@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package model;
 
 /**
@@ -9,5 +5,14 @@ package model;
  * @author Santiago
  */
 public class MotelManagement {
+    private FileManager files;
+    private Room[][] rooms;
+    private Printer printer;
+    private Register register;
+    private Turn turn;
+    private int currentFloor;
     
+    public MotelManagement(){
+        files = new FileManager();
+    }
 }

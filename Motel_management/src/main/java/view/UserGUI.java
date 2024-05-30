@@ -1,4 +1,3 @@
-
 package view;
 
 import javax.swing.JFrame;
@@ -7,18 +6,30 @@ import javax.swing.JFrame;
  *
  * @author Santiago
  */
-public class UserGUI  extends JFrame{
-     public UserGUI(){
-    initComponents();
-}
+public class UserGUI extends JFrame {
     
-     private void initComponents() {
-        // Configurar la ventana
+    private TurnSelectView turnSelectView;
+    private FloorView floorView;
+    private RoomView roomView;
+
+    public UserGUI() {
+        initComponents();
+    }
+
+    private void initComponents() {
+        //Creation of the different views
+        turnSelectView = new TurnSelectView();
+        floorView = new FloorView();
+        roomView = new RoomView();
+        //Default window configuration
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(800, 600);
         //setResizable(false);
-        
-        //Inicializando las diferentes opciones
+
         setVisible(true);
+    }
+
+    public void setupFloors() {
+        
     }
 }

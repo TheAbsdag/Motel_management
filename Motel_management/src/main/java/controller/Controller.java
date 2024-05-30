@@ -19,6 +19,7 @@ public class Controller {
 
     public void start() {
         userInterface.setVisible(true);
+        userInterface.setupFloors();
     }
     
 }
