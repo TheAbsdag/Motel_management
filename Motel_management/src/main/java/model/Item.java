@@ -31,25 +31,12 @@ public class Item {
         return name;
     }
 
-    /**
-     * @param name the name to set
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
 
     /**
      * @return the price
      */
     public int getPrice() {
         return price;
-    }
-
-    /**
-     * @param price the price to set
-     */
-    public void setPrice(int price) {
-        this.price = price;
     }
 
     /**
@@ -73,11 +60,5 @@ public class Item {
         return itemID;
     }
 
-    /**
-     * @param itemID the itemID to set
-     */
-    public void setItemID(int itemID) {
-        this.itemID = itemID;
-    }
 
 }

@@ -49,7 +49,7 @@ public class RoomView extends javax.swing.JPanel {
         endTimeButton = new javax.swing.JButton();
         addTimeButton = new javax.swing.JButton();
         roomSellingButton = new javax.swing.JButton();
-        jLabel1 = new javax.swing.JLabel();
+        dateLabel = new javax.swing.JLabel();
 
         roomStatusBackground.setBackground(new java.awt.Color(102, 255, 0));
 
@@ -209,8 +209,8 @@ public class RoomView extends javax.swing.JPanel {
         roomSellingButton.setFont(new java.awt.Font("Segoe UI Black", 0, 24)); // NOI18N
         roomSellingButton.setText("VENTA A LA HABITACION");
 
-        jLabel1.setFont(new java.awt.Font("Segoe UI Black", 0, 24)); // NOI18N
-        jLabel1.setText("DICIEMBRE 2 2024");
+        dateLabel.setFont(new java.awt.Font("Segoe UI Black", 0, 24)); // NOI18N
+        dateLabel.setText("DICIEMBRE 2 2024");
 
         javax.swing.GroupLayout backgroundRoomLayout = new javax.swing.GroupLayout(backgroundRoom);
         backgroundRoom.setLayout(backgroundRoomLayout);
@@ -230,40 +230,41 @@ public class RoomView extends javax.swing.JPanel {
                     .addGroup(backgroundRoomLayout.createSequentialGroup()
                         .addGap(36, 36, 36)
                         .addGroup(backgroundRoomLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, backgroundRoomLayout.createSequentialGroup()
-                                .addGroup(backgroundRoomLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                                    .addComponent(removeBigQuantity, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(removeSmallQuantityButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addGroup(backgroundRoomLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(addBigQuantityButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(addSmallQuantityButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, backgroundRoomLayout.createSequentialGroup()
-                                .addGap(0, 0, Short.MAX_VALUE)
-                                .addGroup(backgroundRoomLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addGroup(backgroundRoomLayout.createSequentialGroup()
-                                        .addComponent(booking6HoursButton)
-                                        .addGap(29, 29, 29)
-                                        .addComponent(booking12HoursButton))
-                                    .addComponent(roomStatusInformative)
-                                    .addComponent(timeLabel, javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 244, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGap(15, 15, 15))
                             .addGroup(backgroundRoomLayout.createSequentialGroup()
                                 .addComponent(addTimeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 314, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(0, 0, Short.MAX_VALUE))))
+                                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, backgroundRoomLayout.createSequentialGroup()
+                                .addGroup(backgroundRoomLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                    .addGroup(backgroundRoomLayout.createSequentialGroup()
+                                        .addGroup(backgroundRoomLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                            .addComponent(removeBigQuantity, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                            .addComponent(removeSmallQuantityButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                        .addGroup(backgroundRoomLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(addBigQuantityButton, javax.swing.GroupLayout.DEFAULT_SIZE, 179, Short.MAX_VALUE)
+                                            .addComponent(addSmallQuantityButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                                    .addComponent(jTextField1)
+                                    .addGroup(backgroundRoomLayout.createSequentialGroup()
+                                        .addGap(0, 0, 0)
+                                        .addGroup(backgroundRoomLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addGroup(backgroundRoomLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                                .addGroup(javax.swing.GroupLayout.Alignment.LEADING, backgroundRoomLayout.createSequentialGroup()
+                                                    .addComponent(booking3HoursButton)
+                                                    .addGap(33, 33, 33)
+                                                    .addComponent(booking6HoursButton))
+                                                .addGroup(backgroundRoomLayout.createSequentialGroup()
+                                                    .addGroup(backgroundRoomLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                                        .addComponent(dateLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 244, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                        .addComponent(timeLabel))
+                                                    .addGap(44, 44, 44)))
+                                            .addGroup(backgroundRoomLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                                .addComponent(booking12HoursButton)
+                                                .addComponent(roomStatusInformative)))))
+                                .addContainerGap(12, Short.MAX_VALUE))))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, backgroundRoomLayout.createSequentialGroup()
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGroup(backgroundRoomLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, backgroundRoomLayout.createSequentialGroup()
-                                .addGroup(backgroundRoomLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(booking3HoursButton)
-                                    .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 288, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGap(19, 19, 19))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, backgroundRoomLayout.createSequentialGroup()
-                                .addComponent(printingCheckBox)
-                                .addGap(45, 45, 45)))))
-                .addContainerGap())
+                        .addComponent(printingCheckBox)
+                        .addGap(45, 45, 45))))
         );
         backgroundRoomLayout.setVerticalGroup(
             backgroundRoomLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -279,7 +280,7 @@ public class RoomView extends javax.swing.JPanel {
                                 .addComponent(backRoomButton, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addComponent(roomSellingButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 73, javax.swing.GroupLayout.PREFERRED_SIZE)))
                     .addGroup(backgroundRoomLayout.createSequentialGroup()
-                        .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 29, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(dateLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 29, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(timeLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -303,24 +304,18 @@ public class RoomView extends javax.swing.JPanel {
                         .addComponent(printingCheckBox)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(addTimeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(18, Short.MAX_VALUE))
+                .addContainerGap(39, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(272, Short.MAX_VALUE)
-                .addComponent(backgroundRoom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(28, 28, 28))
+            .addComponent(backgroundRoom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGap(62, 62, 62)
-                .addComponent(backgroundRoom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(138, Short.MAX_VALUE))
+            .addComponent(backgroundRoom, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -362,8 +357,8 @@ public class RoomView extends javax.swing.JPanel {
     private javax.swing.JButton booking12HoursButton;
     private javax.swing.JButton booking3HoursButton;
     private javax.swing.JButton booking6HoursButton;
+    private javax.swing.JLabel dateLabel;
     private javax.swing.JButton endTimeButton;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JTextField jTextField1;
     private javax.swing.JCheckBox printingCheckBox;
     private javax.swing.JLabel remainingInformativeLabel;

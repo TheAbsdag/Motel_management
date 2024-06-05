@@ -19,7 +19,19 @@ public class Controller {
 
     public void start() {
         userInterface.setVisible(true);
-        userInterface.setupFloors();
+        motelManager.prepareProgramData();
+        userInterface.setupFloors(motelManager.getRoomsArray());
+        userInterface.setFloorView();
+        motelManager.prepareTurnRegisterData();
+        
+        updateLoopStart();
     }
-    
+
+    private void updateLoopStart() {
+        while(true){
+            motelManager.timeInformationUpdate();
+            String timeShown  = motelManager.getCurrentLocalizedTime();
+            userInterface.updateTime(timeShown);
+        }
+    } 
 }
