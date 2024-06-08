@@ -1,11 +1,13 @@
 package model;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.time.ZonedDateTime;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.json.JSONException;
@@ -49,7 +51,7 @@ public class FileManager {
      */
     public JSONObject getJsonData(String dataNeeded) {
         String outputString = new String();
-        JSONObject output;
+        JSONObject output = null;
         try {
             BufferedReader reader = new BufferedReader(new FileReader(DATA_PATH + "\\" + dataNeeded));
             String line;
@@ -57,18 +59,39 @@ public class FileManager {
                 outputString = outputString.concat(line);
             }
             reader.close();
+            try {
+                output = new JSONObject(outputString);
+            } catch (JSONException ex) {
+                Logger.getLogger(FileManager.class.getName()).log(Level.SEVERE, null, ex);
+                //return null;
+            }
+        } catch (IOException ex) {
+            Logger.getLogger(FileManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return output;
+    }
+
+    public void saveJsonMainDataPath(JSONObject data, String dataToSave) {
+        String saveString = data.toString();
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter(DATA_PATH + "\\" + dataToSave));
+            writer.write(saveString);
+            writer.close();
+        } catch (IOException ex) {
+            Logger.getLogger(FileManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void saveHistoryData(JSONObject data, String dataToSave, ZonedDateTime time) {
+        String saveString = data.toString();
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter(HISTORY_PATH + "\\" + dataToSave + "-" + time.toString()));
+            writer.write(saveString);
+            writer.close();
         } catch (IOException ex) {
             Logger.getLogger(FileManager.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-        try{
-            System.out.println(outputString);
-            output = new JSONObject(outputString);
-        }catch(JSONException ex){
-            Logger.getLogger(FileManager.class.getName()).log(Level.SEVERE, null, ex);
-            return null;
-        }
-        return output;
     }
 
 }

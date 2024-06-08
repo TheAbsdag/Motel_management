@@ -15,12 +15,12 @@ public class Register {
 
     private int historyID;
 
-    public void Register() {
+    public  Register() {
         sellingList = new JSONArray();
         inventory = new ArrayList<Item>();
     }
 
-    public void Register(int historyID) {
+    public  Register(int historyID) {
         this.historyID = historyID;
         sellingList = new JSONArray();
         inventory = new ArrayList<Item>();

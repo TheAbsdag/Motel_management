@@ -79,6 +79,7 @@ public class Turn {
                 change.put("endStatus", dateLocalized);
                 change.put("price", price);
                 change.put("service", room.getService());
+                change.put("extension", room.getExtension());
                 break;
         }
         turnHistory.put(change);

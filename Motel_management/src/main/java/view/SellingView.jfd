@@ -1,0 +1,119 @@
+JFDML JFormDesigner: "8.2.2.0.382" Java: "17.0.11" encoding: "UTF-8"
+
+new FormModel {
+	contentType: "form/swing"
+	root: new FormRoot {
+		add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
+			"$layoutConstraints": "hidemode 3"
+			"$columnConstraints": "[175,fill][106,grow,fill][118,fill][117,fill][112,fill][136,fill][139,grow,fill]"
+			"$rowConstraints": "[33][51][80][70][72][51][77][146]"
+		} ) {
+			name: "this"
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "dateLabel"
+				"text": "date"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 18 )
+				"horizontalAlignment": 0
+				"foreground": sfield java.awt.Color yellow
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 0 3 1"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "timeLabel"
+				"text": "time:"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 20 )
+				"horizontalAlignment": 4
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 4 0 3 1"
+			} )
+			add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
+				"$layoutConstraints": "hidemode 3"
+				"$columnConstraints": "[grow,fill]"
+				"$rowConstraints": "[389,grow,shrink 0,fill]"
+			} ) {
+				name: "itemListPanel"
+				"background": new java.awt.Color( 117, 192, 241, 255 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 1 3 6"
+			} )
+			add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
+				"$layoutConstraints": "hidemode 3"
+				"$columnConstraints": "[fill]"
+				"$rowConstraints": "[261,fill]"
+			} ) {
+				name: "registerListPanel"
+				"background": new java.awt.Color( 204, 235, 199, 255 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 4 1 3 4"
+			} )
+			add( new FormComponent( "javax.swing.JTextField" ) {
+				name: "quantityTextField"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 22 )
+				"text": "N"
+				"horizontalAlignment": 0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 3 2"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "addQuantityButton"
+				"text": "+"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 28 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 3 3,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "removeQuantityButton"
+				"text": "-"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 28 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 3 4,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "addItemButton"
+				"text": "ADD"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 24 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 4 5,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "itemDeleteButton"
+				"text": "DELETE"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 24 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 6 5"
+			} )
+			add( new FormComponent( "javax.swing.JCheckBox" ) {
+				name: "printingCheckBox"
+				"text": "PRINTING"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 26 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 5 6 2 1,grow"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "backButton"
+				"text": "BACK"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 28 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 7,growy"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "sellingToLabel"
+				"text": "SELLING TO: XXX"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 28 )
+				"horizontalAlignment": 0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 1 7 4 1"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "finishSaleButton"
+				"text": "FINISH"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 28 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 5 7 2 1,growy"
+			} )
+		}, new FormLayoutConstraints( null ) {
+			"location": new java.awt.Point( 230, 50 )
+			"size": new java.awt.Dimension( 950, 615 )
+		} )
+	}
+}

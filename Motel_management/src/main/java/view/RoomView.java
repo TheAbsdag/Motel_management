@@ -1,377 +1,423 @@
 /*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JPanel.java to edit this template
+ * Created by JFormDesigner on Sat Jun 08 00:25:29 COT 2024
  */
+
 package view;
 
+import java.awt.*;
+import javax.swing.*;
+import javax.swing.border.*;
+import net.miginfocom.swing.*;
+
 /**
- *
  * @author Santiago
  */
-public class RoomView extends javax.swing.JPanel {
+public class RoomView extends JPanel {
+    public RoomView() {
+	initComponents();
+    }
+
+    private void initComponents() {
+	// JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents  @formatter:off
+	// Generated using JFormDesigner Educational license - Santiago Esteban Castelblanco Castiblanco (saecastelblancoc)
+	roomStatusBackground = new JPanel();
+	roomNumber = new JLabel();
+	statusLabel = new JLabel();
+	startInformativeLabel = new JLabel();
+	remainingInformativeLabel = new JLabel();
+	startTimeLabel = new JLabel();
+	remainingTimeLabel = new JLabel();
+	startDateLabel = new JLabel();
+	dateLabel = new JLabel();
+	timeLabel = new JLabel();
+	roomStatusInformative = new JLabel();
+	booking3HoursButton = new JButton();
+	booking6HoursButton = new JButton();
+	booking12HoursButton = new JButton();
+	priceTextField = new JTextField();
+	removeSmallQuantityButton = new JButton();
+	addSmallQuantityButton = new JButton();
+	removeBigQuantity = new JButton();
+	addBigQuantityButton = new JButton();
+	printingCheckBox = new JCheckBox();
+	backRoomButton = new JButton();
+	roomSellingButton = new JButton();
+	endTimeButton = new JButton();
+	addTimeButton = new JButton();
+
+	//======== this ========
+	setLayout(new MigLayout(
+	    "hidemode 3",
+	    // columns
+	    "[145,grow,fill]" +
+	    "[78,grow,fill]" +
+	    "[125,grow,fill]" +
+	    "[79,grow,fill]" +
+	    "[145,grow,fill]" +
+	    "[127,grow,fill]" +
+	    "[15,fill]" +
+	    "[83,grow,fill]" +
+	    "[15,fill]" +
+	    "[138,grow,fill]",
+	    // rows
+	    "[42]" +
+	    "[49]" +
+	    "[66]" +
+	    "[49]" +
+	    "[53]" +
+	    "[55]" +
+	    "[63]" +
+	    "[86]" +
+	    "[76]"));
+
+	//======== roomStatusBackground ========
+	{
+	    roomStatusBackground.setLayout(new MigLayout(
+		"hidemode 3",
+		// columns
+		"[65,grow,fill]" +
+		"[261,grow,fill]" +
+		"[68,grow,fill]" +
+		"[226,grow,fill]" +
+		"[97,grow,fill]",
+		// rows
+		"[102,grow]" +
+		"[92,grow]" +
+		"[10,grow]" +
+		"[76,grow]" +
+		"[101,grow]" +
+		"[54]"));
+
+	    //---- roomNumber ----
+	    roomNumber.setText("000");
+	    roomNumber.setFont(new Font("Segoe UI Black", Font.PLAIN, 90));
+	    roomNumber.setHorizontalAlignment(SwingConstants.CENTER);
+	    roomNumber.setForeground(Color.black);
+	    roomStatusBackground.add(roomNumber, "cell 2 0,growy");
+
+	    //---- statusLabel ----
+	    statusLabel.setText("LIMPIEZA");
+	    statusLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 90));
+	    statusLabel.setHorizontalAlignment(SwingConstants.CENTER);
+	    statusLabel.setBorder(new LineBorder(Color.gray, 7, true));
+	    statusLabel.setForeground(Color.black);
+	    roomStatusBackground.add(statusLabel, "cell 1 1 3 1,growy");
+
+	    //---- startInformativeLabel ----
+	    startInformativeLabel.setText("INICIO");
+	    startInformativeLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 70));
+	    startInformativeLabel.setHorizontalAlignment(SwingConstants.CENTER);
+	    startInformativeLabel.setForeground(Color.black);
+	    roomStatusBackground.add(startInformativeLabel, "cell 0 3 2 1");
+
+	    //---- remainingInformativeLabel ----
+	    remainingInformativeLabel.setText("RESTANTE");
+	    remainingInformativeLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 70));
+	    remainingInformativeLabel.setHorizontalAlignment(SwingConstants.CENTER);
+	    remainingInformativeLabel.setForeground(Color.black);
+	    roomStatusBackground.add(remainingInformativeLabel, "cell 3 3 2 1,grow");
+
+	    //---- startTimeLabel ----
+	    startTimeLabel.setText("00:00");
+	    startTimeLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 48));
+	    startTimeLabel.setHorizontalAlignment(SwingConstants.CENTER);
+	    startTimeLabel.setForeground(Color.black);
+	    roomStatusBackground.add(startTimeLabel, "cell 0 4 2 1,growy");
+
+	    //---- remainingTimeLabel ----
+	    remainingTimeLabel.setText("00:00");
+	    remainingTimeLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 48));
+	    remainingTimeLabel.setHorizontalAlignment(SwingConstants.CENTER);
+	    remainingTimeLabel.setForeground(Color.black);
+	    roomStatusBackground.add(remainingTimeLabel, "cell 3 4 2 1,growy");
+
+	    //---- startDateLabel ----
+	    startDateLabel.setText("date");
+	    startDateLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 20));
+	    startDateLabel.setForeground(Color.black);
+	    startDateLabel.setHorizontalAlignment(SwingConstants.CENTER);
+	    roomStatusBackground.add(startDateLabel, "cell 0 5 2 1,growy");
+	}
+	add(roomStatusBackground, "cell 0 0 5 8");
+
+	//---- dateLabel ----
+	dateLabel.setText("22 DICIEMBRE 2022");
+	dateLabel.setHorizontalAlignment(SwingConstants.CENTER);
+	dateLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 24));
+	add(dateLabel, "cell 5 0 5 1,growy");
+
+	//---- timeLabel ----
+	timeLabel.setText("00:00 AM");
+	timeLabel.setHorizontalAlignment(SwingConstants.CENTER);
+	timeLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 56));
+	add(timeLabel, "cell 5 1 5 1,growy");
+
+	//---- roomStatusInformative ----
+	roomStatusInformative.setText("SOBRETIEMPO");
+	roomStatusInformative.setHorizontalAlignment(SwingConstants.CENTER);
+	roomStatusInformative.setFont(new Font("Segoe UI Black", Font.PLAIN, 30));
+	add(roomStatusInformative, "cell 5 2 5 1,growy");
+
+	//---- booking3HoursButton ----
+	booking3HoursButton.setText("3");
+	booking3HoursButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 48));
+	add(booking3HoursButton, "cell 5 3,growy");
+
+	//---- booking6HoursButton ----
+	booking6HoursButton.setText("6");
+	booking6HoursButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 48));
+	add(booking6HoursButton, "cell 7 3,growy");
+
+	//---- booking12HoursButton ----
+	booking12HoursButton.setText("12");
+	booking12HoursButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 48));
+	add(booking12HoursButton, "cell 9 3,growy");
+
+	//---- priceTextField ----
+	priceTextField.setFont(new Font("Segoe UI Black", Font.PLAIN, 48));
+	add(priceTextField, "cell 5 4 5 1,growy");
+
+	//---- removeSmallQuantityButton ----
+	removeSmallQuantityButton.setText("-100");
+	removeSmallQuantityButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 48));
+	add(removeSmallQuantityButton, "cell 5 5 2 1,growy");
+
+	//---- addSmallQuantityButton ----
+	addSmallQuantityButton.setText("100");
+	addSmallQuantityButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 48));
+	add(addSmallQuantityButton, "cell 8 5 2 1,growy");
+
+	//---- removeBigQuantity ----
+	removeBigQuantity.setText("-1000");
+	removeBigQuantity.setFont(new Font("Segoe UI Black", Font.PLAIN, 48));
+	add(removeBigQuantity, "cell 5 6 2 1,growy");
+
+	//---- addBigQuantityButton ----
+	addBigQuantityButton.setText("1000");
+	addBigQuantityButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 48));
+	add(addBigQuantityButton, "cell 8 6 2 1,growy");
+
+	//---- printingCheckBox ----
+	printingCheckBox.setText("IMPRESION");
+	printingCheckBox.setHorizontalAlignment(SwingConstants.CENTER);
+	printingCheckBox.setFont(new Font("Segoe UI Black", Font.PLAIN, 48));
+	add(printingCheckBox, "cell 5 7 5 1,growy");
+
+	//---- backRoomButton ----
+	backRoomButton.setText("VOLVER");
+	backRoomButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 48));
+	add(backRoomButton, "cell 0 8,growy");
+
+	//---- roomSellingButton ----
+	roomSellingButton.setText("VENTA HABITACION");
+	roomSellingButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 24));
+	add(roomSellingButton, "cell 1 8 2 1,growy");
+
+	//---- endTimeButton ----
+	endTimeButton.setText("TERMINAR");
+	endTimeButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 48));
+	add(endTimeButton, "cell 3 8 2 1,growy");
+
+	//---- addTimeButton ----
+	addTimeButton.setText("VENDER");
+	addTimeButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 48));
+	add(addTimeButton, "cell 5 8 5 1,growy");
+	// JFormDesigner - End of component initialization  //GEN-END:initComponents  @formatter:on
+    }
+
+    // JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables  @formatter:off
+    // Generated using JFormDesigner Educational license - Santiago Esteban Castelblanco Castiblanco (saecastelblancoc)
+    private JPanel roomStatusBackground;
+    private JLabel roomNumber;
+    private JLabel statusLabel;
+    private JLabel startInformativeLabel;
+    private JLabel remainingInformativeLabel;
+    private JLabel startTimeLabel;
+    private JLabel remainingTimeLabel;
+    private JLabel startDateLabel;
+    private JLabel dateLabel;
+    private JLabel timeLabel;
+    private JLabel roomStatusInformative;
+    private JButton booking3HoursButton;
+    private JButton booking6HoursButton;
+    private JButton booking12HoursButton;
+    private JTextField priceTextField;
+    private JButton removeSmallQuantityButton;
+    private JButton addSmallQuantityButton;
+    private JButton removeBigQuantity;
+    private JButton addBigQuantityButton;
+    private JCheckBox printingCheckBox;
+    private JButton backRoomButton;
+    private JButton roomSellingButton;
+    private JButton endTimeButton;
+    private JButton addTimeButton;
+    // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
 
     /**
-     * Creates new form RoomView
+     * @return the roomStatusBackground
      */
-    public RoomView() {
-        initComponents();
+    public JPanel getRoomStatusBackground() {
+        return roomStatusBackground;
     }
 
     /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
+     * @return the roomNumber
      */
-    @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
-    private void initComponents() {
+    public JLabel getRoomNumber() {
+        return roomNumber;
+    }
 
-        backgroundRoom = new javax.swing.JPanel();
-        roomStatusBackground = new javax.swing.JPanel();
-        remainingInformativeLabel = new javax.swing.JLabel();
-        roomNumber1 = new javax.swing.JLabel();
-        statusLabel = new javax.swing.JLabel();
-        startInformativeLabel = new javax.swing.JLabel();
-        startTimeLabel = new javax.swing.JLabel();
-        remainingTimeLabel1 = new javax.swing.JLabel();
-        timeLabel = new javax.swing.JLabel();
-        roomStatusInformative = new javax.swing.JLabel();
-        booking3HoursButton = new javax.swing.JButton();
-        booking12HoursButton = new javax.swing.JButton();
-        booking6HoursButton = new javax.swing.JButton();
-        backRoomButton = new javax.swing.JButton();
-        jTextField1 = new javax.swing.JTextField();
-        addSmallQuantityButton = new javax.swing.JButton();
-        removeSmallQuantityButton = new javax.swing.JButton();
-        removeBigQuantity = new javax.swing.JButton();
-        addBigQuantityButton = new javax.swing.JButton();
-        printingCheckBox = new javax.swing.JCheckBox();
-        endTimeButton = new javax.swing.JButton();
-        addTimeButton = new javax.swing.JButton();
-        roomSellingButton = new javax.swing.JButton();
-        dateLabel = new javax.swing.JLabel();
+    /**
+     * @return the statusLabel
+     */
+    public JLabel getStatusLabel() {
+        return statusLabel;
+    }
 
-        roomStatusBackground.setBackground(new java.awt.Color(102, 255, 0));
+    /**
+     * @return the startInformativeLabel
+     */
+    public JLabel getStartInformativeLabel() {
+        return startInformativeLabel;
+    }
 
-        remainingInformativeLabel.setFont(new java.awt.Font("Segoe UI Black", 0, 70)); // NOI18N
-        remainingInformativeLabel.setForeground(new java.awt.Color(0, 0, 0));
-        remainingInformativeLabel.setText("RESTANTE");
+    /**
+     * @return the remainingInformativeLabel
+     */
+    public JLabel getRemainingInformativeLabel() {
+        return remainingInformativeLabel;
+    }
 
-        roomNumber1.setFont(new java.awt.Font("Segoe UI Black", 0, 90)); // NOI18N
-        roomNumber1.setForeground(new java.awt.Color(0, 0, 0));
-        roomNumber1.setText("000");
+    /**
+     * @return the startTimeLabel
+     */
+    public JLabel getStartTimeLabel() {
+        return startTimeLabel;
+    }
 
-        statusLabel.setFont(new java.awt.Font("Segoe UI Black", 0, 90)); // NOI18N
-        statusLabel.setForeground(new java.awt.Color(0, 0, 0));
-        statusLabel.setText("LIMPIEZA");
-        statusLabel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(102, 102, 102), 15));
+    /**
+     * @return the remainingTimeLabel
+     */
+    public JLabel getRemainingTimeLabel() {
+        return remainingTimeLabel;
+    }
 
-        startInformativeLabel.setFont(new java.awt.Font("Segoe UI Black", 0, 70)); // NOI18N
-        startInformativeLabel.setForeground(new java.awt.Color(0, 0, 0));
-        startInformativeLabel.setText("INICIO");
+    /**
+     * @return the dateLabel
+     */
+    public JLabel getDateLabel() {
+        return dateLabel;
+    }
 
-        startTimeLabel.setFont(new java.awt.Font("Segoe UI Black", 0, 48)); // NOI18N
-        startTimeLabel.setForeground(new java.awt.Color(51, 51, 51));
-        startTimeLabel.setText("00:00 AM");
+    /**
+     * @return the timeLabel
+     */
+    public JLabel getTimeLabel() {
+        return timeLabel;
+    }
 
-        remainingTimeLabel1.setFont(new java.awt.Font("Segoe UI Black", 0, 48)); // NOI18N
-        remainingTimeLabel1.setForeground(new java.awt.Color(51, 51, 51));
-        remainingTimeLabel1.setText("00:00 ");
+    /**
+     * @return the roomStatusInformative
+     */
+    public JLabel getRoomStatusInformative() {
+        return roomStatusInformative;
+    }
 
-        javax.swing.GroupLayout roomStatusBackgroundLayout = new javax.swing.GroupLayout(roomStatusBackground);
-        roomStatusBackground.setLayout(roomStatusBackgroundLayout);
-        roomStatusBackgroundLayout.setHorizontalGroup(
-            roomStatusBackgroundLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(roomStatusBackgroundLayout.createSequentialGroup()
-                .addGap(396, 396, 396)
-                .addComponent(roomNumber1, javax.swing.GroupLayout.PREFERRED_SIZE, 181, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, Short.MAX_VALUE))
-            .addGroup(roomStatusBackgroundLayout.createSequentialGroup()
-                .addGap(31, 31, 31)
-                .addGroup(roomStatusBackgroundLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(roomStatusBackgroundLayout.createSequentialGroup()
-                        .addComponent(startTimeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGap(731, 731, 731))
-                    .addGroup(roomStatusBackgroundLayout.createSequentialGroup()
-                        .addComponent(statusLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 558, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(roomStatusBackgroundLayout.createSequentialGroup()
-                        .addComponent(startInformativeLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 253, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(remainingInformativeLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 389, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(128, 128, 128))))
-            .addGroup(roomStatusBackgroundLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, roomStatusBackgroundLayout.createSequentialGroup()
-                    .addContainerGap(537, Short.MAX_VALUE)
-                    .addComponent(remainingTimeLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 247, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGap(205, 205, 205)))
-        );
-        roomStatusBackgroundLayout.setVerticalGroup(
-            roomStatusBackgroundLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, roomStatusBackgroundLayout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(roomNumber1, javax.swing.GroupLayout.PREFERRED_SIZE, 154, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(statusLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 154, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addGroup(roomStatusBackgroundLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(remainingInformativeLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 154, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(startInformativeLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 154, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addComponent(startTimeLabel)
-                .addGap(131, 131, 131))
-            .addGroup(roomStatusBackgroundLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, roomStatusBackgroundLayout.createSequentialGroup()
-                    .addContainerGap(520, Short.MAX_VALUE)
-                    .addComponent(remainingTimeLabel1)
-                    .addGap(121, 121, 121)))
-        );
+    /**
+     * @return the booking3HoursButton
+     */
+    public JButton getBooking3HoursButton() {
+        return booking3HoursButton;
+    }
 
-        timeLabel.setFont(new java.awt.Font("Segoe UI Black", 0, 56)); // NOI18N
-        timeLabel.setForeground(new java.awt.Color(255, 255, 255));
-        timeLabel.setText("00:00 AM ");
+    /**
+     * @return the booking6HoursButton
+     */
+    public JButton getBooking6HoursButton() {
+        return booking6HoursButton;
+    }
 
-        roomStatusInformative.setFont(new java.awt.Font("Segoe UI Black", 0, 40)); // NOI18N
-        roomStatusInformative.setText("SOBRETIEMPO");
+    /**
+     * @return the booking12HoursButton
+     */
+    public JButton getBooking12HoursButton() {
+        return booking12HoursButton;
+    }
 
-        booking3HoursButton.setFont(new java.awt.Font("Segoe UI Black", 0, 48)); // NOI18N
-        booking3HoursButton.setText("3");
-        booking3HoursButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                booking3HoursButtonActionPerformed(evt);
-            }
-        });
+    /**
+     * @return the priceTextField
+     */
+    public JTextField getPriceTextField() {
+        return priceTextField;
+    }
 
-        booking12HoursButton.setFont(new java.awt.Font("Segoe UI Black", 0, 48)); // NOI18N
-        booking12HoursButton.setText("12");
-        booking12HoursButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                booking12HoursButtonActionPerformed(evt);
-            }
-        });
+    /**
+     * @return the removeSmallQuantityButton
+     */
+    public JButton getRemoveSmallQuantityButton() {
+        return removeSmallQuantityButton;
+    }
 
-        booking6HoursButton.setFont(new java.awt.Font("Segoe UI Black", 0, 48)); // NOI18N
-        booking6HoursButton.setText("6");
-        booking6HoursButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                booking6HoursButtonActionPerformed(evt);
-            }
-        });
+    /**
+     * @return the addSmallQuantityButton
+     */
+    public JButton getAddSmallQuantityButton() {
+        return addSmallQuantityButton;
+    }
 
-        backRoomButton.setFont(new java.awt.Font("Segoe UI Black", 0, 48)); // NOI18N
-        backRoomButton.setText("VOLVER");
+    /**
+     * @return the removeBigQuantity
+     */
+    public JButton getRemoveBigQuantity() {
+        return removeBigQuantity;
+    }
 
-        jTextField1.setFont(new java.awt.Font("Segoe UI Black", 0, 48)); // NOI18N
-        jTextField1.setText("100000000");
-        jTextField1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jTextField1ActionPerformed(evt);
-            }
-        });
+    /**
+     * @return the addBigQuantityButton
+     */
+    public JButton getAddBigQuantityButton() {
+        return addBigQuantityButton;
+    }
 
-        addSmallQuantityButton.setFont(new java.awt.Font("Segoe UI", 0, 48)); // NOI18N
-        addSmallQuantityButton.setText("+100");
+    /**
+     * @return the printingCheckBox
+     */
+    public JCheckBox getPrintingCheckBox() {
+        return printingCheckBox;
+    }
 
-        removeSmallQuantityButton.setFont(new java.awt.Font("Segoe UI", 0, 48)); // NOI18N
-        removeSmallQuantityButton.setText("-100");
-        removeSmallQuantityButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                removeSmallQuantityButtonActionPerformed(evt);
-            }
-        });
+    /**
+     * @return the backRoomButton
+     */
+    public JButton getBackRoomButton() {
+        return backRoomButton;
+    }
 
-        removeBigQuantity.setFont(new java.awt.Font("Segoe UI", 0, 48)); // NOI18N
-        removeBigQuantity.setText("-1000");
-        removeBigQuantity.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                removeBigQuantityActionPerformed(evt);
-            }
-        });
+    /**
+     * @return the roomSellingButton
+     */
+    public JButton getRoomSellingButton() {
+        return roomSellingButton;
+    }
 
-        addBigQuantityButton.setFont(new java.awt.Font("Segoe UI", 0, 48)); // NOI18N
-        addBigQuantityButton.setText("+1000");
-        addBigQuantityButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                addBigQuantityButtonActionPerformed(evt);
-            }
-        });
+    /**
+     * @return the endTimeButton
+     */
+    public JButton getEndTimeButton() {
+        return endTimeButton;
+    }
 
-        printingCheckBox.setFont(new java.awt.Font("Segoe UI", 0, 48)); // NOI18N
-        printingCheckBox.setSelected(true);
-        printingCheckBox.setText("IMPRESION");
+    /**
+     * @return the addTimeButton
+     */
+    public JButton getAddTimeButton() {
+        return addTimeButton;
+    }
 
-        endTimeButton.setFont(new java.awt.Font("Segoe UI Black", 0, 48)); // NOI18N
-        endTimeButton.setText("TERMINAR");
-
-        addTimeButton.setFont(new java.awt.Font("Segoe UI Black", 0, 48)); // NOI18N
-        addTimeButton.setText("VENDER");
-
-        roomSellingButton.setFont(new java.awt.Font("Segoe UI Black", 0, 24)); // NOI18N
-        roomSellingButton.setText("VENTA A LA HABITACION");
-
-        dateLabel.setFont(new java.awt.Font("Segoe UI Black", 0, 24)); // NOI18N
-        dateLabel.setText("DICIEMBRE 2 2024");
-
-        javax.swing.GroupLayout backgroundRoomLayout = new javax.swing.GroupLayout(backgroundRoom);
-        backgroundRoom.setLayout(backgroundRoomLayout);
-        backgroundRoomLayout.setHorizontalGroup(
-            backgroundRoomLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(backgroundRoomLayout.createSequentialGroup()
-                .addGap(23, 23, 23)
-                .addGroup(backgroundRoomLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addGroup(backgroundRoomLayout.createSequentialGroup()
-                        .addComponent(backRoomButton, javax.swing.GroupLayout.PREFERRED_SIZE, 236, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(26, 26, 26)
-                        .addComponent(roomSellingButton, javax.swing.GroupLayout.PREFERRED_SIZE, 358, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(endTimeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 314, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(roomStatusBackground, javax.swing.GroupLayout.PREFERRED_SIZE, 969, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGroup(backgroundRoomLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(backgroundRoomLayout.createSequentialGroup()
-                        .addGap(36, 36, 36)
-                        .addGroup(backgroundRoomLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(backgroundRoomLayout.createSequentialGroup()
-                                .addComponent(addTimeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 314, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, backgroundRoomLayout.createSequentialGroup()
-                                .addGroup(backgroundRoomLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addGroup(backgroundRoomLayout.createSequentialGroup()
-                                        .addGroup(backgroundRoomLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                                            .addComponent(removeBigQuantity, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                            .addComponent(removeSmallQuantityButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addGroup(backgroundRoomLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(addBigQuantityButton, javax.swing.GroupLayout.DEFAULT_SIZE, 179, Short.MAX_VALUE)
-                                            .addComponent(addSmallQuantityButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                                    .addComponent(jTextField1)
-                                    .addGroup(backgroundRoomLayout.createSequentialGroup()
-                                        .addGap(0, 0, 0)
-                                        .addGroup(backgroundRoomLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addGroup(backgroundRoomLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                                .addGroup(javax.swing.GroupLayout.Alignment.LEADING, backgroundRoomLayout.createSequentialGroup()
-                                                    .addComponent(booking3HoursButton)
-                                                    .addGap(33, 33, 33)
-                                                    .addComponent(booking6HoursButton))
-                                                .addGroup(backgroundRoomLayout.createSequentialGroup()
-                                                    .addGroup(backgroundRoomLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                                        .addComponent(dateLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 244, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                        .addComponent(timeLabel))
-                                                    .addGap(44, 44, 44)))
-                                            .addGroup(backgroundRoomLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                                .addComponent(booking12HoursButton)
-                                                .addComponent(roomStatusInformative)))))
-                                .addContainerGap(12, Short.MAX_VALUE))))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, backgroundRoomLayout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(printingCheckBox)
-                        .addGap(45, 45, 45))))
-        );
-        backgroundRoomLayout.setVerticalGroup(
-            backgroundRoomLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(backgroundRoomLayout.createSequentialGroup()
-                .addGap(18, 18, 18)
-                .addGroup(backgroundRoomLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(backgroundRoomLayout.createSequentialGroup()
-                        .addComponent(roomStatusBackground, javax.swing.GroupLayout.PREFERRED_SIZE, 641, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addGroup(backgroundRoomLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(backgroundRoomLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(endTimeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(backRoomButton, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(roomSellingButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 73, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addGroup(backgroundRoomLayout.createSequentialGroup()
-                        .addComponent(dateLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 29, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(timeLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(roomStatusInformative)
-                        .addGap(27, 27, 27)
-                        .addGroup(backgroundRoomLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(booking3HoursButton)
-                            .addComponent(booking12HoursButton)
-                            .addComponent(booking6HoursButton))
-                        .addGap(18, 18, 18)
-                        .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(32, 32, 32)
-                        .addGroup(backgroundRoomLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(removeSmallQuantityButton)
-                            .addComponent(addSmallQuantityButton))
-                        .addGap(31, 31, 31)
-                        .addGroup(backgroundRoomLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(removeBigQuantity)
-                            .addComponent(addBigQuantityButton))
-                        .addGap(18, 18, 18)
-                        .addComponent(printingCheckBox)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(addTimeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(39, Short.MAX_VALUE))
-        );
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(backgroundRoom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(backgroundRoom, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
-    }// </editor-fold>//GEN-END:initComponents
-
-    private void booking3HoursButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_booking3HoursButtonActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_booking3HoursButtonActionPerformed
-
-    private void booking12HoursButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_booking12HoursButtonActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_booking12HoursButtonActionPerformed
-
-    private void booking6HoursButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_booking6HoursButtonActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_booking6HoursButtonActionPerformed
-
-    private void jTextField1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField1ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jTextField1ActionPerformed
-
-    private void removeSmallQuantityButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeSmallQuantityButtonActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_removeSmallQuantityButtonActionPerformed
-
-    private void removeBigQuantityActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeBigQuantityActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_removeBigQuantityActionPerformed
-
-    private void addBigQuantityButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addBigQuantityButtonActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_addBigQuantityButtonActionPerformed
-
-
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton addBigQuantityButton;
-    private javax.swing.JButton addSmallQuantityButton;
-    private javax.swing.JButton addTimeButton;
-    private javax.swing.JButton backRoomButton;
-    private javax.swing.JPanel backgroundRoom;
-    private javax.swing.JButton booking12HoursButton;
-    private javax.swing.JButton booking3HoursButton;
-    private javax.swing.JButton booking6HoursButton;
-    private javax.swing.JLabel dateLabel;
-    private javax.swing.JButton endTimeButton;
-    private javax.swing.JTextField jTextField1;
-    private javax.swing.JCheckBox printingCheckBox;
-    private javax.swing.JLabel remainingInformativeLabel;
-    private javax.swing.JLabel remainingTimeLabel1;
-    private javax.swing.JButton removeBigQuantity;
-    private javax.swing.JButton removeSmallQuantityButton;
-    private javax.swing.JLabel roomNumber1;
-    private javax.swing.JButton roomSellingButton;
-    private javax.swing.JPanel roomStatusBackground;
-    private javax.swing.JLabel roomStatusInformative;
-    private javax.swing.JLabel startInformativeLabel;
-    private javax.swing.JLabel startTimeLabel;
-    private javax.swing.JLabel statusLabel;
-    private javax.swing.JLabel timeLabel;
-    // End of variables declaration//GEN-END:variables
+    /**
+     * @return the startDateLabel
+     */
+    public JLabel getStartDateLabel() {
+        return startDateLabel;
+    }
 }

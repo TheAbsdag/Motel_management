@@ -17,6 +17,7 @@ public class Room {
     For status management, 1 means free, 2 is cleaning, 3 is occupied.
     */
     private int service;
+    private int extension;
     private Instant startStatus;
     private Instant endStatus;
     
@@ -24,6 +25,8 @@ public class Room {
         this.roomString = roomName;
         this.roomNumber = roomNumber;
         this.floorNumber = floor;
+        //A default status will be free
+        this.status = 1;
     }
     
     //Method to book a room
@@ -34,6 +37,7 @@ public class Room {
         
         //Assigning the end time for it.
         this.endStatus = start.plus(Duration.ofHours(service));
+        extension = 0;
     }
     
     //Method for cleaning a room
@@ -41,6 +45,7 @@ public class Room {
         this.status = status;
         this.startStatus = start;
         service = 0;
+        extension = 0;
     }
     
     //Method for a room that's just been freed
@@ -48,6 +53,12 @@ public class Room {
         this.status = status;
         startStatus = Instant.now();
         service = 0;
+        extension = 0;
+    }
+    
+    public void extendRoomTime(int roomTime){
+        extension += roomTime;
+        endStatus = endStatus.plus(Duration.ofHours(roomTime));
     }
 
     /**
@@ -103,6 +114,13 @@ public class Room {
         else{
             return endStatus;
         }
+    }
+
+    /**
+     * @return the extension
+     */
+    public int getExtension() {
+        return extension;
     }
     
 }
