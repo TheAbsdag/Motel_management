@@ -27,7 +27,7 @@ public class UserGUI extends JFrame {
     private ManagementSelectView managementSelection;
     private InventoryManagementView inventoryView;
     private HistoryView historyView;
-    private TurnManagementSelectView turnManagerView;
+    private TurnManagerView turnManagerView;
     
     private Map<String, JLabel> timeLabels;
     private Map<String, JLabel> dateLabels;
@@ -64,7 +64,7 @@ public class UserGUI extends JFrame {
         historyView = new HistoryView();
         addView(historyView, "historyView");
 
-        turnManagerView = new TurnManagementSelectView();
+        turnManagerView = new TurnManagerView();
         addView(turnManagerView, "turnManagerView");
 
         //Default window configuration
@@ -91,21 +91,22 @@ public class UserGUI extends JFrame {
             timeLabels.put(name, ((SellingView) panel).getTimeLabel());
             dateLabels.put(name, ((SellingView) panel).getDateLabel());
         } 
-        /* Yet to be implemented
         else if (panel instanceof ManagementSelectView) {
             timeLabels.put(name, ((ManagementSelectView) panel).getTimeLabel());
             dateLabels.put(name, ((ManagementSelectView) panel).getDateLabel());
-        } else if (panel instanceof InventoryManagementView) {
+        } 
+         else if (panel instanceof TurnManagerView) {
+            timeLabels.put(name, ((TurnManagerView) panel).getTimeLabel());
+            dateLabels.put(name, ((TurnManagerView) panel).getDateLabel());
+        }
+        else if (panel instanceof InventoryManagementView) {
             timeLabels.put(name, ((InventoryManagementView) panel).getTimeLabel());
             dateLabels.put(name, ((InventoryManagementView) panel).getDateLabel());
-        } else if (panel instanceof HistoryView) {
+        }
+        else if (panel instanceof HistoryView) {
             timeLabels.put(name, ((HistoryView) panel).getTimeLabel());
             dateLabels.put(name, ((HistoryView) panel).getDateLabel());
-        } else if (panel instanceof TurnManagementSelectView) {
-            timeLabels.put(name, ((TurnManagementSelectView) panel).getTimeLabel());
-            dateLabels.put(name, ((TurnManagementSelectView) panel).getDateLabel());
         }
-        */
     }
 
     public void setupFloors(int[] arr) {
@@ -233,7 +234,7 @@ public class UserGUI extends JFrame {
     /**
      * @return the turnManagerView
      */
-    public TurnManagementSelectView getTurnManagerView() {
+    public TurnManagerView getTurnManagerView() {
         return turnManagerView;
     }
 

@@ -13,35 +13,56 @@ public class Register {
     private ArrayList<Item> inventory;
     private JSONArray sellingList;
 
-    private int historyID;
+    private long historyID;
 
-    public  Register() {
+    public Register() {
         sellingList = new JSONArray();
         inventory = new ArrayList<Item>();
     }
 
-    public  Register(int historyID) {
+    public Register(long historyID) {
         this.historyID = historyID;
         sellingList = new JSONArray();
-        inventory = new ArrayList<Item>();
+        inventory = new ArrayList<>();
     }
 
-    public void createItem(String name, int value, int quantity, int itemID) {
+    public void createItem(String name, long value, long quantity, long itemIDInput) {
+        long itemID = itemIDInput;
+        //Double take so each item has unique ID
+        for (int i = 0; i < inventory.size(); i++) {
+            if (inventory.get(i).getItemID() == itemID) {
+                itemID++;
+                i = 0;
+            }
+        }
         Item newItem = new Item(name, value, quantity, itemID);
         inventory.add(newItem);
     }
 
-    public void deleteItemInformation(Item item, int itemID) {
+    public void createNewItem(String name, long value, long quantity) {
+        long itemID = 0;
         for (int i = 0; i < inventory.size(); i++) {
             if (inventory.get(i).getItemID() == itemID) {
+                itemID++;
+                i = 0;
+            }
+        }
+        Item newItem = new Item(name, value, quantity, itemID);
+        inventory.add(newItem);
+    }
+
+    public void deleteItemInformation(Item item) {
+        for (int i = 0; i < inventory.size(); i++) {
+            if (inventory.get(i).getItemID() == item.getItemID()) {
                 inventory.remove(i);
             }
         }
     }
 
-    public void saveItemInformation(Item item, int itemID) {
+    public void saveItemInformation(Item item) {
+        System.out.println("item modified");
         for (int i = 0; i < inventory.size(); i++) {
-            if (inventory.get(i).getItemID() == itemID) {
+            if (inventory.get(i).getItemID() == item.getItemID()) {
                 inventory.set(i, item);
             }
         }
@@ -61,11 +82,11 @@ public class Register {
         }
     }
 
-    public void addItemToList(Item item, int quantity) {
+    public void addItemToList(Item item, long quantity) {
         JSONObject itemRegister = new JSONObject();
         itemRegister.put("itemName", item.getName());
         itemRegister.put("itemID", item.getItemID());
-        int finalPrice = quantity * item.getPrice();
+        long finalPrice = quantity * item.getPrice();
         itemRegister.put("quantity", quantity);
         itemRegister.put("price", finalPrice);
         sellingList.put(itemRegister);
@@ -97,6 +118,7 @@ public class Register {
             item.put("price", inventory.get(i).getPrice());
             item.put("itemName", inventory.get(i).getName());
             item.put("quantity", inventory.get(i).getQuantity());
+            inventoryArray.put(item);
         }
 
         output.put("inventoryItems", inventoryArray);

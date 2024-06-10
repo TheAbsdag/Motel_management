@@ -6,6 +6,7 @@ package view;
 
 import java.awt.*;
 import javax.swing.*;
+import javax.swing.text.AbstractDocument;
 import net.miginfocom.swing.*;
 
 /**
@@ -15,6 +16,8 @@ public class SellingView extends JPanel {
     public SellingView() {
 	initComponents();
     }
+    
+    //Required additional special class to showcase the details for the items
 
     private void initComponents() {
 	// JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents  @formatter:off
@@ -24,10 +27,11 @@ public class SellingView extends JPanel {
 	itemListPanel = new JPanel();
 	registerListPanel = new JPanel();
 	quantityTextField = new JTextField();
+	 ((AbstractDocument) quantityTextField.getDocument()).setDocumentFilter(new NumericDocumentFilter());
 	addQuantityButton = new JButton();
 	removeQuantityButton = new JButton();
-	addItemButton = new JButton();
 	itemDeleteButton = new JButton();
+	addItemButton = new JButton();
 	printingCheckBox = new JCheckBox();
 	backButton = new JButton();
 	sellingToLabel = new JLabel();
@@ -107,34 +111,34 @@ public class SellingView extends JPanel {
 	removeQuantityButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 28));
 	add(removeQuantityButton, "cell 3 4,growy");
 
-	//---- addItemButton ----
-	addItemButton.setText("ADD");
-	addItemButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 24));
-	add(addItemButton, "cell 4 5,growy");
-
 	//---- itemDeleteButton ----
-	itemDeleteButton.setText("DELETE");
+	itemDeleteButton.setText("BORRAR");
 	itemDeleteButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 24));
 	add(itemDeleteButton, "cell 6 5");
 
+	//---- addItemButton ----
+	addItemButton.setText("A\u00d1ADIR");
+	addItemButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 24));
+	add(addItemButton, "cell 3 6,growy");
+
 	//---- printingCheckBox ----
-	printingCheckBox.setText("PRINTING");
+	printingCheckBox.setText("IMPRIMIR");
 	printingCheckBox.setFont(new Font("Segoe UI Black", Font.PLAIN, 26));
 	add(printingCheckBox, "cell 5 6 2 1,grow");
 
 	//---- backButton ----
-	backButton.setText("BACK");
+	backButton.setText("VOLVER");
 	backButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 28));
 	add(backButton, "cell 0 7,growy");
 
 	//---- sellingToLabel ----
-	sellingToLabel.setText("SELLING TO: XXX");
+	sellingToLabel.setText("VENDIENDO A: XXX");
 	sellingToLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 28));
 	sellingToLabel.setHorizontalAlignment(SwingConstants.CENTER);
 	add(sellingToLabel, "cell 1 7 4 1");
 
 	//---- finishSaleButton ----
-	finishSaleButton.setText("FINISH");
+	finishSaleButton.setText("COMPLETAR");
 	finishSaleButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 28));
 	add(finishSaleButton, "cell 5 7 2 1,growy");
 	// JFormDesigner - End of component initialization  //GEN-END:initComponents  @formatter:on
@@ -149,8 +153,8 @@ public class SellingView extends JPanel {
     private JTextField quantityTextField;
     private JButton addQuantityButton;
     private JButton removeQuantityButton;
-    private JButton addItemButton;
     private JButton itemDeleteButton;
+    private JButton addItemButton;
     private JCheckBox printingCheckBox;
     private JButton backButton;
     private JLabel sellingToLabel;

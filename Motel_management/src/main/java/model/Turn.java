@@ -15,7 +15,7 @@ public class Turn {
 
     private Instant start;
     private Instant end;
-    private int turnNumber;
+    private long turnNumber;
     private JSONArray turnHistory;
     private JSONObject turnDetails;
     private ZoneId zoneID;
@@ -48,7 +48,7 @@ public class Turn {
         turnDetails.put("turnEnd", dateLocalized);
     }
 
-    public void registerRoomChange(Room room, Instant time, int price) {
+    public void registerRoomChange(Room room, Instant time, long price) {
         //Setting temporary information for the change.
         String dateLocalized = time.atZone(zoneID).toString();
         JSONObject change = new JSONObject();
@@ -95,7 +95,7 @@ public class Turn {
         turnHistory.put(change);
     }
     
-    public void setNewTurn(int turnID, Instant start){
+    public void setNewTurn(long turnID, Instant start){
         this.turnNumber = turnID;
         this.start = start;
         String dateLocalized = start.atZone(zoneID).toString();
@@ -135,7 +135,7 @@ public class Turn {
                 int status = change.getInt("status");
                 //A room was booked on the turn, so we capture the data for the summary
                 if(status ==3){
-                    int price = change.getInt("price");
+                    long price = change.getLong("price");
                     int service = change.getInt("service");
                     boolean roomServiceExisting = false;
                     //Going through the curren turnHistorySummary to find if the key exists
@@ -177,7 +177,7 @@ public class Turn {
         turnHistory.clear();
         turnDetails.clear();
         start = ZonedDateTime.parse(previousTurn.getString("turnStart")).toInstant();
-        turnNumber = previousTurn.getInt("turnNumber");
+        turnNumber = previousTurn.getLong("turnNumber");
         String dateLocalized = start.atZone(zoneID).toString();
         turnDetails.put("turnNumber", turnNumber);
         turnDetails.put("turnStart", dateLocalized);

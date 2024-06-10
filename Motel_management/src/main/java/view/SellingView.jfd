@@ -51,6 +51,9 @@ new FormModel {
 				"font": new java.awt.Font( "Segoe UI Black", 0, 22 )
 				"text": "N"
 				"horizontalAlignment": 0
+				auxiliary() {
+					"JavaCodeGenerator.postCreateCode": " ((AbstractDocument) quantityTextField.getDocument()).setDocumentFilter(new NumericDocumentFilter());"
+				}
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 3 2"
 			} )
@@ -69,36 +72,36 @@ new FormModel {
 				"value": "cell 3 4,growy"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
-				name: "addItemButton"
-				"text": "ADD"
-				"font": new java.awt.Font( "Segoe UI Black", 0, 24 )
-			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 4 5,growy"
-			} )
-			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "itemDeleteButton"
-				"text": "DELETE"
+				"text": "BORRAR"
 				"font": new java.awt.Font( "Segoe UI Black", 0, 24 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 6 5"
 			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "addItemButton"
+				"text": "AÑADIR"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 24 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 3 6,growy"
+			} )
 			add( new FormComponent( "javax.swing.JCheckBox" ) {
 				name: "printingCheckBox"
-				"text": "PRINTING"
+				"text": "IMPRIMIR"
 				"font": new java.awt.Font( "Segoe UI Black", 0, 26 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 5 6 2 1,grow"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "backButton"
-				"text": "BACK"
+				"text": "VOLVER"
 				"font": new java.awt.Font( "Segoe UI Black", 0, 28 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 0 7,growy"
 			} )
 			add( new FormComponent( "javax.swing.JLabel" ) {
 				name: "sellingToLabel"
-				"text": "SELLING TO: XXX"
+				"text": "VENDIENDO A: XXX"
 				"font": new java.awt.Font( "Segoe UI Black", 0, 28 )
 				"horizontalAlignment": 0
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
@@ -106,7 +109,7 @@ new FormModel {
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "finishSaleButton"
-				"text": "FINISH"
+				"text": "COMPLETAR"
 				"font": new java.awt.Font( "Segoe UI Black", 0, 28 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 5 7 2 1,growy"

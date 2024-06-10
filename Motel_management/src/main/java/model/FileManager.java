@@ -65,7 +65,11 @@ public class FileManager {
                 Logger.getLogger(FileManager.class.getName()).log(Level.SEVERE, null, ex);
                 //return null;
             }
-        } catch (IOException ex) {
+        }
+        catch(FileNotFoundException e){
+            System.out.println("No se ha encontrado archivo de "+dataNeeded);
+        }
+        catch (IOException ex) {
             Logger.getLogger(FileManager.class.getName()).log(Level.SEVERE, null, ex);
         }
         return output;

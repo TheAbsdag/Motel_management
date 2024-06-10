@@ -1,0 +1,103 @@
+JFDML JFormDesigner: "8.2.2.0.382" Java: "17.0.11" encoding: "UTF-8"
+
+new FormModel {
+	contentType: "form/swing"
+	root: new FormRoot {
+		add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
+			"$layoutConstraints": "hidemode 3"
+			"$columnConstraints": "[grow,fill][grow,fill][grow,fill][grow,fill][grow,fill][grow,fill][grow,fill]"
+			"$rowConstraints": "[grow][grow][grow][grow][grow][grow][25][grow]"
+		} ) {
+			name: "this"
+			add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
+				"$layoutConstraints": "hidemode 3"
+				"$columnConstraints": "[grow,fill]"
+				"$rowConstraints": "[grow,fill]"
+			} ) {
+				name: "turnDetailsPanel"
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 0 5 7,growy"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "turnNumberInformativeLabel"
+				"text": "TURNO:"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 22 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 5 0"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "turnNumberLabel"
+				"text": "N"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 28 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 6 0"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "turnStartInformativeLabel"
+				"text": "Inicio:"
+				"font": &Font0 new java.awt.Font( "Segoe UI Black", 0, 28 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 5 1"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "turnStartLabel"
+				"text": "XXXX-XX-XX - XX:XX"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 6 1"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "turnEndInformativeLabel"
+				"text": "Final"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 5 2"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "turnEndLabel"
+				"text": "XXXX-XX-XX - XX:XX"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 6 2"
+			} )
+			add( new FormComponent( "javax.swing.JCheckBox" ) {
+				name: "noPrintCheckBox"
+				"text": "NO IMPRIMIR"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 26 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 5 4 2 1,growy"
+			} )
+			add( new FormComponent( "javax.swing.JCheckBox" ) {
+				name: "summarizedPrintCheckBox"
+				"text": "RESUMIDO"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 26 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 5 5 2 1,growy"
+			} )
+			add( new FormComponent( "javax.swing.JCheckBox" ) {
+				name: "detailedPrintCheckBox"
+				"text": "DETALLADO"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 26 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 5 6 2 1,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "backButton"
+				"text": "CERRAR"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 28 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 7,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "printButton"
+				"text": "IMPRIMIR"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 28 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 5 7 2 1,growy"
+			} )
+		}, new FormLayoutConstraints( null ) {
+			"location": new java.awt.Point( 0, 0 )
+			"size": new java.awt.Dimension( 885, 450 )
+		} )
+	}
+}

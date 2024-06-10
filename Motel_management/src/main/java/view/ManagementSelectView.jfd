@@ -1,0 +1,66 @@
+JFDML JFormDesigner: "8.2.2.0.382" Java: "17.0.11" encoding: "UTF-8"
+
+new FormModel {
+	contentType: "form/swing"
+	root: new FormRoot {
+		add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
+			"$layoutConstraints": "hidemode 3"
+			"$columnConstraints": "[171,fill][145,fill][118,fill][145,fill][118,fill][145,fill][133,fill]"
+			"$rowConstraints": "[121][45][grow][40][116]"
+		} ) {
+			name: "this"
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "managementInfoLabel"
+				"text": "ADMINISTRACION"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 48 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 0 3 1"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "timeLabel"
+				"text": "TIME"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 28 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 4 0 3 1"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "dateLabel"
+				"text": "DATE"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 22 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 4 1 3 1,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "turnButton"
+				"text": "TURNO"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 22 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 1 2,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "inventoryButton"
+				"text": "INVENTARIO"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 22 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 3 2,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "historyButton"
+				"text": "HISTORIAL"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 22 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 5 2,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "backButton"
+				"text": "VOLVER"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 20 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 4,growy"
+			} )
+		}, new FormLayoutConstraints( null ) {
+			"location": new java.awt.Point( 0, 0 )
+			"size": new java.awt.Dimension( 1035, 515 )
+		} )
+	}
+}

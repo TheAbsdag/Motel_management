@@ -7,6 +7,7 @@ package view;
 import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.*;
+import javax.swing.text.AbstractDocument;
 import net.miginfocom.swing.*;
 
 /**
@@ -35,6 +36,7 @@ public class RoomView extends JPanel {
 	booking6HoursButton = new JButton();
 	booking12HoursButton = new JButton();
 	priceTextField = new JTextField();
+	 ((AbstractDocument) priceTextField.getDocument()).setDocumentFilter(new NumericDocumentFilter());
 	removeSmallQuantityButton = new JButton();
 	addSmallQuantityButton = new JButton();
 	removeBigQuantity = new JButton();

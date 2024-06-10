@@ -130,6 +130,9 @@ new FormModel {
 			add( new FormComponent( "javax.swing.JTextField" ) {
 				name: "priceTextField"
 				"font": #Font0
+				auxiliary() {
+					"JavaCodeGenerator.postCreateCode": " ((AbstractDocument) priceTextField.getDocument()).setDocumentFilter(new NumericDocumentFilter());"
+				}
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 5 4 5 1,growy"
 			} )

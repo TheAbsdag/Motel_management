@@ -19,23 +19,23 @@ import org.json.JSONObject;
  */
 public class MotelManagement {
 
-    private FileManager files;
-    private ArrayList<ArrayList<Room>> rooms;
-    private Printer printer;
-    private Register register;
-    private Turn turn;
+    private final FileManager files;
+    private final ArrayList<ArrayList<Room>> rooms;
+    private final Printer printer;
+    private final Register register;
+    private final Turn turn;
     private int currentFloorViewed;
     private int currentRoomViewed;
     private int currentServiceDesired;
     private Instant currentTime;
     private ZonedDateTime localizedTime;
-    private ZoneId zoneID;
-    private Room reception;
+    private final ZoneId zoneID;
+    private final Room reception;
 
     public MotelManagement() {
         files = new FileManager();
         zoneID = ZoneId.of("America/Bogota");
-        rooms = new ArrayList<ArrayList<Room>>();
+        rooms = new ArrayList<>();
         currentTime = Instant.now();
         localizedTime = currentTime.atZone(zoneID);
         turn = new Turn(currentTime, zoneID);
@@ -49,7 +49,7 @@ public class MotelManagement {
         int floors = programData.getInt("floors");
         //creation for the rooms of each floor
         for (int i = 0; i < floors; i++) {
-            rooms.add(new ArrayList<Room>());
+            rooms.add(new ArrayList<>());
             int roomsInFloor = programData.getInt("roomsFloor" + i);
             for (int j = 0; j < roomsInFloor; j++) {
                 String formatedRoomString = (i + 1) + String.format("%02d", (j + 1));
@@ -99,7 +99,7 @@ public class MotelManagement {
         this.turn.setNewTurn(turn, currentTime);
     }
     
-    public void registerRoomTimeAdded(int floor, int room, int service, int price){
+    public void registerRoomTimeAdded(int floor, int room, int service, long price){
         int currentStatus = rooms.get(floor).get(room).getStatus();
         //A time increase was done if the room is currently booked
         if(currentStatus ==3){
@@ -253,5 +253,33 @@ public class MotelManagement {
         register.newSellingList();
     }
 
-    
+    public JSONObject getInventoryData(){
+        return register.getInventoryData();
+    }
+    public void  saveItemInformation(JSONObject itemInformation){
+        Item updatedItem = new Item(
+                itemInformation.getString("itemName"),
+                itemInformation.getLong("price"),
+                itemInformation.getLong("quantity"),
+                itemInformation.getLong("itemID")
+        );
+        register.saveItemInformation(updatedItem);
+    }
+
+    public void newItemCreated(JSONObject itemInformation) {
+        register.createNewItem(
+                itemInformation.getString("itemName"),
+                itemInformation.getLong("price"),
+                itemInformation.getLong("quantity"));
+    }
+
+    public void deleteItemFromInventory(JSONObject selectedItem) {
+        Item updatedItem = new Item(
+                selectedItem.getString("itemName"),
+                selectedItem.getLong("price"),
+                selectedItem.getLong("quantity"),
+                selectedItem.getLong("itemID")
+        );
+        register.deleteItemInformation(updatedItem);
+    }
 }
