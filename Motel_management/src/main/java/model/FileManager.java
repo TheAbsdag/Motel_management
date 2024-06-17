@@ -8,6 +8,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.json.JSONException;
@@ -19,12 +20,10 @@ import org.json.JSONObject;
  */
 public class FileManager {
 
-    private static final String PATH = System.getProperty("user.dir");
+    public static final String PATH = System.getProperty("user.dir");
     private static final String DATA_PATH = PATH + "\\data";
     private static final String BACKUP_PATH = PATH + "\\backup";
     private static final String HISTORY_PATH = PATH + "\\history";
-    private FileWriter turnFile;
-    private FileWriter roomFile;
 
     public FileManager() {
         prepareFolders();
@@ -85,11 +84,24 @@ public class FileManager {
             Logger.getLogger(FileManager.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-
-    public void saveHistoryData(JSONObject data, String dataToSave, ZonedDateTime time) {
+    
+    public void saveJsonBackupDataPath(JSONObject data, String dataToSave){
         String saveString = data.toString();
         try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(HISTORY_PATH + "\\" + dataToSave + "-" + time.toString()));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(BACKUP_PATH + "\\" + dataToSave));
+            writer.write(saveString);
+            writer.close();
+        } catch (IOException ex) {
+            Logger.getLogger(FileManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void saveHistoryData(JSONObject data, String dataToSave, ZonedDateTime time) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH-mm-ss-yyyy-MM-dd");
+        String timeString = time.format(formatter);
+        String saveString = data.toString();
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter(HISTORY_PATH + "\\" + dataToSave + "-" + timeString.toString()));
             writer.write(saveString);
             writer.close();
         } catch (IOException ex) {

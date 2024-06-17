@@ -40,7 +40,7 @@ public class Turn {
         turnDetails = new JSONObject();
         this.zoneID = zoneID;
         isTurnActive = false;
-        
+
         String dateLocalized = this.start.atZone(zoneID).toString();
         turnDetails.put("turnNumber", this.turnNumber);
         turnDetails.put("turnStart", dateLocalized);
@@ -48,7 +48,7 @@ public class Turn {
         turnDetails.put("turnEnd", dateLocalized);
     }
 
-    public void registerRoomChange(Room room, Instant time, long price) {
+    public JSONObject registerRoomChange(Room room, Instant time, long price) {
         //Setting temporary information for the change.
         String dateLocalized = time.atZone(zoneID).toString();
         JSONObject change = new JSONObject();
@@ -64,7 +64,7 @@ public class Turn {
         dateLocalized = room.getStartStatus().atZone(zoneID).toString();
         change.put("startStatus", dateLocalized);
         switch (roomStatus) {
-            case 3:
+            case 3 -> {
                 change.put("changeDate", dateLocalized);
                 change.put("changeType", "room");
                 change.put("roomString", room.getRoomString());
@@ -80,22 +80,30 @@ public class Turn {
                 change.put("price", price);
                 change.put("service", room.getService());
                 change.put("extension", room.getExtension());
-                break;
+            }
         }
         turnHistory.put(change);
+        saveCurrentTurnHistory();
+        return change;
     }
-    
-    public void saveTransactionInformation (JSONArray registerJson, Room roomSoldTo, Instant time){
+
+    public JSONObject saveTransactionInformation(JSONArray registerJson, Room roomSoldTo, Instant time) {
         JSONObject change = new JSONObject();
         String dateLocalized = time.atZone(zoneID).toString();
         change.put("changeDate", dateLocalized);
         change.put("changeType", "sale");
         change.put("roomSoldTo", roomSoldTo.getRoomString());
-        change.put("register",registerJson);
+        change.put("register", registerJson);
         turnHistory.put(change);
+        saveCurrentTurnHistory();
+        return change;
     }
     
-    public void setNewTurn(long turnID, Instant start){
+    private void saveCurrentTurnHistory(){
+        turnDetails.put("turnActivity", turnHistory);
+    }
+
+    public void setNewTurn(long turnID, Instant start) {
         this.turnNumber = turnID;
         this.start = start;
         String dateLocalized = start.atZone(zoneID).toString();
@@ -106,56 +114,59 @@ public class Turn {
         isTurnActive = true;
         turnDetails.put("isTurnActive", isTurnActive);
     }
-    
+
     //TurnEnd must be called before any turn information is requested
-    public void turnEnd(Instant end){
+    public void turnEnd(Instant end) {
         this.end = end;
         String dateLocalized = this.end.atZone(zoneID).toString();
         turnDetails.put("turnEnd", dateLocalized);
         turnDetails.put("turnActivity", turnHistory);
         isTurnActive = false;
-                turnDetails.put("isTurnActive", isTurnActive);
+        turnDetails.put("isTurnActive", isTurnActive);
 
     }
-    
-    public JSONObject getBasicTurnInformation(){
+
+    public JSONObject getBasicTurnInformation() {
         JSONObject basicTurn = new JSONObject();
         basicTurn.put("turnStart", turnDetails.getString("turnStart"));
         basicTurn.put("turnNumber", turnDetails.getInt("turnNumber"));
         basicTurn.put("turnEnd", turnDetails.getString("turnEnd"));
-        
+
         JSONArray turnHistorySummary = new JSONArray();
-        
+
         //Going through each transaction made within it.
-        for(int i =0; i< turnHistory.length();i++){
+        for (int i = 0; i < turnHistory.length(); i++) {
             JSONObject change = turnHistory.getJSONObject(i);
             String changeType = change.getString("changeType");
             //Validation for the room summary
-            if(changeType.equals("room")){
-                int status = change.getInt("status");
+            if (changeType.equals("room")) {
+                int status = change.getInt("roomStatus");
                 //A room was booked on the turn, so we capture the data for the summary
-                if(status ==3){
+                if (status == 3) {
                     long price = change.getLong("price");
                     int service = change.getInt("service");
                     boolean roomServiceExisting = false;
                     //Going through the curren turnHistorySummary to find if the key exists
                     
-                    for(int j = 0;j<turnHistorySummary.length();j++){
+                    for (int j = 0; j < turnHistorySummary.length(); j++) {
                         JSONObject summaryItem = turnHistorySummary.getJSONObject(j);
-                        if(summaryItem.getInt("roomService") == service){
-                            //It exists, we update values, and we exit the loop
-                            roomServiceExisting = true;
-                            summaryItem.put("quantity", summaryItem.getInt("quantity") + 1);
-                            summaryItem.put("price", summaryItem.getInt("price") + price);
-                            turnHistorySummary.remove(j);
-                            turnHistorySummary.put(summaryItem);
-                            break;
+                        if ("room".equals(summaryItem.getString("summaryType"))) {
+                            if (summaryItem.getInt("roomService") == service) {
+                                //It exists, we update values, and we exit the loop
+                                roomServiceExisting = true;
+                                summaryItem.put("quantity", summaryItem.getInt("quantity") + 1);
+                                summaryItem.put("price", summaryItem.getInt("price") + price);
+                                turnHistorySummary.remove(j);
+                                turnHistorySummary.put(summaryItem);
+                                break;
+                            }
                         }
                     }
-                    
+
                     //If the roomService was never found, we just create a new one
-                    if(!roomServiceExisting){
+                    if (!roomServiceExisting) {
                         JSONObject newSummaryItem = new JSONObject();
+                        newSummaryItem.put("summaryType", "room");
                         newSummaryItem.put("service", service);
                         newSummaryItem.put("quantity", 1);
                         newSummaryItem.put("price", price);
@@ -163,17 +174,53 @@ public class Turn {
                     }
                 }
             }
-            
+
             //Validation for the items summary
+            if (changeType.equals("sale")) {
+                JSONArray itemList = change.getJSONArray("register");
+                for (int itemSold = 0; itemSold < itemList.length(); itemSold++) {
+                    JSONObject item = itemList.getJSONObject(itemSold);
+                    long itemID = item.getLong("itemID");
+                    long price = item.getLong("price");
+                    long quantity = item.getLong("quantity");
+                    //Going through the current list to see if the item is found
+                    boolean itemExists = false;
+                    for (int j = 0; j < turnHistorySummary.length(); j++) {
+                        JSONObject summaryItem = turnHistorySummary.getJSONObject(j);
+                        if("item".equals(summaryItem.getString("summaryType"))){
+                            //We found the item, updating quantity and price
+                            if(itemID == summaryItem.getLong("itemID")){
+                                summaryItem.put("quantity", summaryItem.getLong("quantity")+quantity);
+                                summaryItem.put("price", summaryItem.getLong("price")+price);
+                                
+                                itemExists =true;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    //The item summary does not exists, creation required
+                    if(!itemExists){
+                        JSONObject newSummaryItem = new JSONObject();
+                        newSummaryItem.put("summaryType", "item");
+                        newSummaryItem.put("itemName", item.getString("itemName"));
+                        newSummaryItem.put("itemID", itemID);
+                        newSummaryItem.put("quantity", quantity);
+                        newSummaryItem.put("price", price);
+                        turnHistorySummary.put(newSummaryItem);
+                    }
+                }
+            }
         }
+        basicTurn.put("turnSummary", turnHistorySummary);
         return basicTurn;
     }
-    
-    public JSONObject getDetailedTurnInformation(){
+
+    public JSONObject getDetailedTurnInformation() {
         return turnDetails;
     }
-    
-    public void setPreviousTurnJSON(JSONObject previousTurn){
+
+    public boolean setPreviousTurnJSON(JSONObject previousTurn) {
         turnHistory.clear();
         turnDetails.clear();
         start = ZonedDateTime.parse(previousTurn.getString("turnStart")).toInstant();
@@ -181,10 +228,15 @@ public class Turn {
         String dateLocalized = start.atZone(zoneID).toString();
         turnDetails.put("turnNumber", turnNumber);
         turnDetails.put("turnStart", dateLocalized);
-        
+
         isTurnActive = previousTurn.getBoolean("isTurnActive");
         turnDetails.put("isTurnActive", isTurnActive);
-
-        turnHistory = previousTurn.getJSONArray("turnActivity");
+        try{
+            turnHistory = previousTurn.getJSONArray("turnActivity");
+            saveCurrentTurnHistory();
+        }catch(JSONException ex){
+            System.out.println("Previous turn found, no previous activity found");
+        } 
+        return isTurnActive;
     }
 }

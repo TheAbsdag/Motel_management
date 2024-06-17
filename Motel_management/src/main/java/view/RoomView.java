@@ -52,10 +52,10 @@ public class RoomView extends JPanel {
 	    "hidemode 3",
 	    // columns
 	    "[145,grow,fill]" +
-	    "[78,grow,fill]" +
-	    "[125,grow,fill]" +
+	    "[78,grow,shrink 0,fill]" +
+	    "[147,grow,shrink 0,fill]" +
 	    "[79,grow,fill]" +
-	    "[145,grow,fill]" +
+	    "[145,grow,shrink 0,fill]" +
 	    "[127,grow,fill]" +
 	    "[15,fill]" +
 	    "[83,grow,fill]" +
@@ -63,14 +63,14 @@ public class RoomView extends JPanel {
 	    "[138,grow,fill]",
 	    // rows
 	    "[42]" +
-	    "[49]" +
+	    "[49,grow]" +
 	    "[66]" +
 	    "[49]" +
-	    "[53]" +
-	    "[55]" +
-	    "[63]" +
-	    "[86]" +
-	    "[76]"));
+	    "[53,grow]" +
+	    "[55,grow]" +
+	    "[63,grow]" +
+	    "[86,grow]" +
+	    "[76,grow]"));
 
 	//======== roomStatusBackground ========
 	{
@@ -212,7 +212,7 @@ public class RoomView extends JPanel {
 
 	//---- roomSellingButton ----
 	roomSellingButton.setText("VENTA HABITACION");
-	roomSellingButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 24));
+	roomSellingButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 20));
 	add(roomSellingButton, "cell 1 8 2 1,growy");
 
 	//---- endTimeButton ----

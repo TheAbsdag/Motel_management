@@ -1,20 +1,129 @@
 /*
  * Created by JFormDesigner on Sat Jun 08 11:15:03 COT 2024
  */
-
 package view;
 
 import java.awt.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import javax.swing.*;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableColumnModel;
 import net.miginfocom.swing.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import view.customListRenderes.CustomCellRenderer;
+import view.customListRenderes.CustomHeaderRenderer;
 
 /**
  * @author Santiago
  */
 public class TurnHistoryManagerView extends JPanel {
+    
+    private JTable turnDetailsTable;
+    private TurnDetailsTableModel turnDetailsTableModel;
+    private final Font cellFont;
 
-    public TurnHistoryManagerView(){
+    public TurnHistoryManagerView() {
+        this.cellFont = new Font("Segoe UI", Font.BOLD, 16);
         initComponents();
+        initCustomTable();
+    }
+
+    private void initCustomTable() {
+        
+        turnDetailsTableModel = new TurnDetailsTableModel();
+        turnDetailsTable = new JTable(turnDetailsTableModel);
+        TableColumnModel columnModel = turnDetailsTable.getColumnModel();
+        for (int i = 0; i < columnModel.getColumnCount(); i++) {
+            columnModel.getColumn(i).setCellRenderer(new CustomCellRenderer(cellFont));
+            columnModel.getColumn(i).setHeaderRenderer(new CustomHeaderRenderer(cellFont));
+        }
+        
+        turnDetailsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        JScrollPane scrollPane = new JScrollPane(turnDetailsTable);
+        turnDetailsTable.getTableHeader().setReorderingAllowed(false);
+        
+        turnDetailsPanel.add(scrollPane, "cell 0 0, grow");
+    }
+
+    private class TurnDetailsTableModel extends AbstractTableModel {
+
+        private final String[] columnNames = {"Tiempo", "Accion", "Valor"};
+        private JSONArray turnDetails;
+
+        public TurnDetailsTableModel() {
+            this.turnDetails = new JSONArray();
+        }
+
+        public void updateData(JSONArray data) {
+            turnDetails = data;
+            fireTableDataChanged();
+        }
+
+        @Override
+        public int getRowCount() {
+            return turnDetails.length();
+        }
+
+        @Override
+        public int getColumnCount() {
+            return columnNames.length;
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            try {
+                JSONObject item = turnDetails.getJSONObject(rowIndex);
+                String changeType = item.getString("changeType");
+                LocalDateTime changeDate = LocalDateTime.parse(item.getString("changeDate").replace("[America/Bogota]", ""));
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd - hh:mm a");
+                String formattedDate = changeDate.format(formatter);
+
+                switch (columnIndex) {
+                    case 0: // Time
+                        return formattedDate;
+                    case 1: // Action
+                        if (changeType.equals("sale")) {
+                            return "Vendidos objetos a: " + item.getString("roomSoldTo");
+                        } else if (changeType.equals("room") && item.getInt("roomStatus") == 3) {
+                            return "Habitacion " + item.getString("roomString") + " alquilada";
+                        } else {
+                            return "";
+                        }
+                    case 2: // Value
+                        if (changeType.equals("sale")) {
+                            JSONArray register = item.getJSONArray("register");
+                            int totalValue = 0;
+                            for (int i = 0; i < register.length(); i++) {
+                                JSONObject registerItem = register.getJSONObject(i);
+                                totalValue += registerItem.getInt("price");
+                            }
+                            return totalValue;
+                        } else if (changeType.equals("room") && item.getInt("roomStatus") == 3) {
+                            return item.getInt("price");
+                        } else {
+                            return "";
+                        }
+                    default:
+                        return null;
+                }
+            } catch (JSONException ex) {
+                ex.printStackTrace();
+                return null;
+            }
+        }
+
+        @Override
+        public String getColumnName(int column) {
+            return columnNames[column];
+        }
+
+        @Override
+        public Class<?> getColumnClass(int columnIndex) {
+            return String.class;
+        }
     }
 
     private void initComponents() {

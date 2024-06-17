@@ -9,9 +9,9 @@ import java.time.Instant;
  * @author Santiago
  */
 public class Room {
-    private String roomString;
-    private int roomNumber;
-    private int floorNumber;
+    private final String roomString;
+    private final int roomNumber;
+    private final int floorNumber;
     private int status;
     /*
     For status management, 1 means free, 2 is cleaning, 3 is occupied.
@@ -21,7 +21,7 @@ public class Room {
     private Instant startStatus;
     private Instant endStatus;
     
-    public Room(String roomName, int roomNumber, int floor){
+    public Room(String roomName, int floor, int roomNumber){
         this.roomString = roomName;
         this.roomNumber = roomNumber;
         this.floorNumber = floor;
@@ -123,4 +123,10 @@ public class Room {
         return extension;
     }
     
+    /**
+     * @param extension the extension to set
+     */
+    public void setExtension(int extension) {
+        this.extension = extension;
+    }
 }

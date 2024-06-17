@@ -24,3 +24,7 @@ hs_err_pid*
 /Motel_management/nbproject/private/
 /Motel_management/build/
 /Motel_management/target/
+/Motel_management/data/
+/Motel_management/backup/
+/Motel_management/history/
+/Motel_management/receiptPrints/

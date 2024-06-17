@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
@@ -236,6 +237,22 @@ public class UserGUI extends JFrame {
      */
     public TurnManagerView getTurnManagerView() {
         return turnManagerView;
+    }
+
+    public boolean confirmPrinting() {
+        int response = JOptionPane.showConfirmDialog(
+                null, 
+                "¿ESTA SEGURO DE NO IMPRIMIR RECIBO?", 
+                "CONFIRMACION",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE
+        );
+        if (response == JOptionPane.YES_OPTION) {
+            return true;
+        }else{
+            return false;
+        }
+        
     }
 
 }

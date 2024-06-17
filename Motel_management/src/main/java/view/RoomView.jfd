@@ -5,8 +5,8 @@ new FormModel {
 	root: new FormRoot {
 		add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
 			"$layoutConstraints": "hidemode 3"
-			"$columnConstraints": "[145,grow,fill][78,grow,fill][125,grow,fill][79,grow,fill][145,grow,fill][127,grow,fill][15,fill][83,grow,fill][15,fill][138,grow,fill]"
-			"$rowConstraints": "[42][49][66][49][53][55][63][86][76]"
+			"$columnConstraints": "[145,grow,fill][78,grow,shrink 0,fill][147,grow,shrink 0,fill][79,grow,fill][145,grow,shrink 0,fill][127,grow,fill][15,fill][83,grow,fill][15,fill][138,grow,fill]"
+			"$rowConstraints": "[42][49,grow][66][49][53,grow][55,grow][63,grow][86,grow][76,grow]"
 		} ) {
 			name: "this"
 			add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
@@ -182,7 +182,7 @@ new FormModel {
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "roomSellingButton"
 				"text": "VENTA HABITACION"
-				"font": new java.awt.Font( "Segoe UI Black", 0, 24 )
+				"font": new java.awt.Font( "Segoe UI Black", 0, 20 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 1 8 2 1,growy"
 			} )

@@ -1,14 +1,14 @@
 package controller;
 
+import java.awt.AWTException;
 import java.awt.Color;
-import java.awt.event.ActionListener;
+import java.awt.Robot;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.KeyEvent;
 import javax.swing.JCheckBox;
 import javax.swing.Timer;
 import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.table.AbstractTableModel;
 import model.MotelManagement;
 import org.json.JSONObject;
 import view.UserGUI;
@@ -24,10 +24,17 @@ public class Controller {
     private Timer timerForTimeUpdates;
     private Timer timerForBackupFiles;
     private Timer timerForCurrentFile;
+    private boolean isSellingListAdjusting = false;
+    private Robot robotSim;
 
     public Controller(MotelManagement motelManager, UserGUI userInterface) {
         this.motelManager = motelManager;
         this.userInterface = userInterface;
+        try{
+            robotSim = new Robot();
+        }catch(AWTException e){
+            e.printStackTrace();
+        }
     }
 
     public void start() {
@@ -45,8 +52,8 @@ public class Controller {
 
         setupListeners();
         timerForTimeUpdates = new Timer(80, e -> updateTime());
-        timerForBackupFiles = new Timer(15000, e -> System.out.println("backup files"));
-        timerForCurrentFile = new Timer(2000, e -> System.out.println("saving main file"));
+        timerForBackupFiles = new Timer(15000, e -> SaveBackupFiles());
+        timerForCurrentFile = new Timer(2000, e -> saveMainFiles());
         startTimers();
     }
 
@@ -95,6 +102,27 @@ public class Controller {
         userInterface.getSellingView().getAddQuantityButton().addActionListener(e -> updateItemSaleAmount(1));
         userInterface.getSellingView().getRemoveQuantityButton().addActionListener(e -> updateItemSaleAmount(-1));
         userInterface.getSellingView().getFinishSaleButton().addActionListener(e -> finishSale());
+        userInterface.getSellingView().getItemTable().getSelectionModel().addListSelectionListener((ListSelectionEvent event) -> {
+            if (!event.getValueIsAdjusting() && !isSellingListAdjusting) {
+                isSellingListAdjusting = true;
+                userInterface.getSellingView().getQuantityTextField().setText("1");
+                userInterface.getSellingView().getAddItemButton().setEnabled(true);
+                userInterface.getSellingView().getItemDeleteButton().setEnabled(false);
+                userInterface.getSellingView().getSellingTable().clearSelection();
+                isSellingListAdjusting = false;
+            }
+        });
+        userInterface.getSellingView().getSellingTable().getSelectionModel().addListSelectionListener((ListSelectionEvent event) -> {
+            if (!event.getValueIsAdjusting() && !isSellingListAdjusting) {
+                isSellingListAdjusting = true;
+                userInterface.getSellingView().getItemDeleteButton().setEnabled(true);
+                userInterface.getSellingView().getAddItemButton().setEnabled(false);
+                userInterface.getSellingView().getItemTable().clearSelection();
+                isSellingListAdjusting = false;
+            }
+        });
+        userInterface.getSellingView().getUpSellingListButton().addActionListener(e -> simulateArrowUpSelling());
+        userInterface.getSellingView().getDownSellingListButton().addActionListener(e -> simulateArrowDownSelling());
 
         //Setting up management Select view listeners
         userInterface.getManagementSelection().getBackButton().addActionListener(e -> showFloorPerspective());
@@ -105,7 +133,7 @@ public class Controller {
         //Setting up turn management listeners
         userInterface.getTurnManagerView().getBackButton().addActionListener(e -> managementOptions());
         userInterface.getTurnManagerView().getPrintButton().addActionListener(e -> printTurn());
-        userInterface.getTurnManagerView().getEndTurnButton().addActionListener(e -> turnEnd());
+        userInterface.getTurnManagerView().getEndTurnButton().addActionListener(e -> turnChange());
 
         userInterface.getTurnManagerView().getNoPrintCheckBox().addItemListener(new CheckBoxItemListener(this.userInterface));
         userInterface.getTurnManagerView().getSummarizedPrintCheckBox().addItemListener(new CheckBoxItemListener(this.userInterface));
@@ -128,7 +156,6 @@ public class Controller {
         userInterface.getInventoryView().getInventoryTable().getSelectionModel().addListSelectionListener((ListSelectionEvent event) -> {
             if (!event.getValueIsAdjusting()) {
                 int selectedRow = userInterface.getInventoryView().getInventoryTable().getSelectedRow();
-                System.out.println("Row is " + selectedRow);
                 if (selectedRow != -1) {
                     JSONObject selectedItem = userInterface.getInventoryView().getCurrentSelectedItem(selectedRow);
                     userInterface.getInventoryView().getInformativeEditLabel().setText("MODIFICANDO");
@@ -136,7 +163,7 @@ public class Controller {
                     userInterface.getInventoryView().getQuantityTextField().setText(String.valueOf(selectedItem.getInt("quantity")));
                     userInterface.getInventoryView().getPriceTextField().setText(String.valueOf(selectedItem.getLong("price")));
                     setInventoryModificators(true);
-                    
+
                 }
             }
         });
@@ -155,7 +182,7 @@ public class Controller {
 
     private void deleteInventoryItem() {
         int rowSelected = userInterface.getInventoryView().getInventoryTable().getSelectedRow();
-        if(rowSelected !=-1){
+        if (rowSelected != -1) {
             JSONObject selectedItem = userInterface.getInventoryView().getCurrentSelectedItem(rowSelected);
             motelManager.deleteItemFromInventory(selectedItem);
         }
@@ -239,7 +266,27 @@ public class Controller {
         userInterface.getInventoryView().updateInventory(motelManager.getInventoryData());
     }
 
-    //Separate class for all item checks
+    private void saveMainFiles() {
+        motelManager.saveFilesForMainService();
+    }
+
+    private void SaveBackupFiles() {
+        motelManager.saveFilesForBackup();
+    }
+
+    private void simulateArrowUpSelling() {
+        userInterface.getSellingView().getItemTable().requestFocusInWindow();
+        robotSim.keyPress(KeyEvent.VK_UP);
+        robotSim.keyRelease(KeyEvent.VK_UP);
+    }
+
+    private void simulateArrowDownSelling() {
+        userInterface.getSellingView().getItemTable().requestFocusInWindow();
+        robotSim.keyPress(KeyEvent.VK_DOWN);
+        robotSim.keyRelease(KeyEvent.VK_DOWN);
+    }
+
+    //Separate class for all item checks if additional selection is required
     private class CheckBoxItemListener implements ItemListener {
 
         private final UserGUI view;
@@ -257,7 +304,7 @@ public class Controller {
                 if (selectedCheckBox == view.getTurnManagerView().getNoPrintCheckBox()
                         || selectedCheckBox == view.getTurnManagerView().getSummarizedPrintCheckBox()
                         || selectedCheckBox == view.getTurnManagerView().getDetailedPrintCheckBox()) {
-                    userInterface.getTurnManagerView().getEndTurnButton().setEnabled(true);
+                    userInterface.getTurnManagerView().getPrintButton().setEnabled(true);
                 }
                 if (selectedCheckBox != view.getTurnManagerView().getNoPrintCheckBox()) {
                     view.getTurnManagerView().getNoPrintCheckBox().setSelected(false);
@@ -375,14 +422,69 @@ public class Controller {
         if (receptionSale) {
             motelManager.setCurrentFloorRoom(-1, -1);
         }
-        motelManager.startSaleManager();
+        motelManager.restartSaleManager();
         String roomString = motelManager.getRoom(motelManager.getCurrentFloorViewed(), motelManager.getCurrentRoomViewed()).getRoomString();
         userInterface.getSellingView().getSellingToLabel().setText("VENIENDO A: " + roomString);
         userInterface.setSellingView();
+        userInterface.getSellingView().getAddItemButton().setEnabled(false);
+        userInterface.getSellingView().getItemDeleteButton().setEnabled(false);
+        userInterface.getSellingView().getFinishSaleButton().setEnabled(false);
+        userInterface.getSellingView().updateItemListed(motelManager.getInventoryData());
+        userInterface.getSellingView().updateSellingListed(motelManager.getCurrentSellingList());
+    }
+
+    private void itemRemovedFromRegisterList() {
+        JSONObject itemSelected = userInterface.getSellingView().getCurrentSelectedSellingListed(userInterface.getSellingView().getSellingTable().getSelectedRow());
+        long itemID = itemSelected.getLong("itemID");
+        motelManager.removeItemToSelling(itemID);
+        long totalPrice = motelManager.getCurrentTotalPriceSellingList();
+        userInterface.getSellingView().getTotalPriceLabel().setText(String.valueOf(totalPrice));
+        userInterface.getSellingView().updateSellingListed(motelManager.getCurrentSellingList());
+    }
+
+    private void updateItemSaleAmount(int i) {
+        int newValue = 0;
+        try {
+            newValue = Integer.parseInt(userInterface.getSellingView().getQuantityTextField().getText()) + i;
+            if (newValue < 0) {
+                newValue = 0;
+            }
+        } catch (NumberFormatException ex) {
+            newValue = 0;
+        }
+        userInterface.getSellingView().getQuantityTextField().setText(String.valueOf(newValue));
+    }
+
+    private void addItemToRegisterList() {
+        JSONObject itemSelected = userInterface.getSellingView().getCurrentSelectedItemListed(userInterface.getSellingView().getItemTable().getSelectedRow());
+        int quantity = Integer.parseInt(userInterface.getSellingView().getQuantityTextField().getText());
+        long itemID = itemSelected.getLong("itemID");
+        userInterface.getSellingView().getFinishSaleButton().setEnabled(true);
+        motelManager.addItemToSelling(itemID, quantity);
+        long totalPrice = motelManager.getCurrentTotalPriceSellingList();
+        userInterface.getSellingView().getTotalPriceLabel().setText(String.valueOf(totalPrice));
+        userInterface.getSellingView().updateSellingListed(motelManager.getCurrentSellingList());
+        userInterface.getSellingView().getItemTable().clearSelection();
+        userInterface.getSellingView().getSellingTable().clearSelection();
+        userInterface.getSellingView().getAddItemButton().setEnabled(false);
+    }
+
+    private void finishSale() {
+        boolean print = userInterface.getSellingView().getPrintingCheckBox().isSelected();
+        if (!print) {
+            boolean noPrintingConfirmation = userInterface.confirmPrinting();
+            if (noPrintingConfirmation) {
+                motelManager.roomSaleFinished (false);
+                userInterface.setFloorView();
+            } 
+        } else {
+            motelManager.roomSaleFinished(true);
+            userInterface.setFloorView();
+        }
     }
 
     private void backFromSelling() {
-        motelManager.stopSaleManager();
+        motelManager.restartSaleManager();
         userInterface.setFloorView();
     }
 
@@ -391,9 +493,18 @@ public class Controller {
         int roomNumber = motelManager.getCurrentRoomViewed();
         int floorNumber = motelManager.getCurrentFloorViewed();
         int service = motelManager.getCurrentServiceDesired();
-        int price = Integer.parseInt(userInterface.getRoomView().getPriceTextField().getText());
-        motelManager.registerRoomTimeAdded(floorNumber, roomNumber, service, price);
-        userInterface.setFloorView();
+        int price = Integer.parseInt(userInterface.getRoomView().getPriceTextField().getText()); 
+        boolean print = userInterface.getRoomView().getPrintingCheckBox().isSelected();
+        if (!print) {
+            boolean noPrintingConfirmation = userInterface.confirmPrinting();
+            if (noPrintingConfirmation) {
+                motelManager.registerRoomTimeAdded(floorNumber, roomNumber, service, price, false);
+                userInterface.setFloorView();
+            } 
+        } else {
+            motelManager.registerRoomTimeAdded(floorNumber, roomNumber, service, price, true);
+            userInterface.setFloorView();
+        } 
     }
 
     private void updateRoomPrice(long price) {
@@ -512,33 +623,10 @@ public class Controller {
         timerForCurrentFile.start();
     }
 
-    private void itemRemovedFromRegisterList() {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
-
-    private void updateItemSaleAmount(int i) {
-        int newValue = 0;
-        try {
-            newValue = Integer.parseInt(userInterface.getSellingView().getQuantityTextField().getText()) + i;
-            if (newValue < 0) {
-                newValue = 0;
-            }
-        } catch (NumberFormatException ex) {
-            newValue = 0;
-        }
-        userInterface.getSellingView().getQuantityTextField().setText(String.valueOf(newValue));
-    }
-
-    private void addItemToRegisterList() {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
-
-    private void finishSale() {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
-
     private void managementTurnSelected() {
         userInterface.getTurnManagerView().getEndTurnButton().setEnabled(false);
+        userInterface.getTurnManagerView().getPrintButton().setEnabled(false);
+        userInterface.getTurnManagerView().setTurnDetailsData(motelManager.getCurrentTurnData());
         userInterface.setTurnManagerView();
     }
 
@@ -552,10 +640,20 @@ public class Controller {
     }
 
     private void printTurn() {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        motelManager.timeInformationUpdate();
+        userInterface.getTurnManagerView().getBackButton().setEnabled(false);
+        userInterface.getTurnManagerView().getEndTurnButton().setEnabled(true);
+        motelManager.turnEnded();
+        if(userInterface.getTurnManagerView().getNoPrintCheckBox().isSelected()){
+            motelManager.turnEndPrint(1);
+        }else if(userInterface.getTurnManagerView().getSummarizedPrintCheckBox().isSelected() ){
+            motelManager.turnEndPrint(2);
+        }else if(userInterface.getTurnManagerView().getDetailedPrintCheckBox().isSelected()){
+            motelManager.turnEndPrint(3);
+        }
     }
 
-    private void turnEnd() {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    private void turnChange() {
+        userInterface.setTurnSelectView();
     }
 }
