@@ -21,28 +21,35 @@ import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.property.TextAlignment;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import java.io.File;
+import java.util.HashMap;
 
 import org.json.JSONObject;
 
 public class Printer {
 
-    private JTextPane printLayout;
+    private final JTextPane printLayout;
     private final String motelName;
     private final int percentTax = 19;
     private final String motelDirection;
-    private DateTimeFormatter hourFormatter;
-    private DateTimeFormatter dateFormatter;
-    private NumberFormat numberFormat;
+    private final DateTimeFormatter hourFormatter;
+    private final DateTimeFormatter dateFormatter;
+    private final NumberFormat numberFormat;
     private StyledDocument document;
     private final String PDF_SAVE_PATH = FileManager.PATH + "\\receiptPrints";
 
     public Printer() {
+        System.out.println("FileManager initialized");
         printLayout = new JTextPane();
-        motelName = "";
-        motelDirection = "";
+        motelName = "RODADERO";
+        motelDirection = "Cra 14A No 65-24";
         hourFormatter = new DateTimeFormatterBuilder()
                 .appendPattern("hh:mm").appendLiteral(' ')
-                .appendText(ChronoField.AMPM_OF_DAY, Map.of(0L, "AM", 1L, "PM"))
+                .appendText(ChronoField.AMPM_OF_DAY, new HashMap<Long, String>() {
+                    {
+                        put(0L, "AM");
+                        put(1L, "PM");
+                    }
+                })
                 .toFormatter();
         dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd", new Locale("es", "ES"));
         numberFormat = NumberFormat.getNumberInstance(Locale.US);
@@ -114,10 +121,17 @@ public class Printer {
         Style fillerStyle = document.addStyle("FillerStyle", null);
         StyleConstants.setFontSize(fillerStyle, 1);
         StyleConstants.setFontFamily(fillerStyle, fontFamily);
+
+        Style centeredStyle = document.addStyle("CenteredStyle", null);
+        StyleConstants.setAlignment(centeredStyle, StyleConstants.ALIGN_CENTER);
     }
 
     private String spaces(int n) {
-        return " ".repeat(n);
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < n; i++) {
+            sb.append(" ");
+        }
+        return sb.toString();
     }
 
     public void printRoomTimeSell(JSONObject roomTimeSell, int consecutiveTransaction, boolean justPDF) {
@@ -263,11 +277,11 @@ public class Printer {
 
     private void saveAsPDF(String type, ZonedDateTime date, int consecutive) {
         try {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH-mm-ss-yyyy-MM-dd");
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss");
 
             // Format the ZonedDateTime using the formatter
             String formattedDateTime = date.format(formatter);
-            PdfWriter writer = new PdfWriter(new FileOutputStream(PDF_SAVE_PATH + "\\" + consecutive + "-" + type + formattedDateTime + ".pdf"));
+            PdfWriter writer = new PdfWriter(new FileOutputStream(PDF_SAVE_PATH + "\\" + formattedDateTime + "-No" + consecutive + "-" + type + ".pdf"));
             PdfDocument pdfDoc = new PdfDocument(writer);
             Document document = new Document(pdfDoc);
 
@@ -280,15 +294,188 @@ public class Printer {
         }
     }
 
-    void printSummarizedTurn(JSONObject summarizedTurn, boolean b) {
+    void printSummarizedTurn(JSONObject summarizedTurn, boolean justPDF) {
         printLayout.setText("");
         ZonedDateTime fullDateTurnStart = ZonedDateTime.parse(summarizedTurn.getString("turnStart"));
         ZonedDateTime FullDateTurnEnd = ZonedDateTime.parse(summarizedTurn.getString("turnEnd"));
+        int turnNumber = summarizedTurn.getInt("turnNumber");
+        //Start of the formatting for the page
+        document = printLayout.getStyledDocument();
+
+        try {
+
+            document.insertString(document.getLength(), spaces(2) + "MOTEL \n", document.getStyle("HeaderStyle"));
+            document.insertString(document.getLength(), spaces(1) + motelName + "\n", document.getStyle("DefaultStyleBold"));
+            document.insertString(document.getLength(), spaces(1) + "RESUMEN VENTAS TURNO\n", document.getStyle("FooterStyleBold"));
+            document.insertString(document.getLength(), "___________________________________\n", document.getStyle("SecondLastStyleBold"));
+            document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
+
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd - HH:mm:ss");
+
+            String startDate = fullDateTurnStart.format(formatter);
+            String endDate = FullDateTurnEnd.format(formatter);
+
+            document.insertString(document.getLength(), "Inicio turno: \n", document.getStyle("SecondLastStyleBold"));
+            document.setParagraphAttributes(document.getLength() - 1, 1, document.getStyle("CenteredStyle"), false);
+            document.insertString(document.getLength(), startDate + "\n", document.getStyle("DefaultStyleBold"));
+            document.setParagraphAttributes(document.getLength() - 1, 1, document.getStyle("CenteredStyle"), false);
+            document.insertString(document.getLength(), "Fin turno: \n", document.getStyle("SecondLastStyleBold"));
+            document.setParagraphAttributes(document.getLength() - 1, 1, document.getStyle("CenteredStyle"), false);
+            document.insertString(document.getLength(), endDate + "\n", document.getStyle("DefaultStyleBold"));
+            document.setParagraphAttributes(document.getLength() - 1, 1, document.getStyle("CenteredStyle"), false);
+
+            document.insertString(document.getLength(), "___________________________________\n", document.getStyle("SecondLastStyleBold"));
+            document.insertString(document.getLength(), "Cant\tConcepto\tPrecio\n", document.getStyle("TransactionStyle"));
+            document.insertString(document.getLength(), "___________________________________\n", document.getStyle("SecondLastStyleBold"));
+            document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
+
+            JSONArray summaryArray = summarizedTurn.getJSONArray("turnSummary");
+            long totalSales = 0;
+            long totalItems = 0;
+            long totalRooms = 0;
+            for (int i = 0; i < summaryArray.length(); i++) {
+                JSONObject summaryObject = summaryArray.getJSONObject(i);
+                String change = summaryObject.getString("summaryType");
+                if ("room".equals(change)) {
+                    int quantity = summaryObject.getInt("quantity");
+                    long price = summaryObject.getLong("price");
+                    int service = summaryObject.getInt("service");
+                    totalSales += price;
+                    totalRooms += price;
+                    document.insertString(document.getLength(), spaces(3) + quantity + " Alquiler " + service + "\t" + numberFormat.format(price) + "\n", document.getStyle("TransactionStyle"));
+                } else if ("item".equals(change)) {
+                    int quantity = summaryObject.getInt("quantity");
+                    long price = summaryObject.getLong("price");
+                    String itemName = summaryObject.getString("itemName");
+                    document.insertString(document.getLength(), spaces(3) + quantity + spaces(2) + itemName + "\t" + numberFormat.format(price) + "\n", document.getStyle("TransactionStyle"));
+                    totalSales += price;
+                    totalItems += price;
+                }
+            }
+            document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
+            document.insertString(document.getLength(), "___________________________________\n", document.getStyle("SecondLastStyleBold"));
+            document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
+            document.insertString(document.getLength(), spaces(2) + "Habitaciones: ", document.getStyle("DefaultStyle"));
+            document.insertString(document.getLength(), numberFormat.format(totalRooms) + "\n", document.getStyle("DefaultStyleBold"));
+            document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
+            document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
+            document.insertString(document.getLength(), spaces(4) + "Productos: ", document.getStyle("DefaultStyle"));
+            document.insertString(document.getLength(), numberFormat.format(totalItems) + "\n", document.getStyle("DefaultStyleBold"));
+            document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
+            document.insertString(document.getLength(), "Total Turno: ", document.getStyle("DefaultStyle"));
+            document.insertString(document.getLength(), numberFormat.format(totalSales) + "\n", document.getStyle("DefaultStyleBold"));
+
+            //Saving a pdf beforehand
+            saveAsPDF("summarizedTurn", fullDateTurnStart, turnNumber);
+
+            if (!justPDF) {
+                PrinterJob job = PrinterJob.getPrinterJob();
+                PageFormat pf = job.defaultPage();
+                Paper paper = pf.getPaper();
+                paper.setImageableArea(0, 0, paper.getWidth(), paper.getHeight());
+                pf.setPaper(paper);
+                job.setPrintable(printLayout.getPrintable(null, null), pf);
+
+                // Print without showing the print dialog
+                job.print();
+            }
+        } catch (BadLocationException | PrinterException ex) {
+            Logger.getLogger(Printer.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
-    void printDetailedTurn(JSONObject summarizedTurn, boolean b) {
+    void printDetailedTurn(JSONObject detailedTurn, boolean justPDF) {
         printLayout.setText("");
-        ZonedDateTime fullDateTurnStart = ZonedDateTime.parse(summarizedTurn.getString("turnStart"));
-        ZonedDateTime FullDateTurnEnd = ZonedDateTime.parse(summarizedTurn.getString("turnEnd"));
+        ZonedDateTime fullDateTurnStart = ZonedDateTime.parse(detailedTurn.getString("turnStart"));
+        ZonedDateTime FullDateTurnEnd = ZonedDateTime.parse(detailedTurn.getString("turnEnd"));
+        int turnNumber = detailedTurn.getInt("turnNumber");
+        //Start of the formatting for the page
+        document = printLayout.getStyledDocument();
+
+        try {
+
+            document.insertString(document.getLength(), spaces(2) + "MOTEL \n", document.getStyle("HeaderStyle"));
+            document.insertString(document.getLength(), spaces(1) + motelName + "\n", document.getStyle("LargeStyle"));
+            document.insertString(document.getLength(), spaces(1) + "DETALLE VENTAS TURNO\n", document.getStyle("FooterStyleBold"));
+            document.insertString(document.getLength(), "___________________________________\n", document.getStyle("SecondLastStyleBold"));
+            document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
+
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd - HH:mm:ss");
+
+            String startDate = fullDateTurnStart.format(formatter);
+            String endDate = FullDateTurnEnd.format(formatter);
+
+            document.insertString(document.getLength(), "Inicio turno: \n", document.getStyle("SecondLastStyleBold"));
+            document.setParagraphAttributes(document.getLength() - 1, 1, document.getStyle("CenteredStyle"), false);
+            document.insertString(document.getLength(), startDate + "\n", document.getStyle("DefaultStyleBold"));
+            document.setParagraphAttributes(document.getLength() - 1, 1, document.getStyle("CenteredStyle"), false);
+            document.insertString(document.getLength(), "Fin turno: \n", document.getStyle("SecondLastStyleBold"));
+            document.setParagraphAttributes(document.getLength() - 1, 1, document.getStyle("CenteredStyle"), false);
+            document.insertString(document.getLength(), endDate + "\n", document.getStyle("DefaultStyleBold"));
+            document.setParagraphAttributes(document.getLength() - 1, 1, document.getStyle("CenteredStyle"), false);
+
+            document.insertString(document.getLength(), "Tiempo Hab Concepto Precio\n", document.getStyle("TransactionStyleBold"));
+            document.insertString(document.getLength(), "___________________________________\n", document.getStyle("SecondLastStyleBold"));
+
+            JSONArray turnActivity = detailedTurn.getJSONArray("turnActivity");
+            long totalSales = 0;
+            long totalItems = 0;
+            long totalRooms = 0;
+            for (int i = 0; i < turnActivity.length(); i++) {
+                JSONObject change = turnActivity.getJSONObject(i);
+                String changeType = change.getString("changeType");
+                ZonedDateTime changeDate = ZonedDateTime.parse(change.getString("changeDate"));
+                DateTimeFormatter specialDateFormatter = DateTimeFormatter.ofPattern("MM/dd-HH:mm");
+                String formattedDate = changeDate.format(specialDateFormatter);
+                if (changeType.equals("sale")) {
+                    JSONArray register = change.getJSONArray("register");
+                    for (int j = 0; j < register.length(); j++) {
+                        JSONObject currentItem = register.getJSONObject(j);
+                        document.insertString(document.getLength(), spaces(1) + formattedDate + "|" + change.getString("roomSoldTo") + "|" + currentItem.getString("itemName") + "|" + currentItem.getLong("price") + "\n", document.getStyle("TransactionStyle"));
+                        totalSales+=currentItem.getLong("price");
+                        totalItems+=currentItem.getLong("price");
+                    }
+                } else if (changeType.equals("room") && change.getInt("roomStatus") == 3) {
+                    totalSales+=change.getLong("price");
+                    totalRooms+=change.getLong("price");
+                    if (change.getInt("servicedExtension") == 0) {
+                        document.insertString(document.getLength(), spaces(1) + formattedDate + "|" + change.getString("roomString") + "|" + "Alquiler " + change.getInt("service")+"|" + change.getLong("price") + "\n", document.getStyle("TransactionStyle"));
+                    } else {
+                        document.insertString(document.getLength(), spaces(1) + formattedDate + "|" + change.getString("roomString") + "|" + "Alquiler " + change.getInt("servicedExtension")+"|" + change.getLong("price") + "\n", document.getStyle("TransactionStyle"));
+                    }
+                } else if (changeType.equals("roomSwap")) {
+                    document.insertString(document.getLength(), spaces(1) + formattedDate + "|" + change.getString("originalRoom") + "|"+ "Cambio a: " + change.getString("swapedRoom") + "\n", document.getStyle("TransactionStyle"));
+                }
+            }
+            document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
+            document.insertString(document.getLength(), "___________________________________\n", document.getStyle("SecondLastStyleBold"));
+            document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
+            document.insertString(document.getLength(), spaces(2) + "Habitaciones: ", document.getStyle("DefaultStyle"));
+            document.insertString(document.getLength(), numberFormat.format(totalRooms) + "\n", document.getStyle("DefaultStyleBold"));
+            document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
+            document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
+            document.insertString(document.getLength(), spaces(4) + "Productos: ", document.getStyle("DefaultStyle"));
+            document.insertString(document.getLength(), numberFormat.format(totalItems) + "\n", document.getStyle("DefaultStyleBold"));
+            document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
+            document.insertString(document.getLength(), "Total Turno: ", document.getStyle("DefaultStyle"));
+            document.insertString(document.getLength(), numberFormat.format(totalSales) + "\n", document.getStyle("DefaultStyleBold"));
+
+            //Saving a pdf beforehand
+            saveAsPDF("detailedTurnTurn", fullDateTurnStart, turnNumber);
+
+            if (!justPDF) {
+                PrinterJob job = PrinterJob.getPrinterJob();
+                PageFormat pf = job.defaultPage();
+                Paper paper = pf.getPaper();
+                paper.setImageableArea(0, 0, paper.getWidth(), paper.getHeight());
+                pf.setPaper(paper);
+                job.setPrintable(printLayout.getPrintable(null, null), pf);
+
+                // Print without showing the print dialog
+                job.print();
+            }
+        } catch (BadLocationException | PrinterException ex) {
+            Logger.getLogger(Printer.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 }

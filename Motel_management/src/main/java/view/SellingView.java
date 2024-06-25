@@ -115,16 +115,16 @@ public class SellingView extends JPanel {
         public Object getValueAt(int rowIndex, int columnIndex) {
             try {
                 JSONObject item = sellingItems.getJSONObject(rowIndex);
-                return switch (columnIndex) {
-                    case 0 ->
-                        item.getString("itemName");
-                    case 1 ->
-                        item.getInt("quantity");
-                    case 2 ->
-                        item.getDouble("price");
-                    default ->
-                        null;
-                };
+                switch (columnIndex) {
+                    case 0:
+                        return item.getString("itemName");
+                    case 1:
+                        return item.getInt("quantity");
+                    case 2:
+                        return item.getDouble("price");
+                    default:
+                        return null;
+                }
             } catch (JSONException ex) {
                 return null;
             }
@@ -137,16 +137,16 @@ public class SellingView extends JPanel {
 
         @Override
         public Class<?> getColumnClass(int columnIndex) {
-            return switch (columnIndex) {
-                case 0 ->
-                    String.class;
-                case 1 ->
-                    Integer.class;
-                case 2 ->
-                    Double.class;
-                default ->
-                    super.getColumnClass(columnIndex);
-            };
+            switch (columnIndex) {
+                case 0:
+                    return String.class;
+                case 1:
+                    return Integer.class;
+                case 2:
+                    return Double.class;
+                default:
+                    return super.getColumnClass(columnIndex);
+            }
         }
     }
 
@@ -181,14 +181,14 @@ public class SellingView extends JPanel {
         public Object getValueAt(int rowIndex, int columnIndex) {
             try {
                 JSONObject item = inventoryItems.getJSONObject(rowIndex);
-                return switch (columnIndex) {
-                    case 0 ->
-                        item.getString("itemName");
-                    case 1 ->
-                        item.getDouble("price");
-                    default ->
-                        null;
-                };
+                switch (columnIndex) {
+                    case 0:
+                        return item.getString("itemName");
+                    case 1:
+                        return item.getDouble("price");
+                    default:
+                        return null;
+                }
             } catch (JSONException ex) {
                 return null;
             }
@@ -201,14 +201,14 @@ public class SellingView extends JPanel {
 
         @Override
         public Class<?> getColumnClass(int columnIndex) {
-            return switch (columnIndex) {
-                case 0 ->
-                    String.class;
-                case 1 ->
-                    Double.class;
-                default ->
-                    super.getColumnClass(columnIndex);
-            };
+            switch (columnIndex) {
+                case 0:
+                    return String.class;
+                case 1:
+                    return Double.class;
+                default:
+                    return super.getColumnClass(columnIndex);
+            }
         }
     }
 
@@ -218,6 +218,7 @@ public class SellingView extends JPanel {
 	dateLabel = new JLabel();
 	upSellingListButton = new JButton();
 	downSellingListButton = new JButton();
+	courtesySaleButton = new JButton();
 	timeLabel = new JLabel();
 	itemListPanel = new JPanel();
 	registerListPanel = new JPanel();
@@ -270,6 +271,11 @@ public class SellingView extends JPanel {
 	//---- downSellingListButton ----
 	downSellingListButton.setIcon(new ImageIcon(getClass().getResource("/down.png")));
 	add(downSellingListButton, "cell 2 0 1 2,growy");
+
+	//---- courtesySaleButton ----
+	courtesySaleButton.setText("CORTESIA");
+	courtesySaleButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 20));
+	add(courtesySaleButton, "cell 3 1,growy");
 
 	//---- timeLabel ----
 	timeLabel.setText("time:");
@@ -365,6 +371,7 @@ public class SellingView extends JPanel {
     private JLabel dateLabel;
     private JButton upSellingListButton;
     private JButton downSellingListButton;
+    private JButton courtesySaleButton;
     private JLabel timeLabel;
     private JPanel itemListPanel;
     private JPanel registerListPanel;
@@ -512,6 +519,13 @@ public class SellingView extends JPanel {
      */
     public JButton getDownSellingListButton() {
         return downSellingListButton;
+    }
+
+    /**
+     * @return the courtesySaleButton
+     */
+    public JButton getCourtesySaleButton() {
+        return courtesySaleButton;
     }
 
 }

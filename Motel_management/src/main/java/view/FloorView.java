@@ -40,15 +40,17 @@ public class FloorView extends JPanel {
         floorTimeLabel = new JLabel();
         sidePanel = new JPanel();
         floorTimeLabel = new JLabel("Tiempo");
-        floorTimeLabel.setFont(new Font("SEGOE UI BLACK", Font.BOLD, 32));
+        floorTimeLabel.setFont(new Font("SEGOE UI BLACK", Font.BOLD, 28));
         floorTimeLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
         floorDateLabel = new JLabel("Fecha");
-        floorDateLabel.setFont(new Font("SEGOE UI BLACK", Font.BOLD, 32));
+        floorDateLabel.setFont(new Font("SEGOE UI BLACK", Font.BOLD, 20));
         floorDateLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
-        floorUpButton = new JButton("Subir");
-        floorDownButton = new JButton("Bajar");
+        floorUpButton = new JButton();
+        floorUpButton.setIcon(new ImageIcon(getClass().getResource("/up.png")));
+        floorDownButton = new JButton();
+        floorDownButton.setIcon(new ImageIcon(getClass().getResource("/down.png")));
         managementOptionsButton = new JButton("OPCIONES");
         receptionSellButton = new JButton("VENTA RECEPCION");
 

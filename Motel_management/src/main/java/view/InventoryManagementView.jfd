@@ -1,4 +1,4 @@
-JFDML JFormDesigner: "8.2.2.0.382" Java: "17.0.11" encoding: "UTF-8"
+JFDML JFormDesigner: "8.2.2.0.382" Java: "21.0.3" encoding: "UTF-8"
 
 new FormModel {
 	contentType: "form/swing"
@@ -101,6 +101,12 @@ new FormModel {
 				"value": "cell 6 3 2 1,growy"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "upButton"
+				"icon": new com.jformdesigner.model.SwingIcon( 0, "/up.png" )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 5 4,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "removeSmallPriceButton"
 				"text": "-100"
 				"font": &Font0 new java.awt.Font( "Segoe UI Black", 0, 30 )
@@ -113,6 +119,12 @@ new FormModel {
 				"font": #Font0
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 7 4,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "downButton"
+				"icon": new com.jformdesigner.model.SwingIcon( 0, "/down.png" )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 5 5,growy"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "removeBigPriceButton"

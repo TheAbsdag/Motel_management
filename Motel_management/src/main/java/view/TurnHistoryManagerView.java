@@ -4,8 +4,12 @@
 package view;
 
 import java.awt.*;
+import java.text.NumberFormat;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Locale;
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumnModel;
@@ -24,11 +28,29 @@ public class TurnHistoryManagerView extends JPanel {
     private JTable turnDetailsTable;
     private TurnDetailsTableModel turnDetailsTableModel;
     private final Font cellFont;
+    private final NumberFormat numberFormat;
 
     public TurnHistoryManagerView() {
+        numberFormat = NumberFormat.getNumberInstance(Locale.US);
         this.cellFont = new Font("Segoe UI", Font.BOLD, 16);
         initComponents();
         initCustomTable();
+    }
+    
+    public void setTurnDetailsData(JSONObject turnDetails) {
+        try {
+            turnDetailsTableModel.updateData(turnDetails.getJSONArray("turnActivity"));
+            turnStartLabel.setText(turnDetails.getString("startString"));
+            turnEndLabel.setText(turnDetails.getString("endString"));
+            totalRoomsLabel.setText(numberFormat.format(turnDetails.getLong("totalRooms")));
+            totalItemsLabel.setText(numberFormat.format(turnDetails.getLong("totalItems")));
+            totalSalesLabel.setText(numberFormat.format(turnDetails.getLong("totalSales")));
+            turnNumberLabel.setText(String.valueOf(turnDetails.getInt("turnNumber")));
+        } catch (JSONException ex) {
+            System.out.println("No turn for GUI to show");
+            this.backButton.setEnabled(true);
+        }
+        turnDetailsTable.repaint();
     }
 
     private void initCustomTable() {
@@ -50,21 +72,45 @@ public class TurnHistoryManagerView extends JPanel {
 
     private class TurnDetailsTableModel extends AbstractTableModel {
 
-        private final String[] columnNames = {"Tiempo", "Accion", "Valor"};
-        private JSONArray turnDetails;
+        private final String[] columnNames = {"Habitacion", "Tiempo", "Accion", "Valor"};
+        private ArrayList<JSONObject> filteredTurnDetails;
 
         public TurnDetailsTableModel() {
-            this.turnDetails = new JSONArray();
+            this.filteredTurnDetails = new ArrayList<>();
         }
 
         public void updateData(JSONArray data) {
-            turnDetails = data;
+            filteredTurnDetails.clear();
+            for (int i = 0; i < data.length(); i++) {
+                try {
+                    JSONObject item = data.getJSONObject(i);
+                    String changeType = item.getString("changeType");
+                    if (changeType.equals("sale")) {
+                        JSONArray registerArray = item.getJSONArray("register");
+                        String roomSoldTo = item.getString("roomSoldTo");
+                        String changeDate = item.getString("changeDate");
+                        for (int registerItem = 0; registerItem < registerArray.length(); registerItem++) {
+                            JSONObject currentItem = new JSONObject(registerArray.getJSONObject(registerItem).toString());
+                            currentItem.put("roomSoldTo", roomSoldTo);
+                            currentItem.put("changeType", "sale");
+                            currentItem.put("changeDate", changeDate);
+                            filteredTurnDetails.add(currentItem);
+                        }
+                    } else if (changeType.equals("room") && item.getInt("roomStatus") == 3) {
+                        filteredTurnDetails.add(item);
+                    }else if(changeType.equals("roomSwap")){
+                        filteredTurnDetails.add(item);
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
             fireTableDataChanged();
         }
 
         @Override
         public int getRowCount() {
-            return turnDetails.length();
+            return filteredTurnDetails.size();
         }
 
         @Override
@@ -75,32 +121,46 @@ public class TurnHistoryManagerView extends JPanel {
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             try {
-                JSONObject item = turnDetails.getJSONObject(rowIndex);
+                JSONObject item = filteredTurnDetails.get(rowIndex);
                 String changeType = item.getString("changeType");
-                LocalDateTime changeDate = LocalDateTime.parse(item.getString("changeDate").replace("[America/Bogota]", ""));
+                ZonedDateTime changeDate = ZonedDateTime.parse(item.getString("changeDate"));
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd - hh:mm a");
                 String formattedDate = changeDate.format(formatter);
 
                 switch (columnIndex) {
-                    case 0: // Time
-                        return formattedDate;
-                    case 1: // Action
+                    case 0:
                         if (changeType.equals("sale")) {
-                            return "Vendidos objetos a: " + item.getString("roomSoldTo");
+                            return item.getString("roomSoldTo");
                         } else if (changeType.equals("room") && item.getInt("roomStatus") == 3) {
-                            return "Habitacion " + item.getString("roomString") + " alquilada";
-                        } else {
+                            return item.getString("roomString");
+                        }
+                        else if(changeType.equals("roomSwap")){
+                            return item.getString("originalRoom");
+                        }
+                        else {
                             return "";
                         }
-                    case 2: // Value
+                    case 1: // Time
+                        return formattedDate;
+                    case 2: // Action
                         if (changeType.equals("sale")) {
-                            JSONArray register = item.getJSONArray("register");
-                            int totalValue = 0;
-                            for (int i = 0; i < register.length(); i++) {
-                                JSONObject registerItem = register.getJSONObject(i);
-                                totalValue += registerItem.getInt("price");
+                            return item.getString("itemName");
+                        } else if (changeType.equals("room") && item.getInt("roomStatus") == 3) {
+                            if (item.getInt("servicedExtension") == 0) {
+                                return "Alquiler " + item.getInt("service");
+                            } else {
+                                return "Alquiler " + item.getInt("servicedExtension");
                             }
-                            return totalValue;
+                        } 
+                        else if(changeType.equals("roomSwap")){
+                            return "Cambio de habitacion a: "+item.getString("swapedRoom");
+                        }
+                        else {
+                            return "";
+                        }
+                    case 3: // Value
+                        if (changeType.equals("sale")) {
+                            return item.getInt("price");
                         } else if (changeType.equals("room") && item.getInt("roomStatus") == 3) {
                             return item.getInt("price");
                         } else {
@@ -136,6 +196,12 @@ public class TurnHistoryManagerView extends JPanel {
 	turnStartLabel = new JLabel();
 	turnEndInformativeLabel = new JLabel();
 	turnEndLabel = new JLabel();
+	totalRoomsInformativeLabel = new JLabel();
+	totalRoomsLabel = new JLabel();
+	totalItemsInformativeLabel = new JLabel();
+	totalItemsLabel = new JLabel();
+	totalSalesInformativeLabel = new JLabel();
+	totalSalesLabel = new JLabel();
 	noPrintCheckBox = new JCheckBox();
 	summarizedPrintCheckBox = new JCheckBox();
 	detailedPrintCheckBox = new JCheckBox();
@@ -144,24 +210,26 @@ public class TurnHistoryManagerView extends JPanel {
 
 	//======== this ========
 	setLayout(new MigLayout(
-	    "hidemode 3",
+	    "fill,hidemode 3",
 	    // columns
 	    "[grow,fill]" +
+	    "[grow,shrink 0,fill]" +
+	    "[grow,shrink 0,fill]" +
 	    "[grow,fill]" +
-	    "[grow,fill]" +
-	    "[grow,fill]" +
-	    "[grow,fill]" +
-	    "[grow,fill]" +
-	    "[grow,fill]",
+	    "[grow,shrink 0,fill]" +
+	    "[fill]" +
+	    "[fill]",
 	    // rows
-	    "[grow]" +
-	    "[grow]" +
-	    "[grow]" +
-	    "[grow]" +
-	    "[grow]" +
-	    "[grow]" +
+	    "[grow,shrink 0]" +
+	    "[grow,shrink 0]" +
+	    "[grow,shrink 0]" +
+	    "[grow,shrink 0]" +
+	    "[grow,shrink 0]" +
+	    "[grow,shrink 0]" +
+	    "[grow,shrink 0]" +
+	    "[grow,shrink 0]" +
 	    "[25]" +
-	    "[grow]"));
+	    "[grow,shrink 0]"));
 
 	//======== turnDetailsPanel ========
 	{
@@ -172,7 +240,7 @@ public class TurnHistoryManagerView extends JPanel {
 		// rows
 		"[grow,fill]"));
 	}
-	add(turnDetailsPanel, "cell 0 0 5 7,growy");
+	add(turnDetailsPanel, "cell 0 0 5 9,growy");
 
 	//---- turnNumberInformativeLabel ----
 	turnNumberInformativeLabel.setText("TURNO:");
@@ -204,30 +272,60 @@ public class TurnHistoryManagerView extends JPanel {
 	turnEndLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 28));
 	add(turnEndLabel, "cell 6 2");
 
+	//---- totalRoomsInformativeLabel ----
+	totalRoomsInformativeLabel.setText("HABITACIONES:");
+	totalRoomsInformativeLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
+	add(totalRoomsInformativeLabel, "cell 5 3");
+
+	//---- totalRoomsLabel ----
+	totalRoomsLabel.setText("text");
+	totalRoomsLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
+	add(totalRoomsLabel, "cell 6 3");
+
+	//---- totalItemsInformativeLabel ----
+	totalItemsInformativeLabel.setText("PRODUCTOS");
+	totalItemsInformativeLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
+	add(totalItemsInformativeLabel, "cell 5 4");
+
+	//---- totalItemsLabel ----
+	totalItemsLabel.setText("text");
+	totalItemsLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
+	add(totalItemsLabel, "cell 6 4");
+
+	//---- totalSalesInformativeLabel ----
+	totalSalesInformativeLabel.setText("TOTAL");
+	totalSalesInformativeLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
+	add(totalSalesInformativeLabel, "cell 5 5");
+
+	//---- totalSalesLabel ----
+	totalSalesLabel.setText("text");
+	totalSalesLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
+	add(totalSalesLabel, "cell 6 5");
+
 	//---- noPrintCheckBox ----
 	noPrintCheckBox.setText("NO IMPRIMIR");
 	noPrintCheckBox.setFont(new Font("Segoe UI Black", Font.PLAIN, 26));
-	add(noPrintCheckBox, "cell 5 4 2 1,growy");
+	add(noPrintCheckBox, "cell 5 6 2 1,growy");
 
 	//---- summarizedPrintCheckBox ----
 	summarizedPrintCheckBox.setText("RESUMIDO");
 	summarizedPrintCheckBox.setFont(new Font("Segoe UI Black", Font.PLAIN, 26));
-	add(summarizedPrintCheckBox, "cell 5 5 2 1,growy");
+	add(summarizedPrintCheckBox, "cell 5 7 2 1,growy");
 
 	//---- detailedPrintCheckBox ----
 	detailedPrintCheckBox.setText("DETALLADO");
 	detailedPrintCheckBox.setFont(new Font("Segoe UI Black", Font.PLAIN, 26));
-	add(detailedPrintCheckBox, "cell 5 6 2 1,growy");
+	add(detailedPrintCheckBox, "cell 5 8 2 1,growy");
 
 	//---- backButton ----
 	backButton.setText("CERRAR");
 	backButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 28));
-	add(backButton, "cell 0 7,growy");
+	add(backButton, "cell 0 9,growy");
 
 	//---- printButton ----
 	printButton.setText("IMPRIMIR");
 	printButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 28));
-	add(printButton, "cell 5 7 2 1,growy");
+	add(printButton, "cell 5 9 2 1,growy");
 	// JFormDesigner - End of component initialization  //GEN-END:initComponents  @formatter:on
     }
 
@@ -240,6 +338,12 @@ public class TurnHistoryManagerView extends JPanel {
     private JLabel turnStartLabel;
     private JLabel turnEndInformativeLabel;
     private JLabel turnEndLabel;
+    private JLabel totalRoomsInformativeLabel;
+    private JLabel totalRoomsLabel;
+    private JLabel totalItemsInformativeLabel;
+    private JLabel totalItemsLabel;
+    private JLabel totalSalesInformativeLabel;
+    private JLabel totalSalesLabel;
     private JCheckBox noPrintCheckBox;
     private JCheckBox summarizedPrintCheckBox;
     private JCheckBox detailedPrintCheckBox;

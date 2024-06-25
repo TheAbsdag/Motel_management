@@ -74,7 +74,7 @@ public class Register {
     public void removeFromList(Item item) {
         for (int i = 0; i < sellingList.length(); i++) {
             JSONObject itemRegister = sellingList.getJSONObject(i);
-            if (itemRegister.getLong("itemID")==item.getItemID()) {
+            if (itemRegister.getLong("itemID") == item.getItemID()) {
                 sellingList.remove(i);
                 break;
             }
@@ -104,6 +104,16 @@ public class Register {
             itemRegister.put("price", finalPrice);
             sellingList.put(itemRegister);
         }
+    }
+
+    public void addCourtesyItemToList(Item item, long quantity) {
+        JSONObject newItem = new JSONObject();
+        newItem.put("quantity", quantity);
+        newItem.put("itemName", item.getName());
+        newItem.put("itemID", item.getItemID());
+        newItem.put("quantity", quantity);
+        newItem.put("price", 0);
+        sellingList.put(newItem);
     }
 
     public JSONArray getRegisterListSaleMade() {

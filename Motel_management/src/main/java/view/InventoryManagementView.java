@@ -21,6 +21,20 @@ import view.customListRenderes.*;
 public class InventoryManagementView extends JPanel {
 
     /**
+     * @return the upButton
+     */
+    public JButton getUpButton() {
+        return upButton;
+    }
+
+    /**
+     * @return the downButton
+     */
+    public JButton getDownButton() {
+        return downButton;
+    }
+
+    /**
      * @return the inventoryTable
      */
     public JTable getInventoryTable() {
@@ -57,15 +71,15 @@ public class InventoryManagementView extends JPanel {
             columnModel.getColumn(i).setCellRenderer(new CustomCellRenderer(cellFont));
             columnModel.getColumn(i).setHeaderRenderer(new CustomHeaderRenderer(cellFont));
         }
-        
+
         inventoryTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         JScrollPane scrollPane = new JScrollPane(inventoryTable);
         inventoryTable.getTableHeader().setReorderingAllowed(false);
-        
+
         inventoryPanel.add(scrollPane, "cell 0 0, grow");
     }
-    
-    public JSONObject getCurrentSelectedItem(int rowSelected){
+
+    public JSONObject getCurrentSelectedItem(int rowSelected) {
         return tableModel.inventoryItems.getJSONObject(rowSelected);
     }
 
@@ -76,7 +90,6 @@ public class InventoryManagementView extends JPanel {
 
         private final String[] columnNames = {"Imagen", "Nombre", "Cantidad", "Precio"};
         private JSONArray inventoryItems;
-        
 
         public InventoryTableModel() {
             this.inventoryItems = new JSONArray();
@@ -104,13 +117,18 @@ public class InventoryManagementView extends JPanel {
         public Object getValueAt(int rowIndex, int columnIndex) {
             try {
                 JSONObject item = inventoryItems.getJSONObject(rowIndex);
-                return switch (columnIndex) {
-                    //case 0 -> item.getString("imagePath");
-                    case 1 -> item.getString("itemName");
-                    case 2 -> item.getInt("quantity");
-                    case 3 -> item.getDouble("price");
-                    default -> null;
-                };
+                switch (columnIndex) {
+                    // case 0:
+                    //     return item.getString("imagePath");
+                    case 1:
+                        return item.getString("itemName");
+                    case 2:
+                        return item.getInt("quantity");
+                    case 3:
+                        return item.getDouble("price");
+                    default:
+                        return null;
+                }
             } catch (JSONException ex) {
                 return null;
             }
@@ -147,8 +165,10 @@ public class InventoryManagementView extends JPanel {
 	priceLabel = new JLabel();
 	priceTextField = new JTextField();
 	 ((AbstractDocument) priceTextField.getDocument()).setDocumentFilter(new NumericDocumentFilter());
+	upButton = new JButton();
 	removeSmallPriceButton = new JButton();
 	addSmallPriceButton = new JButton();
+	downButton = new JButton();
 	removeBigPriceButton = new JButton();
 	addBigPriceButton = new JButton();
 	backButton = new JButton();
@@ -243,6 +263,10 @@ public class InventoryManagementView extends JPanel {
 	priceTextField.setFont(new Font("Segoe UI Black", Font.PLAIN, 26));
 	add(priceTextField, "cell 6 3 2 1,growy");
 
+	//---- upButton ----
+	upButton.setIcon(new ImageIcon(getClass().getResource("/up.png")));
+	add(upButton, "cell 5 4,growy");
+
 	//---- removeSmallPriceButton ----
 	removeSmallPriceButton.setText("-100");
 	removeSmallPriceButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 30));
@@ -252,6 +276,10 @@ public class InventoryManagementView extends JPanel {
 	addSmallPriceButton.setText("+100");
 	addSmallPriceButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 30));
 	add(addSmallPriceButton, "cell 7 4,growy");
+
+	//---- downButton ----
+	downButton.setIcon(new ImageIcon(getClass().getResource("/down.png")));
+	add(downButton, "cell 5 5,growy");
 
 	//---- removeBigPriceButton ----
 	removeBigPriceButton.setText("-1000");
@@ -301,8 +329,10 @@ public class InventoryManagementView extends JPanel {
     private JButton removeQuantityButton;
     private JLabel priceLabel;
     private JTextField priceTextField;
+    private JButton upButton;
     private JButton removeSmallPriceButton;
     private JButton addSmallPriceButton;
+    private JButton downButton;
     private JButton removeBigPriceButton;
     private JButton addBigPriceButton;
     private JButton backButton;

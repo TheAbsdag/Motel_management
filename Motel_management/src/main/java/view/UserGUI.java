@@ -29,7 +29,8 @@ public class UserGUI extends JFrame {
     private InventoryManagementView inventoryView;
     private HistoryView historyView;
     private TurnManagerView turnManagerView;
-    
+    private RoomChangeView roomChangeView;
+
     private Map<String, JLabel> timeLabels;
     private Map<String, JLabel> dateLabels;
 
@@ -43,7 +44,7 @@ public class UserGUI extends JFrame {
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
 
-         // Creation of the different views, and assignation to the cardLayout
+        // Creation of the different views, and assignation to the cardLayout
         turnSelectView = new TurnSelectView();
         addView(turnSelectView, "turnSelectView");
 
@@ -68,14 +69,19 @@ public class UserGUI extends JFrame {
         turnManagerView = new TurnManagerView();
         addView(turnManagerView, "turnManagerView");
 
+        roomChangeView = new RoomChangeView();
+        addView(roomChangeView, "roomChangeView");
+
         //Default window configuration
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1500, 900);
+        setSize(1024, 768);
+        //setExtendedState(JFrame.MAXIMIZED_BOTH);
         //setResizable(false);
         add(mainPanel);
         setVisible(true);
     }
-     private void addView(JPanel panel, String name) {
+
+    private void addView(JPanel panel, String name) {
         panel.setName(name);
         mainPanel.add(panel, name);
         if (panel instanceof FloorView) {
@@ -87,32 +93,32 @@ public class UserGUI extends JFrame {
         } else if (panel instanceof RoomView) {
             timeLabels.put(name, ((RoomView) panel).getTimeLabel());
             dateLabels.put(name, ((RoomView) panel).getDateLabel());
-        } 
-        else if (panel instanceof SellingView) {
+        } else if (panel instanceof SellingView) {
             timeLabels.put(name, ((SellingView) panel).getTimeLabel());
             dateLabels.put(name, ((SellingView) panel).getDateLabel());
-        } 
-        else if (panel instanceof ManagementSelectView) {
+        } else if (panel instanceof ManagementSelectView) {
             timeLabels.put(name, ((ManagementSelectView) panel).getTimeLabel());
             dateLabels.put(name, ((ManagementSelectView) panel).getDateLabel());
-        } 
-         else if (panel instanceof TurnManagerView) {
+        } else if (panel instanceof TurnManagerView) {
             timeLabels.put(name, ((TurnManagerView) panel).getTimeLabel());
             dateLabels.put(name, ((TurnManagerView) panel).getDateLabel());
-        }
-        else if (panel instanceof InventoryManagementView) {
+        } else if (panel instanceof InventoryManagementView) {
             timeLabels.put(name, ((InventoryManagementView) panel).getTimeLabel());
             dateLabels.put(name, ((InventoryManagementView) panel).getDateLabel());
-        }
-        else if (panel instanceof HistoryView) {
+        } else if (panel instanceof HistoryView) {
             timeLabels.put(name, ((HistoryView) panel).getTimeLabel());
             dateLabels.put(name, ((HistoryView) panel).getDateLabel());
+        } else if (panel instanceof RoomChangeView) {
+            timeLabels.put(name, ((RoomChangeView) panel).getTimeLabel());
+            dateLabels.put(name, ((RoomChangeView) panel).getDateLabel());
         }
     }
 
     public void setupFloors(int[] arr) {
         floorView.createButtonsForFloor(arr);
+        roomChangeView.createButtonsForRoomChange(arr);
     }
+
     private String getCurrentCard() {
         for (Component comp : mainPanel.getComponents()) {
             if (comp.isVisible()) {
@@ -121,35 +127,43 @@ public class UserGUI extends JFrame {
         }
         return null;
     }
-    
+
     public boolean isFloorShown() {
         boolean output = false;
-        if(getCurrentCard() == "floorView"){
-            output = true;
-        }
-        return output;
-    }
-    
-    public boolean isRoomShown() {
-        boolean output = false;
-        if(getCurrentCard() == "roomView"){
+        if (getCurrentCard() == "floorView") {
             output = true;
         }
         return output;
     }
 
-    public void updateDateTime(String timeShown, String dateShown) { 
+    public boolean isRoomShown() {
+        boolean output = false;
+        if (getCurrentCard() == "roomView") {
+            output = true;
+        }
+        return output;
+    }
+
+    public boolean isRoomChangeShown() {
+        boolean output = false;
+        if (getCurrentCard() == "roomChangeView") {
+            output = true;
+        }
+        return output;
+    }
+
+    public void updateDateTime(String timeShown, String dateShown) {
         String currentCard = getCurrentCard();
-        if(currentCard != null){
+        if (currentCard != null) {
             JLabel timeLabel = timeLabels.get(currentCard);
             JLabel dateLabel = dateLabels.get(currentCard);
-            if( timeLabel != null && dateLabel != null){
+            if (timeLabel != null && dateLabel != null) {
                 timeLabel.setText(timeShown);
                 dateLabel.setText(dateShown);
             }
         }
     }
-    
+
     public void setFloorView() {
         cardLayout.show(mainPanel, "floorView");
     }
@@ -170,17 +184,21 @@ public class UserGUI extends JFrame {
     public void setManagementSelection() {
         cardLayout.show(mainPanel, "managementSelectView");
     }
-    
-    public void setInventoryView(){
+
+    public void setInventoryView() {
         cardLayout.show(mainPanel, "inventoryView");
     }
-    
-    public void setSellingView(){
+
+    public void setSellingView() {
         cardLayout.show(mainPanel, "sellingView");
     }
-    
-    public void setHistoryView(){
+
+    public void setHistoryView() {
         cardLayout.show(mainPanel, "historyView");
+    }
+
+    public void setRoomChangeView() {
+        cardLayout.show(mainPanel, "roomChangeView");
     }
 
     /**
@@ -241,18 +259,25 @@ public class UserGUI extends JFrame {
 
     public boolean confirmPrinting() {
         int response = JOptionPane.showConfirmDialog(
-                null, 
-                "¿ESTA SEGURO DE NO IMPRIMIR RECIBO?", 
+                null,
+                "¿ESTA SEGURO DE NO IMPRIMIR RECIBO?",
                 "CONFIRMACION",
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.QUESTION_MESSAGE
         );
         if (response == JOptionPane.YES_OPTION) {
             return true;
-        }else{
+        } else {
             return false;
         }
-        
+
+    }
+
+    /**
+     * @return the roomChangeView
+     */
+    public RoomChangeView getRoomChangeView() {
+        return roomChangeView;
     }
 
 }

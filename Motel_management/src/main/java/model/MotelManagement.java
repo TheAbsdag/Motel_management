@@ -8,6 +8,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import org.json.JSONArray;
@@ -32,21 +33,27 @@ public class MotelManagement {
     private final ZoneId zoneID;
     private final Room reception;
     private JSONObject programData;
-    
+    private ArrayList<Turn> turnHistory;
+
+    //Special for room change
+    private int selectedRoomChangeRoom;
+    private int selectedRoomChangeFloor;
+
     private int consecutiveTransaction;
 
     public MotelManagement() {
         files = new FileManager();
         zoneID = ZoneId.of("America/Bogota");
-        rooms = new ArrayList<>(); 
+        rooms = new ArrayList<>();
         currentTime = Instant.now();
         localizedTime = currentTime.atZone(zoneID);
         turn = new Turn(currentTime, zoneID);
         register = new Register();
         printer = new Printer();
-        reception = new Room("Reception", -1, -1);
+        reception = new Room("Recepcion", -1, -1);
         consecutiveTransaction = 0;
         programData = new JSONObject();
+        turnHistory = new ArrayList<>();
     }
 
     public void prepareProgramData() {
@@ -89,55 +96,61 @@ public class MotelManagement {
                 int roomNum = room.getInt("roomNumber");
                 int status = room.getInt("status");
                 switch (status) {
-                    case 1 ->
+                    case 1:
                         rooms.get(floor).get(roomNum).setRoomStatus(status);
-                    case 2 ->
+                        break;
+                    case 2:
                         rooms.get(floor).get(roomNum).setRoomStatus(status, ZonedDateTime.parse(room.getString("startStatus")).toInstant());
-                    case 3 ->
+                        break;
+                    case 3:
                         rooms.get(floor).get(roomNum).setRoomStatus(status, ZonedDateTime.parse(room.getString("startStatus")).toInstant(), room.getInt("service"));
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Invalid status: " + status);
                 }
                 int extension = room.getInt("extension");
-                if(extension!=0){
+                if (extension != 0) {
                     rooms.get(floor).get(roomNum).extendRoomTime(extension);
                 }
             }
         }
 
     }
-    
-    public void setNewTurn(int turn){
+
+    public void setNewTurn(int turn) {
         this.turn.setNewTurn(turn, currentTime);
     }
-    
+
     //TODO add boolean for printing logic
-    public void registerRoomTimeAdded(int floor, int room, int service, long price, boolean print){
+    public void registerRoomTimeAdded(int floor, int room, int service, long price, boolean print) {
         addConsecutiveTransaction();
         int currentStatus = rooms.get(floor).get(room).getStatus();
+        int currentExtension = 0;
         //A time increase was done if the room is currently booked
-        if(currentStatus ==3){
+        if (currentStatus == 3) {
             rooms.get(floor).get(room).extendRoomTime(service);
-        }
-        else{
+            currentExtension = service;
+        } else {
             rooms.get(floor).get(room).setRoomStatus(3, currentTime, service);
         }
-        JSONObject roomChange = turn.registerRoomChange(rooms.get(floor).get(room), currentTime, price);
-        if(print){
-            printer.printRoomTimeSell(roomChange,consecutiveTransaction, false);
-        }else{
-            printer.printRoomTimeSell(roomChange,consecutiveTransaction, true);
+        JSONObject roomChange = turn.registerRoomChange(rooms.get(floor).get(room), currentTime, price, currentExtension);
+        if (print) {
+            printer.printRoomTimeSell(roomChange, consecutiveTransaction, false);
+        } else {
+            printer.printRoomTimeSell(roomChange, consecutiveTransaction, true);
         }
     }
-    
-    public void registerRoomTimeEnd(int floor, int room){
+
+    public void registerRoomTimeEnd(int floor, int room) {
         int currentStatus = rooms.get(floor).get(room).getStatus();
         //If it was being cleaned it will set it up as free
-        if(currentStatus ==2){
+        if (currentStatus == 2) {
             rooms.get(floor).get(room).setRoomStatus(1);
-        }else{
+        } else {
             //Otherwise it will be setup as cleaning
             rooms.get(floor).get(room).setRoomStatus(2, currentTime);
         }
-        turn.registerRoomChange(rooms.get(floor).get(room), currentTime, 0);
+        turn.registerRoomChange(rooms.get(floor).get(room), currentTime, 0, 0);
     }
 
     public boolean prepareTurnRegisterData() {
@@ -147,7 +160,7 @@ public class MotelManagement {
         //Validation if the file is valid or not, if it'snot, a previous turn was not found.
         if (!(turnData == null || turnData.isEmpty())) {
             validPreviousTurn = turn.setPreviousTurnJSON(turnData);
-            if(!validPreviousTurn){
+            if (!validPreviousTurn) {
                 System.out.println("Found previosu turn, but it's no longer active, backuing up");
                 this.timeInformationUpdate();
                 turn.turnEnd(currentTime);
@@ -167,87 +180,82 @@ public class MotelManagement {
         }
         return validPreviousTurn;
     }
-    
+
     public void saveFilesForMainService() {
         JSONObject turnData = turn.getDetailedTurnInformation();
         files.saveJsonMainDataPath(turnData, "turn");
         JSONObject inventoryData = register.getInventoryData();
         files.saveJsonMainDataPath(inventoryData, "inventory");
-        
+
         //Creation for room data
-        
         JSONObject roomData = new JSONObject();
         JSONArray roomDataArray = new JSONArray();
-        for(int floor = 0;floor < rooms.size();floor++){
-            for(int room = 0;room <rooms.get(floor).size();room ++){
+        for (int floor = 0; floor < rooms.size(); floor++) {
+            for (int room = 0; room < rooms.get(floor).size(); room++) {
                 JSONObject currentRoom = new JSONObject();
                 currentRoom.put("roomString", rooms.get(floor).get(room).getRoomString());
                 currentRoom.put("floorNumber", rooms.get(floor).get(room).getFloorNumber());
                 currentRoom.put("roomNumber", rooms.get(floor).get(room).getRoomNumber());
                 currentRoom.put("status", rooms.get(floor).get(room).getStatus());
                 currentRoom.put("service", rooms.get(floor).get(room).getService());
-                Instant startStatus =rooms.get(floor).get(room).getStartStatus();
-                
-                if(startStatus==null){
+                Instant startStatus = rooms.get(floor).get(room).getStartStatus();
+
+                if (startStatus == null) {
                     currentRoom.put("startStatus", "");
-                }
-                else{
+                } else {
                     currentRoom.put("startStatus", startStatus.atZone(zoneID).toString());
                 }
-                
+
                 Instant endStatus = rooms.get(floor).get(room).getEndStatus();
-                
-                if(endStatus==null){
+
+                if (endStatus == null) {
                     currentRoom.put("endStatus", "");
-                }
-                else{
+                } else {
                     currentRoom.put("endStatus", endStatus.atZone(zoneID).toString());
                 }
                 currentRoom.put("extension", rooms.get(floor).get(room).getExtension());
-                
+
                 roomDataArray.put(currentRoom);
             }
         }
         roomData.put("rooms", roomDataArray);
         files.saveJsonMainDataPath(roomData, "roomsInformation");
     }
+
     public void saveFilesForBackup() {
         JSONObject turnData = turn.getDetailedTurnInformation();
         files.saveJsonBackupDataPath(turnData, "turn");
         JSONObject inventoryData = register.getInventoryData();
         files.saveJsonBackupDataPath(inventoryData, "inventory");
-        
+
         //Creation for room data
-        
         JSONObject roomData = new JSONObject();
         JSONArray roomDataArray = new JSONArray();
-        for(int floor = 0;floor < rooms.size();floor++){
-            for(int room = 0;room <rooms.get(floor).size();room ++){
+        for (int floor = 0; floor < rooms.size(); floor++) {
+            for (int room = 0; room < rooms.get(floor).size(); room++) {
                 JSONObject currentRoom = new JSONObject();
                 currentRoom.put("roomString", rooms.get(floor).get(room).getRoomString());
                 currentRoom.put("floorNumber", rooms.get(floor).get(room).getFloorNumber());
                 currentRoom.put("roomNumber", rooms.get(floor).get(room).getRoomNumber());
                 currentRoom.put("status", rooms.get(floor).get(room).getStatus());
                 currentRoom.put("service", rooms.get(floor).get(room).getService());
-                Instant startStatus =rooms.get(floor).get(room).getStartStatus();
-                
-                if(startStatus==null){
+                Instant startStatus = rooms.get(floor).get(room).getStartStatus();
+
+                if (startStatus == null) {
                     currentRoom.put("startStatus", "");
-                }
-                else{
+                } else {
                     currentRoom.put("startStatus", startStatus.atZone(zoneID).toString());
                 }
-                
+
                 Instant endStatus = rooms.get(floor).get(room).getEndStatus();
-                
-                if(endStatus==null){
+
+                if (endStatus == null) {
                     currentRoom.put("endStatus", "");
-                }
-                else{
+                } else {
                     currentRoom.put("endStatus", endStatus.atZone(zoneID).toString());
                 }
                 currentRoom.put("extension", rooms.get(floor).get(room).getExtension());
-                
+
                 roomDataArray.put(currentRoom);
             }
         }
@@ -263,16 +271,21 @@ public class MotelManagement {
     public String getCurrentLocalizedTime() {
         DateTimeFormatter formatter = new DateTimeFormatterBuilder()
                 .appendPattern("hh:mm:ss").appendLiteral(' ')
-                .appendText(ChronoField.AMPM_OF_DAY, Map.of(0L, "\tAM", 1L, "\tPM"))
+                .appendText(ChronoField.AMPM_OF_DAY, new HashMap<Long, String>() {
+                    {
+                        put(0L, "\tAM");
+                        put(1L, "\tPM");
+                    }
+                })
                 .toFormatter();
-        
+
         // Format the ZonedDateTime to the desired format
         return localizedTime.format(formatter);
     }
-    
-     public String getCurrentLocalizedDate() {
-         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", new Locale("es", "ES"));
-        
+
+    public String getCurrentLocalizedDate() {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", new Locale("es", "ES"));
+
         // Format the ZonedDateTime
         return localizedTime.format(formatter);
     }
@@ -284,9 +297,9 @@ public class MotelManagement {
         }
         return arr;
     }
-    
-    public Room getRoom(int floor, int room){
-        if(floor <0 || room <0){
+
+    public Room getRoom(int floor, int room) {
+        if (floor < 0 || room < 0) {
             return reception;
         }
         return rooms.get(floor).get(room);
@@ -320,7 +333,7 @@ public class MotelManagement {
         this.currentServiceDesired = currentServiceDesired;
     }
 
-    public void setCurrentFloorRoom(int floor, int room){
+    public void setCurrentFloorRoom(int floor, int room) {
         this.currentFloorViewed = floor;
         this.currentRoomViewed = room;
     }
@@ -330,22 +343,27 @@ public class MotelManagement {
         Duration duration = Duration.between(currentTime, getRoom(floor, room).getEndStatus());
         long hours = duration.toHours();
         long minutes = duration.minusHours(hours).toMinutes();
-        output = String.valueOf(hours+":"+minutes);
+        output = String.valueOf(hours + ":" + minutes);
         return output;
     }
-    
+
     public String getStartTimeRoom(int floor, int room) {
         DateTimeFormatter formatter = new DateTimeFormatterBuilder()
                 .appendPattern("hh:mm:ss").appendLiteral(' ')
-                .appendText(ChronoField.AMPM_OF_DAY, Map.of(0L, "\tAM", 1L, "\tPM"))
+                .appendText(ChronoField.AMPM_OF_DAY, new HashMap<Long, String>() {
+                    {
+                        put(0L, "\tAM");
+                        put(1L, "\tPM");
+                    }
+                })
                 .toFormatter();
         String output = new String();
         ZonedDateTime start = getRoom(floor, room).getStartStatus().atZone(zoneID);
         output = start.format(formatter);
         return output;
     }
-    
-    public String getStartDateRoom(int floor, int room){
+
+    public String getStartDateRoom(int floor, int room) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d 'de' MMMM yyyy", new Locale("es", "ES"));
         String output = new String();
         ZonedDateTime start = getRoom(floor, room).getStartStatus().atZone(zoneID);
@@ -357,12 +375,12 @@ public class MotelManagement {
         register.newSellingList();
     }
 
-
     //Related to inventory management
-    public JSONObject getInventoryData(){
+    public JSONObject getInventoryData() {
         return register.getInventoryData();
     }
-    public void  saveItemInformation(JSONObject itemInformation){
+
+    public void saveItemInformation(JSONObject itemInformation) {
         Item updatedItem = new Item(
                 itemInformation.getString("itemName"),
                 itemInformation.getLong("price"),
@@ -388,40 +406,43 @@ public class MotelManagement {
         );
         register.deleteItemInformation(updatedItem);
     }
-    
-    
-    public void addItemToSelling(long itemID, long quantity){
-        register.addItemToList(register.getItemFromItemID(itemID), quantity);
+
+    public void addItemToSelling(long itemID, long quantity, boolean courtesySale) {
+        if (!courtesySale) {
+            register.addItemToList(register.getItemFromItemID(itemID), quantity);
+        } else {
+            register.addCourtesyItemToList(register.getItemFromItemID(itemID), quantity);
+        }
     }
-    
-    public void removeItemToSelling(long itemID){
+
+    public void removeItemToSelling(long itemID) {
         register.removeFromList(register.getItemFromItemID(itemID));
     }
-    
-    public long getCurrentTotalPriceSellingList(){
+
+    public long getCurrentTotalPriceSellingList() {
         return register.getTotalPriceRegisterList();
     }
-    
-    public void roomSaleFinished(boolean print){
+
+    public void roomSaleFinished(boolean print) {
         addConsecutiveTransaction();
         Room roomSoldTo = null;
-        if(currentFloorViewed ==-1){
+        if (currentFloorViewed == -1) {
             roomSoldTo = reception;
-        }else{
+        } else {
             roomSoldTo = rooms.get(currentFloorViewed).get(currentRoomViewed);
         }
-        JSONObject transaction =turn.saveTransactionInformation(register.getRegisterListSaleMade()
-                , roomSoldTo,
-                currentTime);
+        JSONObject transaction = turn.saveTransactionInformation(new JSONArray(register.getRegisterListSaleMade()),
+                roomSoldTo,
+                currentTime, consecutiveTransaction);
         //print logic TODO
-        if(print){
+        if (print) {
             printer.printItemSold(transaction, consecutiveTransaction, false);
-        }else{
+        } else {
             printer.printItemSold(transaction, consecutiveTransaction, true);
         }
     }
-    
-    public JSONArray getCurrentSellingList(){
+
+    public JSONArray getCurrentSellingList() {
         return register.getCurrentRegisterList();
     }
 
@@ -430,7 +451,7 @@ public class MotelManagement {
     }
 
     private void addConsecutiveTransaction() {
-        consecutiveTransaction ++;
+        consecutiveTransaction++;
         programData.put("consecutiveTransaction", consecutiveTransaction);
         files.saveJsonMainDataPath(programData, "applicationProperties");
     }
@@ -443,7 +464,6 @@ public class MotelManagement {
         JSONObject summarizedTurn = turn.getBasicTurnInformation();
         JSONObject detailedTurn = turn.getDetailedTurnInformation();
         files.saveHistoryData(detailedTurn, "turn", localizedTime);
-        System.out.println(detailedTurn);
         switch (option) {
             case 1:
                 printer.printSummarizedTurn(summarizedTurn, true);
@@ -460,5 +480,106 @@ public class MotelManagement {
             default:
                 break;
         }
+    }
+
+    public void setDesiredRoomChange(int currentFloor, int currentRoom) {
+        selectedRoomChangeFloor = currentFloor;
+        selectedRoomChangeRoom = currentRoom;
+    }
+
+    /**
+     * @return the selectedRoomChangeRoom
+     */
+    public int getSelectedRoomChangeRoom() {
+        return selectedRoomChangeRoom;
+    }
+
+    /**
+     * @return the selectedRoomChangeFloor
+     */
+    public int getSelectedRoomChangeFloor() {
+        return selectedRoomChangeFloor;
+    }
+
+    public boolean changeRoomTimeToAnother() {
+        boolean validReturn = false;
+        Room currentRoom = rooms.get(currentFloorViewed).get(currentRoomViewed);
+        Room desiredChangeRoom = rooms.get(selectedRoomChangeFloor).get(selectedRoomChangeRoom);
+        if (desiredChangeRoom.getStatus() != 3) {
+            validReturn = true;
+            int currentService = currentRoom.getService();
+            int currentTotalExtension = currentRoom.getExtension();
+            Instant currentStartTime = currentRoom.getStartStatus();
+            desiredChangeRoom.setRoomStatus(3, currentStartTime, currentService);
+            desiredChangeRoom.setExtension(currentTotalExtension);
+            currentRoom.setRoomStatus(2, currentTime);
+            turn.registerRoomSwap(currentRoom, desiredChangeRoom, currentTime);
+        }
+
+        return validReturn;
+    }
+
+    public JSONArray getHistoryData() {
+        JSONArray currentHistory = files.getHistoryFiles();
+        //Creation for turn to base off logic for printing if required
+        turnHistory.clear();
+        for (int i = 0; i < currentHistory.length(); i++) {
+            JSONObject currentTurn = currentHistory.getJSONObject(i);
+            JSONArray activityArray = currentTurn.getJSONArray("turnActivity");
+            Instant start = ZonedDateTime.parse(currentTurn.getString("turnStart")).toInstant();
+            Instant end = ZonedDateTime.parse(currentTurn.getString("turnEnd")).toInstant();
+            int turnNum = currentTurn.getInt("turnNumber");
+            Turn newTurn = new Turn(start, end, turnNum, zoneID, activityArray);
+            turnHistory.add(newTurn);
+        }
+        return currentHistory;
+    }
+
+    public JSONObject getBasicTurnHistoryData(int selectedRow) {
+        JSONObject output = new JSONObject();
+        JSONObject currentTurn = turnHistory.get(selectedRow).getDetailedTurnInformation();
+        ZonedDateTime turnStart = ZonedDateTime.parse(currentTurn.getString("turnStart"));
+        ZonedDateTime turnEnd = ZonedDateTime.parse(currentTurn.getString("turnEnd"));
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd - hh:mm a");
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", new Locale("es", "ES"));
+        Duration durationRaw = Duration.between(turnStart, turnEnd);
+        long hours = durationRaw.toHours();
+        long minutes = durationRaw.minusHours(hours).toMinutes();
+        String duration = String.valueOf(hours + ":" + minutes);
+        
+        String formattedStart = turnStart.format(formatter);
+        String formattedEnd = turnEnd.format(formatter);
+        String startDate = turnStart.format(dateFormatter);
+        output.put("startDate", startDate);
+        output.put("duration", duration);
+        output.put("totalSales", currentTurn.getLong("totalSales"));
+        output.put("totalItems", currentTurn.getLong("totalItems"));
+        output.put("totalRooms", currentTurn.getLong("totalRooms"));
+        output.put("startString", formattedStart);
+        output.put("endString", formattedEnd);
+        return output;
+    }
+    
+    public JSONObject getDetailedTurnHistoryData(int selectedRow){
+        JSONObject output = new JSONObject(turnHistory.get(selectedRow).getDetailedTurnInformation().toString());
+        
+        JSONObject currentTurn = turnHistory.get(selectedRow).getDetailedTurnInformation();
+        ZonedDateTime turnStart = ZonedDateTime.parse(currentTurn.getString("turnStart"));
+        ZonedDateTime turnEnd = ZonedDateTime.parse(currentTurn.getString("turnEnd"));
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd - hh:mm a");
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", new Locale("es", "ES"));
+        Duration durationRaw = Duration.between(turnStart, turnEnd);
+        long hours = durationRaw.toHours();
+        long minutes = durationRaw.minusHours(hours).toMinutes();
+        String duration = String.valueOf(hours + ":" + minutes);
+        
+        String formattedStart = turnStart.format(formatter);
+        String formattedEnd = turnEnd.format(formatter);
+        String startDate = turnStart.format(dateFormatter);
+        output.put("startDate", startDate);
+        output.put("duration", duration);
+        output.put("startString", formattedStart);
+        output.put("endString", formattedEnd);
+        return output;
     }
 }

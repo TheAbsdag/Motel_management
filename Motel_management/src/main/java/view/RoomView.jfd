@@ -1,18 +1,25 @@
-JFDML JFormDesigner: "8.2.2.0.382" Java: "17.0.11" encoding: "UTF-8"
+JFDML JFormDesigner: "8.2.2.0.382" Java: "21.0.3" encoding: "UTF-8"
 
 new FormModel {
 	contentType: "form/swing"
 	root: new FormRoot {
 		add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
-			"$layoutConstraints": "hidemode 3"
-			"$columnConstraints": "[145,grow,fill][78,grow,shrink 0,fill][147,grow,shrink 0,fill][79,grow,fill][145,grow,shrink 0,fill][127,grow,fill][15,fill][83,grow,fill][15,fill][138,grow,fill]"
+			"$layoutConstraints": "fill,hidemode 3"
+			"$columnConstraints": "[145,grow,fill][78,grow,fill][114,grow,fill][79,grow][127,grow,fill][15,grow,fill][83,grow,fill][15,grow,fill][138,grow,fill]"
 			"$rowConstraints": "[42][49,grow][66][49][53,grow][55,grow][63,grow][86,grow][76,grow]"
 		} ) {
 			name: "this"
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "roomChangeButton"
+				"text": "CAMBIO DE HABITACION"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 16 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 0 3 1,growy"
+			} )
 			add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
-				"$layoutConstraints": "hidemode 3"
-				"$columnConstraints": "[65,grow,fill][261,grow,fill][68,grow,fill][226,grow,fill][97,grow,fill]"
-				"$rowConstraints": "[102,grow][92,grow][10,grow][76,grow][101,grow][54]"
+				"$layoutConstraints": "fillx,hidemode 3"
+				"$columnConstraints": "[173,grow,fill][62,grow,fill][226,grow,fill]"
+				"$rowConstraints": "[102,grow][92,grow][76,grow][101,grow][54,grow]"
 			} ) {
 				name: "roomStatusBackground"
 				add( new FormComponent( "javax.swing.JLabel" ) {
@@ -22,35 +29,35 @@ new FormModel {
 					"horizontalAlignment": 0
 					"foreground": &Color0 new java.awt.Color( 0, 0, 0, 255 )
 				}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-					"value": "cell 2 0,growy"
+					"value": "cell 0 0 3 1,growy"
 				} )
 				add( new FormComponent( "javax.swing.JLabel" ) {
 					name: "statusLabel"
 					"text": "LIMPIEZA"
-					"font": new java.awt.Font( "Segoe UI Black", 0, 90 )
+					"font": new java.awt.Font( "Segoe UI Black", 0, 70 )
 					"horizontalAlignment": 0
 					"border": new javax.swing.border.LineBorder( sfield java.awt.Color gray, 7, true )
 					"foreground": #Color0
 				}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-					"value": "cell 1 1 3 1,growy"
+					"value": "cell 0 1 3 1,growy"
 				} )
 				add( new FormComponent( "javax.swing.JLabel" ) {
 					name: "startInformativeLabel"
 					"text": "INICIO"
-					"font": new java.awt.Font( "Segoe UI Black", 0, 70 )
+					"font": new java.awt.Font( "Segoe UI Black", 0, 50 )
 					"horizontalAlignment": 0
 					"foreground": #Color0
 				}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-					"value": "cell 0 3 2 1"
+					"value": "cell 0 2"
 				} )
 				add( new FormComponent( "javax.swing.JLabel" ) {
 					name: "remainingInformativeLabel"
 					"text": "RESTANTE"
-					"font": new java.awt.Font( "Segoe UI Black", 0, 70 )
+					"font": new java.awt.Font( "Segoe UI Black", 0, 50 )
 					"horizontalAlignment": 0
 					"foreground": #Color0
 				}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-					"value": "cell 3 3 2 1,grow"
+					"value": "cell 1 2 2 1,grow"
 				} )
 				add( new FormComponent( "javax.swing.JLabel" ) {
 					name: "startTimeLabel"
@@ -59,7 +66,7 @@ new FormModel {
 					"horizontalAlignment": 0
 					"foreground": #Color0
 				}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-					"value": "cell 0 4 2 1,growy"
+					"value": "cell 0 3,growy"
 				} )
 				add( new FormComponent( "javax.swing.JLabel" ) {
 					name: "remainingTimeLabel"
@@ -68,7 +75,7 @@ new FormModel {
 					"horizontalAlignment": 0
 					"foreground": #Color0
 				}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-					"value": "cell 3 4 2 1,growy"
+					"value": "cell 1 3 2 1,growy"
 				} )
 				add( new FormComponent( "javax.swing.JLabel" ) {
 					name: "startDateLabel"
@@ -77,10 +84,10 @@ new FormModel {
 					"foreground": new java.awt.Color( 0, 0, 0, 255 )
 					"horizontalAlignment": 0
 				}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-					"value": "cell 0 5 2 1,growy"
+					"value": "cell 0 4,growy"
 				} )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 0 0 5 8"
+				"value": "cell 0 1 4 7,growy"
 			} )
 			add( new FormComponent( "javax.swing.JLabel" ) {
 				name: "dateLabel"
@@ -88,15 +95,15 @@ new FormModel {
 				"horizontalAlignment": 0
 				"font": new java.awt.Font( "Segoe UI Black", 0, 24 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 5 0 5 1,growy"
+				"value": "cell 4 0 5 1,growy"
 			} )
 			add( new FormComponent( "javax.swing.JLabel" ) {
 				name: "timeLabel"
 				"text": "00:00 AM"
 				"horizontalAlignment": 0
-				"font": new java.awt.Font( "Segoe UI Black", 0, 56 )
+				"font": new java.awt.Font( "Segoe UI Black", 0, 48 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 5 1 5 1,growy"
+				"value": "cell 4 1 5 1,growy"
 			} )
 			add( new FormComponent( "javax.swing.JLabel" ) {
 				name: "roomStatusInformative"
@@ -104,28 +111,28 @@ new FormModel {
 				"horizontalAlignment": 0
 				"font": new java.awt.Font( "Segoe UI Black", 0, 30 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 5 2 5 1,growy"
+				"value": "cell 4 2 5 1,growy"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "booking3HoursButton"
 				"text": "3"
 				"font": &Font0 new java.awt.Font( "Segoe UI Black", 0, 48 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 5 3,growy"
-			} )
-			add( new FormComponent( "javax.swing.JButton" ) {
-				name: "booking6HoursButton"
-				"text": "6"
-				"font": #Font0
-			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 7 3,growy"
+				"value": "cell 4 3,growy"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "booking12HoursButton"
 				"text": "12"
 				"font": #Font0
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 9 3,growy"
+				"value": "cell 6 3,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "booking24HoursButton"
+				"text": "24"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 8 3,growy"
 			} )
 			add( new FormComponent( "javax.swing.JTextField" ) {
 				name: "priceTextField"
@@ -134,35 +141,35 @@ new FormModel {
 					"JavaCodeGenerator.postCreateCode": " ((AbstractDocument) priceTextField.getDocument()).setDocumentFilter(new NumericDocumentFilter());"
 				}
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 5 4 5 1,growy"
+				"value": "cell 4 4 5 1,growy"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "removeSmallQuantityButton"
 				"text": "-100"
-				"font": #Font0
+				"font": &Font1 new java.awt.Font( "Segoe UI Black", 0, 42 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 5 5 2 1,growy"
+				"value": "cell 4 5 2 1,growy"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "addSmallQuantityButton"
-				"text": "100"
-				"font": #Font0
+				"text": "+100"
+				"font": #Font1
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 8 5 2 1,growy"
+				"value": "cell 7 5 2 1,growy"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "removeBigQuantity"
 				"text": "-1000"
-				"font": #Font0
+				"font": #Font1
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 5 6 2 1,growy"
+				"value": "cell 4 6 2 1,growy"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "addBigQuantityButton"
-				"text": "1000"
-				"font": #Font0
+				"text": "+1000"
+				"font": #Font1
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 8 6 2 1,growy"
+				"value": "cell 7 6 2 1,growy"
 			} )
 			add( new FormComponent( "javax.swing.JCheckBox" ) {
 				name: "printingCheckBox"
@@ -170,18 +177,18 @@ new FormModel {
 				"horizontalAlignment": 0
 				"font": #Font0
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 5 7 5 1,growy"
+				"value": "cell 4 7 5 1,growy"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "backRoomButton"
 				"text": "VOLVER"
-				"font": new java.awt.Font( "Segoe UI Black", 0, 48 )
+				"font": new java.awt.Font( "Segoe UI Black", 0, 36 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 0 8,growy"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "roomSellingButton"
-				"text": "VENTA HABITACION"
+				"text": "VENTA HAB"
 				"font": new java.awt.Font( "Segoe UI Black", 0, 20 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 1 8 2 1,growy"
@@ -189,20 +196,20 @@ new FormModel {
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "endTimeButton"
 				"text": "TERMINAR"
-				"font": #Font0
+				"font": new java.awt.Font( "Segoe UI Black", 0, 36 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 3 8 2 1,growy"
+				"value": "cell 3 8,growy"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "addTimeButton"
 				"text": "VENDER"
-				"font": #Font0
+				"font": new java.awt.Font( "Segoe UI Black", 0, 36 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 5 8 5 1,growy"
+				"value": "cell 4 8 5 1,growy"
 			} )
 		}, new FormLayoutConstraints( null ) {
-			"location": new java.awt.Point( 55, 5 )
-			"size": new java.awt.Dimension( 1280, 660 )
+			"location": new java.awt.Point( 55, 10 )
+			"size": new java.awt.Dimension( 1040, 710 )
 		} )
 	}
 }
