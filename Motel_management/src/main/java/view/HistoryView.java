@@ -23,6 +23,20 @@ import view.customListRenderes.CustomHeaderRenderer;
 public class HistoryView extends JPanel {
 
     /**
+     * @return the upButton
+     */
+    public JButton getUpButton() {
+        return upButton;
+    }
+
+    /**
+     * @return the downButton
+     */
+    public JButton getDownButton() {
+        return downButton;
+    }
+
+    /**
      * @return the turnHistoryTable
      */
     public JTable getTurnHistoryTable() {
@@ -63,8 +77,8 @@ public class HistoryView extends JPanel {
 
     private void initCustomComponents() {
         popupTurn.setSize(1024, 768);
-        //setExtendedState(JFrame.MAXIMIZED_BOTH);
-        //setResizable(false);
+        popupTurn.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        popupTurn.setResizable(false);
     }
 
     public class TunHistoryTableModel extends AbstractTableModel {
@@ -154,6 +168,8 @@ public class HistoryView extends JPanel {
 	durationLabel = new JLabel();
 	backButton = new JButton();
 	timeLabel = new JLabel();
+	upButton = new JButton();
+	downButton = new JButton();
 	turnDetailsButton = new JButton();
 	dateLabel = new JLabel();
 	popupTurn = new JFrame();
@@ -166,9 +182,10 @@ public class HistoryView extends JPanel {
 	    // columns
 	    "[fill]" +
 	    "[fill]" +
-	    "[248,fill]" +
-	    "[183,fill]" +
-	    "[39,grow,fill]",
+	    "[0,grow,shrink 0,fill]" +
+	    "[grow,fill]" +
+	    "[grow,fill]" +
+	    "[183,fill]",
 	    // rows
 	    "[grow]" +
 	    "[grow]" +
@@ -190,47 +207,47 @@ public class HistoryView extends JPanel {
 		// rows
 		"[grow]"));
 	}
-	add(turnSelectionPanel, "cell 0 0 3 8,grow");
+	add(turnSelectionPanel, "cell 0 0 5 8,grow");
 
 	//---- turnDateInformativeLabel ----
 	turnDateInformativeLabel.setText("FECHA:");
 	turnDateInformativeLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 30));
-	add(turnDateInformativeLabel, "cell 3 0");
+	add(turnDateInformativeLabel, "cell 5 0");
 
 	//---- turnDateLabel ----
 	turnDateLabel.setText("XXXX-XX-XX ");
 	turnDateLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
-	add(turnDateLabel, "cell 3 1");
+	add(turnDateLabel, "cell 5 1");
 
 	//---- startDateInformativeLabel ----
 	startDateInformativeLabel.setText("INICIO");
 	startDateInformativeLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 30));
-	add(startDateInformativeLabel, "cell 3 2");
+	add(startDateInformativeLabel, "cell 5 2");
 
 	//---- turnStartLabel ----
 	turnStartLabel.setText("XXXX-XX-XX - XX:XX AM/PM");
 	turnStartLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
-	add(turnStartLabel, "cell 3 3");
+	add(turnStartLabel, "cell 5 3");
 
 	//---- turnEndInformativeLabel ----
 	turnEndInformativeLabel.setText("FINAL");
 	turnEndInformativeLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 30));
-	add(turnEndInformativeLabel, "cell 3 4");
+	add(turnEndInformativeLabel, "cell 5 4");
 
 	//---- turnEndLabel ----
 	turnEndLabel.setText("XXXX-XX-XX - XX:XX AM/PM");
 	turnEndLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
-	add(turnEndLabel, "cell 3 5");
+	add(turnEndLabel, "cell 5 5");
 
 	//---- durationInformativeLabel ----
 	durationInformativeLabel.setText("DURACION");
 	durationInformativeLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 30));
-	add(durationInformativeLabel, "cell 3 6");
+	add(durationInformativeLabel, "cell 5 6");
 
 	//---- durationLabel ----
 	durationLabel.setText("N");
 	durationLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
-	add(durationLabel, "cell 3 7");
+	add(durationLabel, "cell 5 7");
 
 	//---- backButton ----
 	backButton.setText("VOLVER");
@@ -242,10 +259,18 @@ public class HistoryView extends JPanel {
 	timeLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 26));
 	add(timeLabel, "cell 1 8 2 1");
 
+	//---- upButton ----
+	upButton.setIcon(new ImageIcon(getClass().getResource("/up.png")));
+	add(upButton, "cell 3 8,growy");
+
+	//---- downButton ----
+	downButton.setIcon(new ImageIcon(getClass().getResource("/down.png")));
+	add(downButton, "cell 4 8,growy");
+
 	//---- turnDetailsButton ----
 	turnDetailsButton.setText("DETALLES");
 	turnDetailsButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 30));
-	add(turnDetailsButton, "cell 4 8 1 2,growy");
+	add(turnDetailsButton, "cell 5 8 1 2,growy");
 
 	//---- dateLabel ----
 	dateLabel.setText("date");
@@ -254,14 +279,15 @@ public class HistoryView extends JPanel {
 
 	//======== popupTurn ========
 	{
+	    popupTurn.setAlwaysOnTop(true);
 	    Container popupTurnContentPane = popupTurn.getContentPane();
 	    popupTurnContentPane.setLayout(new MigLayout(
 		"fill,hidemode 3",
 		// columns
-		"[fill]",
+		"[grow,fill]",
 		// rows
-		"[]"));
-	    popupTurnContentPane.add(turnDetailsView, "cell 0 0");
+		"[grow]"));
+	    popupTurnContentPane.add(turnDetailsView, "cell 0 0,grow");
 	    popupTurn.pack();
 	    popupTurn.setLocationRelativeTo(popupTurn.getOwner());
 	}
@@ -281,6 +307,8 @@ public class HistoryView extends JPanel {
     private JLabel durationLabel;
     private JButton backButton;
     private JLabel timeLabel;
+    private JButton upButton;
+    private JButton downButton;
     private JButton turnDetailsButton;
     private JLabel dateLabel;
     private JFrame popupTurn;

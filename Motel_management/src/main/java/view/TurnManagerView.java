@@ -28,12 +28,15 @@ public class TurnManagerView extends JPanel {
     private TurnDetailsTableModel turnDetailsTableModel;
     private final Font cellFont;
     private final NumberFormat numberFormat;
+    private JTable summarizedTurnTable;
+    private SummarizedTurnTableModel summarizedTurnTableModel;
 
     public TurnManagerView() {
         numberFormat = NumberFormat.getNumberInstance(Locale.US);
         this.cellFont = new Font("Segoe UI", Font.BOLD, 16);
         initComponents();
         initCustomTable();
+        initCustomComponents();
     }
 
     public void setTurnDetailsData(JSONObject turnDetails) {
@@ -49,9 +52,13 @@ public class TurnManagerView extends JPanel {
             totalSalesLabel.setText(numberFormat.format(0));
             turnDetailsTableModel.updateData(null);
             this.backButton.setEnabled(true);
-            
+
         }
         turnDetailsTable.repaint();
+    }
+
+    public void updateSummarizedTurnData(JSONObject summarizedTurn) {
+        summarizedTurnTableModel.updateData(summarizedTurn);
     }
 
     private void initCustomTable() {
@@ -66,8 +73,29 @@ public class TurnManagerView extends JPanel {
         turnDetailsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         JScrollPane scrollPane = new JScrollPane(turnDetailsTable);
         turnDetailsTable.getTableHeader().setReorderingAllowed(false);
-
         turnDetailsPanel.add(scrollPane, "cell 0 0, grow");
+
+        //intialize for the summarized table
+        summarizedTurnTableModel = new SummarizedTurnTableModel();
+        summarizedTurnTable = new JTable(summarizedTurnTableModel);
+        TableColumnModel summarizedColumnModel = getSummarizedTurnTable().getColumnModel();
+        for (int i = 0; i < summarizedColumnModel.getColumnCount(); i++) {
+            summarizedColumnModel.getColumn(i).setCellRenderer(new CustomCellRenderer(cellFont));
+            summarizedColumnModel.getColumn(i).setHeaderRenderer(new CustomHeaderRenderer(cellFont));
+        }
+
+        getSummarizedTurnTable().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        JScrollPane summarizedScrollPane = new JScrollPane(getSummarizedTurnTable());
+        getSummarizedTurnTable().getTableHeader().setReorderingAllowed(false);
+        summarizedTurnInfoPanel.add(summarizedScrollPane, "cell 0 0, grow");
+    }
+
+    public JSONObject getCurrentSelectedItem(int selectedRow) {
+        return turnDetailsTableModel.filteredTurnDetails.get(selectedRow);
+    }
+
+    private void initCustomComponents() {
+        summarizedPopup.setExtendedState(JFrame.MAXIMIZED_BOTH);
     }
 
     private class TurnDetailsTableModel extends AbstractTableModel {
@@ -144,7 +172,7 @@ public class TurnManagerView extends JPanel {
                         return formattedDate;
                     case 2: // Action
                         if (changeType.equals("sale")) {
-                            return item.getString("itemName");
+                            return item.getLong("quantity") + " de " + item.getString("itemName");
                         } else if (changeType.equals("room") && item.getInt("roomStatus") == 3) {
                             if (item.getInt("servicedExtension") == 0) {
                                 return "Alquiler " + item.getInt("service");
@@ -184,9 +212,85 @@ public class TurnManagerView extends JPanel {
         }
     }
 
+    private class SummarizedTurnTableModel extends AbstractTableModel {
+
+        private final String[] columnNames = {"Cantidad", "Concepto", "Precio"};
+        private ArrayList<JSONObject> summarizedTurnDetails;
+
+        public SummarizedTurnTableModel() {
+            this.summarizedTurnDetails = new ArrayList<>();
+        }
+
+        public void updateData(JSONObject data) {
+            summarizedTurnDetails.clear();
+            if (data != null) {
+                JSONArray summaryArray = data.getJSONArray("turnSummary");
+                for (int i = 0; i < summaryArray.length(); i++) {
+                    JSONObject summaryObject = summaryArray.getJSONObject(i);
+                    summarizedTurnDetails.add(summaryObject);
+                }
+            }
+            fireTableDataChanged();
+        }
+
+        @Override
+        public int getRowCount() {
+            // The number of rows is the size of the summarizedTurnDetails list
+            return summarizedTurnDetails != null ? summarizedTurnDetails.size() : 0;
+        }
+
+        @Override
+        public int getColumnCount() {
+            // We have 3 columns: Cantidad, Concepto, Precio
+            return columnNames.length;
+        }
+
+        @Override
+        public String getColumnName(int columnIndex) {
+            return columnNames[columnIndex];
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            // Get the JSONObject for the current row
+            JSONObject summaryObject = summarizedTurnDetails.get(rowIndex);
+
+            try {
+                switch (columnIndex) {
+                    case 0:
+                        // "Cantidad" column: either room or item quantity
+                        return summaryObject.getInt("quantity");
+                    case 1:
+                        // "Concepto" column: Either "Alquiler" + service or item name
+                        String change = summaryObject.getString("summaryType");
+                        if ("room".equals(change)) {
+                            int service = summaryObject.getInt("service");
+                            return "Alquiler " + service;
+                        } else if ("item".equals(change)) {
+                            return summaryObject.getString("itemName");
+                        }
+                        return ""; // Default case if unknown
+                    case 2:
+                        // "Precio" column: Price formatted with the number format
+                        long price = summaryObject.getLong("price");
+                        return numberFormat.format(price);
+                    default:
+                        return "";
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+    }
+
     private void initComponents() {
 	// JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents  @formatter:off
 	// Generated using JFormDesigner Educational license - Santiago Esteban Castelblanco Castiblanco (saecastelblancoc)
+	deleteActionButton = new JButton();
+	upButton = new JButton();
+	downButton = new JButton();
+	summarizedTurnButton = new JButton();
 	turnDetailsPanel = new JPanel();
 	timeLabel = new JLabel();
 	dateLabel = new JLabel();
@@ -202,6 +306,10 @@ public class TurnManagerView extends JPanel {
 	backButton = new JButton();
 	printButton = new JButton();
 	endTurnButton = new JButton();
+	summarizedPopup = new JFrame();
+	summarizedTurnLabel = new JLabel();
+	summarizedTurnInfoPanel = new JPanel();
+	backFromSummarizedTurn = new JButton();
 
 	//======== this ========
 	setLayout(new MigLayout(
@@ -215,7 +323,7 @@ public class TurnManagerView extends JPanel {
 	    "[grow,fill]" +
 	    "[grow,fill]",
 	    // rows
-	    "[grow]" +
+	    "[77]" +
 	    "[grow]" +
 	    "[]" +
 	    "[grow]" +
@@ -224,6 +332,24 @@ public class TurnManagerView extends JPanel {
 	    "[grow]" +
 	    "[25]" +
 	    "[grow]"));
+
+	//---- deleteActionButton ----
+	deleteActionButton.setText("ELIMINAR");
+	deleteActionButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 24));
+	add(deleteActionButton, "cell 0 0,growy");
+
+	//---- upButton ----
+	upButton.setIcon(new ImageIcon(getClass().getResource("/up.png")));
+	add(upButton, "cell 1 0,growy");
+
+	//---- downButton ----
+	downButton.setIcon(new ImageIcon(getClass().getResource("/down.png")));
+	add(downButton, "cell 2 0,growy");
+
+	//---- summarizedTurnButton ----
+	summarizedTurnButton.setText("RESUMIDO TURNO");
+	summarizedTurnButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
+	add(summarizedTurnButton, "cell 3 0 2 1,grow");
 
 	//======== turnDetailsPanel ========
 	{
@@ -234,7 +360,7 @@ public class TurnManagerView extends JPanel {
 		// rows
 		"[grow,fill]"));
 	}
-	add(turnDetailsPanel, "cell 0 0 5 7,growy");
+	add(turnDetailsPanel, "cell 0 1 5 7,growy");
 
 	//---- timeLabel ----
 	timeLabel.setText("time");
@@ -307,11 +433,54 @@ public class TurnManagerView extends JPanel {
 	endTurnButton.setText("FIN TURNO");
 	endTurnButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 28));
 	add(endTurnButton, "cell 5 8 2 1,growy");
+
+	//======== summarizedPopup ========
+	{
+	    summarizedPopup.setAlwaysOnTop(true);
+	    Container summarizedPopupContentPane = summarizedPopup.getContentPane();
+	    summarizedPopupContentPane.setLayout(new MigLayout(
+		"fill,hidemode 3",
+		// columns
+		"[fill]",
+		// rows
+		"[0]" +
+		"[384]" +
+		"[]"));
+	    summarizedPopup.setExtendedState(JFrame.MAXIMIZED_BOTH);
+
+	    //---- summarizedTurnLabel ----
+	    summarizedTurnLabel.setText("RESUMEN TURNO:");
+	    summarizedTurnLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 20));
+	    summarizedTurnLabel.setHorizontalAlignment(SwingConstants.CENTER);
+	    summarizedPopupContentPane.add(summarizedTurnLabel, "cell 0 0");
+
+	    //======== summarizedTurnInfoPanel ========
+	    {
+		summarizedTurnInfoPanel.setLayout(new MigLayout(
+		    "fill,hidemode 3",
+		    // columns
+		    "[fill]",
+		    // rows
+		    "[]"));
+	    }
+	    summarizedPopupContentPane.add(summarizedTurnInfoPanel, "cell 0 1,growy");
+
+	    //---- backFromSummarizedTurn ----
+	    backFromSummarizedTurn.setText("VOLVER");
+	    backFromSummarizedTurn.setFont(new Font("Segoe UI Black", Font.PLAIN, 24));
+	    summarizedPopupContentPane.add(backFromSummarizedTurn, "cell 0 2,growy");
+	    summarizedPopup.pack();
+	    summarizedPopup.setLocationRelativeTo(summarizedPopup.getOwner());
+	}
 	// JFormDesigner - End of component initialization  //GEN-END:initComponents  @formatter:on
     }
 
     // JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables  @formatter:off
     // Generated using JFormDesigner Educational license - Santiago Esteban Castelblanco Castiblanco (saecastelblancoc)
+    private JButton deleteActionButton;
+    private JButton upButton;
+    private JButton downButton;
+    private JButton summarizedTurnButton;
     private JPanel turnDetailsPanel;
     private JLabel timeLabel;
     private JLabel dateLabel;
@@ -327,6 +496,10 @@ public class TurnManagerView extends JPanel {
     private JButton backButton;
     private JButton printButton;
     private JButton endTurnButton;
+    private JFrame summarizedPopup;
+    private JLabel summarizedTurnLabel;
+    private JPanel summarizedTurnInfoPanel;
+    private JButton backFromSummarizedTurn;
     // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
 
     /**
@@ -391,4 +564,68 @@ public class TurnManagerView extends JPanel {
     public JButton getBackButton() {
         return backButton;
     }
+
+    /**
+     * @return the turnDetailsTable
+     */
+    public JTable getTurnDetailsTable() {
+        return turnDetailsTable;
+    }
+
+    /**
+     * @return the deleteActionButton
+     */
+    public JButton getDeleteActionButton() {
+        return deleteActionButton;
+    }
+
+    /**
+     * @return the upButton
+     */
+    public JButton getUpButton() {
+        return upButton;
+    }
+
+    /**
+     * @return the downButton
+     */
+    public JButton getDownButton() {
+        return downButton;
+    }
+
+    /**
+     * @return the summarizedTurnButton
+     */
+    public JButton getSummarizedTurnButton() {
+        return summarizedTurnButton;
+    }
+
+    /**
+     * @return the summarizedTurnTable
+     */
+    public JTable getSummarizedTurnTable() {
+        return summarizedTurnTable;
+    }
+
+    /**
+     * @return the summarizedPopup
+     */
+    public JFrame getSummarizedPopup() {
+        return summarizedPopup;
+    }
+
+    /**
+     * @return the summarizedTurnLabel
+     */
+    public JLabel getSummarizedTurnLabel() {
+        return summarizedTurnLabel;
+    }
+
+    /**
+     * @return the backFromSummarizedTurn
+     */
+    public JButton getBackFromSummarizedTurn() {
+        return backFromSummarizedTurn;
+    }
+    
 }

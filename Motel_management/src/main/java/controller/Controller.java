@@ -53,8 +53,8 @@ public class Controller {
 
         setupListeners();
         timerForTimeUpdates = new Timer(80, e -> updateTime());
-        timerForBackupFiles = new Timer(15000, e -> SaveBackupFiles());
-        timerForCurrentFile = new Timer(2000, e -> saveMainFiles());
+        timerForBackupFiles = new Timer(300000, e -> saveBackupFiles("backup"));
+        timerForCurrentFile = new Timer(20000, e -> saveMainFiles());
         startTimers();
     }
 
@@ -148,6 +148,27 @@ public class Controller {
         userInterface.getTurnManagerView().getNoPrintCheckBox().addItemListener(new CheckBoxItemListener(this.userInterface));
         userInterface.getTurnManagerView().getSummarizedPrintCheckBox().addItemListener(new CheckBoxItemListener(this.userInterface));
         userInterface.getTurnManagerView().getDetailedPrintCheckBox().addItemListener(new CheckBoxItemListener(this.userInterface));
+        userInterface.getTurnManagerView().getUpButton().addActionListener(e -> simulateArrowUpTurnManager());
+        userInterface.getTurnManagerView().getDownButton().addActionListener(e -> simulateArrowDownTurnManager());
+        userInterface.getTurnManagerView().getTurnDetailsTable().getSelectionModel().addListSelectionListener((ListSelectionEvent event) -> {
+            if (!event.getValueIsAdjusting()) {
+                int selectedRow = userInterface.getTurnManagerView().getTurnDetailsTable().getSelectedRow();
+                if (selectedRow != -1 && !isListAdjusting) {
+                    isListAdjusting = true;
+                    JSONObject selectedItem = userInterface.getTurnManagerView().getCurrentSelectedItem(selectedRow);
+                    String changeType = selectedItem.getString("changeType");
+                    if (changeType.equals("sale")) {
+                        userInterface.getTurnManagerView().getDeleteActionButton().setEnabled(true);
+                    } else {
+                        userInterface.getTurnManagerView().getDeleteActionButton().setEnabled(false);
+                    }
+                    isListAdjusting = false;
+                }
+            }
+        });
+        userInterface.getTurnManagerView().getDeleteActionButton().addActionListener(e -> deleteRegisterFromTurn());
+        userInterface.getTurnManagerView().getSummarizedTurnButton().addActionListener(e -> showCurrentSummarizedTurn());
+        userInterface.getTurnManagerView().getBackFromSummarizedTurn().addActionListener(e -> closeSummarizedPopup());
 
         //Setting up inventory listeners
         userInterface.getInventoryView().getNewitemButton().addActionListener(e -> newInventoryItem());
@@ -188,23 +209,26 @@ public class Controller {
         userInterface.getHistoryView().getTurnDetailsView().getNoPrintCheckBox().addItemListener(new CheckBoxItemListener(this.userInterface));
         userInterface.getHistoryView().getTurnDetailsView().getSummarizedPrintCheckBox().addItemListener(new CheckBoxItemListener(this.userInterface));
         userInterface.getHistoryView().getTurnDetailsView().getDetailedPrintCheckBox().addItemListener(new CheckBoxItemListener(this.userInterface));
+        userInterface.getHistoryView().getTurnDetailsView().getPrintButton().addActionListener(e -> printHistoryTurn());
 
         //Special history listener
-        userInterface.getHistoryView().getTurnHistoryTable().getSelectionModel().addListSelectionListener((ListSelectionEvent event) ->{
-            if(!event.getValueIsAdjusting()){
+        userInterface.getHistoryView().getTurnHistoryTable().getSelectionModel().addListSelectionListener((ListSelectionEvent event) -> {
+            if (!event.getValueIsAdjusting()) {
                 int selectedRow = userInterface.getHistoryView().getTurnHistoryTable().getSelectedRow();
-                if(selectedRow != -1 &&!isListAdjusting){
+                if (selectedRow != -1 && !isListAdjusting) {
                     isListAdjusting = true;
                     JSONObject historyBasicInformation = motelManager.getBasicTurnHistoryData(selectedRow);
                     userInterface.getHistoryView().getTurnStartLabel().setText(historyBasicInformation.getString("startString"));
                     userInterface.getHistoryView().getTurnEndLabel().setText(historyBasicInformation.getString("endString"));
                     userInterface.getHistoryView().getTurnDateLabel().setText(historyBasicInformation.getString("startDate"));
                     userInterface.getHistoryView().getDurationLabel().setText(historyBasicInformation.getString("duration"));
+                    userInterface.getHistoryView().getTurnDetailsButton().setEnabled(true);
                     isListAdjusting = false;
                 }
             }
         });
-        
+        userInterface.getHistoryView().getUpButton().addActionListener(e -> simulateUpArrowHistory());
+        userInterface.getHistoryView().getDownButton().addActionListener(e -> simulateDownArrowHistory());
     }
 
     private void newInventoryItem() {
@@ -273,6 +297,8 @@ public class Controller {
         }
         setInventoryModificators(false);
         userInterface.getInventoryView().getInventoryTable().clearSelection();
+        saveMainFiles();
+        saveBackupFiles("operation");
     }
 
     private void setInventoryModificators(boolean enable) {
@@ -305,8 +331,8 @@ public class Controller {
         motelManager.saveFilesForMainService();
     }
 
-    private void SaveBackupFiles() {
-        motelManager.saveFilesForBackup();
+    private void saveBackupFiles(String saveType) {
+        motelManager.saveFilesForBackup(saveType);
     }
 
     private void simulateArrowUpSelling() {
@@ -331,6 +357,30 @@ public class Controller {
         userInterface.getInventoryView().getInventoryTable().requestFocusInWindow();
         robotSim.keyPress(KeyEvent.VK_UP);
         robotSim.keyRelease(KeyEvent.VK_UP);
+    }
+
+    private void simulateArrowDownTurnManager() {
+        userInterface.getTurnManagerView().getTurnDetailsTable().requestFocusInWindow();
+        robotSim.keyPress(KeyEvent.VK_DOWN);
+        robotSim.keyRelease(KeyEvent.VK_DOWN);
+    }
+
+    private void simulateArrowUpTurnManager() {
+        userInterface.getTurnManagerView().getTurnDetailsTable().requestFocusInWindow();
+        robotSim.keyPress(KeyEvent.VK_UP);
+        robotSim.keyRelease(KeyEvent.VK_UP);
+    }
+
+    private void simulateUpArrowHistory() {
+        userInterface.getHistoryView().getTurnHistoryTable().requestFocusInWindow();
+        robotSim.keyPress(KeyEvent.VK_UP);
+        robotSim.keyRelease(KeyEvent.VK_UP);
+    }
+
+    private void simulateDownArrowHistory() {
+        userInterface.getHistoryView().getTurnHistoryTable().requestFocusInWindow();
+        robotSim.keyPress(KeyEvent.VK_DOWN);
+        robotSim.keyRelease(KeyEvent.VK_DOWN);
     }
 
     private void roomReassigment() {
@@ -527,7 +577,7 @@ public class Controller {
         }
         motelManager.restartSaleManager();
         String roomString = motelManager.getRoom(motelManager.getCurrentFloorViewed(), motelManager.getCurrentRoomViewed()).getRoomString();
-        userInterface.getSellingView().getSellingToLabel().setText("VENIENDO A: " + roomString);
+        userInterface.getSellingView().getSellingToLabel().setText("VENDIENDO A: " + roomString);
         userInterface.setSellingView();
         userInterface.getSellingView().getAddItemButton().setEnabled(false);
         userInterface.getSellingView().getItemDeleteButton().setEnabled(false);
@@ -593,10 +643,14 @@ public class Controller {
             if (noPrintingConfirmation) {
                 motelManager.roomSaleFinished(false);
                 userInterface.setFloorView();
+                saveMainFiles();
+                saveBackupFiles("operation");
             }
         } else {
             motelManager.roomSaleFinished(true);
             userInterface.setFloorView();
+            saveMainFiles();
+            saveBackupFiles("operation");
         }
     }
 
@@ -617,10 +671,14 @@ public class Controller {
             if (noPrintingConfirmation) {
                 motelManager.registerRoomTimeAdded(floorNumber, roomNumber, service, price, false);
                 userInterface.setFloorView();
+                saveMainFiles();
+                saveBackupFiles("operation");
             }
         } else {
             motelManager.registerRoomTimeAdded(floorNumber, roomNumber, service, price, true);
             userInterface.setFloorView();
+            saveMainFiles();
+            saveBackupFiles("operation");
         }
     }
 
@@ -681,6 +739,7 @@ public class Controller {
         boolean isRoomChangeShown = userInterface.isRoomChangeShown();
         //We update each button for the current information required.
         if (isFloorShown) {
+            userInterface.getFloorView().getTurnNumberLabel().setText(String.valueOf(motelManager.getTurnNumber()));
             int roomArray[] = motelManager.getRoomsArray();
             for (int floor = 0; floor < roomArray.length; floor++) {
                 for (int room = 0; room < roomArray[floor]; room++) {
@@ -717,11 +776,12 @@ public class Controller {
             int floor = motelManager.getCurrentFloorViewed();
             int room = motelManager.getCurrentRoomViewed();
             int status = motelManager.getRoom(floor, room).getStatus();
-            String roomString = motelManager.getRoom(floor, room).getRoomString();
             switch (status) {
                 case 2:
                     String startTime = motelManager.getStartTimeRoom(floor, room);
+                    String startDateClean = motelManager.getStartDateRoom(floor, room);
                     userInterface.getRoomView().getStartTimeLabel().setText(startTime);
+                    userInterface.getRoomView().getStartDateLabel().setText(startDateClean);
                     break;
                 case 3:
                     String startTimeRoom = motelManager.getStartTimeRoom(floor, room);
@@ -793,7 +853,24 @@ public class Controller {
         userInterface.getTurnManagerView().getNoPrintCheckBox().setSelected(false);
         userInterface.getTurnManagerView().getSummarizedPrintCheckBox().setSelected(false);
         userInterface.getTurnManagerView().getDetailedPrintCheckBox().setSelected(false);
+        userInterface.getTurnManagerView().getDeleteActionButton().setEnabled(false);
+        userInterface.getTurnManagerView().getBackButton().setEnabled(true);
         userInterface.setTurnManagerView();
+    }
+    
+    private void showCurrentSummarizedTurn() {
+        userInterface.getTurnManagerView().updateSummarizedTurnData(motelManager.getCurrentSummarizedTurn());
+        userInterface.getTurnManagerView().getSummarizedPopup().setVisible(true);
+    }
+    
+    private void closeSummarizedPopup(){
+        userInterface.getTurnManagerView().getSummarizedPopup().setVisible(false);
+    }
+
+    private void deleteRegisterFromTurn() {
+        JSONObject selectedFilteredItem = userInterface.getTurnManagerView().getCurrentSelectedItem(userInterface.getTurnManagerView().getTurnDetailsTable().getSelectedRow());
+        motelManager.revertItemSale(selectedFilteredItem);
+        userInterface.getTurnManagerView().setTurnDetailsData(motelManager.getCurrentTurnData());
     }
 
     private void managementInventorySelected() {
@@ -803,6 +880,7 @@ public class Controller {
 
     private void managementHistorySelected() {
         userInterface.getHistoryView().setTurnHistoryDetails(motelManager.getHistoryData());
+        userInterface.getHistoryView().getTurnDetailsButton().setEnabled(false);
         userInterface.setHistoryView();
     }
 
@@ -810,10 +888,22 @@ public class Controller {
         int selectedRow = userInterface.getHistoryView().getTurnHistoryTable().getSelectedRow();
         userInterface.getHistoryView().getTurnDetailsView().setTurnDetailsData(motelManager.getDetailedTurnHistoryData(selectedRow));
         userInterface.getHistoryView().getPopupTurn().setVisible(true);
+        userInterface.getHistoryView().getTurnDetailsView().getPrintButton().setEnabled(false);
     }
 
     private void closeHistoryDetails() {
         userInterface.getHistoryView().getPopupTurn().setVisible(false);
+    }
+
+    private void printHistoryTurn() {
+        int selectedRow = userInterface.getHistoryView().getTurnHistoryTable().getSelectedRow();
+        if (userInterface.getHistoryView().getTurnDetailsView().getNoPrintCheckBox().isSelected()) {
+            motelManager.turnHistoryPrint(1, selectedRow);
+        } else if (userInterface.getHistoryView().getTurnDetailsView().getSummarizedPrintCheckBox().isSelected()) {
+            motelManager.turnHistoryPrint(2, selectedRow);
+        } else if (userInterface.getHistoryView().getTurnDetailsView().getDetailedPrintCheckBox().isSelected()) {
+            motelManager.turnHistoryPrint(3, selectedRow);
+        }
     }
 
     private void printTurn() {

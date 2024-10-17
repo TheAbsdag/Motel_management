@@ -44,9 +44,7 @@ public class CustomCellRenderer extends JTextArea implements TableCellRenderer {
             setForeground(table.getForeground());
         }
         // Adjust row height for wrapping text
-        if(column ==1){
-            adjustRowHeight(table, row);
-        }
+        adjustRowHeight(table, row);
         
 
         return this;
@@ -60,7 +58,7 @@ public class CustomCellRenderer extends JTextArea implements TableCellRenderer {
             int prefH = getPreferredSize().height;
             maxRowHeight = Math.max(maxRowHeight, prefH);
         }
-        if (table.getRowHeight(row) != maxRowHeight) {
+        if (table.getRowHeight(row) <= maxRowHeight) {
             table.setRowHeight(row, maxRowHeight);
         }
     }

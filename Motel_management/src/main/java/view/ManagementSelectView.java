@@ -78,7 +78,7 @@ public class ManagementSelectView extends JPanel {
 
 	//======== this ========
 	setLayout(new MigLayout(
-	    "hidemode 3",
+	    "fill,hidemode 3",
 	    // columns
 	    "[171,fill]" +
 	    "[145,fill]" +

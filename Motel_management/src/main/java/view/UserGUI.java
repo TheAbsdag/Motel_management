@@ -75,7 +75,7 @@ public class UserGUI extends JFrame {
         //Default window configuration
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1024, 768);
-        //setExtendedState(JFrame.MAXIMIZED_BOTH);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
         //setResizable(false);
         add(mainPanel);
         setVisible(true);
@@ -85,8 +85,8 @@ public class UserGUI extends JFrame {
         panel.setName(name);
         mainPanel.add(panel, name);
         if (panel instanceof FloorView) {
-            timeLabels.put(name, ((FloorView) panel).getFloorTimeLabel());
-            dateLabels.put(name, ((FloorView) panel).getFloorDateLabel());
+            timeLabels.put(name, ((FloorView) panel).getTimeLabel());
+            dateLabels.put(name, ((FloorView) panel).getDateLabel());
         } else if (panel instanceof TurnSelectView) {
             timeLabels.put(name, ((TurnSelectView) panel).getTimeLabel());
             dateLabels.put(name, ((TurnSelectView) panel).getDateLabel());

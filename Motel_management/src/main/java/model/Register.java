@@ -132,11 +132,6 @@ public class Register {
         return sellingList;
     }
 
-    //Method to be used exclusively for information retreival in history
-    public void setRegisterInformation(JSONArray registerInfo) {
-
-    }
-
     public JSONObject getInventoryData() {
         JSONObject output = new JSONObject();
         JSONArray inventoryArray = new JSONArray();

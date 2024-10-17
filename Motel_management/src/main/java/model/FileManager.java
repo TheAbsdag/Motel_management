@@ -93,19 +93,38 @@ public class FileManager {
         }
     }
 
-    public void saveJsonBackupDataPath(JSONObject data, String dataToSave) {
+    public void saveJsonBackupDataPath(JSONObject data, String dataToSave, ZonedDateTime time, String saveType) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss");
+        String currentFilePath = BACKUP_PATH+"\\"+time.format(formatter)+"-"+saveType;
+        File newFolderBackup = new File(currentFilePath);
+        newFolderBackup.mkdirs();
         String saveString = data.toString();
         try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(BACKUP_PATH + "\\" + dataToSave));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(currentFilePath + "\\" + dataToSave));
             writer.write(saveString);
             writer.close();
         } catch (IOException ex) {
             Logger.getLogger(FileManager.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
+    
+    
+    public void clearBackupFiles() {
+        File backupPathFile = new File(BACKUP_PATH);
+        deleteDirectory(backupPathFile);
+    }
+    
+    private void deleteDirectory ( File file){
+        for (File subfile : file.listFiles()) {
+            if (subfile.isDirectory()) {
+                deleteDirectory(subfile);
+            }
+            subfile.delete();
+        }
+    }
 
     public void saveHistoryData(JSONObject data, String dataToSave, ZonedDateTime time) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH-mm-ss-yyyy-MM-dd");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss");
         String timeString = time.format(formatter);
         String saveString = data.toString();
         try {

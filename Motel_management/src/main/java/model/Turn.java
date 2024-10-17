@@ -13,6 +13,13 @@ import org.json.JSONObject;
  */
 public class Turn {
 
+    /**
+     * @return the turnNumber
+     */
+    public long getTurnNumber() {
+        return turnNumber;
+    }
+
     private Instant start;
     private Instant end;
     private long turnNumber;
@@ -154,7 +161,13 @@ public class Turn {
         JSONObject basicTurn = new JSONObject();
         basicTurn.put("turnStart", turnDetails.getString("turnStart"));
         basicTurn.put("turnNumber", turnDetails.getInt("turnNumber"));
-        basicTurn.put("turnEnd", turnDetails.getString("turnEnd"));
+        try{
+            basicTurn.put("turnEnd", turnDetails.getString("turnEnd"));
+        }
+        catch(JSONException e){
+            //This should only trigger if turnEnd does not exists
+            basicTurn.put("turnEnd", "not finished");
+        }
 
         JSONArray turnHistorySummary = new JSONArray();
 
@@ -295,5 +308,27 @@ public class Turn {
             System.out.println("Previous turn found, no previous activity found");
         }
         return isTurnActive;
+    }
+
+    public void reverseItemSaleFromTurn(JSONObject selectedFilteredItem) {
+        String roomSoldTo = selectedFilteredItem.getString("roomSoldTo");
+        String changeDate = selectedFilteredItem.getString("changeDate");
+        long itemID = selectedFilteredItem.getLong("itemID");
+        long quantity = selectedFilteredItem.getLong("quantity");
+        for(int i = 0;i<turnHistory.length();i++){
+            JSONObject currentRegisterChange = turnHistory.getJSONObject(i);
+            String changeType = currentRegisterChange.getString("changeType");
+            if(changeType.equals("sale")
+                    &&changeDate.equals(currentRegisterChange.getString("changeDate"))
+                    && roomSoldTo.equals(currentRegisterChange.getString("roomSoldTo"))){
+                JSONArray currentArray = currentRegisterChange.getJSONArray("register");
+                for(int j = 0;j<currentArray.length();j++){
+                    JSONObject currentObject = currentArray.getJSONObject(j);
+                    if(currentObject.getLong("itemID") == itemID && currentObject.getLong("quantity") == quantity){
+                        currentArray.remove(j);
+                    }
+                }
+            }
+        }
     }
 }

@@ -222,11 +222,12 @@ public class MotelManagement {
         files.saveJsonMainDataPath(roomData, "roomsInformation");
     }
 
-    public void saveFilesForBackup() {
+    public void saveFilesForBackup(String saveType) {
+        timeInformationUpdate();
         JSONObject turnData = turn.getDetailedTurnInformation();
-        files.saveJsonBackupDataPath(turnData, "turn");
+        files.saveJsonBackupDataPath(turnData, "turn",localizedTime, saveType);
         JSONObject inventoryData = register.getInventoryData();
-        files.saveJsonBackupDataPath(inventoryData, "inventory");
+        files.saveJsonBackupDataPath(inventoryData, "inventory",localizedTime, saveType);
 
         //Creation for room data
         JSONObject roomData = new JSONObject();
@@ -260,7 +261,9 @@ public class MotelManagement {
             }
         }
         roomData.put("rooms", roomDataArray);
-        files.saveJsonBackupDataPath(roomData, "roomsInformation");
+        files.saveJsonBackupDataPath(roomData, "roomsInformation",localizedTime, saveType);
+        files.saveJsonBackupDataPath(programData, "applicationProperties", localizedTime, saveType);
+        
     }
 
     public void timeInformationUpdate() {
@@ -480,6 +483,28 @@ public class MotelManagement {
             default:
                 break;
         }
+        files.clearBackupFiles();
+    }
+    //Exclusive for turnHistory
+    public void turnHistoryPrint(int option, int selectedRow) {
+        JSONObject summarizedTurn = turnHistory.get(selectedRow).getBasicTurnInformation();
+        JSONObject detailedTurn = turnHistory.get(selectedRow).getDetailedTurnInformation();
+        switch (option) {
+            case 1:
+                printer.printSummarizedTurn(summarizedTurn, true);
+                printer.printDetailedTurn(detailedTurn, true);
+                break;
+            case 2:
+                printer.printSummarizedTurn(summarizedTurn, false);
+                printer.printDetailedTurn(detailedTurn, true);
+                break;
+            case 3:
+                printer.printSummarizedTurn(summarizedTurn, true);
+                printer.printDetailedTurn(detailedTurn, false);
+                break;
+            default:
+                break;
+        }
     }
 
     public void setDesiredRoomChange(int currentFloor, int currentRoom) {
@@ -546,7 +571,7 @@ public class MotelManagement {
         long hours = durationRaw.toHours();
         long minutes = durationRaw.minusHours(hours).toMinutes();
         String duration = String.valueOf(hours + ":" + minutes);
-        
+
         String formattedStart = turnStart.format(formatter);
         String formattedEnd = turnEnd.format(formatter);
         String startDate = turnStart.format(dateFormatter);
@@ -559,10 +584,10 @@ public class MotelManagement {
         output.put("endString", formattedEnd);
         return output;
     }
-    
-    public JSONObject getDetailedTurnHistoryData(int selectedRow){
+
+    public JSONObject getDetailedTurnHistoryData(int selectedRow) {
         JSONObject output = new JSONObject(turnHistory.get(selectedRow).getDetailedTurnInformation().toString());
-        
+
         JSONObject currentTurn = turnHistory.get(selectedRow).getDetailedTurnInformation();
         ZonedDateTime turnStart = ZonedDateTime.parse(currentTurn.getString("turnStart"));
         ZonedDateTime turnEnd = ZonedDateTime.parse(currentTurn.getString("turnEnd"));
@@ -572,7 +597,7 @@ public class MotelManagement {
         long hours = durationRaw.toHours();
         long minutes = durationRaw.minusHours(hours).toMinutes();
         String duration = String.valueOf(hours + ":" + minutes);
-        
+
         String formattedStart = turnStart.format(formatter);
         String formattedEnd = turnEnd.format(formatter);
         String startDate = turnStart.format(dateFormatter);
@@ -581,5 +606,21 @@ public class MotelManagement {
         output.put("startString", formattedStart);
         output.put("endString", formattedEnd);
         return output;
+    }
+    
+    public long getTurnNumber(){
+        return turn.getTurnNumber();
+    }
+
+    public void revertItemSale(JSONObject selectedFilteredItem) {
+        long itemID = selectedFilteredItem.getLong("itemID");
+        long quantity = selectedFilteredItem.getLong("quantity");
+        Item currentItem = register.getItemFromItemID(itemID);
+        currentItem.itemAdded(quantity);
+        turn.reverseItemSaleFromTurn(selectedFilteredItem);
+    }
+
+    public JSONObject getCurrentSummarizedTurn() {
+        return turn.getBasicTurnInformation();
     }
 }

@@ -6,7 +6,7 @@ new FormModel {
 		add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
 			"$layoutConstraints": "fill,hidemode 3"
 			"$columnConstraints": "[grow,fill][grow,shrink 0,fill][grow,shrink 0,fill][grow,fill][grow,shrink 0,fill][fill][fill]"
-			"$rowConstraints": "[grow,shrink 0][grow,shrink 0][grow,shrink 0][grow,shrink 0][grow,shrink 0][grow,shrink 0][grow,shrink 0][grow,shrink 0][25][grow,shrink 0]"
+			"$rowConstraints": "[grow,shrink 0][grow,shrink 0][grow,shrink 0][grow,shrink 0][grow,shrink 0][grow,shrink 0][grow,shrink 0][grow,shrink 0][63,grow,shrink 0][grow,shrink 0]"
 		} ) {
 			name: "this"
 			add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {

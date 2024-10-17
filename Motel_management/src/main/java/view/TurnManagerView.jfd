@@ -1,4 +1,4 @@
-JFDML JFormDesigner: "8.2.2.0.382" Java: "21.0.3" encoding: "UTF-8"
+JFDML JFormDesigner: "8.2.2.0.382" Java: "21.0.4" encoding: "UTF-8"
 
 new FormModel {
 	contentType: "form/swing"
@@ -6,9 +6,35 @@ new FormModel {
 		add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
 			"$layoutConstraints": "hidemode 3"
 			"$columnConstraints": "[grow,fill][grow,fill][grow,fill][grow,fill][grow,fill][grow,fill][grow,fill]"
-			"$rowConstraints": "[grow][grow][][grow][grow][grow][grow][25][grow]"
+			"$rowConstraints": "[77][grow][][grow][grow][grow][grow][25][grow]"
 		} ) {
 			name: "this"
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "deleteActionButton"
+				"text": "ELIMINAR"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 24 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 0,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "upButton"
+				"icon": new com.jformdesigner.model.SwingIcon( 0, "/up.png" )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 1 0,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "downButton"
+				"icon": new com.jformdesigner.model.SwingIcon( 0, "/down.png" )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 2 0,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "summarizedTurnButton"
+				"text": "RESUMIDO TURNO"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 18 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 3 0 2 1,grow"
+			} )
 			add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
 				"$layoutConstraints": "hidemode 3"
 				"$columnConstraints": "[grow,fill]"
@@ -16,7 +42,7 @@ new FormModel {
 			} ) {
 				name: "turnDetailsPanel"
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 0 0 5 7,growy"
+				"value": "cell 0 1 5 7,growy"
 			} )
 			add( new FormComponent( "javax.swing.JLabel" ) {
 				name: "timeLabel"
@@ -120,7 +146,45 @@ new FormModel {
 			} )
 		}, new FormLayoutConstraints( null ) {
 			"location": new java.awt.Point( 0, 0 )
-			"size": new java.awt.Dimension( 720, 450 )
+			"size": new java.awt.Dimension( 930, 615 )
+		} )
+		add( new FormWindow( "javax.swing.JFrame", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
+			"$layoutConstraints": "fill,hidemode 3"
+			"$columnConstraints": "[fill]"
+			"$rowConstraints": "[0][384][]"
+		} ) {
+			name: "summarizedPopup"
+			"alwaysOnTop": true
+			auxiliary() {
+				"JavaCodeGenerator.postInitCode": "summarizedPopup.setExtendedState(JFrame.MAXIMIZED_BOTH);"
+			}
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "summarizedTurnLabel"
+				"text": "RESUMEN TURNO:"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 20 )
+				"horizontalAlignment": 0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 0"
+			} )
+			add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
+				"$layoutConstraints": "fill,hidemode 3"
+				"$columnConstraints": "[fill]"
+				"$rowConstraints": "[]"
+			} ) {
+				name: "summarizedTurnInfoPanel"
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 1,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "backFromSummarizedTurn"
+				"text": "VOLVER"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 24 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 2,growy"
+			} )
+		}, new FormLayoutConstraints( null ) {
+			"location": new java.awt.Point( 945, 10 )
+			"size": new java.awt.Dimension( 385, 545 )
 		} )
 	}
 }

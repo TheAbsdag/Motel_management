@@ -228,7 +228,7 @@ public class TurnHistoryManagerView extends JPanel {
 	    "[grow,shrink 0]" +
 	    "[grow,shrink 0]" +
 	    "[grow,shrink 0]" +
-	    "[25]" +
+	    "[63,grow,shrink 0]" +
 	    "[grow,shrink 0]"));
 
 	//======== turnDetailsPanel ========

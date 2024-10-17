@@ -1,11 +1,11 @@
-JFDML JFormDesigner: "8.2.2.0.382" Java: "21.0.3" encoding: "UTF-8"
+JFDML JFormDesigner: "8.2.2.0.382" Java: "21.0.4" encoding: "UTF-8"
 
 new FormModel {
 	contentType: "form/swing"
 	root: new FormRoot {
 		add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
 			"$layoutConstraints": "fill,hidemode 3"
-			"$columnConstraints": "[fill][fill][248,fill][183,fill][39,grow,fill]"
+			"$columnConstraints": "[fill][fill][0,grow,shrink 0,fill][grow,fill][grow,fill][183,fill]"
 			"$rowConstraints": "[grow][grow][grow][grow][grow][grow][grow][16:n,grow][32][grow]"
 		} ) {
 			name: "this"
@@ -17,63 +17,63 @@ new FormModel {
 			} ) {
 				name: "turnSelectionPanel"
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 0 0 3 8,grow"
+				"value": "cell 0 0 5 8,grow"
 			} )
 			add( new FormComponent( "javax.swing.JLabel" ) {
 				name: "turnDateInformativeLabel"
 				"text": "FECHA:"
 				"font": #Font0
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 3 0"
+				"value": "cell 5 0"
 			} )
 			add( new FormComponent( "javax.swing.JLabel" ) {
 				name: "turnDateLabel"
 				"text": "XXXX-XX-XX "
 				"font": new java.awt.Font( "Segoe UI Black", 0, 18 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 3 1"
+				"value": "cell 5 1"
 			} )
 			add( new FormComponent( "javax.swing.JLabel" ) {
 				name: "startDateInformativeLabel"
 				"text": "INICIO"
 				"font": #Font0
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 3 2"
+				"value": "cell 5 2"
 			} )
 			add( new FormComponent( "javax.swing.JLabel" ) {
 				name: "turnStartLabel"
 				"text": "XXXX-XX-XX - XX:XX AM/PM"
 				"font": new java.awt.Font( "Segoe UI Black", 0, 18 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 3 3"
+				"value": "cell 5 3"
 			} )
 			add( new FormComponent( "javax.swing.JLabel" ) {
 				name: "turnEndInformativeLabel"
 				"text": "FINAL"
 				"font": #Font0
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 3 4"
+				"value": "cell 5 4"
 			} )
 			add( new FormComponent( "javax.swing.JLabel" ) {
 				name: "turnEndLabel"
 				"text": "XXXX-XX-XX - XX:XX AM/PM"
 				"font": new java.awt.Font( "Segoe UI Black", 0, 18 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 3 5"
+				"value": "cell 5 5"
 			} )
 			add( new FormComponent( "javax.swing.JLabel" ) {
 				name: "durationInformativeLabel"
 				"text": "DURACION"
 				"font": #Font0
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 3 6"
+				"value": "cell 5 6"
 			} )
 			add( new FormComponent( "javax.swing.JLabel" ) {
 				name: "durationLabel"
 				"text": "N"
 				"font": new java.awt.Font( "Segoe UI Black", 0, 18 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 3 7"
+				"value": "cell 5 7"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "backButton"
@@ -90,11 +90,23 @@ new FormModel {
 				"value": "cell 1 8 2 1"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "upButton"
+				"icon": new com.jformdesigner.model.SwingIcon( 0, "/up.png" )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 3 8,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "downButton"
+				"icon": new com.jformdesigner.model.SwingIcon( 0, "/down.png" )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 4 8,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "turnDetailsButton"
 				"text": "DETALLES"
 				"font": #Font0
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 4 8 1 2,growy"
+				"value": "cell 5 8 1 2,growy"
 			} )
 			add( new FormComponent( "javax.swing.JLabel" ) {
 				name: "dateLabel"
@@ -105,22 +117,23 @@ new FormModel {
 			} )
 		}, new FormLayoutConstraints( null ) {
 			"location": new java.awt.Point( 0, 0 )
-			"size": new java.awt.Dimension( 860, 540 )
+			"size": new java.awt.Dimension( 815, 540 )
 		} )
 		add( new FormWindow( "javax.swing.JFrame", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
 			"$layoutConstraints": "fill,hidemode 3"
-			"$columnConstraints": "[fill]"
-			"$rowConstraints": "[]"
+			"$columnConstraints": "[grow,fill]"
+			"$rowConstraints": "[grow]"
 		} ) {
 			name: "popupTurn"
+			"alwaysOnTop": true
 			add( new FormComponent( "view.TurnHistoryManagerView" ) {
 				name: "turnDetailsView"
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 0 0"
+				"value": "cell 0 0,grow"
 			} )
 		}, new FormLayoutConstraints( null ) {
 			"location": new java.awt.Point( 5, 560 )
-			"size": new java.awt.Dimension( 825, 445 )
+			"size": new java.awt.Dimension( 785, 590 )
 		} )
 	}
 }

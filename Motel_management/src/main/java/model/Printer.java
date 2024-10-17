@@ -34,14 +34,16 @@ public class Printer {
     private final DateTimeFormatter hourFormatter;
     private final DateTimeFormatter dateFormatter;
     private final NumberFormat numberFormat;
+    private final String motelNit;
     private StyledDocument document;
     private final String PDF_SAVE_PATH = FileManager.PATH + "\\receiptPrints";
 
     public Printer() {
         System.out.println("FileManager initialized");
         printLayout = new JTextPane();
-        motelName = "RODADERO";
-        motelDirection = "Cra 14A No 65-24";
+        motelName = "";
+        motelDirection = "";
+        motelNit = "";
         hourFormatter = new DateTimeFormatterBuilder()
                 .appendPattern("hh:mm").appendLiteral(' ')
                 .appendText(ChronoField.AMPM_OF_DAY, new HashMap<Long, String>() {
@@ -152,8 +154,10 @@ public class Printer {
         document = printLayout.getStyledDocument();
 
         try {
-            document.insertString(document.getLength(), spaces(2) + "MOTEL \n", document.getStyle("HeaderStyle"));
-            document.insertString(document.getLength(), spaces(1) + motelName + "\n", document.getStyle("LargeStyle"));
+           document.insertString(document.getLength(), spaces(2) + "MOTEL", document.getStyle("HeaderStyle"));
+            document.insertString(document.getLength(), "\n"+spaces(1) + motelName + "\n", document.getStyle("LargeStyle"));
+            document.insertString(document.getLength(), spaces(6) + motelDirection + "\n", document.getStyle("FooterStyleBold"));
+            document.insertString(document.getLength(), spaces(3) + motelNit + "\n", document.getStyle("FooterStyleBold"));
             document.insertString(document.getLength(), "___________________________________\n", document.getStyle("SecondLastStyleBold"));
             document.insertString(document.getLength(), spaces(2) + "FACTURA DE VENTA No. ", document.getStyle("DefaultStyle"));
             document.insertString(document.getLength(), spaces(2) + consecutiveTransaction, document.getStyle("DefaultStyleBold"));
@@ -221,8 +225,10 @@ public class Printer {
         //Start of the formatting for the page
         document = printLayout.getStyledDocument();
         try {
-            document.insertString(document.getLength(), spaces(2) + "MOTEL \n", document.getStyle("HeaderStyle"));
-            document.insertString(document.getLength(), spaces(1) + motelName + "\n", document.getStyle("LargeStyle"));
+            document.insertString(document.getLength(), spaces(2) + "MOTEL", document.getStyle("HeaderStyle"));
+            document.insertString(document.getLength(), "\n"+spaces(1) + motelName + "\n", document.getStyle("LargeStyle"));
+            document.insertString(document.getLength(), spaces(6) + motelDirection + "\n", document.getStyle("FooterStyleBold"));
+            document.insertString(document.getLength(), spaces(3) + motelNit + "\n", document.getStyle("FooterStyleBold"));
             document.insertString(document.getLength(), "___________________________________\n", document.getStyle("SecondLastStyleBold"));
             document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
             document.insertString(document.getLength(), spaces(2) + "VENTA A LA HABITACIÓN: ", document.getStyle("DefaultStyle"));
