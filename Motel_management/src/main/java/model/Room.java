@@ -13,6 +13,7 @@ public class Room {
     private final int roomNumber;
     private final int floorNumber;
     private int status;
+    private final int towerNumber;
     /*
     For status management, 1 means free, 2 is cleaning, 3 is occupied.
     */
@@ -21,10 +22,11 @@ public class Room {
     private Instant startStatus;
     private Instant endStatus;
     
-    public Room(String roomName, int floor, int roomNumber){
+    public Room(String roomName, int floor, int roomNumber, int towerNumber){
         this.roomString = roomName;
         this.roomNumber = roomNumber;
         this.floorNumber = floor;
+        this.towerNumber = towerNumber;
         //A default status will be free
         this.status = 1;
     }
@@ -128,5 +130,9 @@ public class Room {
      */
     public void setExtension(int extension) {
         this.extension = extension;
+    }
+    
+    public int getTowerNumber() {
+        return towerNumber;
     }
 }

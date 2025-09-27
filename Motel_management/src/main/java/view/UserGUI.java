@@ -30,6 +30,7 @@ public class UserGUI extends JFrame {
     private HistoryView historyView;
     private TurnManagerView turnManagerView;
     private RoomChangeView roomChangeView;
+    private AppOptionsView appOptions;
 
     private Map<String, JLabel> timeLabels;
     private Map<String, JLabel> dateLabels;
@@ -71,6 +72,9 @@ public class UserGUI extends JFrame {
 
         roomChangeView = new RoomChangeView();
         addView(roomChangeView, "roomChangeView");
+        
+        appOptions = new AppOptionsView();
+        addView(getAppOptions(), "appOptionsView");
 
         //Default window configuration
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -114,9 +118,9 @@ public class UserGUI extends JFrame {
         }
     }
 
-    public void setupFloors(int[] arr) {
-        floorView.createButtonsForFloor(arr);
-        roomChangeView.createButtonsForRoomChange(arr);
+    public void setupFloors(int[][] arr) {
+        floorView.createButtonsForTowers(arr);
+        roomChangeView.createButtonsForTowers(arr);
     }
 
     private String getCurrentCard() {
@@ -200,6 +204,10 @@ public class UserGUI extends JFrame {
     public void setRoomChangeView() {
         cardLayout.show(mainPanel, "roomChangeView");
     }
+    
+    public void setAppOptionsView(){
+        cardLayout.show(mainPanel, "appOptionsView");
+    }
 
     /**
      * @return the turnSelectView
@@ -278,6 +286,13 @@ public class UserGUI extends JFrame {
      */
     public RoomChangeView getRoomChangeView() {
         return roomChangeView;
+    }
+
+    /**
+     * @return the appOptions
+     */
+    public AppOptionsView getAppOptions() {
+        return appOptions;
     }
 
 }

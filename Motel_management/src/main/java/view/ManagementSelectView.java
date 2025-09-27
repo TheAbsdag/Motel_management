@@ -14,6 +14,13 @@ import net.miginfocom.swing.*;
 public class ManagementSelectView extends JPanel {
 
     /**
+     * @return the programOptionsButton
+     */
+    public JButton getAppOptionsButton() {
+        return appOptionsButton;
+    }
+
+    /**
      * @return the backButton
      */
     public JButton getBackButton() {
@@ -75,6 +82,7 @@ public class ManagementSelectView extends JPanel {
 	inventoryButton = new JButton();
 	historyButton = new JButton();
 	backButton = new JButton();
+	appOptionsButton = new JButton();
 
 	//======== this ========
 	setLayout(new MigLayout(
@@ -128,6 +136,11 @@ public class ManagementSelectView extends JPanel {
 	backButton.setText("VOLVER");
 	backButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 20));
 	add(backButton, "cell 0 4,growy");
+
+	//---- appOptionsButton ----
+	appOptionsButton.setText("OPCIONES");
+	appOptionsButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 22));
+	add(appOptionsButton, "cell 5 4 2 1,growy");
 	// JFormDesigner - End of component initialization  //GEN-END:initComponents  @formatter:on
     }
 
@@ -140,5 +153,6 @@ public class ManagementSelectView extends JPanel {
     private JButton inventoryButton;
     private JButton historyButton;
     private JButton backButton;
+    private JButton appOptionsButton;
     // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
 }

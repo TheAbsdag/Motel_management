@@ -6,6 +6,7 @@ import java.awt.Robot;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
+import java.util.Vector;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.Timer;
@@ -25,6 +26,8 @@ public class Controller {
     private Timer timerForTimeUpdates;
     private Timer timerForBackupFiles;
     private Timer timerForCurrentFile;
+    private Timer timerForAutomaticFloorChange;
+    private boolean goingUp = false;
     private boolean isListAdjusting = false;
     private Robot robotSim;
 
@@ -55,6 +58,7 @@ public class Controller {
         timerForTimeUpdates = new Timer(80, e -> updateTime());
         timerForBackupFiles = new Timer(300000, e -> saveBackupFiles("backup"));
         timerForCurrentFile = new Timer(20000, e -> saveMainFiles());
+        timerForAutomaticFloorChange = new Timer(1200000, e -> automaticFloorChange());
         startTimers();
     }
 
@@ -68,15 +72,20 @@ public class Controller {
         //Setting FloorView Listeners
         userInterface.getFloorView().getFloorUpButton().addActionListener(e -> changeFloor(1));
         userInterface.getFloorView().getFloorDownButton().addActionListener(e -> changeFloor(-1));
+        userInterface.getFloorView().getPreviousTowerButton().addActionListener(e -> changeTower(-1));
+        userInterface.getFloorView().getNextTowerButton().addActionListener(e ->changeTower(1));
 
-        int floors[] = motelManager.getRoomsArray();
-        for (int floor = 0; floor < floors.length; floor++) {
-            for (int room = 0; room < floors[floor]; room++) {
-                final int currentFloor = floor;
-                final int currentRoom = room;
-                //Listeners for each room
-                userInterface.getFloorView().getRoomButtonGrid().get(floor).get(room).addActionListener(e -> roomSelected(currentFloor, currentRoom));
-                userInterface.getRoomChangeView().getRoomButtonGrid().get(floor).get(room).addActionListener(e -> roomChangeSelected(currentFloor, currentRoom));
+        int towers[][] = motelManager.getRoomsArray();
+        for (int tower = 0; tower < towers.length; tower++) {
+            for (int floor = 0; floor < towers[tower].length; floor++) {
+                for (int room = 0; room < towers[tower][floor]; room++) {
+                    final int currentTower = tower;
+                    final int currentFloor = floor;
+                    final int currentRoom = room;
+                    //Listeners for each room
+                    userInterface.getFloorView().getRoomButtonGridByTower().get(tower).get(floor).get(room).addActionListener(e -> roomSelected(currentTower, currentFloor, currentRoom));
+                    userInterface.getRoomChangeView().getRoomButtonGridByTower().get(tower).get(floor).get(room).addActionListener(e -> roomChangeSelected(currentTower, currentFloor, currentRoom));
+                }
             }
         }
         userInterface.getFloorView().getManagementOptionsButton().addActionListener(e -> managementOptions());
@@ -139,6 +148,7 @@ public class Controller {
         userInterface.getManagementSelection().getTurnButton().addActionListener(e -> managementTurnSelected());
         userInterface.getManagementSelection().getInventoryButton().addActionListener(e -> managementInventorySelected());
         userInterface.getManagementSelection().getHistoryButton().addActionListener(e -> managementHistorySelected());
+        userInterface.getManagementSelection().getAppOptionsButton().addActionListener(e -> optionsMenuSelected());
 
         //Setting up turn management listeners
         userInterface.getTurnManagerView().getBackButton().addActionListener(e -> managementOptions());
@@ -229,6 +239,22 @@ public class Controller {
         });
         userInterface.getHistoryView().getUpButton().addActionListener(e -> simulateUpArrowHistory());
         userInterface.getHistoryView().getDownButton().addActionListener(e -> simulateDownArrowHistory());
+
+        //Options Listener
+        userInterface.getAppOptions().getBackButton().addActionListener(e -> managementOptions());
+        userInterface.getAppOptions().getPrinterList().addListSelectionListener((ListSelectionEvent event) -> {
+            if (!event.getValueIsAdjusting()) {
+                int selectedIndex = userInterface.getAppOptions().getPrinterList().getSelectedIndex();
+                if (selectedIndex != -1 && !isListAdjusting) {
+                    isListAdjusting = true;
+                    String printerName = motelManager.getPrinterLists().get(selectedIndex);
+                    userInterface.getAppOptions().getSelectedPrinterLabel().setText(printerName);
+                    userInterface.getAppOptions().getConfirmPrinterButton().setEnabled(true);
+                    isListAdjusting = false;
+                }
+            }
+        });
+        userInterface.getAppOptions().getConfirmPrinterButton().addActionListener(e -> confirmPrinter());
     }
 
     private void newInventoryItem() {
@@ -387,10 +413,10 @@ public class Controller {
         userInterface.setRoomChangeView();
     }
 
-    private void roomChangeSelected(int currentFloor, int currentRoom) {
-        String roomString = motelManager.getRoom(currentFloor, currentRoom).getRoomString();
-        int status = motelManager.getRoom(currentFloor, currentRoom).getStatus();
-        motelManager.setDesiredRoomChange(currentFloor, currentRoom);
+    private void roomChangeSelected(int currentTower, int currentFloor, int currentRoom) {
+        String roomString = motelManager.getRoom(currentTower, currentFloor, currentRoom).getRoomString();
+        int status = motelManager.getRoom(currentTower, currentFloor, currentRoom).getStatus();
+        motelManager.setDesiredRoomChange(currentTower, currentFloor, currentRoom);
         if (status == 3) {
             userInterface.getRoomChangeView().getSelectedLabel().setText("NO DISPONIBLE");
         } else {
@@ -408,6 +434,38 @@ public class Controller {
         boolean validReturn = motelManager.changeRoomTimeToAnother();
         if (validReturn) {
             userInterface.setFloorView();
+        }
+    }
+
+    private void optionsMenuSelected() {
+        userInterface.setAppOptionsView();
+        userInterface.getAppOptions().getConfirmPrinterButton().setEnabled(false);
+        userInterface.getAppOptions().getPrinterUsedLabel().setText(motelManager.getCurrentPrinterName());
+        userInterface.getAppOptions().getPrinterList().setListData(motelManager.getPrinterLists().toArray());
+    }
+
+    private void confirmPrinter() {
+        String printerName = motelManager.getPrinterLists().get(userInterface.getAppOptions().getPrinterList().getSelectedIndex());
+        motelManager.setPrinter(printerName);
+        userInterface.getAppOptions().getPrinterUsedLabel().setText(motelManager.getCurrentPrinterName());
+    }
+
+    private void automaticFloorChange() {
+        System.out.println("Changing");
+        if (goingUp) {
+            if (userInterface.getFloorView().getCurrentFloorIndex() != motelManager.getRoomsArray().length - 1) {
+                this.changeFloor(1);
+                System.out.println("up");
+            } else {
+                goingUp = false;
+            }
+        } else {
+            if (userInterface.getFloorView().getCurrentFloorIndex() != 0) {
+                this.changeFloor(-1);
+                System.out.println("down");
+            } else {
+                goingUp = true;
+            }
         }
     }
 
@@ -461,11 +519,11 @@ public class Controller {
     }
 
     //Validation for room data
-    public void roomSelected(int floor, int room) {
-        motelManager.setCurrentFloorRoom(floor, room);
+    public void roomSelected(int tower, int floor, int room) {
+        motelManager.setCurrentFloorRoom(tower, floor, room);
         motelManager.setCurrentServiceDesired(0);
-        String roomText = motelManager.getRoom(floor, room).getRoomString();
-        int roomStatus = motelManager.getRoom(floor, room).getStatus();
+        String roomText = motelManager.getRoom(tower, floor, room).getRoomString();
+        int roomStatus = motelManager.getRoom(tower, floor, room).getStatus();
 
         userInterface.getRoomView().getRoomNumber().setText(roomText);
         userInterface.getRoomView().getBooking12HoursButton().setBackground(Color.WHITE);
@@ -570,13 +628,13 @@ public class Controller {
 
     private void roomSale(boolean receptionSale) {
         if (receptionSale) {
-            motelManager.setCurrentFloorRoom(-1, -1);
+            motelManager.setCurrentFloorRoom(-1, -1, -1);
             userInterface.getSellingView().getCourtesySaleButton().setVisible(true);
         } else {
             userInterface.getSellingView().getCourtesySaleButton().setVisible(false);
         }
         motelManager.restartSaleManager();
-        String roomString = motelManager.getRoom(motelManager.getCurrentFloorViewed(), motelManager.getCurrentRoomViewed()).getRoomString();
+        String roomString = motelManager.getRoom(motelManager.getCurrentTowerViewed(), motelManager.getCurrentFloorViewed(), motelManager.getCurrentRoomViewed()).getRoomString();
         userInterface.getSellingView().getSellingToLabel().setText("VENDIENDO A: " + roomString);
         userInterface.setSellingView();
         userInterface.getSellingView().getAddItemButton().setEnabled(false);
@@ -661,6 +719,7 @@ public class Controller {
 
     private void roomTimeSale() {
         motelManager.timeInformationUpdate();
+        int towerNumber = motelManager.getCurrentTowerViewed();
         int roomNumber = motelManager.getCurrentRoomViewed();
         int floorNumber = motelManager.getCurrentFloorViewed();
         int service = motelManager.getCurrentServiceDesired();
@@ -669,13 +728,13 @@ public class Controller {
         if (!print) {
             boolean noPrintingConfirmation = userInterface.confirmPrinting();
             if (noPrintingConfirmation) {
-                motelManager.registerRoomTimeAdded(floorNumber, roomNumber, service, price, false);
+                motelManager.registerRoomTimeAdded(towerNumber, floorNumber, roomNumber, service, price, false);
                 userInterface.setFloorView();
                 saveMainFiles();
                 saveBackupFiles("operation");
             }
         } else {
-            motelManager.registerRoomTimeAdded(floorNumber, roomNumber, service, price, true);
+            motelManager.registerRoomTimeAdded(towerNumber, floorNumber, roomNumber, service, price, true);
             userInterface.setFloorView();
             saveMainFiles();
             saveBackupFiles("operation");
@@ -684,7 +743,9 @@ public class Controller {
 
     private void updateRoomPrice(long price) {
         long newPrice = Long.parseLong(userInterface.getRoomView().getPriceTextField().getText()) + price;
-        userInterface.getRoomView().getPriceTextField().setText(String.valueOf(newPrice));
+        if (newPrice > 0) {
+            userInterface.getRoomView().getPriceTextField().setText(String.valueOf(newPrice));
+        }
     }
 
     private void roomTimeModification(int amount) {
@@ -717,9 +778,10 @@ public class Controller {
 
     private void roomTimeEnd() {
         motelManager.timeInformationUpdate();
+        int towerNumber = motelManager.getCurrentTowerViewed();
         int roomNumber = motelManager.getCurrentRoomViewed();
         int floorNumber = motelManager.getCurrentFloorViewed();
-        motelManager.registerRoomTimeEnd(floorNumber, roomNumber);
+        motelManager.registerRoomTimeEnd(towerNumber, floorNumber, roomNumber);
         userInterface.setFloorView();
     }
 
@@ -740,34 +802,36 @@ public class Controller {
         //We update each button for the current information required.
         if (isFloorShown) {
             userInterface.getFloorView().getTurnNumberLabel().setText(String.valueOf(motelManager.getTurnNumber()));
-            int roomArray[] = motelManager.getRoomsArray();
-            for (int floor = 0; floor < roomArray.length; floor++) {
-                for (int room = 0; room < roomArray[floor]; room++) {
-                    int status = motelManager.getRoom(floor, room).getStatus();
-                    String roomString = motelManager.getRoom(floor, room).getRoomString();
-                    switch (status) {
-                        case 1:
-                            userInterface.getFloorView().getRoomButtonGrid().get(floor).get(room).setText("<html><center>" + roomString + "</center></html>");
-                            userInterface.getFloorView().getRoomButtonGrid().get(floor).get(room).setBackground(new Color(39, 174, 96));
-                            break;
-                        case 2:
-                            userInterface.getFloorView().getRoomButtonGrid().get(floor).get(room).setText("<html><center>" + roomString + "</center></html>");
-                            userInterface.getFloorView().getRoomButtonGrid().get(floor).get(room).setBackground(new Color(84, 153, 199));
-                            break;
-                        case 3:
-                            String remainingTime = motelManager.getRemainingTimeRoom(floor, room);
-                            JButton roomButton = userInterface.getFloorView().getRoomButtonGrid().get(floor).get(room);
-                            if (remainingTime.contains("-")) {
-                                roomButton.setText("<html><center>" + roomString + "<br>SOBRETIEMPO</center></html>");
-                                roomButton.setBackground(new Color(241, 196, 15)); // Yellow color
-                            } else {
-                                roomButton.setText("<html><center>" + roomString + "<br>QUEDAN " + remainingTime + "</center></html>");
-                                roomButton.setBackground(new Color(231, 76, 60)); // Red color
-                            }
-                            break;
-                        default:
-                            // Optionally handle unexpected status values if needed
-                            break;
+            int roomArray[][] = motelManager.getRoomsArray();
+            for (int tower = 0; tower < roomArray.length; tower++) {
+                for (int floor = 0; floor < roomArray[tower].length; floor++) {
+                    for (int room = 0; room < roomArray[tower][floor]; room++) {
+                        int status = motelManager.getRoom(tower, floor, room).getStatus();
+                        String roomString = motelManager.getRoom(tower, floor, room).getRoomString();
+                        switch (status) {
+                            case 1:
+                                userInterface.getFloorView().getRoomButtonGridByTower().get(tower).get(floor).get(room).setText("<html><center>" + roomString + "</center></html>");
+                                userInterface.getFloorView().getRoomButtonGridByTower().get(tower).get(floor).get(room).setBackground(new Color(39, 174, 96));
+                                break;
+                            case 2:
+                                userInterface.getFloorView().getRoomButtonGridByTower().get(tower).get(floor).get(room).setText("<html><center>" + roomString + "</center></html>");
+                                userInterface.getFloorView().getRoomButtonGridByTower().get(tower).get(floor).get(room).setBackground(new Color(84, 153, 199));
+                                break;
+                            case 3:
+                                String remainingTime = motelManager.getRemainingTimeRoom(tower, floor, room);
+                                JButton roomButton = userInterface.getFloorView().getRoomButtonGridByTower().get(tower).get(floor).get(room);
+                                if (remainingTime.contains("-")) {
+                                    roomButton.setText("<html><center>" + roomString + "<br>SOBRETIEMPO</center></html>");
+                                    roomButton.setBackground(new Color(241, 196, 15)); // Yellow color
+                                } else {
+                                    roomButton.setText("<html><center>" + roomString + "<br>QUEDAN " + remainingTime + "</center></html>");
+                                    roomButton.setBackground(new Color(231, 76, 60)); // Red color
+                                }
+                                break;
+                            default:
+                                // Optionally handle unexpected status values if needed
+                                break;
+                        }
                     }
                 }
             }
@@ -775,18 +839,19 @@ public class Controller {
         if (isRoomShown) {
             int floor = motelManager.getCurrentFloorViewed();
             int room = motelManager.getCurrentRoomViewed();
-            int status = motelManager.getRoom(floor, room).getStatus();
+            int tower = motelManager.getCurrentTowerViewed();
+            int status = motelManager.getRoom(tower, floor, room).getStatus();
             switch (status) {
                 case 2:
-                    String startTime = motelManager.getStartTimeRoom(floor, room);
-                    String startDateClean = motelManager.getStartDateRoom(floor, room);
+                    String startTime = motelManager.getStartTimeRoom(tower, floor, room);
+                    String startDateClean = motelManager.getStartDateRoom(tower, floor, room);
                     userInterface.getRoomView().getStartTimeLabel().setText(startTime);
                     userInterface.getRoomView().getStartDateLabel().setText(startDateClean);
                     break;
                 case 3:
-                    String startTimeRoom = motelManager.getStartTimeRoom(floor, room);
-                    String startDate = motelManager.getStartDateRoom(floor, room);
-                    String remainingTime = motelManager.getRemainingTimeRoom(floor, room);
+                    String startTimeRoom = motelManager.getStartTimeRoom(tower, floor, room);
+                    String startDate = motelManager.getStartDateRoom(tower, floor, room);
+                    String remainingTime = motelManager.getRemainingTimeRoom(tower, floor, room);
                     if (remainingTime.contains("-")) {
                         userInterface.getRoomView().getRoomStatusBackground().setBackground(new Color(241, 196, 15));
                         userInterface.getRoomView().getStatusLabel().setText("SOBRETIEMPO");
@@ -799,28 +864,31 @@ public class Controller {
             }
         }
         if (isRoomChangeShown) {
-            int roomArray[] = motelManager.getRoomsArray();
-            for (int floor = 0; floor < roomArray.length; floor++) {
-                for (int room = 0; room < roomArray[floor]; room++) {
-                    int status = motelManager.getRoom(floor, room).getStatus();
-                    String roomString = motelManager.getRoom(floor, room).getRoomString();
-                    switch (status) {
-                        case 1:
-                            userInterface.getRoomChangeView().getRoomButtonGrid().get(floor).get(room).setText("<html><center>" + roomString + "</center></html>");
-                            userInterface.getRoomChangeView().getRoomButtonGrid().get(floor).get(room).setBackground(new Color(39, 174, 96));
-                            break;
-                        case 2:
-                            userInterface.getRoomChangeView().getRoomButtonGrid().get(floor).get(room).setText("<html><center>" + roomString + "</center></html>");
-                            userInterface.getRoomChangeView().getRoomButtonGrid().get(floor).get(room).setBackground(new Color(84, 153, 199));
-                            break;
-                        case 3:
-                            JButton roomButton = userInterface.getRoomChangeView().getRoomButtonGrid().get(floor).get(room);
-                            roomButton.setText("<html><center>NO DISPONIBLE</center></html>");
-                            roomButton.setBackground(new Color(231, 76, 60)); // Red color
-                            break;
-                        default:
-                            // Optionally handle unexpected status values if needed
-                            break;
+            int roomArray[][] = motelManager.getRoomsArray();
+            for (int tower = 0; tower < roomArray.length; tower++) {
+                for (int floor = 0; floor < roomArray[tower].length; floor++) {
+                    for (int room = 0; room < roomArray[tower][floor]; room++) {
+                        int status = motelManager.getRoom(tower,floor, room).getStatus();
+                        String roomString = motelManager.getRoom(tower,floor, room).getRoomString();
+                        switch (status) {
+                            case 1:
+                                userInterface.getRoomChangeView().getRoomButtonGridByTower().get(tower).get(floor).get(room).setText("<html><center>" + roomString + "</center></html>");
+                                userInterface.getRoomChangeView().getRoomButtonGridByTower().get(tower).get(floor).get(room).setBackground(new Color(39, 174, 96));
+                                break;
+                            case 2:
+                                userInterface.getRoomChangeView().getRoomButtonGridByTower().get(tower).get(floor).get(room).setText("<html><center>" + roomString + "</center></html>");
+                                userInterface.getRoomChangeView().getRoomButtonGridByTower().get(tower).get(floor).get(room).setBackground(new Color(84, 153, 199));
+                                break;
+                            case 3:
+                                JButton roomButton = userInterface.getRoomChangeView().getRoomButtonGridByTower().get(tower).get(floor).get(room);
+                                roomButton.setText("<html><center>NO DISPONIBLE</center></html>");
+                                roomButton.setBackground(new Color(231, 76, 60)); // Red color
+                                break;
+                            default:
+                                // Optionally handle unexpected status values if needed
+                                break;
+                        }
+
                     }
                 }
             }
@@ -830,6 +898,11 @@ public class Controller {
     private void changeFloor(int i) {
         int currentFloorGUI = userInterface.getFloorView().getCurrentFloorIndex();
         userInterface.getFloorView().switchFloor(currentFloorGUI + i);
+    }
+    
+    private void changeTower(int i){
+        int currentTowerGUI = userInterface.getFloorView().getCurrentTowerIndex();
+        userInterface.getFloorView().switchTower(currentTowerGUI +i);
     }
 
     private void managementOptions() {
@@ -844,6 +917,7 @@ public class Controller {
         timerForTimeUpdates.start();
         timerForBackupFiles.start();
         timerForCurrentFile.start();
+        timerForAutomaticFloorChange.start();
     }
 
     private void managementTurnSelected() {
@@ -857,13 +931,13 @@ public class Controller {
         userInterface.getTurnManagerView().getBackButton().setEnabled(true);
         userInterface.setTurnManagerView();
     }
-    
+
     private void showCurrentSummarizedTurn() {
         userInterface.getTurnManagerView().updateSummarizedTurnData(motelManager.getCurrentSummarizedTurn());
         userInterface.getTurnManagerView().getSummarizedPopup().setVisible(true);
     }
-    
-    private void closeSummarizedPopup(){
+
+    private void closeSummarizedPopup() {
         userInterface.getTurnManagerView().getSummarizedPopup().setVisible(false);
     }
 

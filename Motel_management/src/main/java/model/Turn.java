@@ -68,6 +68,7 @@ public class Turn {
         change.put("roomString", room.getRoomString());
         change.put("roomNumber", room.getRoomNumber());
         change.put("floorNumber", room.getFloorNumber());
+        change.put("towerNumber", room.getTowerNumber());
         change.put("roomStatus", room.getStatus());
         //Validation of the time
         dateLocalized = room.getStartStatus().atZone(zoneID).toString();
@@ -79,6 +80,7 @@ public class Turn {
                 change.put("roomString", room.getRoomString());
                 change.put("roomNumber", room.getRoomNumber());
                 change.put("floorNumber", room.getFloorNumber());
+                change.put("towerNumber", room.getTowerNumber());
                 change.put("roomStatus", room.getStatus());
 
                 dateLocalized = room.getStartStatus().atZone(zoneID).toString();
@@ -108,9 +110,11 @@ public class Turn {
         change.put("swapedRoom", swapedRoom.getRoomString());
         change.put("originalRoomNumber", originalRoom.getRoomNumber());
         change.put("originalFloorNumber", originalRoom.getFloorNumber());
+        change.put("originalTowerNumber", originalRoom.getTowerNumber());
 
         change.put("swapedRoomNumber", swapedRoom.getRoomNumber());
         change.put("swapedFloorNumber", swapedRoom.getFloorNumber());
+        change.put("swapedTowerNumber", swapedRoom.getTowerNumber());
 
         turnHistory.put(change);
         saveCurrentTurnHistory();

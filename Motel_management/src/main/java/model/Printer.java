@@ -14,36 +14,38 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.json.JSONArray;
-
+import java.awt.print.PrinterJob;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.property.TextAlignment;
 import com.itextpdf.kernel.pdf.PdfDocument;
+import java.util.List;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
+import javax.print.PrintService;
+
 
 import org.json.JSONObject;
 
 public class Printer {
 
     private final JTextPane printLayout;
-    private final String motelName;
-    private final int percentTax = 19;
-    private final String motelDirection;
+    private String motelName;
+    private String motelAddress;
+    private String motelID;
+    //private final int percentTax = 19;
     private final DateTimeFormatter hourFormatter;
     private final DateTimeFormatter dateFormatter;
-    private final NumberFormat numberFormat;
-    private final String motelNit;
+    private final NumberFormat numberFormat;  
     private StyledDocument document;
     private final String PDF_SAVE_PATH = FileManager.PATH + "\\receiptPrints";
+    private PrintService printerService;
 
     public Printer() {
         System.out.println("FileManager initialized");
         printLayout = new JTextPane();
-        motelName = "";
-        motelDirection = "";
-        motelNit = "";
         hourFormatter = new DateTimeFormatterBuilder()
                 .appendPattern("hh:mm").appendLiteral(' ')
                 .appendText(ChronoField.AMPM_OF_DAY, new HashMap<Long, String>() {
@@ -58,6 +60,46 @@ public class Printer {
         initializeStyles();
         File preparePDFRoute = new File(PDF_SAVE_PATH);
         preparePDFRoute.mkdirs();
+        printerService = PrinterJob.getPrinterJob().getPrintService();
+    }
+    
+    public void setPrinterVariables(String name, String address, String iD){
+        this.motelName = name;
+        this.motelAddress = address;
+        this.motelID = iD;
+    }
+
+    public List<String> getPrinterServiceNameList() {
+        // get list of all print services
+        PrintService[] services = PrinterJob.lookupPrintServices();
+        List<String> list = new ArrayList<>();
+
+        for (PrintService service : services) {
+            list.add(service.getName());
+        }
+
+        return list;
+    }
+
+    public void setPrinterService(String printerName) {
+        printerName = printerName.toLowerCase();
+
+        PrintService service = null;
+
+        // Get array of all print services
+        PrintService[] services = PrinterJob.lookupPrintServices();
+
+        // Retrieve a print service from the array
+        for (int index = 0; service == null && index < services.length; index++) {
+            if (services[index].getName().toLowerCase().contains(printerName)) {
+                service = services[index];
+            }
+        }
+        printerService = service;
+    }
+
+    public String getCurrentPrinterName() {
+        return printerService.getName();
     }
 
     private void initializeStyles() {
@@ -142,8 +184,10 @@ public class Printer {
 
         String roomString = roomTimeSell.getString("roomString");
         long price = roomTimeSell.getLong("price");
+        /*
         long priceWithTax = (long) (price * ((100.0 - percentTax) / 100));
         long taxPrice = (long) (price * (percentTax / 100.0));
+*/
         int service = roomTimeSell.getInt("service");
 
         ZonedDateTime fullDateHourService = ZonedDateTime.parse(roomTimeSell.getString("startStatus"));
@@ -154,10 +198,10 @@ public class Printer {
         document = printLayout.getStyledDocument();
 
         try {
-           document.insertString(document.getLength(), spaces(2) + "MOTEL", document.getStyle("HeaderStyle"));
-            document.insertString(document.getLength(), "\n"+spaces(1) + motelName + "\n", document.getStyle("LargeStyle"));
-            document.insertString(document.getLength(), spaces(6) + motelDirection + "\n", document.getStyle("FooterStyleBold"));
-            document.insertString(document.getLength(), spaces(3) + motelNit + "\n", document.getStyle("FooterStyleBold"));
+            document.insertString(document.getLength(), spaces(2) + "MOTEL", document.getStyle("HeaderStyle"));
+            document.insertString(document.getLength(), spaces(1) + motelName + "\n", document.getStyle("LargeStyle"));
+            document.insertString(document.getLength(), spaces(6) + motelAddress + "\n", document.getStyle("FooterStyleBold"));
+            document.insertString(document.getLength(), spaces(3) + motelID + "\n", document.getStyle("FooterStyleBold"));
             document.insertString(document.getLength(), "___________________________________\n", document.getStyle("SecondLastStyleBold"));
             document.insertString(document.getLength(), spaces(2) + "FACTURA DE VENTA No. ", document.getStyle("DefaultStyle"));
             document.insertString(document.getLength(), spaces(2) + consecutiveTransaction, document.getStyle("DefaultStyleBold"));
@@ -172,9 +216,9 @@ public class Printer {
             document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
             document.insertString(document.getLength(), spaces(4) + "Servicio: " + service + " Horas" + "\n", document.getStyle("TransactionStyle"));
             document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
-            document.insertString(document.getLength(), spaces(10) + "Valor:\t" + numberFormat.format(priceWithTax) + "\n", document.getStyle("TransactionStyle"));
+            //document.insertString(document.getLength(), spaces(10) + "Valor:\t" + numberFormat.format(priceWithTax) + "\n", document.getStyle("TransactionStyle"));
             document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
-            document.insertString(document.getLength(), spaces(6) + "IVA 19%:\t" + numberFormat.format(taxPrice) + "\n", document.getStyle("TransactionStyle"));
+            //document.insertString(document.getLength(), spaces(6) + "IVA 19%:\t" + numberFormat.format(taxPrice) + "\n", document.getStyle("TransactionStyle"));
             document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
             document.insertString(document.getLength(), spaces(4) + "Pago Total:\t", document.getStyle("TransactionStyle"));
             document.insertString(document.getLength(), " " + numberFormat.format(price), document.getStyle("TransactionStyleBold"));
@@ -185,7 +229,7 @@ public class Printer {
             document.insertString(document.getLength(), "NO OLVIDE SUS PERTENENCIAS", document.getStyle("SecondLastStyleBold"));
             document.insertString(document.getLength(), "\n", document.getStyle("DefaultStyle"));
 
-            document.insertString(document.getLength(), spaces(6) + motelDirection + "\n", document.getStyle("FooterStyleBold"));
+            document.insertString(document.getLength(), spaces(6) + motelAddress + "\n", document.getStyle("FooterStyleBold"));
             document.insertString(document.getLength(), "___________________________________\n", document.getStyle("SecondLastStyleBold"));
             document.insertString(document.getLength(), spaces(10) + dateService + "\n", document.getStyle("SecondLastStyle"));
 
@@ -194,18 +238,10 @@ public class Printer {
 
             // Printing process
             if (!justPDF) {
-                PrinterJob job = PrinterJob.getPrinterJob();
-                PageFormat pf = job.defaultPage();
-                Paper paper = pf.getPaper();
-                paper.setImageableArea(0, 0, paper.getWidth(), paper.getHeight());
-                pf.setPaper(paper);
-                job.setPrintable(printLayout.getPrintable(null, null), pf);
-
-                // Print without showing the print dialog
-                job.print();
+                printWithService();
             }
 
-        } catch (BadLocationException | PrinterException ex) {
+        } catch (BadLocationException ex) {
             Logger.getLogger(Printer.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -226,9 +262,9 @@ public class Printer {
         document = printLayout.getStyledDocument();
         try {
             document.insertString(document.getLength(), spaces(2) + "MOTEL", document.getStyle("HeaderStyle"));
-            document.insertString(document.getLength(), "\n"+spaces(1) + motelName + "\n", document.getStyle("LargeStyle"));
-            document.insertString(document.getLength(), spaces(6) + motelDirection + "\n", document.getStyle("FooterStyleBold"));
-            document.insertString(document.getLength(), spaces(3) + motelNit + "\n", document.getStyle("FooterStyleBold"));
+            document.insertString(document.getLength(), spaces(1) + motelName + "\n", document.getStyle("LargeStyle"));
+            document.insertString(document.getLength(), spaces(6) + motelAddress + "\n", document.getStyle("FooterStyleBold"));
+            document.insertString(document.getLength(), spaces(3) + motelID + "\n", document.getStyle("FooterStyleBold"));
             document.insertString(document.getLength(), "___________________________________\n", document.getStyle("SecondLastStyleBold"));
             document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
             document.insertString(document.getLength(), spaces(2) + "VENTA A LA HABITACIÓN: ", document.getStyle("DefaultStyle"));
@@ -258,7 +294,7 @@ public class Printer {
             document.insertString(document.getLength(), "\n", document.getStyle("TransactionStyle"));
 
             document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
-            document.insertString(document.getLength(), spaces(6) + motelDirection + "\n", document.getStyle("FooterStyleBold"));
+            document.insertString(document.getLength(), spaces(6) + motelAddress + "\n", document.getStyle("FooterStyleBold"));
             document.insertString(document.getLength(), "___________________________________\n", document.getStyle("SecondLastStyleBold"));
             document.insertString(document.getLength(), spaces(10) + dateService + "\n", document.getStyle("SecondLastStyle"));
 
@@ -266,17 +302,9 @@ public class Printer {
             saveAsPDF("Sale", fullDateHourService, consecutiveTransaction);
 
             if (!justPDF) {
-                PrinterJob job = PrinterJob.getPrinterJob();
-                PageFormat pf = job.defaultPage();
-                Paper paper = pf.getPaper();
-                paper.setImageableArea(0, 0, paper.getWidth(), paper.getHeight());
-                pf.setPaper(paper);
-                job.setPrintable(printLayout.getPrintable(null, null), pf);
-
-                // Print without showing the print dialog
-                job.print();
+                printWithService();
             }
-        } catch (BadLocationException | PrinterException ex) {
+        } catch (BadLocationException ex) {
             Logger.getLogger(Printer.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -310,8 +338,10 @@ public class Printer {
 
         try {
 
-            document.insertString(document.getLength(), spaces(2) + "MOTEL \n", document.getStyle("HeaderStyle"));
-            document.insertString(document.getLength(), spaces(1) + motelName + "\n", document.getStyle("DefaultStyleBold"));
+            document.insertString(document.getLength(), spaces(2) + "MOTEL", document.getStyle("HeaderStyle"));
+            document.insertString(document.getLength(), "\n" + spaces(1) + motelName + "\n", document.getStyle("LargeStyle"));
+            document.insertString(document.getLength(), spaces(6) + motelAddress + "\n", document.getStyle("FooterStyleBold"));
+            document.insertString(document.getLength(), spaces(3) + motelID + "\n", document.getStyle("FooterStyleBold"));
             document.insertString(document.getLength(), spaces(1) + "RESUMEN VENTAS TURNO\n", document.getStyle("FooterStyleBold"));
             document.insertString(document.getLength(), "___________________________________\n", document.getStyle("SecondLastStyleBold"));
             document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
@@ -375,17 +405,9 @@ public class Printer {
             saveAsPDF("summarizedTurn", fullDateTurnStart, turnNumber);
 
             if (!justPDF) {
-                PrinterJob job = PrinterJob.getPrinterJob();
-                PageFormat pf = job.defaultPage();
-                Paper paper = pf.getPaper();
-                paper.setImageableArea(0, 0, paper.getWidth(), paper.getHeight());
-                pf.setPaper(paper);
-                job.setPrintable(printLayout.getPrintable(null, null), pf);
-
-                // Print without showing the print dialog
-                job.print();
+                printWithService();
             }
-        } catch (BadLocationException | PrinterException ex) {
+        } catch (BadLocationException ex) {
             Logger.getLogger(Printer.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -400,8 +422,10 @@ public class Printer {
 
         try {
 
-            document.insertString(document.getLength(), spaces(2) + "MOTEL \n", document.getStyle("HeaderStyle"));
-            document.insertString(document.getLength(), spaces(1) + motelName + "\n", document.getStyle("LargeStyle"));
+            document.insertString(document.getLength(), spaces(2) + "MOTEL", document.getStyle("HeaderStyle"));
+            document.insertString(document.getLength(), "\n" + spaces(1) + motelName + "\n", document.getStyle("LargeStyle"));
+            document.insertString(document.getLength(), spaces(6) + motelAddress + "\n", document.getStyle("FooterStyleBold"));
+            document.insertString(document.getLength(), spaces(3) + motelID + "\n", document.getStyle("FooterStyleBold"));
             document.insertString(document.getLength(), spaces(1) + "DETALLE VENTAS TURNO\n", document.getStyle("FooterStyleBold"));
             document.insertString(document.getLength(), "___________________________________\n", document.getStyle("SecondLastStyleBold"));
             document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
@@ -438,19 +462,19 @@ public class Printer {
                     for (int j = 0; j < register.length(); j++) {
                         JSONObject currentItem = register.getJSONObject(j);
                         document.insertString(document.getLength(), spaces(1) + formattedDate + "|" + change.getString("roomSoldTo") + "|" + currentItem.getString("itemName") + "|" + currentItem.getLong("price") + "\n", document.getStyle("TransactionStyle"));
-                        totalSales+=currentItem.getLong("price");
-                        totalItems+=currentItem.getLong("price");
+                        totalSales += currentItem.getLong("price");
+                        totalItems += currentItem.getLong("price");
                     }
                 } else if (changeType.equals("room") && change.getInt("roomStatus") == 3) {
-                    totalSales+=change.getLong("price");
-                    totalRooms+=change.getLong("price");
+                    totalSales += change.getLong("price");
+                    totalRooms += change.getLong("price");
                     if (change.getInt("servicedExtension") == 0) {
-                        document.insertString(document.getLength(), spaces(1) + formattedDate + "|" + change.getString("roomString") + "|" + "Alquiler " + change.getInt("service")+"|" + change.getLong("price") + "\n", document.getStyle("TransactionStyle"));
+                        document.insertString(document.getLength(), spaces(1) + formattedDate + "|" + change.getString("roomString") + "|" + "Alquiler " + change.getInt("service") + "|" + change.getLong("price") + "\n", document.getStyle("TransactionStyle"));
                     } else {
-                        document.insertString(document.getLength(), spaces(1) + formattedDate + "|" + change.getString("roomString") + "|" + "Alquiler " + change.getInt("servicedExtension")+"|" + change.getLong("price") + "\n", document.getStyle("TransactionStyle"));
+                        document.insertString(document.getLength(), spaces(1) + formattedDate + "|" + change.getString("roomString") + "|" + "Alquiler " + change.getInt("servicedExtension") + "|" + change.getLong("price") + "\n", document.getStyle("TransactionStyle"));
                     }
                 } else if (changeType.equals("roomSwap")) {
-                    document.insertString(document.getLength(), spaces(1) + formattedDate + "|" + change.getString("originalRoom") + "|"+ "Cambio a: " + change.getString("swapedRoom") + "\n", document.getStyle("TransactionStyle"));
+                    document.insertString(document.getLength(), spaces(1) + formattedDate + "|" + change.getString("originalRoom") + "|" + "Cambio a: " + change.getString("swapedRoom") + "\n", document.getStyle("TransactionStyle"));
                 }
             }
             document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
@@ -470,17 +494,26 @@ public class Printer {
             saveAsPDF("detailedTurnTurn", fullDateTurnStart, turnNumber);
 
             if (!justPDF) {
-                PrinterJob job = PrinterJob.getPrinterJob();
-                PageFormat pf = job.defaultPage();
-                Paper paper = pf.getPaper();
-                paper.setImageableArea(0, 0, paper.getWidth(), paper.getHeight());
-                pf.setPaper(paper);
-                job.setPrintable(printLayout.getPrintable(null, null), pf);
-
-                // Print without showing the print dialog
-                job.print();
+                printWithService();
             }
-        } catch (BadLocationException | PrinterException ex) {
+        } catch (BadLocationException ex) {
+            Logger.getLogger(Printer.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private void printWithService() {
+        try {
+            PrinterJob job = PrinterJob.getPrinterJob();
+            job.setPrintService(printerService);
+            PageFormat pf = job.defaultPage();
+            Paper paper = pf.getPaper();
+            paper.setImageableArea(0, 0, paper.getWidth(), paper.getHeight());
+            pf.setPaper(paper);
+            job.setPrintable(printLayout.getPrintable(null, null), pf);
+
+            // Print without showing the print dialog
+            job.print();
+        } catch (PrinterException ex) {
             Logger.getLogger(Printer.class.getName()).log(Level.SEVERE, null, ex);
         }
     }

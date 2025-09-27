@@ -1,7 +1,6 @@
 /*
  * Created by JFormDesigner on Mon Jun 24 23:49:55 COT 2024
  */
-
 package view;
 
 import java.awt.*;
@@ -14,59 +13,101 @@ import net.miginfocom.swing.*;
  * @author Santiago
  */
 public class FloorView extends JPanel {
-    private ArrayList<ArrayList<JButton>> roomButtonGrid;
+
+    private ArrayList<ArrayList<ArrayList<JButton>>> roomButtonGridByTower;
     private int currentFloorIndex;
+    private int currentTowerIndex;
     private CardLayout cardLayout;
-    
+
     public FloorView() {
         initCustomComponents();
-	initComponents();
+        initComponents();
     }
-    
+
     private void initCustomComponents() {
         currentFloorIndex = 0;
-        roomButtonGrid = new ArrayList<>();
+        currentTowerIndex = 0;
+        roomButtonGridByTower = new ArrayList<>();
         cardLayout = new CardLayout();
     }
-    
-    public void createButtonsForFloor(int[] roomsPerFloor) {
-        for (int floor = 0; floor < roomsPerFloor.length; floor++) {
-            JPanel floorButtonPanel = new JPanel();
 
-            floorButtonPanel.setLayout(new GridLayout(5, 5));
-            floorButtonPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black), "PISO " + (floor + 1), TitledBorder.CENTER, TitledBorder.TOP, new Font("SEGOE UI BLACK", Font.BOLD, 32)));
+    public void createButtonsForTowers(int[][] roomsPerTower) {
+        roomButtonGridByTower.clear();
+        containerPanel.removeAll();
+        containerPanel.setLayout(cardLayout);
 
-            //Creating a temporal list for the buttons of the current floor
-            ArrayList<JButton> floorButtons = new ArrayList<>();
-            for (int room = 0; room < roomsPerFloor[floor]; room++) {
-                JButton button = new JButton();
-                button.setBorder(BorderFactory.createLineBorder(Color.BLACK)); // Set black border
-                button.setBackground(Color.WHITE); // Set white background
-                button.setForeground(Color.WHITE); // Set white font color
-                button.setFocusPainted(false); // Remove focus border
-                button.setFont(new Font("SEGOE UI BLACK", Font.BOLD, 18));
-                floorButtons.add(button);
-                floorButtonPanel.add(button);
+        for (int tower = 0; tower < roomsPerTower.length; tower++) {
+            int[] roomsPerFloor = roomsPerTower[tower];
+            ArrayList<ArrayList<JButton>> towerFloors = new ArrayList<>();
+
+            for (int floor = 0; floor < roomsPerFloor.length; floor++) {
+                JPanel floorButtonPanel = new JPanel();
+                floorButtonPanel.setLayout(new GridLayout(5, 5));
+                floorButtonPanel.setBorder(BorderFactory.createTitledBorder(
+                        BorderFactory.createLineBorder(Color.black),
+                        "TORRE " + (tower + 1) + " - PISO " + (floor + 1),
+                        TitledBorder.CENTER, TitledBorder.TOP,
+                        new Font("SEGOE UI BLACK", Font.BOLD, 24)));
+
+                ArrayList<JButton> floorButtons = new ArrayList<>();
+                for (int room = 0; room < roomsPerFloor[floor]; room++) {
+                    JButton button = new JButton("" + (room + 1));
+                    button.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+                    button.setBackground(Color.WHITE);
+                    button.setForeground(Color.BLACK); // Changed to black for visibility
+                    button.setFocusPainted(false);
+                    button.setFont(new Font("SEGOE UI BLACK", Font.BOLD, 18));
+                    floorButtons.add(button);
+                    floorButtonPanel.add(button);
+                }
+
+                towerFloors.add(floorButtons);
+                containerPanel.add(floorButtonPanel, "Tower" + tower + "Floor" + floor);
             }
 
-            roomButtonGrid.add(floorButtons);
-            containerPanel.add(floorButtonPanel, "Floor " + floor);
+            roomButtonGridByTower.add(towerFloors);
         }
-        cardLayout.show(containerPanel, "Floor 0");
+
+        cardLayout.show(containerPanel, "Tower0Floor0");
+        updateTowerLabel();
     }
-    
+
     public void switchFloor(int floorIndex) {
-        if (floorIndex >= 0 && floorIndex < roomButtonGrid.size()) {
-            currentFloorIndex = floorIndex;
-            cardLayout.show(containerPanel, "Floor " + currentFloorIndex);
+        if (currentTowerIndex >= 0 && currentTowerIndex < roomButtonGridByTower.size()) {
+            ArrayList<ArrayList<JButton>> currentTower = roomButtonGridByTower.get(currentTowerIndex);
+            if (floorIndex >= 0 && floorIndex < currentTower.size()) {
+                currentFloorIndex = floorIndex;
+                switchToCurrentTowerAndFloor();
+            }
         }
     }
-    
+
+    public void switchTower(int towerIndex) {
+        if (towerIndex >= 0 && towerIndex < roomButtonGridByTower.size()) {
+            currentTowerIndex = towerIndex;
+            // Reset to floor 0 when switching towers
+            currentFloorIndex = 0;
+            switchToCurrentTowerAndFloor();
+            updateTowerLabel();
+        }
+    }
+
+    private void switchToCurrentTowerAndFloor() {
+        cardLayout.show(containerPanel, "Tower" + currentTowerIndex + "Floor" + currentFloorIndex);
+    }
+
+    private void updateTowerLabel() {
+        towerLabelInforfmation.setText("TORRE: " + (currentTowerIndex + 1));
+    }
+
     private void initComponents() {
 	// JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents  @formatter:off
 	// Generated using JFormDesigner Educational license - Santiago Esteban Castelblanco Castiblanco (saecastelblancoc)
 	containerPanel = new JPanel();
 	turnNumberLabel = new JLabel();
+	towerLabelInforfmation = new JLabel();
+	previousTowerButton = new JButton();
+	nextTowerButton = new JButton();
 	timeLabel = new JLabel();
 	dateLabel = new JLabel();
 	floorUpButton = new JButton();
@@ -104,30 +145,44 @@ public class FloorView extends JPanel {
 	turnNumberLabel.setFont(new Font("Segoe UI Black", Font.BOLD, 30));
 	add(turnNumberLabel, "cell 1 0 2 1");
 
+	//---- towerLabelInforfmation ----
+	towerLabelInforfmation.setText("TOWER: N ");
+	towerLabelInforfmation.setHorizontalAlignment(SwingConstants.CENTER);
+	towerLabelInforfmation.setFont(new Font("Segoe UI Black", Font.BOLD, 30));
+	add(towerLabelInforfmation, "cell 1 1 2 1");
+
+	//---- previousTowerButton ----
+	previousTowerButton.setIcon(new ImageIcon(getClass().getResource("/left.png")));
+	add(previousTowerButton, "cell 1 2,growy");
+
+	//---- nextTowerButton ----
+	nextTowerButton.setIcon(new ImageIcon(getClass().getResource("/right.png")));
+	add(nextTowerButton, "cell 2 2,growy");
+
 	//---- timeLabel ----
 	timeLabel.setText("time");
 	timeLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 28));
 	timeLabel.setHorizontalAlignment(SwingConstants.CENTER);
-	add(timeLabel, "cell 1 1 2 1");
+	add(timeLabel, "cell 1 3 2 1");
 
 	//---- dateLabel ----
 	dateLabel.setText("date");
 	dateLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 20));
 	dateLabel.setHorizontalAlignment(SwingConstants.CENTER);
-	add(dateLabel, "cell 1 2 2 1");
+	add(dateLabel, "cell 1 4 2 1");
 
 	//---- floorUpButton ----
 	floorUpButton.setIcon(new ImageIcon(getClass().getResource("/up.png")));
-	add(floorUpButton, "cell 1 3,growy");
+	add(floorUpButton, "cell 1 5,growy");
 
 	//---- floorDownButton ----
 	floorDownButton.setIcon(new ImageIcon(getClass().getResource("/down.png")));
-	add(floorDownButton, "cell 2 3,grow");
+	add(floorDownButton, "cell 2 5,grow");
 
 	//---- receptionSellButton ----
 	receptionSellButton.setText("VENTA RECEPCION");
 	receptionSellButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 16));
-	add(receptionSellButton, "cell 1 5 2 1,growy");
+	add(receptionSellButton, "cell 1 6 2 1,growy");
 
 	//---- managementOptionsButton ----
 	managementOptionsButton.setText("OPCIONES");
@@ -140,6 +195,9 @@ public class FloorView extends JPanel {
     // Generated using JFormDesigner Educational license - Santiago Esteban Castelblanco Castiblanco (saecastelblancoc)
     private JPanel containerPanel;
     private JLabel turnNumberLabel;
+    private JLabel towerLabelInforfmation;
+    private JButton previousTowerButton;
+    private JButton nextTowerButton;
     private JLabel timeLabel;
     private JLabel dateLabel;
     private JButton floorUpButton;
@@ -147,13 +205,6 @@ public class FloorView extends JPanel {
     private JButton receptionSellButton;
     private JButton managementOptionsButton;
     // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
-
-    /**
-     * @return the roomButtonGrid
-     */
-    public ArrayList<ArrayList<JButton>> getRoomButtonGrid() {
-        return roomButtonGrid;
-    }
 
     /**
      * @return the currentFloorIndex
@@ -218,5 +269,36 @@ public class FloorView extends JPanel {
         return managementOptionsButton;
     }
 
-    
+    /**
+     * @return the roomButtonGridByTower
+     */
+    public ArrayList<ArrayList<ArrayList<JButton>>> getRoomButtonGridByTower() {
+        return roomButtonGridByTower;
+    }
+
+    /**
+     * @return the towerLabelInforfmation
+     */
+    public JLabel getTowerLabelInforfmation() {
+        return towerLabelInforfmation;
+    }
+
+    /**
+     * @return the previousTowerButton
+     */
+    public JButton getPreviousTowerButton() {
+        return previousTowerButton;
+    }
+
+    /**
+     * @return the nextTowerButton
+     */
+    public JButton getNextTowerButton() {
+        return nextTowerButton;
+    }
+
+    public int getCurrentTowerIndex() {
+        return currentTowerIndex;
+    }
+
 }
