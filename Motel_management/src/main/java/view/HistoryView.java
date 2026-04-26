@@ -4,16 +4,13 @@
 package view;
 
 import java.awt.*;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.List;
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumnModel;
 import net.miginfocom.swing.*;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import model.dto.TurnHistoryData;
 import view.customListRenderes.CustomCellRenderer;
 import view.customListRenderes.CustomHeaderRenderer;
 
@@ -55,7 +52,7 @@ public class HistoryView extends JPanel {
         initCustomComponents();
     }
 
-    public void setTurnHistoryDetails(JSONArray historyList) {
+    public void setTurnHistoryDetails(List<TurnHistoryData> historyList) {
         turnHistoryTableModel.updateData(historyList);
         turnHistoryTable.repaint();
     }
@@ -71,7 +68,7 @@ public class HistoryView extends JPanel {
         turnHistoryTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         JScrollPane scrollPane = new JScrollPane(turnHistoryTable);
         turnHistoryTable.getTableHeader().setReorderingAllowed(false);
-        
+
         turnSelectionPanel.add(scrollPane, "cell 0 0, grow");
     }
 
@@ -84,22 +81,14 @@ public class HistoryView extends JPanel {
     public class TunHistoryTableModel extends AbstractTableModel {
 
         private final String[] columnNames = {"Inicio", "Fin", "Num Turno"};
-        private ArrayList<JSONObject> filteredTurnHistory;
+        private List<TurnHistoryData> filteredTurnHistory;
 
         public TunHistoryTableModel() {
             this.filteredTurnHistory = new ArrayList<>();
         }
 
-        public void updateData(JSONArray data) {
-            filteredTurnHistory.clear();
-            for (int i = 0; i < data.length(); i++) {
-                try {
-                    JSONObject item = data.getJSONObject(i);
-                    filteredTurnHistory.add(item);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
+        public void updateData(List<TurnHistoryData> data) {
+            filteredTurnHistory = data;
             fireTableDataChanged();
         }
 
@@ -115,28 +104,13 @@ public class HistoryView extends JPanel {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            try {
-                JSONObject item = filteredTurnHistory.get(rowIndex);
-                ZonedDateTime turnStart = ZonedDateTime.parse(item.getString("turnStart"));
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd - hh:mm a");
-                String formattedDate = turnStart.format(formatter);
-
-                switch (columnIndex) {
-                    case 0: // Inicio
-                        return formattedDate;
-                    case 1: // Fin
-                        // Assuming there is a turnEnd in the JSON, if not, this needs to be adjusted
-                        ZonedDateTime turnEnd = ZonedDateTime.parse(item.getString("turnEnd"));
-                        return turnEnd.format(formatter);
-                    case 2: // Num Turno
-                        return item.getInt("turnNumber");
-                    default:
-                        return null;
-                }
-            } catch (JSONException ex) {
-                ex.printStackTrace();
-                return null;
-            }
+            TurnHistoryData item = filteredTurnHistory.get(rowIndex);
+            return switch (columnIndex) {
+                case 0 -> item.getStartString();
+                case 1 -> item.getEndString();
+                case 2 -> item.getTurnNumber();
+                default -> null;
+            };
         }
 
         @Override

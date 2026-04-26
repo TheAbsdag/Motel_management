@@ -1,8 +1,11 @@
 package model;
 
 import java.util.ArrayList;
+import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import model.dto.InventoryItemData;
+import model.dto.SellingItemData;
 
 /**
  *
@@ -55,6 +58,15 @@ public class Register {
         for (int i = 0; i < inventory.size(); i++) {
             if (inventory.get(i).getItemID() == item.getItemID()) {
                 inventory.remove(i);
+            }
+        }
+    }
+
+    public void deleteItemById(long itemID) {
+        for (int i = 0; i < inventory.size(); i++) {
+            if (inventory.get(i).getItemID() == itemID) {
+                inventory.remove(i);
+                break;
             }
         }
     }
@@ -161,6 +173,35 @@ public class Register {
         } else {
             return null;
         }
+    }
+
+    /**
+     * Returns all inventory items as a typed list of DTOs.
+     */
+    public List<InventoryItemData> getInventoryItemDataList() {
+        List<InventoryItemData> result = new ArrayList<>();
+        for (Item item : inventory) {
+            result.add(new InventoryItemData(item.getItemID(), item.getName(), item.getPrice(), item.getQuantity()));
+        }
+        return result;
+    }
+
+    /**
+     * Returns the current selling list as a typed list of DTOs.
+     */
+    public List<SellingItemData> getSellingItemDataList() {
+        List<SellingItemData> result = new ArrayList<>();
+        for (int i = 0; i < sellingList.length(); i++) {
+            JSONObject obj = sellingList.getJSONObject(i);
+            result.add(new SellingItemData(
+                    obj.getLong("itemID"),
+                    obj.getString("itemName"),
+                    obj.getLong("quantity"),
+                    obj.getLong("price"),
+                    obj.getLong("price") == 0
+            ));
+        }
+        return result;
     }
 
     public long getTotalPriceRegisterList() {

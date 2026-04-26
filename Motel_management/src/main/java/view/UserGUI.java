@@ -288,6 +288,15 @@ public class UserGUI extends JFrame {
         return roomChangeView;
     }
 
+    public void showInfoMessage(String message, String title) {
+        JOptionPane.showMessageDialog(
+                null,
+                message,
+                title,
+                JOptionPane.INFORMATION_MESSAGE
+        );
+    }
+
     /**
      * @return the appOptions
      */

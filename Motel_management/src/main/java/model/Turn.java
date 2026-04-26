@@ -3,9 +3,14 @@ package model;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import model.dto.TurnActivityData;
+import model.dto.TurnSummaryItemData;
+import model.RoomStatus;
 
 /**
  *
@@ -61,7 +66,7 @@ public class Turn {
         //Setting temporary information for the change.
         String dateLocalized = time.atZone(zoneID).toString();
         JSONObject change = new JSONObject();
-        int roomStatus = room.getStatus();
+        RoomStatus roomStatus = room.getStatus();
 
         change.put("changeDate", dateLocalized);
         change.put("changeType", "room");
@@ -69,32 +74,19 @@ public class Turn {
         change.put("roomNumber", room.getRoomNumber());
         change.put("floorNumber", room.getFloorNumber());
         change.put("towerNumber", room.getTowerNumber());
-        change.put("roomStatus", room.getStatus());
+        change.put("roomStatus", roomStatus.getCode());
         //Validation of the time
         dateLocalized = room.getStartStatus().atZone(zoneID).toString();
         change.put("startStatus", dateLocalized);
-        switch (roomStatus) {
-            case 3:
-                change.put("changeDate", dateLocalized);
-                change.put("changeType", "room");
-                change.put("roomString", room.getRoomString());
-                change.put("roomNumber", room.getRoomNumber());
-                change.put("floorNumber", room.getFloorNumber());
-                change.put("towerNumber", room.getTowerNumber());
-                change.put("roomStatus", room.getStatus());
+        if (roomStatus == RoomStatus.OCCUPIED) {
+            dateLocalized = room.getEndStatus().atZone(zoneID).toString();
+            change.put("endStatus", dateLocalized);
+            change.put("price", price);
+            change.put("service", room.getService());
+            change.put("extension", room.getExtension());
 
-                dateLocalized = room.getStartStatus().atZone(zoneID).toString();
-                change.put("startStatus", dateLocalized);
-                dateLocalized = room.getEndStatus().atZone(zoneID).toString();
-                //Validation of the time
-                change.put("endStatus", dateLocalized);
-                change.put("price", price);
-                change.put("service", room.getService());
-                change.put("extension", room.getExtension());
-
-                //It's put a current extension for the change type, outside of the total extension.
-                change.put("servicedExtension", extended);
-                break;
+            //Current extension for this change (separate from total extension).
+            change.put("servicedExtension", extended);
         }
         turnHistory.put(change);
         saveCurrentTurnHistory();
@@ -185,10 +177,10 @@ public class Turn {
 
             // Validation for the room summary
             if (changeType.equals("room")) {
-                int status = change.getInt("roomStatus");
+                int statusCode = change.getInt("roomStatus");
 
                 // A room was booked on the turn, so we capture the data for the summary
-                if (status == 3) {
+                if (statusCode == RoomStatus.OCCUPIED.getCode()) {
                     long price = change.getLong("price");
                     int service = change.getInt("service");
                     int servicedExtension = change.getInt("servicedExtension");
@@ -283,7 +275,7 @@ public class Turn {
                     totalSales += currentItem.getLong("price");
                     totalItems += currentItem.getLong("price");
                 }
-            } else if (changeType.equals("room") && change.getInt("roomStatus") == 3) {
+            } else if (changeType.equals("room") && change.getInt("roomStatus") == RoomStatus.OCCUPIED.getCode()) {
                 totalSales += change.getLong("price");
                 totalRooms += change.getLong("price");
             }
@@ -312,6 +304,75 @@ public class Turn {
             System.out.println("Previous turn found, no previous activity found");
         }
         return isTurnActive;
+    }
+
+    /**
+     * Returns the turn activity log as a list of typed DTOs for view consumption.
+     * Each JSONObject in the internal turnHistory is converted to a TurnActivityData.
+     */
+    public List<TurnActivityData> getActivityDataList() {
+        List<TurnActivityData> result = new ArrayList<>();
+        for (int i = 0; i < turnHistory.length(); i++) {
+            JSONObject item = turnHistory.getJSONObject(i);
+            String changeType = item.getString("changeType");
+            ZonedDateTime changeDate = ZonedDateTime.parse(item.getString("changeDate"));
+
+            try {
+                if ("sale".equals(changeType)) {
+                    JSONArray registerArray = item.getJSONArray("register");
+                    String roomSoldTo = item.getString("roomSoldTo");
+                    for (int j = 0; j < registerArray.length(); j++) {
+                        JSONObject reg = registerArray.getJSONObject(j);
+                        result.add(TurnActivityData.forSale(
+                                changeDate, roomSoldTo,
+                                reg.getString("itemName"),
+                                reg.getLong("itemID"),
+                                reg.getLong("quantity"),
+                                reg.getLong("price")
+                        ));
+                    }
+                } else if ("room".equals(changeType) && item.getInt("roomStatus") == RoomStatus.OCCUPIED.getCode()) {
+                    result.add(TurnActivityData.forRoomBooking(
+                            changeDate, item.getString("roomString"),
+                            item.getInt("roomStatus"),
+                            item.getLong("price"),
+                            item.getInt("service"),
+                            item.optInt("servicedExtension", 0)
+                    ));
+                } else if ("roomSwap".equals(changeType)) {
+                    result.add(TurnActivityData.forRoomSwap(
+                            changeDate,
+                            item.getString("originalRoom"),
+                            item.getString("swapedRoom")
+                    ));
+                }
+            } catch (JSONException e) {
+                System.out.println("Skipping malformed turn activity entry at index " + i);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Returns the turn summary as a list of typed DTOs.
+     * Summarizes room bookings grouped by service duration and item sales grouped by item.
+     */
+    public List<TurnSummaryItemData> getSummaryDataList() {
+        List<TurnSummaryItemData> result = new ArrayList<>();
+        JSONArray summaryArray = getBasicTurnInformation().optJSONArray("turnSummary");
+        if (summaryArray == null) return result;
+        for (int i = 0; i < summaryArray.length(); i++) {
+            JSONObject obj = summaryArray.getJSONObject(i);
+            String summaryType = obj.getString("summaryType");
+            int quantity = obj.getInt("quantity");
+            long price = obj.getLong("price");
+            if ("room".equals(summaryType)) {
+                result.add(new TurnSummaryItemData(summaryType, quantity, price, null, obj.getInt("service")));
+            } else if ("item".equals(summaryType)) {
+                result.add(new TurnSummaryItemData(summaryType, quantity, price, obj.getString("itemName"), 0));
+            }
+        }
+        return result;
     }
 
     public void reverseItemSaleFromTurn(JSONObject selectedFilteredItem) {

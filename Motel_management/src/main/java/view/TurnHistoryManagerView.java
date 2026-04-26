@@ -5,18 +5,17 @@ package view;
 
 import java.awt.*;
 import java.text.NumberFormat;
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumnModel;
 import net.miginfocom.swing.*;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import model.dto.TurnActivityData;
+import model.dto.TurnHistoryData;
 import view.customListRenderes.CustomCellRenderer;
 import view.customListRenderes.CustomHeaderRenderer;
 
@@ -24,7 +23,7 @@ import view.customListRenderes.CustomHeaderRenderer;
  * @author Santiago
  */
 public class TurnHistoryManagerView extends JPanel {
-    
+
     private JTable turnDetailsTable;
     private TurnDetailsTableModel turnDetailsTableModel;
     private final Font cellFont;
@@ -36,25 +35,20 @@ public class TurnHistoryManagerView extends JPanel {
         initComponents();
         initCustomTable();
     }
-    
-    public void setTurnDetailsData(JSONObject turnDetails) {
-        try {
-            turnDetailsTableModel.updateData(turnDetails.getJSONArray("turnActivity"));
-            turnStartLabel.setText(turnDetails.getString("startString"));
-            turnEndLabel.setText(turnDetails.getString("endString"));
-            totalRoomsLabel.setText(numberFormat.format(turnDetails.getLong("totalRooms")));
-            totalItemsLabel.setText(numberFormat.format(turnDetails.getLong("totalItems")));
-            totalSalesLabel.setText(numberFormat.format(turnDetails.getLong("totalSales")));
-            turnNumberLabel.setText(String.valueOf(turnDetails.getInt("turnNumber")));
-        } catch (JSONException ex) {
-            System.out.println("No turn for GUI to show");
-            this.backButton.setEnabled(true);
-        }
+
+    public void setTurnDetailsData(TurnHistoryData turnDetails) {
+        turnDetailsTableModel.updateData(turnDetails.getActivities());
+        turnStartLabel.setText(turnDetails.getStartString());
+        turnEndLabel.setText(turnDetails.getEndString());
+        totalRoomsLabel.setText(numberFormat.format(turnDetails.getTotalRooms()));
+        totalItemsLabel.setText(numberFormat.format(turnDetails.getTotalItems()));
+        totalSalesLabel.setText(numberFormat.format(turnDetails.getTotalSales()));
+        turnNumberLabel.setText(String.valueOf(turnDetails.getTurnNumber()));
         turnDetailsTable.repaint();
     }
 
     private void initCustomTable() {
-        
+
         turnDetailsTableModel = new TurnDetailsTableModel();
         turnDetailsTable = new JTable(turnDetailsTableModel);
         TableColumnModel columnModel = turnDetailsTable.getColumnModel();
@@ -62,49 +56,25 @@ public class TurnHistoryManagerView extends JPanel {
             columnModel.getColumn(i).setCellRenderer(new CustomCellRenderer(cellFont));
             columnModel.getColumn(i).setHeaderRenderer(new CustomHeaderRenderer(cellFont));
         }
-        
+
         turnDetailsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         JScrollPane scrollPane = new JScrollPane(turnDetailsTable);
         turnDetailsTable.getTableHeader().setReorderingAllowed(false);
-        
+
         turnDetailsPanel.add(scrollPane, "cell 0 0, grow");
     }
 
     private class TurnDetailsTableModel extends AbstractTableModel {
 
         private final String[] columnNames = {"Habitacion", "Tiempo", "Accion", "Valor"};
-        private ArrayList<JSONObject> filteredTurnDetails;
+        private List<TurnActivityData> filteredTurnDetails;
 
         public TurnDetailsTableModel() {
             this.filteredTurnDetails = new ArrayList<>();
         }
 
-        public void updateData(JSONArray data) {
-            filteredTurnDetails.clear();
-            for (int i = 0; i < data.length(); i++) {
-                try {
-                    JSONObject item = data.getJSONObject(i);
-                    String changeType = item.getString("changeType");
-                    if (changeType.equals("sale")) {
-                        JSONArray registerArray = item.getJSONArray("register");
-                        String roomSoldTo = item.getString("roomSoldTo");
-                        String changeDate = item.getString("changeDate");
-                        for (int registerItem = 0; registerItem < registerArray.length(); registerItem++) {
-                            JSONObject currentItem = new JSONObject(registerArray.getJSONObject(registerItem).toString());
-                            currentItem.put("roomSoldTo", roomSoldTo);
-                            currentItem.put("changeType", "sale");
-                            currentItem.put("changeDate", changeDate);
-                            filteredTurnDetails.add(currentItem);
-                        }
-                    } else if (changeType.equals("room") && item.getInt("roomStatus") == 3) {
-                        filteredTurnDetails.add(item);
-                    }else if(changeType.equals("roomSwap")){
-                        filteredTurnDetails.add(item);
-                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
+        public void updateData(List<TurnActivityData> data) {
+            filteredTurnDetails = data;
             fireTableDataChanged();
         }
 
@@ -120,59 +90,31 @@ public class TurnHistoryManagerView extends JPanel {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            try {
-                JSONObject item = filteredTurnDetails.get(rowIndex);
-                String changeType = item.getString("changeType");
-                ZonedDateTime changeDate = ZonedDateTime.parse(item.getString("changeDate"));
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd - hh:mm a");
-                String formattedDate = changeDate.format(formatter);
+            TurnActivityData item = filteredTurnDetails.get(rowIndex);
+            String changeType = item.getChangeType();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd - hh:mm a");
+            String formattedDate = item.getChangeDate().format(formatter);
 
-                switch (columnIndex) {
-                    case 0:
-                        if (changeType.equals("sale")) {
-                            return item.getString("roomSoldTo");
-                        } else if (changeType.equals("room") && item.getInt("roomStatus") == 3) {
-                            return item.getString("roomString");
-                        }
-                        else if(changeType.equals("roomSwap")){
-                            return item.getString("originalRoom");
-                        }
-                        else {
-                            return "";
-                        }
-                    case 1: // Time
-                        return formattedDate;
-                    case 2: // Action
-                        if (changeType.equals("sale")) {
-                            return item.getString("itemName");
-                        } else if (changeType.equals("room") && item.getInt("roomStatus") == 3) {
-                            if (item.getInt("servicedExtension") == 0) {
-                                return "Alquiler " + item.getInt("service");
-                            } else {
-                                return "Alquiler " + item.getInt("servicedExtension");
-                            }
-                        } 
-                        else if(changeType.equals("roomSwap")){
-                            return "Cambio de habitacion a: "+item.getString("swapedRoom");
-                        }
-                        else {
-                            return "";
-                        }
-                    case 3: // Value
-                        if (changeType.equals("sale")) {
-                            return item.getInt("price");
-                        } else if (changeType.equals("room") && item.getInt("roomStatus") == 3) {
-                            return item.getInt("price");
-                        } else {
-                            return "";
-                        }
-                    default:
-                        return null;
+            return switch (columnIndex) {
+                case 0 -> {
+                    if ("sale".equals(changeType)) yield item.getRoomSoldTo();
+                    else if ("room".equals(changeType)) yield item.getRoomString();
+                    else if ("roomSwap".equals(changeType)) yield item.getOriginalRoom();
+                    else yield "";
                 }
-            } catch (JSONException ex) {
-                ex.printStackTrace();
-                return null;
-            }
+                case 1 -> formattedDate;
+                case 2 -> {
+                    if ("sale".equals(changeType)) yield item.getItemName();
+                    else if ("room".equals(changeType)) yield "Alquiler " + item.getEffectiveService();
+                    else if ("roomSwap".equals(changeType)) yield "Cambio de habitacion a: " + item.getSwappedRoom();
+                    else yield "";
+                }
+                case 3 -> {
+                    if ("sale".equals(changeType) || "room".equals(changeType)) yield item.getPrice();
+                    else yield "";
+                }
+                default -> null;
+            };
         }
 
         @Override
@@ -433,6 +375,48 @@ public class TurnHistoryManagerView extends JPanel {
      */
     public JButton getPrintButton() {
         return printButton;
+    }
+
+    /**
+     * @return the totalRoomsInformativeLabel
+     */
+    public JLabel getTotalRoomsInformativeLabel() {
+        return totalRoomsInformativeLabel;
+    }
+
+    /**
+     * @return the totalRoomsLabel
+     */
+    public JLabel getTotalRoomsLabel() {
+        return totalRoomsLabel;
+    }
+
+    /**
+     * @return the totalItemsInformativeLabel
+     */
+    public JLabel getTotalItemsInformativeLabel() {
+        return totalItemsInformativeLabel;
+    }
+
+    /**
+     * @return the totalItemsLabel
+     */
+    public JLabel getTotalItemsLabel() {
+        return totalItemsLabel;
+    }
+
+    /**
+     * @return the totalSalesInformativeLabel
+     */
+    public JLabel getTotalSalesInformativeLabel() {
+        return totalSalesInformativeLabel;
+    }
+
+    /**
+     * @return the totalSalesLabel
+     */
+    public JLabel getTotalSalesLabel() {
+        return totalSalesLabel;
     }
 
 }

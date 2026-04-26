@@ -14,6 +14,11 @@ import java.util.Locale;
 import java.util.Map;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import model.dto.InventoryItemData;
+import model.dto.SellingItemData;
+import model.dto.TurnActivityData;
+import model.dto.TurnHistoryData;
+import model.dto.TurnSummaryItemData;
 
 /**
  *
@@ -44,11 +49,14 @@ public class MotelManagement {
     private int selectedRoomChangeTower;
 
     private int consecutiveTransaction;
-    
+
     //Motel information
     private  String motelName;
     private  String motelAddress;
     private  String motelID;
+
+    //Saved printer name (for fallback messaging)
+    private String configuredPrinterName;
 
     public MotelManagement() {
         files = new FileManager();
@@ -72,7 +80,15 @@ public class MotelManagement {
         motelAddress = programData.getString("motelAddress");
         motelID = programData.getString("motelID");
         printer.setPrinterVariables(motelName, motelAddress, motelID);
-        
+
+        // Load saved printer name if present
+        if (programData.has("printerName")) {
+            configuredPrinterName = programData.getString("printerName");
+            printer.setPrinterService(configuredPrinterName);
+        } else {
+            configuredPrinterName = null;
+        }
+
         // Get the roomsPerTower array
         JSONArray roomsPerTower = programData.getJSONArray("roomsPerTower");
 
@@ -141,6 +157,7 @@ public class MotelManagement {
                 int floor = room.getInt("floorNumber");
                 int roomNum = room.getInt("roomNumber");
                 int status = room.getInt("status");
+                RoomStatus roomStatus = RoomStatus.fromCode(status);
 
                 // Find the room using tower -> floor -> room indices
                 if (towerNum >= 0 && towerNum < rooms.size()
@@ -149,15 +166,15 @@ public class MotelManagement {
 
                     Room targetRoom = rooms.get(towerNum).get(floor).get(roomNum);
 
-                    switch (status) {
-                        case 1:
-                            targetRoom.setRoomStatus(status);
+                    switch (roomStatus) {
+                        case FREE:
+                            targetRoom.setRoomStatus(RoomStatus.FREE);
                             break;
-                        case 2:
-                            targetRoom.setRoomStatus(status, ZonedDateTime.parse(room.getString("startStatus")).toInstant());
+                        case CLEANING:
+                            targetRoom.setRoomStatus(RoomStatus.CLEANING, ZonedDateTime.parse(room.getString("startStatus")).toInstant());
                             break;
-                        case 3:
-                            targetRoom.setRoomStatus(status, ZonedDateTime.parse(room.getString("startStatus")).toInstant(), room.getInt("service"));
+                        case OCCUPIED:
+                            targetRoom.setRoomStatus(RoomStatus.OCCUPIED, ZonedDateTime.parse(room.getString("startStatus")).toInstant(), room.getInt("service"));
                             break;
                         default:
                             throw new IllegalArgumentException("Invalid status: " + status);
@@ -180,14 +197,14 @@ public class MotelManagement {
 
     public void registerRoomTimeAdded(int tower, int floor, int room, int service, long price, boolean print) {
         addConsecutiveTransaction();
-        int currentStatus = rooms.get(tower).get(floor).get(room).getStatus();
+        RoomStatus currentStatus = rooms.get(tower).get(floor).get(room).getStatus();
         int currentExtension = 0;
         //A time increase was done if the room is currently booked
-        if (currentStatus == 3) {
+        if (currentStatus == RoomStatus.OCCUPIED) {
             rooms.get(tower).get(floor).get(room).extendRoomTime(service);
             currentExtension = service;
         } else {
-            rooms.get(tower).get(floor).get(room).setRoomStatus(3, currentTime, service);
+            rooms.get(tower).get(floor).get(room).setRoomStatus(RoomStatus.OCCUPIED, currentTime, service);
         }
         JSONObject roomChange = turn.registerRoomChange(rooms.get(tower).get(floor).get(room), currentTime, price, currentExtension);
         if (print) {
@@ -198,13 +215,13 @@ public class MotelManagement {
     }
 
     public void registerRoomTimeEnd(int tower, int floor, int room) {
-        int currentStatus = rooms.get(tower).get(floor).get(room).getStatus();
+        RoomStatus currentStatus = rooms.get(tower).get(floor).get(room).getStatus();
         //If it was being cleaned it will set it up as free
-        if (currentStatus == 2) {
-            rooms.get(tower).get(floor).get(room).setRoomStatus(1);
+        if (currentStatus == RoomStatus.CLEANING) {
+            rooms.get(tower).get(floor).get(room).setRoomStatus(RoomStatus.FREE);
         } else {
             //Otherwise it will be setup as cleaning
-            rooms.get(tower).get(floor).get(room).setRoomStatus(2, currentTime);
+            rooms.get(tower).get(floor).get(room).setRoomStatus(RoomStatus.CLEANING, currentTime);
         }
         turn.registerRoomChange(rooms.get(tower).get(floor).get(room), currentTime, 0, 0);
     }
@@ -257,7 +274,7 @@ public class MotelManagement {
                     currentRoom.put("towerNumber", tower); // Save tower index
                     currentRoom.put("floorNumber", currentRoomObj.getFloorNumber());
                     currentRoom.put("roomNumber", currentRoomObj.getRoomNumber());
-                    currentRoom.put("status", currentRoomObj.getStatus());
+                    currentRoom.put("status", currentRoomObj.getStatus().getCode());
                     currentRoom.put("service", currentRoomObj.getService());
 
                     Instant startStatus = currentRoomObj.getStartStatus();
@@ -305,7 +322,7 @@ public class MotelManagement {
                     currentRoom.put("towerNumber", tower); // Save tower index
                     currentRoom.put("floorNumber", currentRoomObj.getFloorNumber());
                     currentRoom.put("roomNumber", currentRoomObj.getRoomNumber());
-                    currentRoom.put("status", currentRoomObj.getStatus());
+                    currentRoom.put("status", currentRoomObj.getStatus().getCode());
                     currentRoom.put("service", currentRoomObj.getService());
 
                     Instant startStatus = currentRoomObj.getStartStatus();
@@ -464,11 +481,21 @@ public class MotelManagement {
         register.saveItemInformation(updatedItem);
     }
 
+    /** DTO-based overload for saving item information. */
+    public void saveItemInformation(InventoryItemData item) {
+        register.saveItemInformation(new Item(item.name(), item.price(), item.quantity(), item.itemID()));
+    }
+
     public void newItemCreated(JSONObject itemInformation) {
         register.createNewItem(
                 itemInformation.getString("itemName"),
                 itemInformation.getLong("price"),
                 itemInformation.getLong("quantity"));
+    }
+
+    /** DTO-based overload for creating a new item. */
+    public void newItemCreated(String name, long price, long quantity) {
+        register.createNewItem(name, price, quantity);
     }
 
     public void deleteItemFromInventory(JSONObject selectedItem) {
@@ -479,6 +506,11 @@ public class MotelManagement {
                 selectedItem.getLong("itemID")
         );
         register.deleteItemInformation(updatedItem);
+    }
+
+    /** DTO-based overload for deleting an inventory item. */
+    public void deleteItemFromInventory(long itemID) {
+        register.deleteItemById(itemID);
     }
 
     public void addItemToSelling(long itemID, long quantity, boolean courtesySale) {
@@ -607,14 +639,14 @@ public class MotelManagement {
         boolean validReturn = false;
         Room currentRoom = rooms.get(currentTowerViewed).get(currentFloorViewed).get(currentRoomViewed);
         Room desiredChangeRoom = rooms.get(selectedRoomChangeTower).get(selectedRoomChangeFloor).get(selectedRoomChangeRoom);
-        if (desiredChangeRoom.getStatus() != 3) {
+        if (desiredChangeRoom.getStatus() != RoomStatus.OCCUPIED) {
             validReturn = true;
             int currentService = currentRoom.getService();
             int currentTotalExtension = currentRoom.getExtension();
             Instant currentStartTime = currentRoom.getStartStatus();
-            desiredChangeRoom.setRoomStatus(3, currentStartTime, currentService);
+            desiredChangeRoom.setRoomStatus(RoomStatus.OCCUPIED, currentStartTime, currentService);
             desiredChangeRoom.setExtension(currentTotalExtension);
-            currentRoom.setRoomStatus(2, currentTime);
+            currentRoom.setRoomStatus(RoomStatus.CLEANING, currentTime);
             turn.registerRoomSwap(currentRoom, desiredChangeRoom, currentTime);
         }
 
@@ -693,8 +725,29 @@ public class MotelManagement {
         long itemID = selectedFilteredItem.getLong("itemID");
         long quantity = selectedFilteredItem.getLong("quantity");
         Item currentItem = register.getItemFromItemID(itemID);
-        currentItem.itemAdded(quantity);
+        if (currentItem != null) {
+            currentItem.itemAdded(quantity);
+        }
         turn.reverseItemSaleFromTurn(selectedFilteredItem);
+    }
+
+    /**
+     * DTO-based overload for reverting an item sale from the current turn.
+     */
+    public void revertItemSale(TurnActivityData activity) {
+        long itemID = activity.getItemID();
+        long quantity = activity.getQuantity();
+        Item currentItem = register.getItemFromItemID(itemID);
+        if (currentItem != null) {
+            currentItem.itemAdded(quantity);
+        }
+        // Build JSON for internal Turn method
+        JSONObject json = new JSONObject();
+        json.put("roomSoldTo", activity.getRoomSoldTo());
+        json.put("changeDate", activity.getChangeDate().toString());
+        json.put("itemID", activity.getItemID());
+        json.put("quantity", activity.getQuantity());
+        turn.reverseItemSaleFromTurn(json);
     }
 
     public JSONObject getCurrentSummarizedTurn() {
@@ -713,7 +766,102 @@ public class MotelManagement {
         printer.setPrinterService(printerName);
     }
 
+    public boolean isPrinterAvailable() {
+        return !"N/A".equals(printer.getCurrentPrinterName());
+    }
+
+    public String setFirstAvailablePrinter() {
+        String name = printer.getFirstAvailablePrinterName();
+        if (name != null) {
+            printer.setPrinterService(name);
+        }
+        return name;
+    }
+
+    public void savePrinterConfiguration(String printerName) {
+        programData.put("printerName", printerName);
+        configuredPrinterName = printerName;
+        files.saveJsonMainDataPath(programData, "applicationProperties");
+    }
+
+    public String getConfiguredPrinterName() {
+        return configuredPrinterName;
+    }
+
     public int getCurrentTowerViewed() {
        return currentTowerViewed;
+    }
+
+    // ========== DTO Access Methods ==========
+
+    /**
+     * Returns the inventory as a typed list of DTOs.
+     */
+    public List<InventoryItemData> getInventoryItemDataList() {
+        return register.getInventoryItemDataList();
+    }
+
+    /**
+     * Returns the current selling list as a typed list of DTOs.
+     */
+    public List<SellingItemData> getSellingItemDataList() {
+        return register.getSellingItemDataList();
+    }
+
+    /**
+     * Returns the current turn activity log as typed DTOs.
+     */
+    public List<TurnActivityData> getTurnActivityDataList() {
+        return turn.getActivityDataList();
+    }
+
+    /**
+     * Returns the current turn summary as typed DTOs.
+     */
+    public List<TurnSummaryItemData> getTurnSummaryDataList() {
+        return turn.getSummaryDataList();
+    }
+
+    /**
+     * Returns turn history as a list of typed DTOs.
+     */
+    public List<TurnHistoryData> getTurnHistoryDataList() {
+        JSONArray rawHistory = files.getHistoryFiles();
+        List<TurnHistoryData> result = new ArrayList<>();
+        for (int i = 0; i < rawHistory.length(); i++) {
+            JSONObject currentTurn = rawHistory.getJSONObject(i);
+            try {
+                JSONArray activityArray = currentTurn.getJSONArray("turnActivity");
+                Instant start = ZonedDateTime.parse(currentTurn.getString("turnStart")).toInstant();
+                Instant end = ZonedDateTime.parse(currentTurn.getString("turnEnd")).toInstant();
+                int turnNum = currentTurn.getInt("turnNumber");
+                Turn historyTurn = new Turn(start, end, turnNum, zoneID, activityArray);
+                turnHistory.add(historyTurn);
+
+                ZonedDateTime turnStartZ = ZonedDateTime.parse(currentTurn.getString("turnStart"));
+                ZonedDateTime turnEndZ = ZonedDateTime.parse(currentTurn.getString("turnEnd"));
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd - hh:mm a");
+                DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", new Locale("es", "ES"));
+                Duration durationRaw = Duration.between(turnStartZ, turnEndZ);
+                long hours = durationRaw.toHours();
+                long minutes = durationRaw.minusHours(hours).toMinutes();
+                String duration = hours + ":" + minutes;
+
+                long totalSales = currentTurn.optLong("totalSales");
+                long totalItems = currentTurn.optLong("totalItems");
+                long totalRooms = currentTurn.optLong("totalRooms");
+
+                result.add(new TurnHistoryData(
+                        turnNum, turnStartZ, turnEndZ,
+                        totalSales, totalItems, totalRooms,
+                        turnStartZ.format(dateFormatter), duration,
+                        turnStartZ.format(formatter), turnEndZ.format(formatter),
+                        historyTurn.getActivityDataList()
+                ));
+            } catch (Exception e) {
+                System.out.println("Skipping malformed history entry at index " + i);
+            }
+        }
+        return result;
     }
 }

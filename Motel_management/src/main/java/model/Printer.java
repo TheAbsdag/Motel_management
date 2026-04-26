@@ -1,33 +1,36 @@
 package model;
 
-import javax.swing.*;
-import javax.swing.text.*;
-import java.awt.print.*;
 import java.io.FileOutputStream;
 import java.text.NumberFormat;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.print.PrintService;
+import javax.swing.JTextPane;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Style;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 import org.json.JSONArray;
-import java.awt.print.PrinterJob;
+import org.json.JSONObject;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.property.TextAlignment;
 import com.itextpdf.kernel.pdf.PdfDocument;
-import java.util.List;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import javax.print.PrintService;
-
-
-import org.json.JSONObject;
+import java.awt.print.PageFormat;
+import java.awt.print.Paper;
+import java.awt.print.PrinterException;
+import java.awt.print.PrinterJob;
 
 public class Printer {
 
@@ -35,10 +38,9 @@ public class Printer {
     private String motelName;
     private String motelAddress;
     private String motelID;
-    //private final int percentTax = 19;
     private final DateTimeFormatter hourFormatter;
     private final DateTimeFormatter dateFormatter;
-    private final NumberFormat numberFormat;  
+    private final NumberFormat numberFormat;
     private StyledDocument document;
     private final String PDF_SAVE_PATH = FileManager.PATH + "\\receiptPrints";
     private PrintService printerService;
@@ -62,34 +64,26 @@ public class Printer {
         preparePDFRoute.mkdirs();
         printerService = PrinterJob.getPrinterJob().getPrintService();
     }
-    
-    public void setPrinterVariables(String name, String address, String iD){
+
+    public void setPrinterVariables(String name, String address, String iD) {
         this.motelName = name;
         this.motelAddress = address;
         this.motelID = iD;
     }
 
     public List<String> getPrinterServiceNameList() {
-        // get list of all print services
         PrintService[] services = PrinterJob.lookupPrintServices();
         List<String> list = new ArrayList<>();
-
         for (PrintService service : services) {
             list.add(service.getName());
         }
-
         return list;
     }
 
     public void setPrinterService(String printerName) {
         printerName = printerName.toLowerCase();
-
         PrintService service = null;
-
-        // Get array of all print services
         PrintService[] services = PrinterJob.lookupPrintServices();
-
-        // Retrieve a print service from the array
         for (int index = 0; service == null && index < services.length; index++) {
             if (services[index].getName().toLowerCase().contains(printerName)) {
                 service = services[index];
@@ -99,13 +93,23 @@ public class Printer {
     }
 
     public String getCurrentPrinterName() {
+        if (printerService == null) {
+            return "N/A";
+        }
         return printerService.getName();
+    }
+
+    public String getFirstAvailablePrinterName() {
+        PrintService[] services = PrinterJob.lookupPrintServices();
+        if (services.length > 0) {
+            return services[0].getName();
+        }
+        return null;
     }
 
     private void initializeStyles() {
         document = printLayout.getStyledDocument();
-
-        String fontFamily = "Calibri";  // Font family to be used for all styles
+        String fontFamily = "Calibri";
 
         Style headerStyle = document.addStyle("HeaderStyle", null);
         StyleConstants.setFontSize(headerStyle, 12);
@@ -131,7 +135,7 @@ public class Printer {
         StyleConstants.setFontSize(secondLastStyle, 7);
         StyleConstants.setFontFamily(secondLastStyle, fontFamily);
 
-        //BOLD VARIANTS
+        // BOLD VARIANTS
         Style headerStyleBold = document.addStyle("HeaderStyleBold", null);
         StyleConstants.setFontSize(headerStyleBold, 12);
         StyleConstants.setBold(headerStyleBold, true);
@@ -170,6 +174,8 @@ public class Printer {
         StyleConstants.setAlignment(centeredStyle, StyleConstants.ALIGN_CENTER);
     }
 
+    // ========== Document Assembly Helpers ==========
+
     private String spaces(int n) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < n; i++) {
@@ -178,191 +184,194 @@ public class Printer {
         return sb.toString();
     }
 
+    /**
+     * Prints the standard header: MOTEL + name + address + NIT + optional subtitle + separator.
+     */
+    private void printHeader(String subtitle) throws BadLocationException {
+        document.insertString(document.getLength(), spaces(2) + "MOTEL", document.getStyle("HeaderStyle"));
+        document.insertString(document.getLength(), spaces(1) + motelName + "\n", document.getStyle("LargeStyle"));
+        document.insertString(document.getLength(), spaces(6) + motelAddress + "\n", document.getStyle("FooterStyleBold"));
+        document.insertString(document.getLength(), spaces(3) + motelID + "\n", document.getStyle("FooterStyleBold"));
+        if (subtitle != null && !subtitle.isEmpty()) {
+            document.insertString(document.getLength(), spaces(1) + subtitle + "\n", document.getStyle("FooterStyleBold"));
+        }
+        printSeparator();
+    }
+
+    /**
+     * Prints the standard separator line.
+     */
+    private void printSeparator() throws BadLocationException {
+        document.insertString(document.getLength(), "___________________________________\n", document.getStyle("SecondLastStyleBold"));
+    }
+
+    /**
+     * Prints "FACTURA DE VENTA No. <consecutive>".
+     */
+    private void printTransactionNumber(int consecutiveTransaction) throws BadLocationException {
+        document.insertString(document.getLength(), spaces(2) + "FACTURA DE VENTA No. ", document.getStyle("DefaultStyle"));
+        document.insertString(document.getLength(), spaces(2) + consecutiveTransaction, document.getStyle("DefaultStyleBold"));
+        document.insertString(document.getLength(), spaces(2) + "\n", document.getStyle("DefaultStyle"));
+    }
+
+    /**
+     * Prints the centered start/end date section for turn reports.
+     */
+    private void printTurnDateSection(ZonedDateTime start, ZonedDateTime end) throws BadLocationException {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd - HH:mm:ss");
+        String startDate = start.format(formatter);
+        String endDate = end.format(formatter);
+
+        document.insertString(document.getLength(), "Inicio turno: \n", document.getStyle("SecondLastStyleBold"));
+        document.setParagraphAttributes(document.getLength() - 1, 1, document.getStyle("CenteredStyle"), false);
+        document.insertString(document.getLength(), startDate + "\n", document.getStyle("DefaultStyleBold"));
+        document.setParagraphAttributes(document.getLength() - 1, 1, document.getStyle("CenteredStyle"), false);
+        document.insertString(document.getLength(), "Fin turno: \n", document.getStyle("SecondLastStyleBold"));
+        document.setParagraphAttributes(document.getLength() - 1, 1, document.getStyle("CenteredStyle"), false);
+        document.insertString(document.getLength(), endDate + "\n", document.getStyle("DefaultStyleBold"));
+        document.setParagraphAttributes(document.getLength() - 1, 1, document.getStyle("CenteredStyle"), false);
+    }
+
+    /**
+     * Prints the totals section (Habitaciones / Productos / Total) for turn reports.
+     */
+    private void printTurnTotals(long totalRooms, long totalItems, long totalSales) throws BadLocationException {
+        document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
+        printSeparator();
+        document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
+        document.insertString(document.getLength(), spaces(2) + "Habitaciones: ", document.getStyle("DefaultStyle"));
+        document.insertString(document.getLength(), numberFormat.format(totalRooms) + "\n", document.getStyle("DefaultStyleBold"));
+        document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
+        document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
+        document.insertString(document.getLength(), spaces(4) + "Productos: ", document.getStyle("DefaultStyle"));
+        document.insertString(document.getLength(), numberFormat.format(totalItems) + "\n", document.getStyle("DefaultStyleBold"));
+        document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
+        document.insertString(document.getLength(), "Total Turno: ", document.getStyle("DefaultStyle"));
+        document.insertString(document.getLength(), numberFormat.format(totalSales) + "\n", document.getStyle("DefaultStyleBold"));
+    }
+
+    /**
+     * Saves a PDF and optionally prints to the configured printer.
+     */
+    private void completePrinting(String pdfType, ZonedDateTime date, int id, boolean justPDF) {
+        saveAsPDF(pdfType, date, id);
+        if (!justPDF) {
+            printWithService();
+        }
+    }
+
+    // ========== Print Methods ==========
+
     public void printRoomTimeSell(JSONObject roomTimeSell, int consecutiveTransaction, boolean justPDF) {
-        // Clear the print layout
         printLayout.setText("");
+        document = printLayout.getStyledDocument();
 
         String roomString = roomTimeSell.getString("roomString");
         long price = roomTimeSell.getLong("price");
-        /*
-        long priceWithTax = (long) (price * ((100.0 - percentTax) / 100));
-        long taxPrice = (long) (price * (percentTax / 100.0));
-*/
         int service = roomTimeSell.getInt("service");
 
         ZonedDateTime fullDateHourService = ZonedDateTime.parse(roomTimeSell.getString("startStatus"));
-
         String hourService = fullDateHourService.format(hourFormatter);
         String dateService = fullDateHourService.format(dateFormatter);
 
-        document = printLayout.getStyledDocument();
-
         try {
-            document.insertString(document.getLength(), spaces(2) + "MOTEL", document.getStyle("HeaderStyle"));
-            document.insertString(document.getLength(), spaces(1) + motelName + "\n", document.getStyle("LargeStyle"));
-            document.insertString(document.getLength(), spaces(6) + motelAddress + "\n", document.getStyle("FooterStyleBold"));
-            document.insertString(document.getLength(), spaces(3) + motelID + "\n", document.getStyle("FooterStyleBold"));
-            document.insertString(document.getLength(), "___________________________________\n", document.getStyle("SecondLastStyleBold"));
-            document.insertString(document.getLength(), spaces(2) + "FACTURA DE VENTA No. ", document.getStyle("DefaultStyle"));
-            document.insertString(document.getLength(), spaces(2) + consecutiveTransaction, document.getStyle("DefaultStyleBold"));
-            document.insertString(document.getLength(), spaces(2) + "\n", document.getStyle("DefaultStyle"));
+            printHeader(null);
+            printTransactionNumber(consecutiveTransaction);
+
             document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
-            document.insertString(document.getLength(), spaces(3) + "Habitación No:", document.getStyle("TransactionStyle"));
+            document.insertString(document.getLength(), spaces(3) + "Habitaci\u00f3n No:", document.getStyle("TransactionStyle"));
             document.insertString(document.getLength(), roomString, document.getStyle("TransactionStyleBold"));
             document.insertString(document.getLength(), "\n", document.getStyle("TransactionStyle"));
             document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
-
             document.insertString(document.getLength(), spaces(3) + "Hora Entrada: " + hourService + "\n", document.getStyle("TransactionStyle"));
             document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
             document.insertString(document.getLength(), spaces(4) + "Servicio: " + service + " Horas" + "\n", document.getStyle("TransactionStyle"));
             document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
-            //document.insertString(document.getLength(), spaces(10) + "Valor:\t" + numberFormat.format(priceWithTax) + "\n", document.getStyle("TransactionStyle"));
-            document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
-            //document.insertString(document.getLength(), spaces(6) + "IVA 19%:\t" + numberFormat.format(taxPrice) + "\n", document.getStyle("TransactionStyle"));
             document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
             document.insertString(document.getLength(), spaces(4) + "Pago Total:\t", document.getStyle("TransactionStyle"));
             document.insertString(document.getLength(), " " + numberFormat.format(price), document.getStyle("TransactionStyleBold"));
             document.insertString(document.getLength(), "\n", document.getStyle("TransactionStyle"));
             document.insertString(document.getLength(), "\n \n", document.getStyle("TransactionStyle"));
-            document.insertString(document.getLength(), "___________________________________\n", document.getStyle("SecondLastStyleBold"));
+            printSeparator();
 
             document.insertString(document.getLength(), "NO OLVIDE SUS PERTENENCIAS", document.getStyle("SecondLastStyleBold"));
             document.insertString(document.getLength(), "\n", document.getStyle("DefaultStyle"));
-
             document.insertString(document.getLength(), spaces(6) + motelAddress + "\n", document.getStyle("FooterStyleBold"));
-            document.insertString(document.getLength(), "___________________________________\n", document.getStyle("SecondLastStyleBold"));
+            printSeparator();
             document.insertString(document.getLength(), spaces(10) + dateService + "\n", document.getStyle("SecondLastStyle"));
 
-            //Save of a PDF beforehand
-            saveAsPDF("roomBooked", fullDateHourService, consecutiveTransaction);
-
-            // Printing process
-            if (!justPDF) {
-                printWithService();
-            }
-
+            completePrinting("roomBooked", fullDateHourService, consecutiveTransaction, justPDF);
         } catch (BadLocationException ex) {
             Logger.getLogger(Printer.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
     public void printItemSold(JSONObject transaction, int consecutiveTransaction, boolean justPDF) {
-        // Clear the print layout
         printLayout.setText("");
+        document = printLayout.getStyledDocument();
+
         String roomString = transaction.getString("roomSoldTo");
         ZonedDateTime fullDateHourService = ZonedDateTime.parse(transaction.getString("changeDate"));
-
         String hourService = fullDateHourService.format(hourFormatter);
         String dateService = fullDateHourService.format(dateFormatter);
-
         JSONArray registerArray = transaction.getJSONArray("register");
         long totalPrice = 0;
 
-        //Start of the formatting for the page
-        document = printLayout.getStyledDocument();
         try {
-            document.insertString(document.getLength(), spaces(2) + "MOTEL", document.getStyle("HeaderStyle"));
-            document.insertString(document.getLength(), spaces(1) + motelName + "\n", document.getStyle("LargeStyle"));
-            document.insertString(document.getLength(), spaces(6) + motelAddress + "\n", document.getStyle("FooterStyleBold"));
-            document.insertString(document.getLength(), spaces(3) + motelID + "\n", document.getStyle("FooterStyleBold"));
-            document.insertString(document.getLength(), "___________________________________\n", document.getStyle("SecondLastStyleBold"));
-            document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
-            document.insertString(document.getLength(), spaces(2) + "VENTA A LA HABITACIÓN: ", document.getStyle("DefaultStyle"));
-            document.insertString(document.getLength(), roomString, document.getStyle("TransactionStyleBold"));
-            document.insertString(document.getLength(), "\n", document.getStyle("TransactionStyle"));
+            printHeader(null);
 
             document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
-            document.insertString(document.getLength(), spaces(2) + "FACTURA DE VENTA No. ", document.getStyle("DefaultStyle"));
-            document.insertString(document.getLength(), spaces(2) + consecutiveTransaction, document.getStyle("DefaultStyleBold"));
-            document.insertString(document.getLength(), spaces(2) + "\n", document.getStyle("DefaultStyle"));
+            document.insertString(document.getLength(), spaces(2) + "VENTA A LA HABITACI\u00d3N: ", document.getStyle("DefaultStyle"));
+            document.insertString(document.getLength(), roomString, document.getStyle("TransactionStyleBold"));
+            document.insertString(document.getLength(), "\n", document.getStyle("TransactionStyle"));
+            document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
+
+            printTransactionNumber(consecutiveTransaction);
+
             document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
             document.insertString(document.getLength(), spaces(3) + "HORA VENTA: " + hourService + "\n", document.getStyle("DefaultStyle"));
             document.insertString(document.getLength(), " \n\n\n", document.getStyle("FillerStyle"));
 
             for (int i = 0; i < registerArray.length(); i++) {
                 JSONObject item = registerArray.getJSONObject(i);
-
                 int quantity = item.getInt("quantity");
                 String name = item.getString("itemName");
                 long price = item.getLong("price");
                 totalPrice += price;
-                document.insertString(document.getLength(), spaces(2) + String.valueOf(quantity) + spaces(3) + name + "\t" + numberFormat.format(price) + " \n", document.getStyle("TransactionStyle"));
+                document.insertString(document.getLength(), spaces(2) + quantity + spaces(3) + name + "\t" + numberFormat.format(price) + " \n", document.getStyle("TransactionStyle"));
                 document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
             }
             document.insertString(document.getLength(), spaces(4) + "\n\nPago Total:\t", document.getStyle("TransactionStyle"));
             document.insertString(document.getLength(), " " + numberFormat.format(totalPrice), document.getStyle("TransactionStyleBold"));
             document.insertString(document.getLength(), "\n", document.getStyle("TransactionStyle"));
-
             document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
             document.insertString(document.getLength(), spaces(6) + motelAddress + "\n", document.getStyle("FooterStyleBold"));
-            document.insertString(document.getLength(), "___________________________________\n", document.getStyle("SecondLastStyleBold"));
+            printSeparator();
             document.insertString(document.getLength(), spaces(10) + dateService + "\n", document.getStyle("SecondLastStyle"));
 
-            //Saving a pdf beforehand
-            saveAsPDF("Sale", fullDateHourService, consecutiveTransaction);
-
-            if (!justPDF) {
-                printWithService();
-            }
+            completePrinting("Sale", fullDateHourService, consecutiveTransaction, justPDF);
         } catch (BadLocationException ex) {
             Logger.getLogger(Printer.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    private void saveAsPDF(String type, ZonedDateTime date, int consecutive) {
-        try {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss");
-
-            // Format the ZonedDateTime using the formatter
-            String formattedDateTime = date.format(formatter);
-            PdfWriter writer = new PdfWriter(new FileOutputStream(PDF_SAVE_PATH + "\\" + formattedDateTime + "-No" + consecutive + "-" + type + ".pdf"));
-            PdfDocument pdfDoc = new PdfDocument(writer);
-            Document document = new Document(pdfDoc);
-
-            String text = printLayout.getText();
-            document.add(new Paragraph(text).setTextAlignment(TextAlignment.LEFT));
-
-            document.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
     void printSummarizedTurn(JSONObject summarizedTurn, boolean justPDF) {
         printLayout.setText("");
+        document = printLayout.getStyledDocument();
+
         ZonedDateTime fullDateTurnStart = ZonedDateTime.parse(summarizedTurn.getString("turnStart"));
         ZonedDateTime FullDateTurnEnd = ZonedDateTime.parse(summarizedTurn.getString("turnEnd"));
         int turnNumber = summarizedTurn.getInt("turnNumber");
-        //Start of the formatting for the page
-        document = printLayout.getStyledDocument();
 
         try {
-
-            document.insertString(document.getLength(), spaces(2) + "MOTEL", document.getStyle("HeaderStyle"));
-            document.insertString(document.getLength(), "\n" + spaces(1) + motelName + "\n", document.getStyle("LargeStyle"));
-            document.insertString(document.getLength(), spaces(6) + motelAddress + "\n", document.getStyle("FooterStyleBold"));
-            document.insertString(document.getLength(), spaces(3) + motelID + "\n", document.getStyle("FooterStyleBold"));
-            document.insertString(document.getLength(), spaces(1) + "RESUMEN VENTAS TURNO\n", document.getStyle("FooterStyleBold"));
-            document.insertString(document.getLength(), "___________________________________\n", document.getStyle("SecondLastStyleBold"));
+            printHeader("RESUMEN VENTAS TURNO");
             document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
 
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd - HH:mm:ss");
+            printTurnDateSection(fullDateTurnStart, FullDateTurnEnd);
 
-            String startDate = fullDateTurnStart.format(formatter);
-            String endDate = FullDateTurnEnd.format(formatter);
-
-            document.insertString(document.getLength(), "Inicio turno: \n", document.getStyle("SecondLastStyleBold"));
-            document.setParagraphAttributes(document.getLength() - 1, 1, document.getStyle("CenteredStyle"), false);
-            document.insertString(document.getLength(), startDate + "\n", document.getStyle("DefaultStyleBold"));
-            document.setParagraphAttributes(document.getLength() - 1, 1, document.getStyle("CenteredStyle"), false);
-            document.insertString(document.getLength(), "Fin turno: \n", document.getStyle("SecondLastStyleBold"));
-            document.setParagraphAttributes(document.getLength() - 1, 1, document.getStyle("CenteredStyle"), false);
-            document.insertString(document.getLength(), endDate + "\n", document.getStyle("DefaultStyleBold"));
-            document.setParagraphAttributes(document.getLength() - 1, 1, document.getStyle("CenteredStyle"), false);
-
-            document.insertString(document.getLength(), "___________________________________\n", document.getStyle("SecondLastStyleBold"));
+            printSeparator();
             document.insertString(document.getLength(), "Cant\tConcepto\tPrecio\n", document.getStyle("TransactionStyle"));
-            document.insertString(document.getLength(), "___________________________________\n", document.getStyle("SecondLastStyleBold"));
+            printSeparator();
             document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
 
             JSONArray summaryArray = summarizedTurn.getJSONArray("turnSummary");
@@ -388,25 +397,9 @@ public class Printer {
                     totalItems += price;
                 }
             }
-            document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
-            document.insertString(document.getLength(), "___________________________________\n", document.getStyle("SecondLastStyleBold"));
-            document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
-            document.insertString(document.getLength(), spaces(2) + "Habitaciones: ", document.getStyle("DefaultStyle"));
-            document.insertString(document.getLength(), numberFormat.format(totalRooms) + "\n", document.getStyle("DefaultStyleBold"));
-            document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
-            document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
-            document.insertString(document.getLength(), spaces(4) + "Productos: ", document.getStyle("DefaultStyle"));
-            document.insertString(document.getLength(), numberFormat.format(totalItems) + "\n", document.getStyle("DefaultStyleBold"));
-            document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
-            document.insertString(document.getLength(), "Total Turno: ", document.getStyle("DefaultStyle"));
-            document.insertString(document.getLength(), numberFormat.format(totalSales) + "\n", document.getStyle("DefaultStyleBold"));
 
-            //Saving a pdf beforehand
-            saveAsPDF("summarizedTurn", fullDateTurnStart, turnNumber);
-
-            if (!justPDF) {
-                printWithService();
-            }
+            printTurnTotals(totalRooms, totalItems, totalSales);
+            completePrinting("summarizedTurn", fullDateTurnStart, turnNumber, justPDF);
         } catch (BadLocationException ex) {
             Logger.getLogger(Printer.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -414,38 +407,20 @@ public class Printer {
 
     void printDetailedTurn(JSONObject detailedTurn, boolean justPDF) {
         printLayout.setText("");
+        document = printLayout.getStyledDocument();
+
         ZonedDateTime fullDateTurnStart = ZonedDateTime.parse(detailedTurn.getString("turnStart"));
         ZonedDateTime FullDateTurnEnd = ZonedDateTime.parse(detailedTurn.getString("turnEnd"));
         int turnNumber = detailedTurn.getInt("turnNumber");
-        //Start of the formatting for the page
-        document = printLayout.getStyledDocument();
 
         try {
-
-            document.insertString(document.getLength(), spaces(2) + "MOTEL", document.getStyle("HeaderStyle"));
-            document.insertString(document.getLength(), "\n" + spaces(1) + motelName + "\n", document.getStyle("LargeStyle"));
-            document.insertString(document.getLength(), spaces(6) + motelAddress + "\n", document.getStyle("FooterStyleBold"));
-            document.insertString(document.getLength(), spaces(3) + motelID + "\n", document.getStyle("FooterStyleBold"));
-            document.insertString(document.getLength(), spaces(1) + "DETALLE VENTAS TURNO\n", document.getStyle("FooterStyleBold"));
-            document.insertString(document.getLength(), "___________________________________\n", document.getStyle("SecondLastStyleBold"));
+            printHeader("DETALLE VENTAS TURNO");
             document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
 
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd - HH:mm:ss");
-
-            String startDate = fullDateTurnStart.format(formatter);
-            String endDate = FullDateTurnEnd.format(formatter);
-
-            document.insertString(document.getLength(), "Inicio turno: \n", document.getStyle("SecondLastStyleBold"));
-            document.setParagraphAttributes(document.getLength() - 1, 1, document.getStyle("CenteredStyle"), false);
-            document.insertString(document.getLength(), startDate + "\n", document.getStyle("DefaultStyleBold"));
-            document.setParagraphAttributes(document.getLength() - 1, 1, document.getStyle("CenteredStyle"), false);
-            document.insertString(document.getLength(), "Fin turno: \n", document.getStyle("SecondLastStyleBold"));
-            document.setParagraphAttributes(document.getLength() - 1, 1, document.getStyle("CenteredStyle"), false);
-            document.insertString(document.getLength(), endDate + "\n", document.getStyle("DefaultStyleBold"));
-            document.setParagraphAttributes(document.getLength() - 1, 1, document.getStyle("CenteredStyle"), false);
+            printTurnDateSection(fullDateTurnStart, FullDateTurnEnd);
 
             document.insertString(document.getLength(), "Tiempo Hab Concepto Precio\n", document.getStyle("TransactionStyleBold"));
-            document.insertString(document.getLength(), "___________________________________\n", document.getStyle("SecondLastStyleBold"));
+            printSeparator();
 
             JSONArray turnActivity = detailedTurn.getJSONArray("turnActivity");
             long totalSales = 0;
@@ -461,7 +436,8 @@ public class Printer {
                     JSONArray register = change.getJSONArray("register");
                     for (int j = 0; j < register.length(); j++) {
                         JSONObject currentItem = register.getJSONObject(j);
-                        document.insertString(document.getLength(), spaces(1) + formattedDate + "|" + change.getString("roomSoldTo") + "|" + currentItem.getString("itemName") + "|" + currentItem.getLong("price") + "\n", document.getStyle("TransactionStyle"));
+                        document.insertString(document.getLength(), spaces(1) + formattedDate + "|" + change.getString("roomSoldTo")
+                                + "|" + currentItem.getString("itemName") + "|" + currentItem.getLong("price") + "\n", document.getStyle("TransactionStyle"));
                         totalSales += currentItem.getLong("price");
                         totalItems += currentItem.getLong("price");
                     }
@@ -469,35 +445,39 @@ public class Printer {
                     totalSales += change.getLong("price");
                     totalRooms += change.getLong("price");
                     if (change.getInt("servicedExtension") == 0) {
-                        document.insertString(document.getLength(), spaces(1) + formattedDate + "|" + change.getString("roomString") + "|" + "Alquiler " + change.getInt("service") + "|" + change.getLong("price") + "\n", document.getStyle("TransactionStyle"));
+                        document.insertString(document.getLength(), spaces(1) + formattedDate + "|" + change.getString("roomString")
+                                + "|" + "Alquiler " + change.getInt("service") + "|" + change.getLong("price") + "\n", document.getStyle("TransactionStyle"));
                     } else {
-                        document.insertString(document.getLength(), spaces(1) + formattedDate + "|" + change.getString("roomString") + "|" + "Alquiler " + change.getInt("servicedExtension") + "|" + change.getLong("price") + "\n", document.getStyle("TransactionStyle"));
+                        document.insertString(document.getLength(), spaces(1) + formattedDate + "|" + change.getString("roomString")
+                                + "|" + "Alquiler " + change.getInt("servicedExtension") + "|" + change.getLong("price") + "\n", document.getStyle("TransactionStyle"));
                     }
                 } else if (changeType.equals("roomSwap")) {
-                    document.insertString(document.getLength(), spaces(1) + formattedDate + "|" + change.getString("originalRoom") + "|" + "Cambio a: " + change.getString("swapedRoom") + "\n", document.getStyle("TransactionStyle"));
+                    document.insertString(document.getLength(), spaces(1) + formattedDate + "|" + change.getString("originalRoom")
+                            + "|" + "Cambio a: " + change.getString("swapedRoom") + "\n", document.getStyle("TransactionStyle"));
                 }
             }
-            document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
-            document.insertString(document.getLength(), "___________________________________\n", document.getStyle("SecondLastStyleBold"));
-            document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
-            document.insertString(document.getLength(), spaces(2) + "Habitaciones: ", document.getStyle("DefaultStyle"));
-            document.insertString(document.getLength(), numberFormat.format(totalRooms) + "\n", document.getStyle("DefaultStyleBold"));
-            document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
-            document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
-            document.insertString(document.getLength(), spaces(4) + "Productos: ", document.getStyle("DefaultStyle"));
-            document.insertString(document.getLength(), numberFormat.format(totalItems) + "\n", document.getStyle("DefaultStyleBold"));
-            document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
-            document.insertString(document.getLength(), "Total Turno: ", document.getStyle("DefaultStyle"));
-            document.insertString(document.getLength(), numberFormat.format(totalSales) + "\n", document.getStyle("DefaultStyleBold"));
 
-            //Saving a pdf beforehand
-            saveAsPDF("detailedTurnTurn", fullDateTurnStart, turnNumber);
-
-            if (!justPDF) {
-                printWithService();
-            }
+            printTurnTotals(totalRooms, totalItems, totalSales);
+            completePrinting("detailedTurnTurn", fullDateTurnStart, turnNumber, justPDF);
         } catch (BadLocationException ex) {
             Logger.getLogger(Printer.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    // ========== PDF & Print ==========
+
+    private void saveAsPDF(String type, ZonedDateTime date, int consecutive) {
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss");
+            String formattedDateTime = date.format(formatter);
+            PdfWriter writer = new PdfWriter(new FileOutputStream(PDF_SAVE_PATH + "\\" + formattedDateTime + "-No" + consecutive + "-" + type + ".pdf"));
+            PdfDocument pdfDoc = new PdfDocument(writer);
+            Document document = new Document(pdfDoc);
+            String text = printLayout.getText();
+            document.add(new Paragraph(text).setTextAlignment(TextAlignment.LEFT));
+            document.close();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -510,8 +490,6 @@ public class Printer {
             paper.setImageableArea(0, 0, paper.getWidth(), paper.getHeight());
             pf.setPaper(paper);
             job.setPrintable(printLayout.getPrintable(null, null), pf);
-
-            // Print without showing the print dialog
             job.print();
         } catch (PrinterException ex) {
             Logger.getLogger(Printer.class.getName()).log(Level.SEVERE, null, ex);

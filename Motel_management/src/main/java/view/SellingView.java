@@ -4,14 +4,15 @@
 package view;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumnModel;
 import javax.swing.text.AbstractDocument;
 import net.miginfocom.swing.*;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import model.dto.InventoryItemData;
+import model.dto.SellingItemData;
 import view.customListRenderes.*;
 
 /**
@@ -58,29 +59,21 @@ public class SellingView extends JPanel {
         registerListPanel.add(sellingScrollPane, "cell 0 0, grow");
     }
 
-    public JSONObject getCurrentSelectedItemListed(int rowSelected) {
-        return itemTableModel.inventoryItems.getJSONObject(rowSelected);
+    public InventoryItemData getCurrentSelectedItemListed(int rowSelected) {
+        return itemTableModel.inventoryItems.get(rowSelected);
     }
 
-    public JSONObject getCurrentSelectedSellingListed(int rowSelected) {
-        return sellingTableModel.sellingItems.getJSONObject(rowSelected);
+    public SellingItemData getCurrentSelectedSellingListed(int rowSelected) {
+        return sellingTableModel.sellingItems.get(rowSelected);
     }
 
-    public void updateItemListed(JSONObject inventoryData) {
-        try {
-            itemTableModel.updateData(inventoryData.getJSONArray("inventoryItems"));
-        } catch (JSONException ex) {
-            System.out.println("No inventory for GUI to show");
-        }
+    public void updateItemListed(List<InventoryItemData> inventoryItems) {
+        itemTableModel.updateData(inventoryItems);
         itemTable.repaint();
     }
 
-    public void updateSellingListed(JSONArray sellingList) {
-        try {
-            sellingTableModel.updateData(sellingList);
-        } catch (JSONException ex) {
-            System.out.println("No selling for GUI to show");
-        }
+    public void updateSellingListed(List<SellingItemData> sellingList) {
+        sellingTableModel.updateData(sellingList);
         sellingTable.repaint();
     }
 
@@ -88,14 +81,13 @@ public class SellingView extends JPanel {
     private class SellingTableModel extends AbstractTableModel {
 
         private final String[] columnNames = {"Nombre", "Cantidad", "Precio"};
-        private JSONArray sellingItems;
+        private List<SellingItemData> sellingItems;
 
         public SellingTableModel() {
-            this.sellingItems = new JSONArray();
+            this.sellingItems = new ArrayList<>();
         }
 
-        public void updateData(JSONArray data) {
-            //sellingItems.clear();
+        public void updateData(List<SellingItemData> data) {
             sellingItems = data;
             getSellingTable().repaint();
             fireTableDataChanged();
@@ -103,7 +95,7 @@ public class SellingView extends JPanel {
 
         @Override
         public int getRowCount() {
-            return sellingItems.length();
+            return sellingItems.size();
         }
 
         @Override
@@ -113,21 +105,13 @@ public class SellingView extends JPanel {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            try {
-                JSONObject item = sellingItems.getJSONObject(rowIndex);
-                switch (columnIndex) {
-                    case 0:
-                        return item.getString("itemName");
-                    case 1:
-                        return item.getInt("quantity");
-                    case 2:
-                        return item.getDouble("price");
-                    default:
-                        return null;
-                }
-            } catch (JSONException ex) {
-                return null;
-            }
+            SellingItemData item = sellingItems.get(rowIndex);
+            return switch (columnIndex) {
+                case 0 -> item.itemName();
+                case 1 -> item.quantity();
+                case 2 -> item.price();
+                default -> null;
+            };
         }
 
         @Override
@@ -137,16 +121,12 @@ public class SellingView extends JPanel {
 
         @Override
         public Class<?> getColumnClass(int columnIndex) {
-            switch (columnIndex) {
-                case 0:
-                    return String.class;
-                case 1:
-                    return Integer.class;
-                case 2:
-                    return Double.class;
-                default:
-                    return super.getColumnClass(columnIndex);
-            }
+            return switch (columnIndex) {
+                case 0 -> String.class;
+                case 1 -> Long.class;
+                case 2 -> Long.class;
+                default -> super.getColumnClass(columnIndex);
+            };
         }
     }
 
@@ -154,14 +134,13 @@ public class SellingView extends JPanel {
     private class ItemTableModel extends AbstractTableModel {
 
         private final String[] columnNames = {"Nombre", "Precio"};
-        private JSONArray inventoryItems;
+        private List<InventoryItemData> inventoryItems;
 
         public ItemTableModel() {
-            this.inventoryItems = new JSONArray();
+            this.inventoryItems = new ArrayList<>();
         }
 
-        public void updateData(JSONArray data) {
-            inventoryItems.clear();
+        public void updateData(List<InventoryItemData> data) {
             inventoryItems = data;
             getItemTable().repaint();
             fireTableDataChanged();
@@ -169,7 +148,7 @@ public class SellingView extends JPanel {
 
         @Override
         public int getRowCount() {
-            return inventoryItems.length();
+            return inventoryItems.size();
         }
 
         @Override
@@ -179,19 +158,12 @@ public class SellingView extends JPanel {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            try {
-                JSONObject item = inventoryItems.getJSONObject(rowIndex);
-                switch (columnIndex) {
-                    case 0:
-                        return item.getString("itemName");
-                    case 1:
-                        return item.getDouble("price");
-                    default:
-                        return null;
-                }
-            } catch (JSONException ex) {
-                return null;
-            }
+            InventoryItemData item = inventoryItems.get(rowIndex);
+            return switch (columnIndex) {
+                case 0 -> item.name();
+                case 1 -> item.price();
+                default -> null;
+            };
         }
 
         @Override
@@ -201,14 +173,11 @@ public class SellingView extends JPanel {
 
         @Override
         public Class<?> getColumnClass(int columnIndex) {
-            switch (columnIndex) {
-                case 0:
-                    return String.class;
-                case 1:
-                    return Double.class;
-                default:
-                    return super.getColumnClass(columnIndex);
-            }
+            return switch (columnIndex) {
+                case 0 -> String.class;
+                case 1 -> Long.class;
+                default -> super.getColumnClass(columnIndex);
+            };
         }
     }
 
