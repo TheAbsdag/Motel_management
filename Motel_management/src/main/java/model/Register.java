@@ -102,8 +102,7 @@ public class Register {
                 sellingItem.put("quantity", quantity + sellingItem.getLong("quantity"));
                 sellingItem.put("price", item.getPrice() * sellingItem.getLong("quantity"));
                 alreadyExists = true;
-                sellingList.remove(i);
-                sellingList.put(sellingItem);
+                sellingList.put(i, sellingItem);
                 break;
             }
         }
@@ -123,7 +122,6 @@ public class Register {
         newItem.put("quantity", quantity);
         newItem.put("itemName", item.getName());
         newItem.put("itemID", item.getItemID());
-        newItem.put("quantity", quantity);
         newItem.put("price", 0);
         sellingList.put(newItem);
     }

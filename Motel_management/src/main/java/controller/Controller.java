@@ -32,6 +32,11 @@ import view.UserGUI;
  */
 public class Controller {
 
+    private static final int CLOCK_UPDATE_INTERVAL_MS = 80;
+    private static final int BACKUP_SAVE_INTERVAL_MS = 300_000;      // 5 minutes
+    private static final int MAIN_FILE_SAVE_INTERVAL_MS = 20_000;     // 20 seconds
+    private static final int FLOOR_ROTATION_INTERVAL_MS = 1_200_000;  // 20 minutes
+
     private final MotelManagement motelManager;
     private final UserGUI userInterface;
 
@@ -87,7 +92,14 @@ public class Controller {
      */
     public void start() {
         motelManager.prepareProgramData();
-        userInterface.setupFloors(motelManager.getRoomsArray());
+        int[][] roomsArray = motelManager.getRoomsArray();
+        userInterface.setupFloors(roomsArray);
+
+        // Single tower mode: hide tower navigation if only one tower exists
+        if (roomsArray.length == 1) {
+            userInterface.getFloorView().setSingleTowerMode();
+            userInterface.getRoomChangeView().setSingleTowerMode();
+        }
 
         // Validate saved printer — fall back to first available if missing
         if (!motelManager.isPrinterAvailable()) {
@@ -156,10 +168,10 @@ public class Controller {
     // ========== Timer Management ==========
 
     private void startTimers() {
-        timerForTimeUpdates = new Timer(80, e -> updateTime());
-        timerForBackupFiles = new Timer(300000, e -> saveBackupFiles("backup"));
-        timerForCurrentFile = new Timer(20000, e -> motelManager.saveFilesForMainService());
-        timerForAutomaticFloorChange = new Timer(1200000, e -> floorController.automaticFloorChange());
+        timerForTimeUpdates = new Timer(CLOCK_UPDATE_INTERVAL_MS, e -> updateTime());
+        timerForBackupFiles = new Timer(BACKUP_SAVE_INTERVAL_MS, e -> saveBackupFiles("backup"));
+        timerForCurrentFile = new Timer(MAIN_FILE_SAVE_INTERVAL_MS, e -> motelManager.saveFilesForMainService());
+        timerForAutomaticFloorChange = new Timer(FLOOR_ROTATION_INTERVAL_MS, e -> floorController.automaticFloorChange());
         timerForTimeUpdates.start();
         timerForBackupFiles.start();
         timerForCurrentFile.start();

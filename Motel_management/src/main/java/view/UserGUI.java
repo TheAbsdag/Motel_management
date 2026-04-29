@@ -32,6 +32,7 @@ public class UserGUI extends JFrame {
     private RoomChangeView roomChangeView;
     private AppOptionsView appOptions;
 
+    private String currentCard;
     private Map<String, JLabel> timeLabels;
     private Map<String, JLabel> dateLabels;
 
@@ -88,33 +89,44 @@ public class UserGUI extends JFrame {
     private void addView(JPanel panel, String name) {
         panel.setName(name);
         mainPanel.add(panel, name);
-        if (panel instanceof FloorView) {
-            timeLabels.put(name, ((FloorView) panel).getTimeLabel());
-            dateLabels.put(name, ((FloorView) panel).getDateLabel());
-        } else if (panel instanceof TurnSelectView) {
-            timeLabels.put(name, ((TurnSelectView) panel).getTimeLabel());
-            dateLabels.put(name, ((TurnSelectView) panel).getDateLabel());
-        } else if (panel instanceof RoomView) {
-            timeLabels.put(name, ((RoomView) panel).getTimeLabel());
-            dateLabels.put(name, ((RoomView) panel).getDateLabel());
-        } else if (panel instanceof SellingView) {
-            timeLabels.put(name, ((SellingView) panel).getTimeLabel());
-            dateLabels.put(name, ((SellingView) panel).getDateLabel());
-        } else if (panel instanceof ManagementSelectView) {
-            timeLabels.put(name, ((ManagementSelectView) panel).getTimeLabel());
-            dateLabels.put(name, ((ManagementSelectView) panel).getDateLabel());
-        } else if (panel instanceof TurnManagerView) {
-            timeLabels.put(name, ((TurnManagerView) panel).getTimeLabel());
-            dateLabels.put(name, ((TurnManagerView) panel).getDateLabel());
-        } else if (panel instanceof InventoryManagementView) {
-            timeLabels.put(name, ((InventoryManagementView) panel).getTimeLabel());
-            dateLabels.put(name, ((InventoryManagementView) panel).getDateLabel());
-        } else if (panel instanceof HistoryView) {
-            timeLabels.put(name, ((HistoryView) panel).getTimeLabel());
-            dateLabels.put(name, ((HistoryView) panel).getDateLabel());
-        } else if (panel instanceof RoomChangeView) {
-            timeLabels.put(name, ((RoomChangeView) panel).getTimeLabel());
-            dateLabels.put(name, ((RoomChangeView) panel).getDateLabel());
+        switch (panel) {
+            case FloorView fv -> {
+                timeLabels.put(name, fv.getTimeLabel());
+                dateLabels.put(name, fv.getDateLabel());
+            }
+            case TurnSelectView tsv -> {
+                timeLabels.put(name, tsv.getTimeLabel());
+                dateLabels.put(name, tsv.getDateLabel());
+            }
+            case RoomView rv -> {
+                timeLabels.put(name, rv.getTimeLabel());
+                dateLabels.put(name, rv.getDateLabel());
+            }
+            case SellingView sv -> {
+                timeLabels.put(name, sv.getTimeLabel());
+                dateLabels.put(name, sv.getDateLabel());
+            }
+            case ManagementSelectView msv -> {
+                timeLabels.put(name, msv.getTimeLabel());
+                dateLabels.put(name, msv.getDateLabel());
+            }
+            case TurnManagerView tmv -> {
+                timeLabels.put(name, tmv.getTimeLabel());
+                dateLabels.put(name, tmv.getDateLabel());
+            }
+            case InventoryManagementView imv -> {
+                timeLabels.put(name, imv.getTimeLabel());
+                dateLabels.put(name, imv.getDateLabel());
+            }
+            case HistoryView hv -> {
+                timeLabels.put(name, hv.getTimeLabel());
+                dateLabels.put(name, hv.getDateLabel());
+            }
+            case RoomChangeView rcv -> {
+                timeLabels.put(name, rcv.getTimeLabel());
+                dateLabels.put(name, rcv.getDateLabel());
+            }
+            default -> { /* AppOptionsView and DataConfigurationView have no time labels */ }
         }
     }
 
@@ -124,36 +136,19 @@ public class UserGUI extends JFrame {
     }
 
     private String getCurrentCard() {
-        for (Component comp : mainPanel.getComponents()) {
-            if (comp.isVisible()) {
-                return ((JPanel) comp).getName();
-            }
-        }
-        return null;
+        return currentCard;
     }
 
     public boolean isFloorShown() {
-        boolean output = false;
-        if (getCurrentCard() == "floorView") {
-            output = true;
-        }
-        return output;
+        return "floorView".equals(currentCard);
     }
 
     public boolean isRoomShown() {
-        boolean output = false;
-        if (getCurrentCard() == "roomView") {
-            output = true;
-        }
-        return output;
+        return "roomView".equals(currentCard);
     }
 
     public boolean isRoomChangeShown() {
-        boolean output = false;
-        if (getCurrentCard() == "roomChangeView") {
-            output = true;
-        }
-        return output;
+        return "roomChangeView".equals(currentCard);
     }
 
     public void updateDateTime(String timeShown, String dateShown) {
@@ -169,43 +164,52 @@ public class UserGUI extends JFrame {
     }
 
     public void setFloorView() {
+        currentCard = "floorView";
         cardLayout.show(mainPanel, "floorView");
     }
 
     public void setTurnSelectView() {
+        currentCard = "turnSelectView";
         cardLayout.show(mainPanel, "turnSelectView");
-
     }
 
     public void setTurnManagerView() {
+        currentCard = "turnManagerView";
         cardLayout.show(mainPanel, "turnManagerView");
     }
 
     public void setRoomView() {
+        currentCard = "roomView";
         cardLayout.show(mainPanel, "roomView");
     }
 
     public void setManagementSelection() {
+        currentCard = "managementSelectView";
         cardLayout.show(mainPanel, "managementSelectView");
     }
 
     public void setInventoryView() {
+        currentCard = "inventoryView";
         cardLayout.show(mainPanel, "inventoryView");
     }
 
     public void setSellingView() {
+        currentCard = "sellingView";
         cardLayout.show(mainPanel, "sellingView");
     }
 
     public void setHistoryView() {
+        currentCard = "historyView";
         cardLayout.show(mainPanel, "historyView");
     }
 
     public void setRoomChangeView() {
+        currentCard = "roomChangeView";
         cardLayout.show(mainPanel, "roomChangeView");
     }
-    
+
     public void setAppOptionsView(){
+        currentCard = "appOptionsView";
         cardLayout.show(mainPanel, "appOptionsView");
     }
 

@@ -8,14 +8,11 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.DirectoryStream;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
@@ -30,9 +27,9 @@ import org.json.JSONObject;
 public class FileManager {
 
     public static final String PATH = System.getProperty("user.dir");
-    private static final String DATA_PATH = PATH + "\\data";
-    private static final String BACKUP_PATH = PATH + "\\backup";
-    private static final String HISTORY_PATH = PATH + "\\history";
+    private static final String DATA_PATH = PATH + File.separator + "data";
+    private static final String BACKUP_PATH = PATH + File.separator + "backup";
+    private static final String HISTORY_PATH = PATH + File.separator + "history";
 
     public FileManager() {
         System.out.println("FileManager initialized");
@@ -62,7 +59,7 @@ public class FileManager {
         String outputString = new String();
         JSONObject output = null;
         try {
-            BufferedReader reader = new BufferedReader(new FileReader(DATA_PATH + "\\" + dataNeeded));
+            BufferedReader reader = new BufferedReader(new FileReader(DATA_PATH + File.separator + dataNeeded));
             String line;
             while ((line = reader.readLine()) != null) {
                 outputString = outputString.concat(line);
@@ -85,7 +82,7 @@ public class FileManager {
     public void saveJsonMainDataPath(JSONObject data, String dataToSave) {
         String saveString = data.toString();
         try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(DATA_PATH + "\\" + dataToSave));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(DATA_PATH + File.separator + dataToSave));
             writer.write(saveString);
             writer.close();
         } catch (IOException ex) {
@@ -95,12 +92,12 @@ public class FileManager {
 
     public void saveJsonBackupDataPath(JSONObject data, String dataToSave, ZonedDateTime time, String saveType) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss");
-        String currentFilePath = BACKUP_PATH+"\\"+time.format(formatter)+"-"+saveType;
+        String currentFilePath = BACKUP_PATH+File.separator+time.format(formatter)+"-"+saveType;
         File newFolderBackup = new File(currentFilePath);
         newFolderBackup.mkdirs();
         String saveString = data.toString();
         try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(currentFilePath + "\\" + dataToSave));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(currentFilePath + File.separator + dataToSave));
             writer.write(saveString);
             writer.close();
         } catch (IOException ex) {
@@ -128,7 +125,7 @@ public class FileManager {
         String timeString = time.format(formatter);
         String saveString = data.toString();
         try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(HISTORY_PATH + "\\" + dataToSave + "-" + timeString.toString()));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(HISTORY_PATH + File.separator + dataToSave + "-" + timeString));
             writer.write(saveString);
             writer.close();
         } catch (IOException ex) {

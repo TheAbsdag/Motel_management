@@ -130,6 +130,7 @@ public class ManagementSelectView extends JPanel {
 	//---- historyButton ----
 	historyButton.setText("HISTORIAL");
 	historyButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 22));
+	historyButton.setEnabled(false);
 	add(historyButton, "cell 5 2,growy");
 
 	//---- backButton ----

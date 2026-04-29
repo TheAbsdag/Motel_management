@@ -30,6 +30,7 @@ public class Room {
     private int extension;
     private Instant startStatus;
     private Instant endStatus;
+    private int[] defaultPriceArray;
 
     /**
      * Creates a new room with default FREE status.

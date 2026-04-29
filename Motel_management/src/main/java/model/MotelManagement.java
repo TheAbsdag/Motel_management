@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import model.dto.InventoryItemData;
@@ -21,220 +20,74 @@ import model.dto.TurnHistoryData;
 import model.dto.TurnSummaryItemData;
 
 /**
+ * Central model facade that coordinates sub-models, persistence, and printing.
+ *
+ * <p>Delegates to:
+ * <ul>
+ *   <li>{@link RoomManager} — room grid and room-level operations</li>
+ *   <li>{@link ProgramConfig} — application configuration data</li>
+ *   <li>{@link Register} — inventory and selling cart</li>
+ *   <li>{@link Turn} — shift/turn management</li>
+ *   <li>{@link Printer} — receipt printing</li>
+ *   <li>{@link FileManager} — JSON file persistence</li>
+ * </ul>
  *
  * @author Santiago
  */
 public class MotelManagement {
 
     private final FileManager files;
-    //private final ArrayList<ArrayList<Room>> rooms;
-    private final ArrayList<ArrayList<ArrayList<Room>>> rooms;
+    private final RoomManager roomManager;
+    private final ProgramConfig programConfig;
     private final Printer printer;
     private final Register register;
     private final Turn turn;
-    private int currentFloorViewed;
-    private int currentRoomViewed;
-    private int currentTowerViewed;
-    private int currentServiceDesired;
     private Instant currentTime;
     private ZonedDateTime localizedTime;
     private final ZoneId zoneID;
-    private final Room reception;
-    private JSONObject programData;
     private ArrayList<Turn> turnHistory;
-
-    //Special for room change
-    private int selectedRoomChangeRoom;
-    private int selectedRoomChangeFloor;
-    private int selectedRoomChangeTower;
-
-    private int consecutiveTransaction;
-
-    //Motel information
-    private  String motelName;
-    private  String motelAddress;
-    private  String motelID;
-
-    //Saved printer name (for fallback messaging)
-    private String configuredPrinterName;
 
     public MotelManagement() {
         files = new FileManager();
         zoneID = ZoneId.of("America/Bogota");
-        rooms = new ArrayList<>();
         currentTime = Instant.now();
         localizedTime = currentTime.atZone(zoneID);
         turn = new Turn(currentTime, zoneID);
         register = new Register();
-        reception = new Room("Recepcion", -1, -1, -1);
-        consecutiveTransaction = 0;
-        programData = new JSONObject();
+        roomManager = new RoomManager(zoneID);
+        programConfig = new ProgramConfig();
         turnHistory = new ArrayList<>();
         printer = new Printer();
     }
 
-    public void prepareProgramData() {       
-        programData = files.getJsonData("applicationProperties");
-        consecutiveTransaction = programData.getInt("consecutiveTransaction");  
-        motelName = programData.getString("motelName");
-        motelAddress = programData.getString("motelAddress");
-        motelID = programData.getString("motelID");
-        printer.setPrinterVariables(motelName, motelAddress, motelID);
+    // ========== Initialization ==========
 
-        // Load saved printer name if present
-        if (programData.has("printerName")) {
-            configuredPrinterName = programData.getString("printerName");
-            printer.setPrinterService(configuredPrinterName);
-        } else {
-            configuredPrinterName = null;
+    public void prepareProgramData() {
+        JSONObject rawConfig = files.getJsonData("applicationProperties");
+        programConfig.loadFromJson(rawConfig);
+
+        printer.setPrinterVariables(
+                programConfig.getMotelName(),
+                programConfig.getMotelAddress(),
+                programConfig.getMotelID());
+
+        String savedPrinter = programConfig.getConfiguredPrinterName();
+        if (savedPrinter != null) {
+            printer.setPrinterService(savedPrinter);
         }
 
-        // Get the roomsPerTower array
-        JSONArray roomsPerTower = programData.getJSONArray("roomsPerTower");
-
-        // Initialize rooms structure: towers -> floors -> rooms
-        for (int towerIndex = 0; towerIndex < roomsPerTower.length(); towerIndex++) {
-            JSONObject tower = roomsPerTower.getJSONObject(towerIndex);
-            int towerNumber = tower.getInt("towerNumber");
-            int towerFloors = tower.getInt("towerFloors");
-
-            // Add new tower (list of floors)
-            rooms.add(new ArrayList<>());
-
-            // Initialize floors for this tower
-            for (int floorIndex = 0; floorIndex < towerFloors; floorIndex++) {
-                // Add new floor (list of rooms) for this tower
-                rooms.get(towerIndex).add(new ArrayList<>());
-            }
-
-            // Process the actual room data for this tower
-            JSONArray towerRooms = tower.getJSONArray("towerRooms");
-
-            // Process each floor in the tower
-            for (int floorDataIndex = 0; floorDataIndex < towerRooms.length(); floorDataIndex++) {
-                JSONObject floorData = towerRooms.getJSONObject(floorDataIndex);
-                int floorNumber = floorData.getInt("floor");
-                JSONArray roomsArray = floorData.getJSONArray("rooms");
-
-                // Process each room on this floor
-                for (int roomIndex = 0; roomIndex < roomsArray.length(); roomIndex++) {
-                    JSONObject roomJson = roomsArray.getJSONObject(roomIndex);
-                    String roomString = roomJson.getString("roomString");
-                    int roomFloor = roomJson.getInt("roomFloor");
-                    int roomNumber = roomJson.getInt("roomNumber");
-
-                    // Create room object and add to the appropriate tower and floor
-                    Room currentRoom = new Room(roomString, roomFloor, roomNumber, towerNumber);
-                    rooms.get(towerIndex).get(floorNumber).add(currentRoom);
-                }
-            }
-        }
-
-        /*
-        For the format of the room data, it would be as follows:
-        {
-        "rooms":[
-                {
-        "roomString": "1-105",
-        "towerNumber" : 1,
-        "floorNumber": 0,
-        "roomNumber": 0,
-        "status": 3,
-        "startStatus": ZonedDateTime String,
-        "service": 12,
-        "endStatus": ZonedDateTime String (with the duration of the service amount)
-                }
-            ]
-        }
-         */
-        JSONObject roomData = files.getJsonData("roomsInformation");
-        if (!(roomData == null || roomData.isEmpty())) {
-            JSONArray roomsArray = roomData.getJSONArray("rooms");
-            for (int i = 0; i < roomsArray.length(); i++) {
-                JSONObject room = roomsArray.getJSONObject(i);
-                String roomString = room.getString("roomString");
-                int towerNum = room.getInt("towerNumber");
-                int floor = room.getInt("floorNumber");
-                int roomNum = room.getInt("roomNumber");
-                int status = room.getInt("status");
-                RoomStatus roomStatus = RoomStatus.fromCode(status);
-
-                // Find the room using tower -> floor -> room indices
-                if (towerNum >= 0 && towerNum < rooms.size()
-                        && floor >= 0 && floor < rooms.get(towerNum).size()
-                        && roomNum >= 0 && roomNum < rooms.get(towerNum).get(floor).size()) {
-
-                    Room targetRoom = rooms.get(towerNum).get(floor).get(roomNum);
-
-                    switch (roomStatus) {
-                        case FREE:
-                            targetRoom.setRoomStatus(RoomStatus.FREE);
-                            break;
-                        case CLEANING:
-                            targetRoom.setRoomStatus(RoomStatus.CLEANING, ZonedDateTime.parse(room.getString("startStatus")).toInstant());
-                            break;
-                        case OCCUPIED:
-                            targetRoom.setRoomStatus(RoomStatus.OCCUPIED, ZonedDateTime.parse(room.getString("startStatus")).toInstant(), room.getInt("service"));
-                            break;
-                        default:
-                            throw new IllegalArgumentException("Invalid status: " + status);
-                    }
-                    int extension = room.getInt("extension");
-                    if (extension != 0) {
-                        targetRoom.extendRoomTime(extension);
-                    }
-                } else {
-                    // Room not found, corrupted
-                    System.out.println("Room not found: " + roomString + " (Tower: " + towerNum + ", Floor: " + floor + ", Room: " + roomNum + ")");
-                }
-            }
-        }
-    }
-
-    public void setNewTurn(int turn) {
-        this.turn.setNewTurn(turn, currentTime);
-    }
-
-    public void registerRoomTimeAdded(int tower, int floor, int room, int service, long price, boolean print) {
-        addConsecutiveTransaction();
-        RoomStatus currentStatus = rooms.get(tower).get(floor).get(room).getStatus();
-        int currentExtension = 0;
-        //A time increase was done if the room is currently booked
-        if (currentStatus == RoomStatus.OCCUPIED) {
-            rooms.get(tower).get(floor).get(room).extendRoomTime(service);
-            currentExtension = service;
-        } else {
-            rooms.get(tower).get(floor).get(room).setRoomStatus(RoomStatus.OCCUPIED, currentTime, service);
-        }
-        JSONObject roomChange = turn.registerRoomChange(rooms.get(tower).get(floor).get(room), currentTime, price, currentExtension);
-        if (print) {
-            printer.printRoomTimeSell(roomChange, consecutiveTransaction, false);
-        } else {
-            printer.printRoomTimeSell(roomChange, consecutiveTransaction, true);
-        }
-    }
-
-    public void registerRoomTimeEnd(int tower, int floor, int room) {
-        RoomStatus currentStatus = rooms.get(tower).get(floor).get(room).getStatus();
-        //If it was being cleaned it will set it up as free
-        if (currentStatus == RoomStatus.CLEANING) {
-            rooms.get(tower).get(floor).get(room).setRoomStatus(RoomStatus.FREE);
-        } else {
-            //Otherwise it will be setup as cleaning
-            rooms.get(tower).get(floor).get(room).setRoomStatus(RoomStatus.CLEANING, currentTime);
-        }
-        turn.registerRoomChange(rooms.get(tower).get(floor).get(room), currentTime, 0, 0);
+        roomManager.buildRoomGrid(programConfig.getProgramData());
+        roomManager.restoreRoomStates(files.getJsonData("roomsInformation"));
     }
 
     public boolean prepareTurnRegisterData() {
         JSONObject turnData = files.getJsonData("turn");
         JSONObject inventoryData = files.getJsonData("inventory");
         boolean validPreviousTurn = false;
-        //Validation if the file is valid or not, if it'snot, a previous turn was not found.
         if (!(turnData == null || turnData.isEmpty())) {
             validPreviousTurn = turn.setPreviousTurnJSON(turnData);
             if (!validPreviousTurn) {
-                System.out.println("Found previosu turn, but it's no longer active, backuing up");
+                System.out.println("Found previous turn, but it's no longer active, backing up");
                 this.timeInformationUpdate();
                 turn.turnEnd(currentTime);
                 files.saveHistoryData(turn.getDetailedTurnInformation(), "turnClosedImproperly", localizedTime);
@@ -254,101 +107,7 @@ public class MotelManagement {
         return validPreviousTurn;
     }
 
-    public void saveFilesForMainService() {
-        JSONObject turnData = turn.getDetailedTurnInformation();
-        files.saveJsonMainDataPath(turnData, "turn");
-        JSONObject inventoryData = register.getInventoryData();
-        files.saveJsonMainDataPath(inventoryData, "inventory");
-
-        // Creation for room data
-        JSONObject roomData = new JSONObject();
-        JSONArray roomDataArray = new JSONArray();
-
-        // Iterate through towers -> floors -> rooms
-        for (int tower = 0; tower < rooms.size(); tower++) {
-            for (int floor = 0; floor < rooms.get(tower).size(); floor++) {
-                for (int roomIndex = 0; roomIndex < rooms.get(tower).get(floor).size(); roomIndex++) {
-                    Room currentRoomObj = rooms.get(tower).get(floor).get(roomIndex);
-                    JSONObject currentRoom = new JSONObject();
-                    currentRoom.put("roomString", currentRoomObj.getRoomString());
-                    currentRoom.put("towerNumber", tower); // Save tower index
-                    currentRoom.put("floorNumber", currentRoomObj.getFloorNumber());
-                    currentRoom.put("roomNumber", currentRoomObj.getRoomNumber());
-                    currentRoom.put("status", currentRoomObj.getStatus().getCode());
-                    currentRoom.put("service", currentRoomObj.getService());
-
-                    Instant startStatus = currentRoomObj.getStartStatus();
-                    if (startStatus == null) {
-                        currentRoom.put("startStatus", "");
-                    } else {
-                        currentRoom.put("startStatus", startStatus.atZone(zoneID).toString());
-                    }
-
-                    Instant endStatus = currentRoomObj.getEndStatus();
-                    if (endStatus == null) {
-                        currentRoom.put("endStatus", "");
-                    } else {
-                        currentRoom.put("endStatus", endStatus.atZone(zoneID).toString());
-                    }
-
-                    currentRoom.put("extension", currentRoomObj.getExtension());
-                    roomDataArray.put(currentRoom);
-                }
-            }
-        }
-
-        roomData.put("rooms", roomDataArray);
-        files.saveJsonMainDataPath(roomData, "roomsInformation");
-    }
-
-    public void saveFilesForBackup(String saveType) {
-        timeInformationUpdate();
-        JSONObject turnData = turn.getDetailedTurnInformation();
-        files.saveJsonBackupDataPath(turnData, "turn", localizedTime, saveType);
-        JSONObject inventoryData = register.getInventoryData();
-        files.saveJsonBackupDataPath(inventoryData, "inventory", localizedTime, saveType);
-
-        // Creation for room data
-        JSONObject roomData = new JSONObject();
-        JSONArray roomDataArray = new JSONArray();
-
-        // Iterate through towers -> floors -> rooms
-        for (int tower = 0; tower < rooms.size(); tower++) {
-            for (int floor = 0; floor < rooms.get(tower).size(); floor++) {
-                for (int roomIndex = 0; roomIndex < rooms.get(tower).get(floor).size(); roomIndex++) {
-                    Room currentRoomObj = rooms.get(tower).get(floor).get(roomIndex);
-                    JSONObject currentRoom = new JSONObject();
-                    currentRoom.put("roomString", currentRoomObj.getRoomString());
-                    currentRoom.put("towerNumber", tower); // Save tower index
-                    currentRoom.put("floorNumber", currentRoomObj.getFloorNumber());
-                    currentRoom.put("roomNumber", currentRoomObj.getRoomNumber());
-                    currentRoom.put("status", currentRoomObj.getStatus().getCode());
-                    currentRoom.put("service", currentRoomObj.getService());
-
-                    Instant startStatus = currentRoomObj.getStartStatus();
-                    if (startStatus == null) {
-                        currentRoom.put("startStatus", "");
-                    } else {
-                        currentRoom.put("startStatus", startStatus.atZone(zoneID).toString());
-                    }
-
-                    Instant endStatus = currentRoomObj.getEndStatus();
-                    if (endStatus == null) {
-                        currentRoom.put("endStatus", "");
-                    } else {
-                        currentRoom.put("endStatus", endStatus.atZone(zoneID).toString());
-                    }
-
-                    currentRoom.put("extension", currentRoomObj.getExtension());
-                    roomDataArray.put(currentRoom);
-                }
-            }
-        }
-
-        roomData.put("rooms", roomDataArray);
-        files.saveJsonBackupDataPath(roomData, "roomsInformation", localizedTime, saveType);
-        files.saveJsonBackupDataPath(programData, "applicationProperties", localizedTime, saveType);
-    }
+    // ========== Time Management ==========
 
     public void timeInformationUpdate() {
         currentTime = Instant.now();
@@ -358,157 +117,141 @@ public class MotelManagement {
     public String getCurrentLocalizedTime() {
         DateTimeFormatter formatter = new DateTimeFormatterBuilder()
                 .appendPattern("hh:mm:ss").appendLiteral(' ')
-                .appendText(ChronoField.AMPM_OF_DAY, new HashMap<Long, String>() {
-                    {
-                        put(0L, "\tAM");
-                        put(1L, "\tPM");
-                    }
-                })
+                .appendText(ChronoField.AMPM_OF_DAY, new HashMap<Long, String>() {{
+                    put(0L, "\tAM"); put(1L, "\tPM");
+                }})
                 .toFormatter();
-
-        // Format the ZonedDateTime to the desired format
         return localizedTime.format(formatter);
     }
 
     public String getCurrentLocalizedDate() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", new Locale("es", "ES"));
-
-        // Format the ZonedDateTime
         return localizedTime.format(formatter);
     }
 
+    // ========== Room Operations (delegated to RoomManager) ==========
+
     public int[][] getRoomsArray() {
-        int[][] arr = new int[rooms.size()][];
-        for (int tower = 0; tower < rooms.size(); tower++) {
-            arr[tower] = new int[rooms.get(tower).size()];
-            for (int floor = 0; floor < rooms.get(tower).size(); floor++) {
-                arr[tower][floor] = rooms.get(tower).get(floor).size();
-            }
-        }
-        return arr;
+        return roomManager.getRoomsArray();
     }
 
     public Room getRoom(int tower, int floor, int room) {
-        if (floor < 0 || room < 0) {
-            return reception;
+        return roomManager.getRoom(tower, floor, room);
+    }
+
+    public void registerRoomTimeAdded(int tower, int floor, int room, int service, long price, boolean print) {
+        addConsecutiveTransaction();
+        int currentExtension = roomManager.registerRoomTimeAdded(tower, floor, room, service, currentTime);
+        JSONObject roomChange = turn.registerRoomChange(
+                roomManager.getRoom(tower, floor, room), currentTime, price, currentExtension);
+        printer.printRoomTimeSell(roomChange, programConfig.getConsecutiveTransaction(), !print);
+    }
+
+    public void registerRoomTimeEnd(int tower, int floor, int room) {
+        roomManager.registerRoomTimeEnd(tower, floor, room, currentTime);
+        turn.registerRoomChange(roomManager.getRoom(tower, floor, room), currentTime, 0, 0);
+    }
+
+    public boolean changeRoomTimeToAnother() {
+        boolean valid = roomManager.changeRoomTimeToAnother(currentTime);
+        if (valid) {
+            turn.registerRoomSwap(roomManager.getCurrentRoom(), roomManager.getDesiredChangeRoom(), currentTime);
         }
-        return rooms.get(tower).get(floor).get(room);
-    }
-
-    /**
-     * @return the currentFloorViewed
-     */
-    public int getCurrentFloorViewed() {
-        return currentFloorViewed;
-    }
-
-    /**
-     * @return the currentRoomViewed
-     */
-    public int getCurrentRoomViewed() {
-        return currentRoomViewed;
-    }
-
-    /**
-     * @return the currentServiceDesired
-     */
-    public int getCurrentServiceDesired() {
-        return currentServiceDesired;
-    }
-
-    /**
-     * @param currentServiceDesired the currentServiceDesired to set
-     */
-    public void setCurrentServiceDesired(int currentServiceDesired) {
-        this.currentServiceDesired = currentServiceDesired;
-    }
-
-    public void setCurrentFloorRoom(int tower, int floor, int room) {
-        this.currentFloorViewed = floor;
-        this.currentRoomViewed = room;
-        this.currentTowerViewed = tower;
+        return valid;
     }
 
     public String getRemainingTimeRoom(int tower, int floor, int room) {
-        String output = new String();
-        Duration duration = Duration.between(currentTime, getRoom(tower, floor, room).getEndStatus());
-        long hours = duration.toHours();
-        long minutes = duration.minusHours(hours).toMinutes();
-        output = String.valueOf(hours + ":" + minutes);
-        return output;
+        return roomManager.getRemainingTimeRoom(tower, floor, room, currentTime);
     }
 
     public String getStartTimeRoom(int tower, int floor, int room) {
-        DateTimeFormatter formatter = new DateTimeFormatterBuilder()
-                .appendPattern("hh:mm:ss").appendLiteral(' ')
-                .appendText(ChronoField.AMPM_OF_DAY, new HashMap<Long, String>() {
-                    {
-                        put(0L, "\tAM");
-                        put(1L, "\tPM");
-                    }
-                })
-                .toFormatter();
-        String output = new String();
-        ZonedDateTime start = getRoom(tower, floor, room).getStartStatus().atZone(zoneID);
-        output = start.format(formatter);
-        return output;
+        return roomManager.getStartTimeRoom(tower, floor, room);
     }
 
     public String getStartDateRoom(int tower, int floor, int room) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d 'de' MMMM yyyy", new Locale("es", "ES"));
-        String output = new String();
-        ZonedDateTime start = getRoom(tower, floor, room).getStartStatus().atZone(zoneID);
-        output = start.format(formatter);
-        return output;
+        return roomManager.getStartDateRoom(tower, floor, room);
     }
+
+    // ========== Room View State (delegated to RoomManager) ==========
+
+    public int getCurrentFloorViewed() { return roomManager.getCurrentFloorViewed(); }
+    public int getCurrentRoomViewed() { return roomManager.getCurrentRoomViewed(); }
+    public int getCurrentTowerViewed() { return roomManager.getCurrentTowerViewed(); }
+    public int getCurrentServiceDesired() { return roomManager.getCurrentServiceDesired(); }
+
+    public void setCurrentServiceDesired(int service) { roomManager.setCurrentServiceDesired(service); }
+
+    public void setCurrentFloorRoom(int tower, int floor, int room) {
+        roomManager.setCurrentFloorRoom(tower, floor, room);
+    }
+
+    public void setDesiredRoomChange(int tower, int floor, int room) {
+        roomManager.setDesiredRoomChange(tower, floor, room);
+    }
+
+    public int getSelectedRoomChangeRoom() { return roomManager.getSelectedRoomChangeRoom(); }
+    public int getSelectedRoomChangeFloor() { return roomManager.getSelectedRoomChangeFloor(); }
+    public int getSelectedRoomChangeTower() { return roomManager.getSelectedRoomChangeTower(); }
+
+    // ========== Turn Operations ==========
+
+    public void setNewTurn(int turnNumber) {
+        this.turn.setNewTurn(turnNumber, currentTime);
+    }
+
+    public void turnEnded() {
+        turn.turnEnd(currentTime);
+    }
+
+    public void turnEndPrint(int option) {
+        JSONObject summarizedTurn = turn.getBasicTurnInformation();
+        JSONObject detailedTurn = turn.getDetailedTurnInformation();
+        files.saveHistoryData(detailedTurn, "turn", localizedTime);
+        switch (option) {
+            case 1 -> { printer.printSummarizedTurn(summarizedTurn, true);  printer.printDetailedTurn(detailedTurn, true); }
+            case 2 -> { printer.printSummarizedTurn(summarizedTurn, false); printer.printDetailedTurn(detailedTurn, true); }
+            case 3 -> { printer.printSummarizedTurn(summarizedTurn, true);  printer.printDetailedTurn(detailedTurn, false); }
+            default -> { /* no printing */ }
+        }
+        files.clearBackupFiles();
+    }
+
+    public void turnHistoryPrint(int option, int selectedRow) {
+        JSONObject summarizedTurn = turnHistory.get(selectedRow).getBasicTurnInformation();
+        JSONObject detailedTurn = turnHistory.get(selectedRow).getDetailedTurnInformation();
+        switch (option) {
+            case 1 -> { printer.printSummarizedTurn(summarizedTurn, true);  printer.printDetailedTurn(detailedTurn, true); }
+            case 2 -> { printer.printSummarizedTurn(summarizedTurn, false); printer.printDetailedTurn(detailedTurn, true); }
+            case 3 -> { printer.printSummarizedTurn(summarizedTurn, true);  printer.printDetailedTurn(detailedTurn, false); }
+            default -> { /* no printing */ }
+        }
+    }
+
+    public long getTurnNumber() {
+        return turn.getTurnNumber();
+    }
+
+    // ========== Inventory / Selling Operations (delegated to Register) ==========
 
     public void restartSaleManager() {
         register.newSellingList();
     }
 
-    //Related to inventory management
     public JSONObject getInventoryData() {
         return register.getInventoryData();
     }
 
-    public void saveItemInformation(JSONObject itemInformation) {
-        Item updatedItem = new Item(
-                itemInformation.getString("itemName"),
-                itemInformation.getLong("price"),
-                itemInformation.getLong("quantity"),
-                itemInformation.getLong("itemID")
-        );
-        register.saveItemInformation(updatedItem);
-    }
-
-    /** DTO-based overload for saving item information. */
+    /** DTO-based method for saving item information. */
     public void saveItemInformation(InventoryItemData item) {
         register.saveItemInformation(new Item(item.name(), item.price(), item.quantity(), item.itemID()));
     }
 
-    public void newItemCreated(JSONObject itemInformation) {
-        register.createNewItem(
-                itemInformation.getString("itemName"),
-                itemInformation.getLong("price"),
-                itemInformation.getLong("quantity"));
-    }
-
-    /** DTO-based overload for creating a new item. */
+    /** DTO-based method for creating a new item. */
     public void newItemCreated(String name, long price, long quantity) {
         register.createNewItem(name, price, quantity);
     }
 
-    public void deleteItemFromInventory(JSONObject selectedItem) {
-        Item updatedItem = new Item(
-                selectedItem.getString("itemName"),
-                selectedItem.getLong("price"),
-                selectedItem.getLong("quantity"),
-                selectedItem.getLong("itemID")
-        );
-        register.deleteItemInformation(updatedItem);
-    }
-
-    /** DTO-based overload for deleting an inventory item. */
+    /** DTO-based method for deleting an inventory item. */
     public void deleteItemFromInventory(long itemID) {
         register.deleteItemById(itemID);
     }
@@ -531,208 +274,15 @@ public class MotelManagement {
 
     public void roomSaleFinished(boolean print) {
         addConsecutiveTransaction();
-        Room roomSoldTo = null;
-        if (currentFloorViewed == -1) {
-            roomSoldTo = reception;
-        } else {
-            roomSoldTo = rooms.get(currentTowerViewed).get(currentFloorViewed).get(currentRoomViewed);
-        }
-        JSONObject transaction = turn.saveTransactionInformation(new JSONArray(register.getRegisterListSaleMade()),
-                roomSoldTo,
-                currentTime, consecutiveTransaction);
-        //print logic TODO
-        if (print) {
-            printer.printItemSold(transaction, consecutiveTransaction, false);
-        } else {
-            printer.printItemSold(transaction, consecutiveTransaction, true);
-        }
-    }
-
-    public JSONArray getCurrentSellingList() {
-        return register.getCurrentRegisterList();
-    }
-
-    public JSONObject getCurrentTurnData() {
-        return turn.getDetailedTurnInformation();
-    }
-
-    private void addConsecutiveTransaction() {
-        consecutiveTransaction++;
-        programData.put("consecutiveTransaction", consecutiveTransaction);
-        files.saveJsonMainDataPath(programData, "applicationProperties");
-    }
-
-    public void turnEnded() {
-        turn.turnEnd(currentTime);
-    }
-
-    public void turnEndPrint(int option) {
-        JSONObject summarizedTurn = turn.getBasicTurnInformation();
-        JSONObject detailedTurn = turn.getDetailedTurnInformation();
-        files.saveHistoryData(detailedTurn, "turn", localizedTime);
-        switch (option) {
-            case 1:
-                printer.printSummarizedTurn(summarizedTurn, true);
-                printer.printDetailedTurn(detailedTurn, true);
-                break;
-            case 2:
-                printer.printSummarizedTurn(summarizedTurn, false);
-                printer.printDetailedTurn(detailedTurn, true);
-                break;
-            case 3:
-                printer.printSummarizedTurn(summarizedTurn, true);
-                printer.printDetailedTurn(detailedTurn, false);
-                break;
-            default:
-                break;
-        }
-        files.clearBackupFiles();
-    }
-
-    //Exclusive for turnHistory
-    public void turnHistoryPrint(int option, int selectedRow) {
-        JSONObject summarizedTurn = turnHistory.get(selectedRow).getBasicTurnInformation();
-        JSONObject detailedTurn = turnHistory.get(selectedRow).getDetailedTurnInformation();
-        switch (option) {
-            case 1:
-                printer.printSummarizedTurn(summarizedTurn, true);
-                printer.printDetailedTurn(detailedTurn, true);
-                break;
-            case 2:
-                printer.printSummarizedTurn(summarizedTurn, false);
-                printer.printDetailedTurn(detailedTurn, true);
-                break;
-            case 3:
-                printer.printSummarizedTurn(summarizedTurn, true);
-                printer.printDetailedTurn(detailedTurn, false);
-                break;
-            default:
-                break;
-        }
-    }
-
-    public void setDesiredRoomChange(int currentTower,int currentFloor, int currentRoom) {
-        selectedRoomChangeTower = currentTower;
-        selectedRoomChangeFloor = currentFloor;
-        selectedRoomChangeRoom = currentRoom;
+        Room roomSoldTo = roomManager.getRoomForSale();
+        JSONObject transaction = turn.saveTransactionInformation(
+                new JSONArray(register.getRegisterListSaleMade()),
+                roomSoldTo, currentTime, programConfig.getConsecutiveTransaction());
+        printer.printItemSold(transaction, programConfig.getConsecutiveTransaction(), !print);
     }
 
     /**
-     * @return the selectedRoomChangeRoom
-     */
-    public int getSelectedRoomChangeRoom() {
-        return selectedRoomChangeRoom;
-    }
-
-    /**
-     * @return the selectedRoomChangeFloor
-     */
-    public int getSelectedRoomChangeFloor() {
-        return selectedRoomChangeFloor;
-    }
-    
-    public int getSelectedRoomChangeTower(){
-        return selectedRoomChangeTower;
-    }
-
-    public boolean changeRoomTimeToAnother() {
-        boolean validReturn = false;
-        Room currentRoom = rooms.get(currentTowerViewed).get(currentFloorViewed).get(currentRoomViewed);
-        Room desiredChangeRoom = rooms.get(selectedRoomChangeTower).get(selectedRoomChangeFloor).get(selectedRoomChangeRoom);
-        if (desiredChangeRoom.getStatus() != RoomStatus.OCCUPIED) {
-            validReturn = true;
-            int currentService = currentRoom.getService();
-            int currentTotalExtension = currentRoom.getExtension();
-            Instant currentStartTime = currentRoom.getStartStatus();
-            desiredChangeRoom.setRoomStatus(RoomStatus.OCCUPIED, currentStartTime, currentService);
-            desiredChangeRoom.setExtension(currentTotalExtension);
-            currentRoom.setRoomStatus(RoomStatus.CLEANING, currentTime);
-            turn.registerRoomSwap(currentRoom, desiredChangeRoom, currentTime);
-        }
-
-        return validReturn;
-    }
-
-    public JSONArray getHistoryData() {
-        JSONArray currentHistory = files.getHistoryFiles();
-        //Creation for turn to base off logic for printing if required
-        turnHistory.clear();
-        for (int i = 0; i < currentHistory.length(); i++) {
-            JSONObject currentTurn = currentHistory.getJSONObject(i);
-            JSONArray activityArray = currentTurn.getJSONArray("turnActivity");
-            Instant start = ZonedDateTime.parse(currentTurn.getString("turnStart")).toInstant();
-            Instant end = ZonedDateTime.parse(currentTurn.getString("turnEnd")).toInstant();
-            int turnNum = currentTurn.getInt("turnNumber");
-            Turn newTurn = new Turn(start, end, turnNum, zoneID, activityArray);
-            turnHistory.add(newTurn);
-        }
-        return currentHistory;
-    }
-
-    public JSONObject getBasicTurnHistoryData(int selectedRow) {
-        JSONObject output = new JSONObject();
-        JSONObject currentTurn = turnHistory.get(selectedRow).getDetailedTurnInformation();
-        ZonedDateTime turnStart = ZonedDateTime.parse(currentTurn.getString("turnStart"));
-        ZonedDateTime turnEnd = ZonedDateTime.parse(currentTurn.getString("turnEnd"));
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd - hh:mm a");
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", new Locale("es", "ES"));
-        Duration durationRaw = Duration.between(turnStart, turnEnd);
-        long hours = durationRaw.toHours();
-        long minutes = durationRaw.minusHours(hours).toMinutes();
-        String duration = String.valueOf(hours + ":" + minutes);
-
-        String formattedStart = turnStart.format(formatter);
-        String formattedEnd = turnEnd.format(formatter);
-        String startDate = turnStart.format(dateFormatter);
-        output.put("startDate", startDate);
-        output.put("duration", duration);
-        output.put("totalSales", currentTurn.getLong("totalSales"));
-        output.put("totalItems", currentTurn.getLong("totalItems"));
-        output.put("totalRooms", currentTurn.getLong("totalRooms"));
-        output.put("startString", formattedStart);
-        output.put("endString", formattedEnd);
-        return output;
-    }
-
-    public JSONObject getDetailedTurnHistoryData(int selectedRow) {
-        JSONObject output = new JSONObject(turnHistory.get(selectedRow).getDetailedTurnInformation().toString());
-
-        JSONObject currentTurn = turnHistory.get(selectedRow).getDetailedTurnInformation();
-        ZonedDateTime turnStart = ZonedDateTime.parse(currentTurn.getString("turnStart"));
-        ZonedDateTime turnEnd = ZonedDateTime.parse(currentTurn.getString("turnEnd"));
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd - hh:mm a");
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", new Locale("es", "ES"));
-        Duration durationRaw = Duration.between(turnStart, turnEnd);
-        long hours = durationRaw.toHours();
-        long minutes = durationRaw.minusHours(hours).toMinutes();
-        String duration = String.valueOf(hours + ":" + minutes);
-
-        String formattedStart = turnStart.format(formatter);
-        String formattedEnd = turnEnd.format(formatter);
-        String startDate = turnStart.format(dateFormatter);
-        output.put("startDate", startDate);
-        output.put("duration", duration);
-        output.put("startString", formattedStart);
-        output.put("endString", formattedEnd);
-        return output;
-    }
-
-    public long getTurnNumber() {
-        return turn.getTurnNumber();
-    }
-
-    public void revertItemSale(JSONObject selectedFilteredItem) {
-        long itemID = selectedFilteredItem.getLong("itemID");
-        long quantity = selectedFilteredItem.getLong("quantity");
-        Item currentItem = register.getItemFromItemID(itemID);
-        if (currentItem != null) {
-            currentItem.itemAdded(quantity);
-        }
-        turn.reverseItemSaleFromTurn(selectedFilteredItem);
-    }
-
-    /**
-     * DTO-based overload for reverting an item sale from the current turn.
+     * DTO-based method for reverting an item sale from the current turn.
      */
     public void revertItemSale(TurnActivityData activity) {
         long itemID = activity.getItemID();
@@ -741,7 +291,6 @@ public class MotelManagement {
         if (currentItem != null) {
             currentItem.itemAdded(quantity);
         }
-        // Build JSON for internal Turn method
         JSONObject json = new JSONObject();
         json.put("roomSoldTo", activity.getRoomSoldTo());
         json.put("changeDate", activity.getChangeDate().toString());
@@ -750,9 +299,13 @@ public class MotelManagement {
         turn.reverseItemSaleFromTurn(json);
     }
 
-    public JSONObject getCurrentSummarizedTurn() {
-        return turn.getBasicTurnInformation();
+    // ========== Transaction Counter (delegated to ProgramConfig) ==========
+
+    private void addConsecutiveTransaction() {
+        programConfig.addConsecutiveTransaction();
     }
+
+    // ========== Printer Operations ==========
 
     public List<String> getPrinterLists() {
         return printer.getPrinterServiceNameList();
@@ -778,53 +331,75 @@ public class MotelManagement {
         return name;
     }
 
-    public void savePrinterConfiguration(String printerName) {
-        programData.put("printerName", printerName);
-        configuredPrinterName = printerName;
-        files.saveJsonMainDataPath(programData, "applicationProperties");
-    }
-
     public String getConfiguredPrinterName() {
-        return configuredPrinterName;
+        return programConfig.getConfiguredPrinterName();
     }
 
-    public int getCurrentTowerViewed() {
-       return currentTowerViewed;
+    public void savePrinterConfiguration(String printerName) {
+        programConfig.savePrinterConfiguration(printerName);
+        files.saveJsonMainDataPath(programConfig.getProgramData(), "applicationProperties");
+    }
+
+    // ========== File Persistence ==========
+
+    public void saveFilesForMainService() {
+        files.saveJsonMainDataPath(turn.getDetailedTurnInformation(), "turn");
+        files.saveJsonMainDataPath(register.getInventoryData(), "inventory");
+
+        JSONObject roomData = new JSONObject();
+        roomData.put("rooms", roomManager.getRoomDataForSaving());
+        files.saveJsonMainDataPath(roomData, "roomsInformation");
+
+        files.saveJsonMainDataPath(programConfig.getProgramData(), "applicationProperties");
+    }
+
+    public void saveFilesForBackup(String saveType) {
+        timeInformationUpdate();
+
+        files.saveJsonBackupDataPath(turn.getDetailedTurnInformation(), "turn", localizedTime, saveType);
+        files.saveJsonBackupDataPath(register.getInventoryData(), "inventory", localizedTime, saveType);
+
+        JSONObject roomData = new JSONObject();
+        roomData.put("rooms", roomManager.getRoomDataForSaving());
+        files.saveJsonBackupDataPath(roomData, "roomsInformation", localizedTime, saveType);
+        files.saveJsonBackupDataPath(programConfig.getProgramData(), "applicationProperties", localizedTime, saveType);
+    }
+
+    // ========== History Operations ==========
+
+    public JSONArray getHistoryData() {
+        JSONArray currentHistory = files.getHistoryFiles();
+        turnHistory.clear();
+        for (int i = 0; i < currentHistory.length(); i++) {
+            JSONObject currentTurn = currentHistory.getJSONObject(i);
+            JSONArray activityArray = currentTurn.getJSONArray("turnActivity");
+            Instant start = ZonedDateTime.parse(currentTurn.getString("turnStart")).toInstant();
+            Instant end = ZonedDateTime.parse(currentTurn.getString("turnEnd")).toInstant();
+            int turnNum = currentTurn.getInt("turnNumber");
+            Turn newTurn = new Turn(start, end, turnNum, zoneID, activityArray);
+            turnHistory.add(newTurn);
+        }
+        return currentHistory;
     }
 
     // ========== DTO Access Methods ==========
 
-    /**
-     * Returns the inventory as a typed list of DTOs.
-     */
     public List<InventoryItemData> getInventoryItemDataList() {
         return register.getInventoryItemDataList();
     }
 
-    /**
-     * Returns the current selling list as a typed list of DTOs.
-     */
     public List<SellingItemData> getSellingItemDataList() {
         return register.getSellingItemDataList();
     }
 
-    /**
-     * Returns the current turn activity log as typed DTOs.
-     */
     public List<TurnActivityData> getTurnActivityDataList() {
         return turn.getActivityDataList();
     }
 
-    /**
-     * Returns the current turn summary as typed DTOs.
-     */
     public List<TurnSummaryItemData> getTurnSummaryDataList() {
         return turn.getSummaryDataList();
     }
 
-    /**
-     * Returns turn history as a list of typed DTOs.
-     */
     public List<TurnHistoryData> getTurnHistoryDataList() {
         JSONArray rawHistory = files.getHistoryFiles();
         List<TurnHistoryData> result = new ArrayList<>();

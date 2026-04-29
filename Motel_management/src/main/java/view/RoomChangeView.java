@@ -100,6 +100,18 @@ public class RoomChangeView extends JPanel {
         getTowerLabelInforfmation().setText("TORRE: " + (getCurrentTowerIndex() + 1));
     }
 
+    /**
+     * Hides and disables all tower-specific UI in single-tower mode.
+     * Call this when the rooms array contains only one tower.
+     */
+    public void setSingleTowerMode() {
+        getPreviousTowerButton().setVisible(false);
+        getPreviousTowerButton().setEnabled(false);
+        getNextTowerButton().setVisible(false);
+        getNextTowerButton().setEnabled(false);
+        getTowerLabelInforfmation().setVisible(false);
+    }
+
     private void initComponents() {
 	// JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents  @formatter:off
 	// Generated using JFormDesigner Educational license - Santiago Esteban Castelblanco Castiblanco (saecastelblancoc)

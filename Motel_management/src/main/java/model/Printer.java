@@ -7,7 +7,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -34,6 +33,13 @@ import java.awt.print.PrinterJob;
 
 public class Printer {
 
+    private static final Logger LOGGER = Logger.getLogger(Printer.class.getName());
+
+    private static final DateTimeFormatter TURN_DATE_SECTION_FORMATTER
+            = DateTimeFormatter.ofPattern("yyyy/MM/dd - HH:mm:ss");
+    private static final DateTimeFormatter DETAILED_TURN_DATE_FORMATTER
+            = DateTimeFormatter.ofPattern("MM/dd-HH:mm");
+
     private final JTextPane printLayout;
     private String motelName;
     private String motelAddress;
@@ -50,12 +56,7 @@ public class Printer {
         printLayout = new JTextPane();
         hourFormatter = new DateTimeFormatterBuilder()
                 .appendPattern("hh:mm").appendLiteral(' ')
-                .appendText(ChronoField.AMPM_OF_DAY, new HashMap<Long, String>() {
-                    {
-                        put(0L, "AM");
-                        put(1L, "PM");
-                    }
-                })
+                .appendText(ChronoField.AMPM_OF_DAY, Map.of(0L, "AM", 1L, "PM"))
                 .toFormatter();
         dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd", new Locale("es", "ES"));
         numberFormat = NumberFormat.getNumberInstance(Locale.US);
@@ -81,11 +82,11 @@ public class Printer {
     }
 
     public void setPrinterService(String printerName) {
-        printerName = printerName.toLowerCase();
+        String lowerName = printerName.toLowerCase();
         PrintService service = null;
         PrintService[] services = PrinterJob.lookupPrintServices();
         for (int index = 0; service == null && index < services.length; index++) {
-            if (services[index].getName().toLowerCase().contains(printerName)) {
+            if (services[index].getName().toLowerCase().contains(lowerName)) {
                 service = services[index];
             }
         }
@@ -111,67 +112,44 @@ public class Printer {
         document = printLayout.getStyledDocument();
         String fontFamily = "Calibri";
 
-        Style headerStyle = document.addStyle("HeaderStyle", null);
-        StyleConstants.setFontSize(headerStyle, 12);
-        StyleConstants.setFontFamily(headerStyle, fontFamily);
+        addStyle("HeaderStyle", 12, false, fontFamily);
+        addStyle("LargeStyle", 28, false, fontFamily);
+        addStyle("DefaultStyle", 10, false, fontFamily);
+        addStyle("TransactionStyle", 9, false, fontFamily);
+        addStyle("FooterStyle", 8, false, fontFamily);
+        addStyle("SecondLastStyle", 7, false, fontFamily);
 
-        Style largeStyle = document.addStyle("LargeStyle", null);
-        StyleConstants.setFontSize(largeStyle, 28);
-        StyleConstants.setFontFamily(largeStyle, fontFamily);
+        addStyle("HeaderStyleBold", 12, true, fontFamily);
+        addStyle("LargeStyleBold", 28, true, fontFamily);
+        addStyle("DefaultStyleBold", 10, true, fontFamily);
+        addStyle("TransactionStyleBold", 9, true, fontFamily);
+        addStyle("FooterStyleBold", 8, true, fontFamily);
+        addStyle("SecondLastStyleBold", 7, true, fontFamily);
 
-        Style defaultStyle = document.addStyle("DefaultStyle", null);
-        StyleConstants.setFontSize(defaultStyle, 10);
-        StyleConstants.setFontFamily(defaultStyle, fontFamily);
-
-        Style transactionStyle = document.addStyle("TransactionStyle", null);
-        StyleConstants.setFontSize(transactionStyle, 9);
-        StyleConstants.setFontFamily(transactionStyle, fontFamily);
-
-        Style footerStyle = document.addStyle("FooterStyle", null);
-        StyleConstants.setFontSize(footerStyle, 8);
-        StyleConstants.setFontFamily(footerStyle, fontFamily);
-
-        Style secondLastStyle = document.addStyle("SecondLastStyle", null);
-        StyleConstants.setFontSize(secondLastStyle, 7);
-        StyleConstants.setFontFamily(secondLastStyle, fontFamily);
-
-        // BOLD VARIANTS
-        Style headerStyleBold = document.addStyle("HeaderStyleBold", null);
-        StyleConstants.setFontSize(headerStyleBold, 12);
-        StyleConstants.setBold(headerStyleBold, true);
-        StyleConstants.setFontFamily(headerStyleBold, fontFamily);
-
-        Style largeStyleBold = document.addStyle("LargeStyleBold", null);
-        StyleConstants.setFontSize(largeStyleBold, 28);
-        StyleConstants.setBold(largeStyleBold, true);
-        StyleConstants.setFontFamily(largeStyleBold, fontFamily);
-
-        Style defaultStyleBold = document.addStyle("DefaultStyleBold", null);
-        StyleConstants.setFontSize(defaultStyleBold, 10);
-        StyleConstants.setBold(defaultStyleBold, true);
-        StyleConstants.setFontFamily(defaultStyleBold, fontFamily);
-
-        Style transactionStyleBold = document.addStyle("TransactionStyleBold", null);
-        StyleConstants.setFontSize(transactionStyleBold, 9);
-        StyleConstants.setBold(transactionStyleBold, true);
-        StyleConstants.setFontFamily(transactionStyleBold, fontFamily);
-
-        Style footerStyleBold = document.addStyle("FooterStyleBold", null);
-        StyleConstants.setFontSize(footerStyleBold, 8);
-        StyleConstants.setBold(footerStyleBold, true);
-        StyleConstants.setFontFamily(footerStyleBold, fontFamily);
-
-        Style secondLastStyleBold = document.addStyle("SecondLastStyleBold", null);
-        StyleConstants.setFontSize(secondLastStyleBold, 7);
-        StyleConstants.setBold(secondLastStyleBold, true);
-        StyleConstants.setFontFamily(secondLastStyleBold, fontFamily);
-
-        Style fillerStyle = document.addStyle("FillerStyle", null);
-        StyleConstants.setFontSize(fillerStyle, 1);
-        StyleConstants.setFontFamily(fillerStyle, fontFamily);
+        addStyle("FillerStyle", 1, false, fontFamily);
 
         Style centeredStyle = document.addStyle("CenteredStyle", null);
         StyleConstants.setAlignment(centeredStyle, StyleConstants.ALIGN_CENTER);
+    }
+
+    private void addStyle(String name, int fontSize, boolean bold, String fontFamily) {
+        Style style = document.addStyle(name, null);
+        StyleConstants.setFontSize(style, fontSize);
+        StyleConstants.setFontFamily(style, fontFamily);
+        if (bold) {
+            StyleConstants.setBold(style, true);
+        }
+    }
+
+    private void resetDocument() {
+        printLayout.setText("");
+        document = printLayout.getStyledDocument();
+    }
+
+    private void printFillerLines(int count) throws BadLocationException {
+        for (int i = 0; i < count; i++) {
+            document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
+        }
     }
 
     // ========== Document Assembly Helpers ==========
@@ -218,9 +196,8 @@ public class Printer {
      * Prints the centered start/end date section for turn reports.
      */
     private void printTurnDateSection(ZonedDateTime start, ZonedDateTime end) throws BadLocationException {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd - HH:mm:ss");
-        String startDate = start.format(formatter);
-        String endDate = end.format(formatter);
+        String startDate = start.format(TURN_DATE_SECTION_FORMATTER);
+        String endDate = end.format(TURN_DATE_SECTION_FORMATTER);
 
         document.insertString(document.getLength(), "Inicio turno: \n", document.getStyle("SecondLastStyleBold"));
         document.setParagraphAttributes(document.getLength() - 1, 1, document.getStyle("CenteredStyle"), false);
@@ -263,8 +240,7 @@ public class Printer {
     // ========== Print Methods ==========
 
     public void printRoomTimeSell(JSONObject roomTimeSell, int consecutiveTransaction, boolean justPDF) {
-        printLayout.setText("");
-        document = printLayout.getStyledDocument();
+        resetDocument();
 
         String roomString = roomTimeSell.getString("roomString");
         long price = roomTimeSell.getLong("price");
@@ -278,16 +254,15 @@ public class Printer {
             printHeader(null);
             printTransactionNumber(consecutiveTransaction);
 
-            document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
+            printFillerLines(1);
             document.insertString(document.getLength(), spaces(3) + "Habitaci\u00f3n No:", document.getStyle("TransactionStyle"));
             document.insertString(document.getLength(), roomString, document.getStyle("TransactionStyleBold"));
             document.insertString(document.getLength(), "\n", document.getStyle("TransactionStyle"));
-            document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
+            printFillerLines(1);
             document.insertString(document.getLength(), spaces(3) + "Hora Entrada: " + hourService + "\n", document.getStyle("TransactionStyle"));
-            document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
+            printFillerLines(1);
             document.insertString(document.getLength(), spaces(4) + "Servicio: " + service + " Horas" + "\n", document.getStyle("TransactionStyle"));
-            document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
-            document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
+            printFillerLines(2);
             document.insertString(document.getLength(), spaces(4) + "Pago Total:\t", document.getStyle("TransactionStyle"));
             document.insertString(document.getLength(), " " + numberFormat.format(price), document.getStyle("TransactionStyleBold"));
             document.insertString(document.getLength(), "\n", document.getStyle("TransactionStyle"));
@@ -300,15 +275,15 @@ public class Printer {
             printSeparator();
             document.insertString(document.getLength(), spaces(10) + dateService + "\n", document.getStyle("SecondLastStyle"));
 
+            printFillerLines(3);
             completePrinting("roomBooked", fullDateHourService, consecutiveTransaction, justPDF);
         } catch (BadLocationException ex) {
-            Logger.getLogger(Printer.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, null, ex);
         }
     }
 
     public void printItemSold(JSONObject transaction, int consecutiveTransaction, boolean justPDF) {
-        printLayout.setText("");
-        document = printLayout.getStyledDocument();
+        resetDocument();
 
         String roomString = transaction.getString("roomSoldTo");
         ZonedDateTime fullDateHourService = ZonedDateTime.parse(transaction.getString("changeDate"));
@@ -320,15 +295,15 @@ public class Printer {
         try {
             printHeader(null);
 
-            document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
+            printFillerLines(1);
             document.insertString(document.getLength(), spaces(2) + "VENTA A LA HABITACI\u00d3N: ", document.getStyle("DefaultStyle"));
             document.insertString(document.getLength(), roomString, document.getStyle("TransactionStyleBold"));
             document.insertString(document.getLength(), "\n", document.getStyle("TransactionStyle"));
-            document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
+            printFillerLines(1);
 
             printTransactionNumber(consecutiveTransaction);
 
-            document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
+            printFillerLines(1);
             document.insertString(document.getLength(), spaces(3) + "HORA VENTA: " + hourService + "\n", document.getStyle("DefaultStyle"));
             document.insertString(document.getLength(), " \n\n\n", document.getStyle("FillerStyle"));
 
@@ -339,40 +314,40 @@ public class Printer {
                 long price = item.getLong("price");
                 totalPrice += price;
                 document.insertString(document.getLength(), spaces(2) + quantity + spaces(3) + name + "\t" + numberFormat.format(price) + " \n", document.getStyle("TransactionStyle"));
-                document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
+                printFillerLines(1);
             }
             document.insertString(document.getLength(), spaces(4) + "\n\nPago Total:\t", document.getStyle("TransactionStyle"));
             document.insertString(document.getLength(), " " + numberFormat.format(totalPrice), document.getStyle("TransactionStyleBold"));
             document.insertString(document.getLength(), "\n", document.getStyle("TransactionStyle"));
-            document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
+            printFillerLines(1);
             document.insertString(document.getLength(), spaces(6) + motelAddress + "\n", document.getStyle("FooterStyleBold"));
             printSeparator();
             document.insertString(document.getLength(), spaces(10) + dateService + "\n", document.getStyle("SecondLastStyle"));
 
+            printFillerLines(3);
             completePrinting("Sale", fullDateHourService, consecutiveTransaction, justPDF);
         } catch (BadLocationException ex) {
-            Logger.getLogger(Printer.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, null, ex);
         }
     }
 
     void printSummarizedTurn(JSONObject summarizedTurn, boolean justPDF) {
-        printLayout.setText("");
-        document = printLayout.getStyledDocument();
+        resetDocument();
 
         ZonedDateTime fullDateTurnStart = ZonedDateTime.parse(summarizedTurn.getString("turnStart"));
-        ZonedDateTime FullDateTurnEnd = ZonedDateTime.parse(summarizedTurn.getString("turnEnd"));
+        ZonedDateTime fullDateTurnEnd = ZonedDateTime.parse(summarizedTurn.getString("turnEnd"));
         int turnNumber = summarizedTurn.getInt("turnNumber");
 
         try {
             printHeader("RESUMEN VENTAS TURNO");
-            document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
+            printFillerLines(1);
 
-            printTurnDateSection(fullDateTurnStart, FullDateTurnEnd);
+            printTurnDateSection(fullDateTurnStart, fullDateTurnEnd);
 
             printSeparator();
             document.insertString(document.getLength(), "Cant\tConcepto\tPrecio\n", document.getStyle("TransactionStyle"));
             printSeparator();
-            document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
+            printFillerLines(1);
 
             JSONArray summaryArray = summarizedTurn.getJSONArray("turnSummary");
             long totalSales = 0;
@@ -399,25 +374,25 @@ public class Printer {
             }
 
             printTurnTotals(totalRooms, totalItems, totalSales);
+            printFillerLines(3);
             completePrinting("summarizedTurn", fullDateTurnStart, turnNumber, justPDF);
         } catch (BadLocationException ex) {
-            Logger.getLogger(Printer.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, null, ex);
         }
     }
 
     void printDetailedTurn(JSONObject detailedTurn, boolean justPDF) {
-        printLayout.setText("");
-        document = printLayout.getStyledDocument();
+        resetDocument();
 
         ZonedDateTime fullDateTurnStart = ZonedDateTime.parse(detailedTurn.getString("turnStart"));
-        ZonedDateTime FullDateTurnEnd = ZonedDateTime.parse(detailedTurn.getString("turnEnd"));
+        ZonedDateTime fullDateTurnEnd = ZonedDateTime.parse(detailedTurn.getString("turnEnd"));
         int turnNumber = detailedTurn.getInt("turnNumber");
 
         try {
             printHeader("DETALLE VENTAS TURNO");
-            document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
+            printFillerLines(1);
 
-            printTurnDateSection(fullDateTurnStart, FullDateTurnEnd);
+            printTurnDateSection(fullDateTurnStart, fullDateTurnEnd);
 
             document.insertString(document.getLength(), "Tiempo Hab Concepto Precio\n", document.getStyle("TransactionStyleBold"));
             printSeparator();
@@ -430,8 +405,7 @@ public class Printer {
                 JSONObject change = turnActivity.getJSONObject(i);
                 String changeType = change.getString("changeType");
                 ZonedDateTime changeDate = ZonedDateTime.parse(change.getString("changeDate"));
-                DateTimeFormatter specialDateFormatter = DateTimeFormatter.ofPattern("MM/dd-HH:mm");
-                String formattedDate = changeDate.format(specialDateFormatter);
+                String formattedDate = changeDate.format(DETAILED_TURN_DATE_FORMATTER);
                 if (changeType.equals("sale")) {
                     JSONArray register = change.getJSONArray("register");
                     for (int j = 0; j < register.length(); j++) {
@@ -458,26 +432,26 @@ public class Printer {
             }
 
             printTurnTotals(totalRooms, totalItems, totalSales);
+            printFillerLines(3);
             completePrinting("detailedTurnTurn", fullDateTurnStart, turnNumber, justPDF);
         } catch (BadLocationException ex) {
-            Logger.getLogger(Printer.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, null, ex);
         }
     }
 
     // ========== PDF & Print ==========
 
     private void saveAsPDF(String type, ZonedDateTime date, int consecutive) {
-        try {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss");
-            String formattedDateTime = date.format(formatter);
-            PdfWriter writer = new PdfWriter(new FileOutputStream(PDF_SAVE_PATH + "\\" + formattedDateTime + "-No" + consecutive + "-" + type + ".pdf"));
-            PdfDocument pdfDoc = new PdfDocument(writer);
-            Document document = new Document(pdfDoc);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss");
+        String formattedDateTime = date.format(formatter);
+        String filePath = PDF_SAVE_PATH + "\\" + formattedDateTime + "-No" + consecutive + "-" + type + ".pdf";
+        try (FileOutputStream fos = new FileOutputStream(filePath);
+             PdfDocument pdfDoc = new PdfDocument(new PdfWriter(fos));
+             Document document = new Document(pdfDoc)) {
             String text = printLayout.getText();
             document.add(new Paragraph(text).setTextAlignment(TextAlignment.LEFT));
-            document.close();
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Failed to save PDF: " + filePath, e);
         }
     }
 
@@ -492,7 +466,7 @@ public class Printer {
             job.setPrintable(printLayout.getPrintable(null, null), pf);
             job.print();
         } catch (PrinterException ex) {
-            Logger.getLogger(Printer.class.getName()).log(Level.SEVERE, null, ex);
+            LOGGER.log(Level.SEVERE, null, ex);
         }
     }
 }

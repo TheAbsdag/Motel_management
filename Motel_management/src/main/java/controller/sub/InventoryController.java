@@ -2,6 +2,8 @@ package controller.sub;
 
 import java.util.List;
 import javax.swing.JTable;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import model.MotelManagement;
 import model.dto.InventoryItemData;
 import view.InventoryManagementView;
@@ -46,6 +48,14 @@ public class InventoryController {
         inventoryView.getBackButton().addActionListener(e -> onBack.run());
         inventoryView.getUpButton().addActionListener(e -> scrollTable(inventoryView.getInventoryTable(), -1));
         inventoryView.getDownButton().addActionListener(e -> scrollTable(inventoryView.getInventoryTable(), 1));
+
+        // Name field validation: enable save only when name is non-empty
+        inventoryView.getNameTextField().getDocument().addDocumentListener(new DocumentListener() {
+            private void update() { updateSaveButtonState(); }
+            @Override public void insertUpdate(DocumentEvent e) { update(); }
+            @Override public void removeUpdate(DocumentEvent e) { update(); }
+            @Override public void changedUpdate(DocumentEvent e) { update(); }
+        });
 
         // Table selection listener for loading selected item into edit fields
         inventoryView.getInventoryTable().getSelectionModel().addListSelectionListener(event -> {
@@ -158,10 +168,17 @@ public class InventoryController {
         inventoryView.getAddSmallPriceButton().setEnabled(enable);
         inventoryView.getRemoveBigPriceButton().setEnabled(enable);
         inventoryView.getAddBigPriceButton().setEnabled(enable);
-        inventoryView.getSaveButton().setEnabled(enable);
+        inventoryView.getSaveButton().setEnabled(enable && !inventoryView.getNameTextField().getText().trim().isEmpty());
         inventoryView.getNameTextField().setEnabled(enable);
         inventoryView.getPriceTextField().setEnabled(enable);
         inventoryView.getQuantityTextField().setEnabled(enable);
+    }
+
+    /** Enables the save button only when the name field is non-empty. */
+    private void updateSaveButtonState() {
+        String name = inventoryView.getNameTextField().getText().trim();
+        inventoryView.getSaveButton().setEnabled(!name.isEmpty()
+                && inventoryView.getNameTextField().isEnabled());
     }
 
     /** Opens the inventory management view with modificators disabled. */

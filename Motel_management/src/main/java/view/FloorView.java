@@ -100,6 +100,23 @@ public class FloorView extends JPanel {
         towerLabelInforfmation.setText("TORRE: " + (currentTowerIndex + 1));
     }
 
+    /**
+     * Hides and disables all tower-specific UI in single-tower mode.
+     * Call this when the rooms array contains only one tower.
+     */
+    public void setSingleTowerMode() {
+        previousTowerButton.setVisible(false);
+        previousTowerButton.setEnabled(false);
+        nextTowerButton.setVisible(false);
+        nextTowerButton.setEnabled(false);
+        towerLabelInforfmation.setVisible(false);
+
+        // Collapse rows 1 and 2 (tower controls) so the empty space gets
+        // redistributed among the remaining rows.
+        ((MigLayout) getLayout()).setRowConstraints(
+            "[grow][]  [][grow][grow][grow][grow][grow]");
+    }
+
     private void initComponents() {
 	// JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents  @formatter:off
 	// Generated using JFormDesigner Educational license - Santiago Esteban Castelblanco Castiblanco (saecastelblancoc)

@@ -39,8 +39,8 @@ public class SellingController {
         sellingView.getAddQuantityButton().addActionListener(e -> updateItemSaleAmount(1));
         sellingView.getRemoveQuantityButton().addActionListener(e -> updateItemSaleAmount(-1));
         sellingView.getFinishSaleButton().addActionListener(e -> finishSale());
-        sellingView.getUpSellingListButton().addActionListener(e -> scrollTable(sellingView.getItemTable(), -1));
-        sellingView.getDownSellingListButton().addActionListener(e -> scrollTable(sellingView.getItemTable(), 1));
+        sellingView.getUpSellingListButton().addActionListener(e -> scrollSelectedTable(-1));
+        sellingView.getDownSellingListButton().addActionListener(e -> scrollSelectedTable(1));
         sellingView.getCourtesySaleButton().addActionListener(e -> addCourtesyItemToRegister());
 
         // Table selection listeners for enabling/disabling add/delete buttons
@@ -184,13 +184,15 @@ public class SellingController {
     // ========== Table Scrolling (Touch-Friendly) ==========
 
     /**
-     * Scrolls the given table by one row in the specified direction.
-     * Replaces the Robot-based key simulation with proper viewport scrolling.
+     * Scrolls whichever table currently has a row selected.
+     * If the selling table is selected, scrolls that one; otherwise scrolls the item table.
      *
-     * @param table     the table to scroll
      * @param direction +1 for down, -1 for up
      */
-    private void scrollTable(JTable table, int direction) {
+    private void scrollSelectedTable(int direction) {
+        JTable table = sellingView.getSellingTable().getSelectedRow() >= 0
+                ? sellingView.getSellingTable()
+                : sellingView.getItemTable();
         int currentRow = table.getSelectedRow();
         int targetRow = Math.max(0, Math.min(currentRow + direction, table.getRowCount() - 1));
         if (targetRow >= 0) {

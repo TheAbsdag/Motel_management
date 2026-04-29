@@ -1,4 +1,4 @@
-JFDML JFormDesigner: "9.0.0.0.352" Java: "21.0.5" encoding: "UTF-8"
+JFDML JFormDesigner: "8.2.2.0.382" Java: "25.0.2" encoding: "UTF-8"
 
 new FormModel {
 	contentType: "form/swing"
@@ -48,6 +48,7 @@ new FormModel {
 				name: "historyButton"
 				"text": "HISTORIAL"
 				"font": new java.awt.Font( "Segoe UI Black", 0, 22 )
+				"enabled": false
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 5 2,growy"
 			} )
