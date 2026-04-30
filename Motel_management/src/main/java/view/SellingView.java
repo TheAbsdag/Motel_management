@@ -206,11 +206,11 @@ public class SellingView extends JPanel {
 
 	//======== this ========
 	setLayout(new MigLayout(
-	    "hidemode 3",
+	    "fill,hidemode 3",
 	    // columns
 	    "[175,fill]" +
 	    "[106,grow,fill]" +
-	    "[118,fill]" +
+	    "[118,grow,fill]" +
 	    "[117,fill]" +
 	    "[112,fill]" +
 	    "[136,fill]" +
@@ -218,12 +218,12 @@ public class SellingView extends JPanel {
 	    // rows
 	    "[]" +
 	    "[33]" +
-	    "[51]" +
-	    "[80]" +
-	    "[70]" +
-	    "[72]" +
-	    "[51]" +
-	    "[77]" +
+	    "[51,grow]" +
+	    "[80,grow]" +
+	    "[70,grow]" +
+	    "[72,grow]" +
+	    "[51,grow]" +
+	    "[77,grow]" +
 	    "[146]"));
 
 	//---- dateLabel ----
@@ -256,25 +256,25 @@ public class SellingView extends JPanel {
 	{
 	    itemListPanel.setBackground(new Color(0x75c0f1));
 	    itemListPanel.setLayout(new MigLayout(
-		"hidemode 3",
+		"fill,hidemode 3",
 		// columns
 		"[grow,fill]",
 		// rows
 		"[389,grow,shrink 0,fill]"));
 	}
-	add(itemListPanel, "cell 0 2 3 6");
+	add(itemListPanel, "cell 0 2 3 6,grow");
 
 	//======== registerListPanel ========
 	{
 	    registerListPanel.setBackground(new Color(0xccebc7));
 	    registerListPanel.setLayout(new MigLayout(
-		"hidemode 3",
+		"fill,hidemode 3",
 		// columns
 		"[grow,fill]",
 		// rows
 		"[261,fill]"));
 	}
-	add(registerListPanel, "cell 4 2 3 4");
+	add(registerListPanel, "cell 4 2 3 4,grow");
 
 	//---- quantityTextField ----
 	quantityTextField.setFont(new Font("Segoe UI Black", Font.PLAIN, 22));

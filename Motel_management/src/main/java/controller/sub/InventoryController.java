@@ -25,13 +25,15 @@ public class InventoryController {
     private final MotelManagement motelManager;
     private final InventoryManagementView inventoryView;
     private final Runnable onBack;
+    private final Runnable saveBackupFilesOperation;
     private boolean isListAdjusting = false;
 
     public InventoryController(MotelManagement motelManager, InventoryManagementView inventoryView,
-                               Runnable onBack) {
+                               Runnable onBack, Runnable saveBackupFilesOperation) {
         this.motelManager = motelManager;
         this.inventoryView = inventoryView;
         this.onBack = onBack;
+        this.saveBackupFilesOperation = saveBackupFilesOperation;
     }
 
     /** Registers action listeners for the inventory view. */
@@ -147,7 +149,7 @@ public class InventoryController {
         setModificators(false);
         inventoryView.getInventoryTable().clearSelection();
         motelManager.saveFilesForMainService();
-        motelManager.saveFilesForBackup("operation");
+        saveBackupFilesOperation.run();
     }
 
     /**

@@ -46,6 +46,7 @@ public class MotelManagement {
     private ZonedDateTime localizedTime;
     private final ZoneId zoneID;
     private ArrayList<Turn> turnHistory;
+    private ArrayList<String> overtimeList;
 
     public MotelManagement() {
         files = new FileManager();
@@ -58,6 +59,7 @@ public class MotelManagement {
         programConfig = new ProgramConfig();
         turnHistory = new ArrayList<>();
         printer = new Printer();
+        overtimeList = new ArrayList<>();
     }
 
     // ========== Initialization ==========
@@ -143,13 +145,14 @@ public class MotelManagement {
         addConsecutiveTransaction();
         int currentExtension = roomManager.registerRoomTimeAdded(tower, floor, room, service, currentTime);
         JSONObject roomChange = turn.registerRoomChange(
-                roomManager.getRoom(tower, floor, room), currentTime, price, currentExtension);
+                roomManager.getRoom(tower, floor, room), currentTime, price, currentExtension,
+                programConfig.getConsecutiveTransaction());
         printer.printRoomTimeSell(roomChange, programConfig.getConsecutiveTransaction(), !print);
     }
 
     public void registerRoomTimeEnd(int tower, int floor, int room) {
         roomManager.registerRoomTimeEnd(tower, floor, room, currentTime);
-        turn.registerRoomChange(roomManager.getRoom(tower, floor, room), currentTime, 0, 0);
+        turn.registerRoomChange(roomManager.getRoom(tower, floor, room), currentTime, 0, 0, 0);
     }
 
     public boolean changeRoomTimeToAnother() {
@@ -201,6 +204,22 @@ public class MotelManagement {
 
     public void turnEnded() {
         turn.turnEnd(currentTime);
+    }
+
+    /**
+     * Prints the current turn report without ending the turn.
+     * Used for mid-turn printing (summarized or detailed).
+     *
+     * @param option 2 = summarized, 3 = detailed
+     */
+    public void turnPrintNoEnd(int option) {
+        JSONObject summarizedTurn = turn.getBasicTurnInformation();
+        JSONObject detailedTurn = turn.getDetailedTurnInformation();
+        switch (option) {
+            case 2 -> printer.printSummarizedCurrentTurn(summarizedTurn);
+            case 3 -> printer.printDetailedCurrentTurn(detailedTurn);
+            default -> { /* no printing */ }
+        }
     }
 
     public void turnEndPrint(int option) {
@@ -297,6 +316,62 @@ public class MotelManagement {
         json.put("itemID", activity.getItemID());
         json.put("quantity", activity.getQuantity());
         turn.reverseItemSaleFromTurn(json);
+    }
+
+    // ========== Spending / Extra Changes / Refunds ==========
+
+    /**
+     * Registers a spending (expense) transaction in the current turn.
+     */
+    public void addSpendingTransaction(String conceptSpending, long value) {
+        addConsecutiveTransaction();
+        turn.registerSpendingTransaction(conceptSpending, value * -1L,
+                programConfig.getConsecutiveTransaction(), currentTime);
+    }
+
+    /**
+     * Registers a bank transfer or safe deposit in the current turn.
+     * @param type "bankTransfer" or "safeDeposit"
+     */
+    public void addExtraChangeTransaction(String description, long value, String type) {
+        addConsecutiveTransaction();
+        turn.registerExtraChangeTransaction(description, value * -1L, type,
+                programConfig.getConsecutiveTransaction(), currentTime);
+    }
+
+    /**
+     * Refunds a transaction from the current turn.
+     * Handles both room and sale refunds, restores inventory stock for item sales.
+     */
+    public void refundItemSale(JSONObject selectedFilteredItem) {
+        addConsecutiveTransaction();
+        String type = selectedFilteredItem.getString("changeType");
+        if (type.equals("sale")) {
+            long itemID = selectedFilteredItem.getLong("itemID");
+            long quantity = selectedFilteredItem.getLong("quantity");
+            Item currentItem = register.getItemFromItemID(itemID);
+            if (currentItem != null) {
+                currentItem.itemAdded(quantity);
+            }
+        }
+        turn.refundTransactionFromTurn(selectedFilteredItem,
+                programConfig.getConsecutiveTransaction(), currentTime);
+    }
+
+    // ========== Overtime Tracking ==========
+
+    public void addToOvertimeList(String roomString) {
+        if (!overtimeList.contains(roomString)) {
+            overtimeList.add(roomString);
+        }
+    }
+
+    public void removeFromOvertimeList(String roomString) {
+        overtimeList.remove(roomString);
+    }
+
+    public ArrayList<String> getOvertimeList() {
+        return overtimeList;
     }
 
     // ========== Transaction Counter (delegated to ProgramConfig) ==========

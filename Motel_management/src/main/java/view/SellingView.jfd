@@ -1,12 +1,12 @@
-JFDML JFormDesigner: "8.2.2.0.382" Java: "21.0.3" encoding: "UTF-8"
+JFDML JFormDesigner: "8.2.2.0.382" Java: "25.0.2" encoding: "UTF-8"
 
 new FormModel {
 	contentType: "form/swing"
 	root: new FormRoot {
 		add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
-			"$layoutConstraints": "hidemode 3"
-			"$columnConstraints": "[175,fill][106,grow,fill][118,fill][117,fill][112,fill][136,fill][139,grow,fill]"
-			"$rowConstraints": "[][33][51][80][70][72][51][77][146]"
+			"$layoutConstraints": "fill,hidemode 3"
+			"$columnConstraints": "[175,fill][106,grow,fill][118,grow,fill][117,fill][112,fill][136,fill][139,grow,fill]"
+			"$rowConstraints": "[][33][51,grow][80,grow][70,grow][72,grow][51,grow][77,grow][146]"
 		} ) {
 			name: "this"
 			add( new FormComponent( "javax.swing.JLabel" ) {
@@ -46,24 +46,24 @@ new FormModel {
 				"value": "cell 4 1 3 1"
 			} )
 			add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
-				"$layoutConstraints": "hidemode 3"
+				"$layoutConstraints": "fill,hidemode 3"
 				"$columnConstraints": "[grow,fill]"
 				"$rowConstraints": "[389,grow,shrink 0,fill]"
 			} ) {
 				name: "itemListPanel"
 				"background": new java.awt.Color( 117, 192, 241, 255 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 0 2 3 6"
+				"value": "cell 0 2 3 6,grow"
 			} )
 			add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
-				"$layoutConstraints": "hidemode 3"
+				"$layoutConstraints": "fill,hidemode 3"
 				"$columnConstraints": "[grow,fill]"
 				"$rowConstraints": "[261,fill]"
 			} ) {
 				name: "registerListPanel"
 				"background": new java.awt.Color( 204, 235, 199, 255 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 4 2 3 4"
+				"value": "cell 4 2 3 4,grow"
 			} )
 			add( new FormComponent( "javax.swing.JTextField" ) {
 				name: "quantityTextField"
@@ -149,7 +149,7 @@ new FormModel {
 			} )
 		}, new FormLayoutConstraints( null ) {
 			"location": new java.awt.Point( 230, 50 )
-			"size": new java.awt.Dimension( 950, 615 )
+			"size": new java.awt.Dimension( 925, 735 )
 		} )
 	}
 }

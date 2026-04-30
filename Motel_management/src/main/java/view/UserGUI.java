@@ -1,16 +1,13 @@
 package view;
 
 import java.awt.CardLayout;
-import java.awt.Color;
 import java.awt.Component;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
 
 /**
  *
@@ -31,6 +28,9 @@ public class UserGUI extends JFrame {
     private TurnManagerView turnManagerView;
     private RoomChangeView roomChangeView;
     private AppOptionsView appOptions;
+    private SpendingRegisterView spendingRegisterView;
+    private ExtraTurnChangesView extraTurnChangesView;
+    private RoomSummaryView roomSummaryView;
 
     private String currentCard;
     private Map<String, JLabel> timeLabels;
@@ -73,15 +73,23 @@ public class UserGUI extends JFrame {
 
         roomChangeView = new RoomChangeView();
         addView(roomChangeView, "roomChangeView");
-        
+
         appOptions = new AppOptionsView();
         addView(getAppOptions(), "appOptionsView");
+
+        spendingRegisterView = new SpendingRegisterView();
+        addView(spendingRegisterView, "spendingRegisterView");
+
+        extraTurnChangesView = new ExtraTurnChangesView();
+        addView(extraTurnChangesView, "extraTurnChangesView");
+
+        roomSummaryView = new RoomSummaryView();
+        addView(roomSummaryView, "roomSummaryView");
 
         //Default window configuration
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1024, 768);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
-        //setResizable(false);
         add(mainPanel);
         setVisible(true);
     }
@@ -89,44 +97,36 @@ public class UserGUI extends JFrame {
     private void addView(JPanel panel, String name) {
         panel.setName(name);
         mainPanel.add(panel, name);
-        switch (panel) {
-            case FloorView fv -> {
-                timeLabels.put(name, fv.getTimeLabel());
-                dateLabels.put(name, fv.getDateLabel());
-            }
-            case TurnSelectView tsv -> {
-                timeLabels.put(name, tsv.getTimeLabel());
-                dateLabels.put(name, tsv.getDateLabel());
-            }
-            case RoomView rv -> {
-                timeLabels.put(name, rv.getTimeLabel());
-                dateLabels.put(name, rv.getDateLabel());
-            }
-            case SellingView sv -> {
-                timeLabels.put(name, sv.getTimeLabel());
-                dateLabels.put(name, sv.getDateLabel());
-            }
-            case ManagementSelectView msv -> {
-                timeLabels.put(name, msv.getTimeLabel());
-                dateLabels.put(name, msv.getDateLabel());
-            }
-            case TurnManagerView tmv -> {
-                timeLabels.put(name, tmv.getTimeLabel());
-                dateLabels.put(name, tmv.getDateLabel());
-            }
-            case InventoryManagementView imv -> {
-                timeLabels.put(name, imv.getTimeLabel());
-                dateLabels.put(name, imv.getDateLabel());
-            }
-            case HistoryView hv -> {
-                timeLabels.put(name, hv.getTimeLabel());
-                dateLabels.put(name, hv.getDateLabel());
-            }
-            case RoomChangeView rcv -> {
-                timeLabels.put(name, rcv.getTimeLabel());
-                dateLabels.put(name, rcv.getDateLabel());
-            }
-            default -> { /* AppOptionsView and DataConfigurationView have no time labels */ }
+        if (panel instanceof FloorView fv) {
+            timeLabels.put(name, fv.getTimeLabel());
+            dateLabels.put(name, fv.getDateLabel());
+        } else if (panel instanceof TurnSelectView tsv) {
+            timeLabels.put(name, tsv.getTimeLabel());
+            dateLabels.put(name, tsv.getDateLabel());
+        } else if (panel instanceof RoomView rv) {
+            timeLabels.put(name, rv.getTimeLabel());
+            dateLabels.put(name, rv.getDateLabel());
+        } else if (panel instanceof SellingView sv) {
+            timeLabels.put(name, sv.getTimeLabel());
+            dateLabels.put(name, sv.getDateLabel());
+        } else if (panel instanceof ManagementSelectView msv) {
+            timeLabels.put(name, msv.getTimeLabel());
+            dateLabels.put(name, msv.getDateLabel());
+        } else if (panel instanceof TurnManagerView tmv) {
+            timeLabels.put(name, tmv.getTimeLabel());
+            dateLabels.put(name, tmv.getDateLabel());
+        } else if (panel instanceof InventoryManagementView imv) {
+            timeLabels.put(name, imv.getTimeLabel());
+            dateLabels.put(name, imv.getDateLabel());
+        } else if (panel instanceof HistoryView hv) {
+            timeLabels.put(name, hv.getTimeLabel());
+            dateLabels.put(name, hv.getDateLabel());
+        } else if (panel instanceof RoomChangeView rcv) {
+            timeLabels.put(name, rcv.getTimeLabel());
+            dateLabels.put(name, rcv.getDateLabel());
+        } else if (panel instanceof RoomSummaryView rsv) {
+            timeLabels.put(name, rsv.getTimeLabel());
+            dateLabels.put(name, rsv.getDateLabel());
         }
     }
 
@@ -149,6 +149,10 @@ public class UserGUI extends JFrame {
 
     public boolean isRoomChangeShown() {
         return "roomChangeView".equals(currentCard);
+    }
+
+    public boolean isRoomSummaryShown() {
+        return "roomSummaryView".equals(currentCard);
     }
 
     public void updateDateTime(String timeShown, String dateShown) {
@@ -208,9 +212,24 @@ public class UserGUI extends JFrame {
         cardLayout.show(mainPanel, "roomChangeView");
     }
 
-    public void setAppOptionsView(){
+    public void setAppOptionsView() {
         currentCard = "appOptionsView";
         cardLayout.show(mainPanel, "appOptionsView");
+    }
+
+    public void setSpendingRegisterView() {
+        currentCard = "spendingRegisterView";
+        cardLayout.show(mainPanel, "spendingRegisterView");
+    }
+
+    public void setExtraTurnChangesView() {
+        currentCard = "extraTurnChangesView";
+        cardLayout.show(mainPanel, "extraTurnChangesView");
+    }
+
+    public void setRoomSummaryView() {
+        currentCard = "roomSummaryView";
+        cardLayout.show(mainPanel, "roomSummaryView");
     }
 
     /**
@@ -277,12 +296,18 @@ public class UserGUI extends JFrame {
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.QUESTION_MESSAGE
         );
-        if (response == JOptionPane.YES_OPTION) {
-            return true;
-        } else {
-            return false;
-        }
+        return response == JOptionPane.YES_OPTION;
+    }
 
+    public boolean confirmTurnEnd() {
+        int response = JOptionPane.showConfirmDialog(
+                null,
+                "¿ESTA SEGURO DE TERMINAR EL TURNO?",
+                "CONFIRMACION",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE
+        );
+        return response == JOptionPane.YES_OPTION;
     }
 
     /**
@@ -306,6 +331,27 @@ public class UserGUI extends JFrame {
      */
     public AppOptionsView getAppOptions() {
         return appOptions;
+    }
+
+    /**
+     * @return the spendingRegisterView
+     */
+    public SpendingRegisterView getSpendingRegisterView() {
+        return spendingRegisterView;
+    }
+
+    /**
+     * @return the extraTurnChangesView
+     */
+    public ExtraTurnChangesView getExtraTurnChangesView() {
+        return extraTurnChangesView;
+    }
+
+    /**
+     * @return the roomSummaryView
+     */
+    public RoomSummaryView getRoomSummaryView() {
+        return roomSummaryView;
     }
 
 }

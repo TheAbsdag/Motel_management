@@ -10,6 +10,7 @@ import controller.sub.SellingController;
 import controller.sub.TurnController;
 import javax.swing.Timer;
 import model.MotelManagement;
+import model.RoomStatus;
 import view.UserGUI;
 
 /**
@@ -21,7 +22,7 @@ import view.UserGUI;
  *   <li>{@link FloorController} — floor/tower navigation and room button updates</li>
  *   <li>{@link RoomController} — room selection, booking, time management, room changes</li>
  *   <li>{@link SellingController} — item sales flow, cart management, checkout</li>
- *   <li>{@link TurnController} — turn lifecycle, turn details, printing</li>
+ *   <li>{@link TurnController} — turn lifecycle, turn details, printing, reversals</li>
  *   <li>{@link HistoryController} — historical turn viewing and printing</li>
  *   <li>{@link InventoryController} — inventory CRUD operations</li>
  *   <li>{@link ManagementController} — management menu navigation</li>
@@ -36,6 +37,7 @@ public class Controller {
     private static final int BACKUP_SAVE_INTERVAL_MS = 300_000;      // 5 minutes
     private static final int MAIN_FILE_SAVE_INTERVAL_MS = 20_000;     // 20 seconds
     private static final int FLOOR_ROTATION_INTERVAL_MS = 1_200_000;  // 20 minutes
+    private static final int OVERTIME_WARNING_INTERVAL_MS = 1_000;    // 1 second
 
     private final MotelManagement motelManager;
     private final UserGUI userInterface;
@@ -55,6 +57,7 @@ public class Controller {
     private Timer timerForBackupFiles;
     private Timer timerForCurrentFile;
     private Timer timerForAutomaticFloorChange;
+    private Timer timerForOvertimeWarning;
 
     /**
      * Creates the Controller and all sub-controllers.
@@ -66,9 +69,10 @@ public class Controller {
 
         // Create sub-controllers (order matters for callback references)
         floorController = new FloorController(motelManager, userInterface.getFloorView());
-        sellingController = new SellingController(motelManager, userInterface.getSellingView(), userInterface);
+        sellingController = new SellingController(motelManager, userInterface.getSellingView(), userInterface,
+                this::saveBackupFilesOperation);
         inventoryController = new InventoryController(motelManager, userInterface.getInventoryView(),
-                this::showManagementSelection);
+                this::showManagementSelection, this::saveBackupFilesOperation);
         appOptionsController = new AppOptionsController(motelManager, userInterface.getAppOptions(),
                 this::showManagementSelection);
         historyController = new HistoryController(motelManager, userInterface.getHistoryView(),
@@ -77,13 +81,33 @@ public class Controller {
                 this::showManagementSelection);
         roomController = new RoomController(motelManager, userInterface.getFloorView(),
                 userInterface.getRoomView(), userInterface.getRoomChangeView(), userInterface,
-                () -> sellingController.roomSale(false));
+                () -> sellingController.roomSale(false), this::saveBackupFilesOperation);
         managementController = new ManagementController(userInterface,
                 () -> { turnController.showTurnManagement(); },
                 () -> { inventoryController.openView(); userInterface.setInventoryView(); },
                 () -> { historyController.openView(); userInterface.setHistoryView(); },
-                () -> { appOptionsController.showOptions(); userInterface.setAppOptionsView(); }
+                () -> { appOptionsController.showOptions(); userInterface.setAppOptionsView(); },
+                () -> {
+                    userInterface.getSpendingRegisterView().getValueTextField().setText("0");
+                    userInterface.getSpendingRegisterView().getDescriptionChangeText().setText("");
+                    userInterface.setSpendingRegisterView();
+                },
+                () -> {
+                    userInterface.getExtraTurnChangesView().getDescriptionText().setText("");
+                    userInterface.getExtraTurnChangesView().getValueTextField().setText("0");
+                    userInterface.getExtraTurnChangesView().getConfirmationButton().setEnabled(false);
+                    userInterface.getExtraTurnChangesView().getBankTransferBox().setSelected(false);
+                    userInterface.getExtraTurnChangesView().getSaveDespositBox().setSelected(false);
+                    userInterface.setExtraTurnChangesView();
+                },
+                () -> userInterface.setRoomSummaryView()
         );
+
+        // Wire spending and extra changes confirmation actions
+        userInterface.getSpendingRegisterView().getConfirmationButton()
+                .addActionListener(e -> registerSpending());
+        userInterface.getExtraTurnChangesView().getConfirmationButton()
+                .addActionListener(e -> registerExtraChanges());
     }
 
     /**
@@ -97,7 +121,6 @@ public class Controller {
 
         // Single tower mode: hide tower navigation if only one tower exists
         if (roomsArray.length == 1) {
-            userInterface.getFloorView().setSingleTowerMode();
             userInterface.getRoomChangeView().setSingleTowerMode();
         }
 
@@ -165,6 +188,34 @@ public class Controller {
         userInterface.setManagementSelection();
     }
 
+    // ========== Spending / Extra Changes ==========
+
+    private void registerSpending() {
+        String conceptSpending = userInterface.getSpendingRegisterView().getDescriptionChangeText().getText();
+        long value = Long.parseLong(userInterface.getSpendingRegisterView().getValueTextField().getText());
+        if (value != 0L && !conceptSpending.isEmpty()) {
+            motelManager.addSpendingTransaction(conceptSpending, value);
+            saveMainFiles();
+            saveBackupFilesOperation();
+            showFloorPerspective();
+        }
+    }
+
+    private void registerExtraChanges() {
+        String conceptSpending = userInterface.getExtraTurnChangesView().getDescriptionText().getText();
+        long value = Long.parseLong(userInterface.getExtraTurnChangesView().getValueTextField().getText());
+        String type;
+        if (userInterface.getExtraTurnChangesView().getBankTransferBox().isSelected()) {
+            type = "bankTransfer";
+        } else {
+            type = "safeDeposit";
+        }
+        motelManager.addExtraChangeTransaction(conceptSpending, value, type);
+        saveMainFiles();
+        saveBackupFilesOperation();
+        showFloorPerspective();
+    }
+
     // ========== Timer Management ==========
 
     private void startTimers() {
@@ -172,10 +223,12 @@ public class Controller {
         timerForBackupFiles = new Timer(BACKUP_SAVE_INTERVAL_MS, e -> saveBackupFiles("backup"));
         timerForCurrentFile = new Timer(MAIN_FILE_SAVE_INTERVAL_MS, e -> motelManager.saveFilesForMainService());
         timerForAutomaticFloorChange = new Timer(FLOOR_ROTATION_INTERVAL_MS, e -> floorController.automaticFloorChange());
+        timerForOvertimeWarning = new Timer(OVERTIME_WARNING_INTERVAL_MS, e -> updateOvertimeWarning());
         timerForTimeUpdates.start();
         timerForBackupFiles.start();
         timerForCurrentFile.start();
         timerForAutomaticFloorChange.start();
+        timerForOvertimeWarning.start();
     }
 
     /**
@@ -198,9 +251,63 @@ public class Controller {
         if (userInterface.isRoomChangeShown()) {
             roomController.updateRoomChangeView();
         }
+        if (userInterface.isRoomSummaryShown()) {
+            updateRoomSummaryView();
+        }
+    }
+
+    /**
+     * Updates the room summary dashboard with current room states.
+     */
+    private void updateRoomSummaryView() {
+        int[][] roomArray = motelManager.getRoomsArray();
+        int[][][] statusData = new int[roomArray.length][][];
+        String[][][] stringsData = new String[roomArray.length][][];
+        boolean[][][] overtimeData = new boolean[roomArray.length][][];
+
+        for (int tower = 0; tower < roomArray.length; tower++) {
+            statusData[tower] = new int[roomArray[tower].length][];
+            stringsData[tower] = new String[roomArray[tower].length][];
+            overtimeData[tower] = new boolean[roomArray[tower].length][];
+            for (int floor = 0; floor < roomArray[tower].length; floor++) {
+                statusData[tower][floor] = new int[roomArray[tower][floor]];
+                stringsData[tower][floor] = new String[roomArray[tower][floor]];
+                overtimeData[tower][floor] = new boolean[roomArray[tower][floor]];
+                for (int room = 0; room < roomArray[tower][floor]; room++) {
+                    statusData[tower][floor][room] = motelManager.getRoom(tower, floor, room).getStatus().getCode();
+                    stringsData[tower][floor][room] = motelManager.getRoom(tower, floor, room).getRoomString();
+                    String remainingTime = motelManager.getRemainingTimeRoom(tower, floor, room);
+                    overtimeData[tower][floor][room] = remainingTime.contains("-");
+                }
+            }
+        }
+        userInterface.getRoomSummaryView().updateRoomSummary(statusData, stringsData, overtimeData);
+    }
+
+    /**
+     * Updates the overtime warning indicator.
+     * Flashes the warning icon when rooms are in overtime.
+     */
+    private void updateOvertimeWarning() {
+        if (motelManager.getOvertimeList().isEmpty()) {
+            userInterface.getFloorView().getWarningIconLabel().setVisible(false);
+        } else if (userInterface.getFloorView().getWarningIconLabel().isVisible()) {
+            userInterface.getFloorView().getWarningIconLabel().setVisible(false);
+        } else {
+            userInterface.getFloorView().getWarningIconLabel().setVisible(true);
+        }
+
+        userInterface.getFloorView().updateWarnings(motelManager.getOvertimeList());
     }
 
     // ========== File Persistence ==========
+
+    /**
+     * Saves the main data files.
+     */
+    public void saveMainFiles() {
+        motelManager.saveFilesForMainService();
+    }
 
     /**
      * Saves backup copies of all data files with a timestamped folder.
@@ -209,5 +316,13 @@ public class Controller {
      */
     public void saveBackupFiles(String saveType) {
         motelManager.saveFilesForBackup(saveType);
+    }
+
+    /**
+     * Triggers a backup save with the "operation" label.
+     * Called after significant user operations (room booking, sales, etc.).
+     */
+    public void saveBackupFilesOperation() {
+        motelManager.saveFilesForBackup("operation");
     }
 }

@@ -1,0 +1,110 @@
+JFDML JFormDesigner: "8.2.2.0.382" Java: "25.0.2" encoding: "UTF-8"
+
+new FormModel {
+	contentType: "form/swing"
+	root: new FormRoot {
+		add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
+			"$layoutConstraints": "fill,hidemode 3"
+			"$columnConstraints": "[grow,fill][grow,fill][grow,fill]"
+			"$rowConstraints": "[grow][grow][grow][grow][grow][grow][grow]"
+		} ) {
+			name: "this"
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "extraTurnChangesInformativeLabel"
+				"text": "REGISTRO ABONO CAJA Y TRANSFERENCIAS BANCARIAS"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 22 )
+				"horizontalAlignment": 0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 0 3 1"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "descriptionLabel"
+				"text": "DESCRIPCION / CONCEPTO"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 22 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 1"
+			} )
+			add( new FormComponent( "javax.swing.JTextField" ) {
+				name: "descriptionText"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 22 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 1 1 2 1,growy"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "valueLabel"
+				"text": "VALOR"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 24 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 2"
+			} )
+			add( new FormComponent( "javax.swing.JTextField" ) {
+				name: "valueTextField"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 24 )
+				auxiliary() {
+					"JavaCodeGenerator.postCreateCode": " ((AbstractDocument) valueTextField.getDocument()).setDocumentFilter(new NumericDocumentFilter());"
+				}
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 1 2 2 1,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "minusSmallValueButton"
+				"text": "-100"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 24 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 1 3,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "addSmallValueButton"
+				"text": "+100"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 24 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 2 3,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "minusBigValueButton"
+				"text": "-1000"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 24 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 1 4,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "addBigValueButton"
+				"text": "+1000"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 24 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 2 4,growy"
+			} )
+			add( new FormComponent( "javax.swing.JCheckBox" ) {
+				name: "bankTransferBox"
+				"text": "Transferencia bancaria"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 22 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 5,growy"
+			} )
+			add( new FormComponent( "javax.swing.JCheckBox" ) {
+				name: "saveDespositBox"
+				"text": "Abono a caja"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 28 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 2 5,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "backButton"
+				"text": "VOLVER"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 28 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 6,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "confirmationButton"
+				"text": "CONFIRMAR"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 28 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 2 6,growy"
+			} )
+		}, new FormLayoutConstraints( null ) {
+			"location": new java.awt.Point( 0, 0 )
+			"size": new java.awt.Dimension( 1230, 590 )
+		} )
+	}
+}

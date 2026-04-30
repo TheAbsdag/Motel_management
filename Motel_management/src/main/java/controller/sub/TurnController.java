@@ -8,6 +8,7 @@ import javax.swing.JTable;
 import model.MotelManagement;
 import model.dto.TurnActivityData;
 import model.dto.TurnSummaryItemData;
+import org.json.JSONObject;
 import view.TurnManagerView;
 import view.UserGUI;
 
@@ -54,8 +55,8 @@ public class TurnController {
 
         // Turn management buttons
         turnManagerView.getBackButton().addActionListener(e -> onBack.run());
-        turnManagerView.getPrintButton().addActionListener(e -> printTurn());
-        turnManagerView.getEndTurnButton().addActionListener(e -> turnChange());
+        turnManagerView.getPrintButton().addActionListener(e -> printCurrentTurn());
+        turnManagerView.getEndTurnButton().addActionListener(e -> endTurn());
 
         // Print checkbox listeners
         turnManagerView.getNoPrintCheckBox().addItemListener(new PrintCheckboxListener(turnManagerView));
@@ -66,14 +67,21 @@ public class TurnController {
         turnManagerView.getUpButton().addActionListener(e -> scrollTable(turnManagerView.getTurnDetailsTable(), -1));
         turnManagerView.getDownButton().addActionListener(e -> scrollTable(turnManagerView.getTurnDetailsTable(), 1));
 
-        // Turn details table selection listener
+        // Turn details table selection listener — enables delete for sale and room types
+        // that have not already been refunded
         turnManagerView.getTurnDetailsTable().getSelectionModel().addListSelectionListener(event -> {
             if (!event.getValueIsAdjusting()) {
                 int selectedRow = turnManagerView.getTurnDetailsTable().getSelectedRow();
                 if (selectedRow != -1 && !isListAdjusting) {
                     isListAdjusting = true;
                     TurnActivityData selectedItem = turnManagerView.getCurrentSelectedItem(selectedRow);
-                    turnManagerView.getDeleteActionButton().setEnabled("sale".equals(selectedItem.getChangeType()));
+                    String changeType = selectedItem.getChangeType();
+                    boolean enabled = false;
+                    if (("sale".equals(changeType) || "room".equals(changeType))
+                            && !selectedItem.isRefunded()) {
+                        enabled = true;
+                    }
+                    turnManagerView.getDeleteActionButton().setEnabled(enabled);
                     isListAdjusting = false;
                 }
             }
@@ -118,10 +126,30 @@ public class TurnController {
     }
 
     /**
-     * Prints the turn end report based on selected checkbox options.
+     * Prints the current turn report WITHOUT ending the turn (mid-turn printing).
      * Options: no print, summarized, or detailed.
      */
-    public void printTurn() {
+    public void printCurrentTurn() {
+        motelManager.timeInformationUpdate();
+        if (turnManagerView.getNoPrintCheckBox().isSelected()) {
+            motelManager.turnPrintNoEnd(1);
+        } else if (turnManagerView.getSummarizedPrintCheckBox().isSelected()) {
+            motelManager.turnPrintNoEnd(2);
+        } else if (turnManagerView.getDetailedPrintCheckBox().isSelected()) {
+            motelManager.turnPrintNoEnd(3);
+        }
+    }
+
+    /**
+     * Ends the current turn: asks for confirmation, ends the turn,
+     * prints based on selected checkbox options, saves history,
+     * clears backups, and transitions to turn select view.
+     */
+    public void endTurn() {
+        boolean turnEndConfirmation = userInterface.confirmTurnEnd();
+        if (!turnEndConfirmation) {
+            return;
+        }
         motelManager.timeInformationUpdate();
         turnManagerView.getBackButton().setEnabled(false);
         turnManagerView.getEndTurnButton().setEnabled(true);
@@ -133,30 +161,49 @@ public class TurnController {
         } else if (turnManagerView.getDetailedPrintCheckBox().isSelected()) {
             motelManager.turnEndPrint(3);
         }
-    }
-
-    /** Transitions to turn select view after ending the current turn. */
-    public void turnChange() {
         userInterface.setTurnSelectView();
     }
 
     // ========== Turn Details ==========
 
-    /** Deletes a sale register from the current turn (reverses the transaction). */
+    /** Refunds a room booking or item sale from the current turn by creating a refund entry. */
     public void deleteRegisterFromTurn() {
-        TurnActivityData selectedItem = turnManagerView.getCurrentSelectedItem(
-                turnManagerView.getTurnDetailsTable().getSelectedRow());
-        if ("sale".equals(selectedItem.getChangeType())) {
-            motelManager.revertItemSale(selectedItem);
-            List<TurnActivityData> activities = motelManager.getTurnActivityDataList();
-            long totalRooms = 0, totalItems = 0;
-            for (TurnActivityData a : activities) {
-                if ("room".equals(a.getChangeType())) totalRooms += a.getPrice();
-                else if ("sale".equals(a.getChangeType())) totalItems += a.getPrice();
-            }
-            long totalSales = totalRooms + totalItems;
-            turnManagerView.setTurnDetailsData(activities, totalRooms, totalItems, totalSales);
+        int row = turnManagerView.getTurnDetailsTable().getSelectedRow();
+        if (row == -1) return;
+
+        TurnActivityData selectedItem = turnManagerView.getCurrentSelectedItem(row);
+        String changeType = selectedItem.getChangeType();
+        if (!"sale".equals(changeType) && !"room".equals(changeType)) return;
+        if (selectedItem.isRefunded()) return;
+
+        // Build a JSONObject from the DTO for the refund engine
+        JSONObject json = new JSONObject();
+        json.put("changeType", changeType);
+        json.put("consecutiveTrans", selectedItem.getConsecutiveTrans());
+        if ("room".equals(changeType)) {
+            json.put("roomString", selectedItem.getRoomString());
+            json.put("price", selectedItem.getPrice());
+            json.put("service", selectedItem.getService());
+        } else {
+            json.put("roomSoldTo", selectedItem.getRoomSoldTo());
+            json.put("itemID", selectedItem.getItemID());
+            json.put("quantity", selectedItem.getQuantity());
+            json.put("itemName", selectedItem.getItemName());
+            json.put("price", selectedItem.getPrice());
         }
+
+        motelManager.refundItemSale(json);
+
+        // Refresh the table
+        List<TurnActivityData> activities = motelManager.getTurnActivityDataList();
+        long totalRooms = 0, totalItems = 0;
+        for (TurnActivityData a : activities) {
+            if ("room".equals(a.getChangeType())) totalRooms += a.getPrice();
+            else if ("sale".equals(a.getChangeType())) totalItems += a.getPrice();
+        }
+        long totalSales = totalRooms + totalItems;
+        turnManagerView.setTurnDetailsData(activities, totalRooms, totalItems, totalSales);
+        turnManagerView.getDeleteActionButton().setEnabled(false);
     }
 
     /** Shows the summarized turn popup. */
@@ -203,6 +250,7 @@ public class TurnController {
             JCheckBox selected = (JCheckBox) e.getSource();
             if (selected.isSelected()) {
                 view.getPrintButton().setEnabled(true);
+                view.getEndTurnButton().setEnabled(true);
                 if (selected != view.getNoPrintCheckBox()) view.getNoPrintCheckBox().setSelected(false);
                 if (selected != view.getSummarizedPrintCheckBox()) view.getSummarizedPrintCheckBox().setSelected(false);
                 if (selected != view.getDetailedPrintCheckBox()) view.getDetailedPrintCheckBox().setSelected(false);

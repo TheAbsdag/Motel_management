@@ -88,7 +88,7 @@ public class FloorController {
      * </ul>
      */
     public void updateRoomButtons() {
-        floorView.getTurnNumberLabel().setText(String.valueOf(motelManager.getTurnNumber()));
+        floorView.getTurnNumberLabel().setText("TURNO: " + motelManager.getTurnNumber());
         int roomArray[][] = motelManager.getRoomsArray();
         for (int tower = 0; tower < roomArray.length; tower++) {
             for (int floor = 0; floor < roomArray[tower].length; floor++) {
@@ -105,12 +105,14 @@ public class FloorController {
                         case CLEANING:
                             roomButton.setText("<html><center>" + roomString + "</center></html>");
                             roomButton.setBackground(new Color(84, 153, 199));
+                            motelManager.removeFromOvertimeList(roomString);
                             break;
                         case OCCUPIED:
                             String remainingTime = motelManager.getRemainingTimeRoom(tower, floor, room);
                             if (remainingTime.contains("-")) {
                                 roomButton.setText("<html><center>" + roomString + "<br>SOBRETIEMPO</center></html>");
                                 roomButton.setBackground(new Color(241, 196, 15));
+                                motelManager.addToOvertimeList(roomString);
                             } else {
                                 roomButton.setText("<html><center>" + roomString + "<br>QUEDAN " + remainingTime + "</center></html>");
                                 roomButton.setBackground(new Color(231, 76, 60));

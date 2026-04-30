@@ -1,0 +1,95 @@
+JFDML JFormDesigner: "8.2.2.0.382" Java: "25.0.2" encoding: "UTF-8"
+
+new FormModel {
+	contentType: "form/swing"
+	root: new FormRoot {
+		add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
+			"$layoutConstraints": "fill,hidemode 3"
+			"$columnConstraints": "[fill][fill][fill][fill]"
+			"$rowConstraints": "[][][][][][]"
+		} ) {
+			name: "this"
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "spendingRegisterAnnouncementLabel"
+				"text": "REGISTRO GASTOS"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 24 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 0"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "descriptionInformativeLabel"
+				"text": "CONCEPTO"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 24 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 1,growy"
+			} )
+			add( new FormComponent( "javax.swing.JTextField" ) {
+				name: "descriptionChangeText"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 24 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 1 1 3 1,growy"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "valueLabel"
+				"text": "VALOR"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 24 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 2"
+			} )
+			add( new FormComponent( "javax.swing.JTextField" ) {
+				name: "valueTextField"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 24 )
+				auxiliary() {
+					"JavaCodeGenerator.postCreateCode": " ((AbstractDocument) valueTextField.getDocument()).setDocumentFilter(new NumericDocumentFilter());"
+				}
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 1 2 2 1,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "minusSmallValueButton"
+				"text": "-100"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 24 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 1 3,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "addSmallValueButton"
+				"text": "+100"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 24 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 2 3,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "minusBigValueButton"
+				"text": "-1000"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 24 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 1 4,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "addBigValueButton"
+				"text": "+1000"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 24 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 2 4,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "cancellationButton"
+				"text": "CANCELAR - VOLVER"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 24 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 5,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "confirmationButton"
+				"text": "CONFIRMAR"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 24 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 3 5,growy"
+			} )
+		}, new FormLayoutConstraints( null ) {
+			"location": new java.awt.Point( 0, 0 )
+			"size": new java.awt.Dimension( 1060, 480 )
+		} )
+	}
+}

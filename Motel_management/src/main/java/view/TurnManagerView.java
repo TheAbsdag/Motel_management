@@ -124,6 +124,9 @@ public class TurnManagerView extends JPanel {
                     if ("sale".equals(changeType)) yield item.getRoomSoldTo();
                     else if ("room".equals(changeType)) yield item.getRoomString();
                     else if ("roomSwap".equals(changeType)) yield item.getOriginalRoom();
+                    else if ("refund".equals(changeType)) yield item.getRoomString();
+                    else if ("spending".equals(changeType)) yield "";
+                    else if ("extraChange".equals(changeType)) yield "";
                     else yield "";
                 }
                 case 1 -> formattedDate;
@@ -131,10 +134,25 @@ public class TurnManagerView extends JPanel {
                     if ("sale".equals(changeType)) yield item.getQuantity() + " de " + item.getItemName();
                     else if ("room".equals(changeType)) yield "Alquiler " + item.getEffectiveService();
                     else if ("roomSwap".equals(changeType)) yield "Cambio de habitacion a: " + item.getSwappedRoom();
+                    else if ("refund".equals(changeType)) {
+                        if ("saleRefund".equals(item.getRefundType()))
+                            yield "Reembolso " + item.getQuantity() + " de " + item.getItemName();
+                        else if ("roomRefund".equals(item.getRefundType()))
+                            yield "Reembolso habitacion " + item.getRoomString();
+                        else yield "Reembolso";
+                    }
+                    else if ("spending".equals(changeType)) yield "Gasto: " + item.getDescription();
+                    else if ("extraChange".equals(changeType)) {
+                        if ("bankTransfer".equals(item.getExtraType())) yield "Transferencia: " + item.getDescription();
+                        else if ("safeDeposit".equals(item.getExtraType())) yield "Deposito: " + item.getDescription();
+                        else yield item.getExtraType();
+                    }
                     else yield "";
                 }
                 case 3 -> {
-                    if ("sale".equals(changeType) || "room".equals(changeType)) yield item.getPrice();
+                    if ("sale".equals(changeType) || "room".equals(changeType)
+                            || "refund".equals(changeType) || "spending".equals(changeType)
+                            || "extraChange".equals(changeType)) yield item.getPrice();
                     else yield "";
                 }
                 default -> null;

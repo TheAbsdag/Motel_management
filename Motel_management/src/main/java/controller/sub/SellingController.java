@@ -23,12 +23,15 @@ public class SellingController {
     private final MotelManagement motelManager;
     private final SellingView sellingView;
     private final UserGUI userInterface;
+    private final Runnable saveBackupFilesOperation;
     private boolean isListAdjusting = false;
 
-    public SellingController(MotelManagement motelManager, SellingView sellingView, UserGUI userInterface) {
+    public SellingController(MotelManagement motelManager, SellingView sellingView, UserGUI userInterface,
+                             Runnable saveBackupFilesOperation) {
         this.motelManager = motelManager;
         this.sellingView = sellingView;
         this.userInterface = userInterface;
+        this.saveBackupFilesOperation = saveBackupFilesOperation;
     }
 
     /** Registers action listeners for the selling view. */
@@ -165,13 +168,13 @@ public class SellingController {
                 motelManager.roomSaleFinished(false);
                 userInterface.setFloorView();
                 motelManager.saveFilesForMainService();
-                motelManager.saveFilesForBackup("operation");
+                saveBackupFilesOperation.run();
             }
         } else {
             motelManager.roomSaleFinished(true);
             userInterface.setFloorView();
             motelManager.saveFilesForMainService();
-            motelManager.saveFilesForBackup("operation");
+            saveBackupFilesOperation.run();
         }
     }
 

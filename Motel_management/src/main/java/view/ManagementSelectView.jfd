@@ -6,7 +6,7 @@ new FormModel {
 		add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
 			"$layoutConstraints": "fill,hidemode 3"
 			"$columnConstraints": "[171,fill][145,fill][118,fill][145,fill][118,fill][145,fill][133,fill]"
-			"$rowConstraints": "[121][45][grow][40][116]"
+			"$rowConstraints": "[121][45,grow][grow][40,grow][116]"
 		} ) {
 			name: "this"
 			add( new FormComponent( "javax.swing.JLabel" ) {
@@ -21,28 +21,28 @@ new FormModel {
 				"text": "TIME"
 				"font": new java.awt.Font( "Segoe UI Black", 0, 28 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 4 0 3 1"
+				"value": "cell 3 0"
 			} )
 			add( new FormComponent( "javax.swing.JLabel" ) {
 				name: "dateLabel"
 				"text": "DATE"
 				"font": new java.awt.Font( "Segoe UI Black", 0, 22 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 4 1 3 1,growy"
+				"value": "cell 4 0 2 1,growy"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "turnButton"
 				"text": "TURNO"
 				"font": new java.awt.Font( "Segoe UI Black", 0, 22 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 1 2,growy"
+				"value": "cell 1 1,growy"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "inventoryButton"
 				"text": "INVENTARIO"
 				"font": new java.awt.Font( "Segoe UI Black", 0, 22 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 3 2,growy"
+				"value": "cell 3 1,growy"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "historyButton"
@@ -50,7 +50,28 @@ new FormModel {
 				"font": new java.awt.Font( "Segoe UI Black", 0, 22 )
 				"enabled": false
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 5 2,growy"
+				"value": "cell 5 1,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "roomSummaryButton"
+				"text": "RESUMEN HABITACIONES"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 18 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 2,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "extraChangesButton"
+				"text": "TRANSFERENCIA "
+				"font": new java.awt.Font( "Segoe UI Black", 0, 22 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 1 3,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "registerSpendingButton"
+				"text": "GASTO"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 22 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 3 3,growy"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "backButton"

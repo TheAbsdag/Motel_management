@@ -2,15 +2,14 @@ package model.dto;
 
 /**
  * Typed data object for a single entry in a turn's summary report.
- * Summaries aggregate room bookings and item sales into grouped line items.
- * <p>
- * Examples: "Alquiler 3" with quantity 5 and total 150000, or "Coca-Cola" with quantity 10 and total 25000.
+ * Summaries aggregate room bookings, item sales, refunds, and extra changes
+ * into grouped line items.
  *
- * @param summaryType "room" or "item"
- * @param quantity    number of units sold/booked
+ * @param summaryType "room", "item", "itemRefund", "roomRefund", or "extraChange"
+ * @param quantity    number of units sold/booked/refunded
  * @param price       total price for this summary line
- * @param name        for items: the item name; for rooms: "Alquiler " + service
- * @param service     the service duration in hours (only meaningful for room summaries)
+ * @param name        for items/itemRefunds: the item name; for extraChange: "bankTransfer" or "safeDeposit"
+ * @param service     the service duration in hours (only meaningful for room/roomRefund summaries)
  */
 public record TurnSummaryItemData(String summaryType, int quantity, long price, String name, int service) {
 
@@ -25,9 +24,17 @@ public record TurnSummaryItemData(String summaryType, int quantity, long price, 
      * Returns the display concept column value.
      */
     public String displayConcept() {
-        if ("room".equals(summaryType)) {
-            return "Alquiler " + service;
-        }
-        return name;
+        return switch (summaryType) {
+            case "room" -> "Alquiler " + service;
+            case "item" -> name;
+            case "itemRefund" -> "Dev. " + name;
+            case "roomRefund" -> "Dev. Alquiler " + service;
+            case "extraChange" -> {
+                if ("bankTransfer".equals(name)) yield "Transf. Bancaria";
+                else if ("safeDeposit".equals(name)) yield "Abono a Caja";
+                else yield name;
+            }
+            default -> name != null ? name : "";
+        };
     }
 }
