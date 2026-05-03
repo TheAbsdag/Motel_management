@@ -31,6 +31,7 @@ public class SellingView extends JPanel {
         this.cellFont = new Font("Segoe UI", Font.BOLD, 18);
         initComponents();
         initCustomTable();
+        FocusHighlighter.applyToAll(this);
     }
 
     private void initCustomTable() {
@@ -45,6 +46,7 @@ public class SellingView extends JPanel {
         JScrollPane itemScrollPane = new JScrollPane(itemTable);
         itemTable.getTableHeader().setReorderingAllowed(false);
         itemListPanel.add(itemScrollPane, "cell 0 0, grow");
+        TouchScrollHandler.attach(itemScrollPane);
 
         sellingTableModel = new SellingTableModel();
         sellingTable = new JTable(sellingTableModel);
@@ -57,6 +59,7 @@ public class SellingView extends JPanel {
         JScrollPane sellingScrollPane = new JScrollPane(sellingTable);
         sellingTable.getTableHeader().setReorderingAllowed(false);
         registerListPanel.add(sellingScrollPane, "cell 0 0, grow");
+        TouchScrollHandler.attach(sellingScrollPane);
     }
 
     public InventoryItemData getCurrentSelectedItemListed(int rowSelected) {

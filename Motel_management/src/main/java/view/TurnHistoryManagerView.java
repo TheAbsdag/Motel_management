@@ -62,6 +62,7 @@ public class TurnHistoryManagerView extends JPanel {
         turnDetailsTable.getTableHeader().setReorderingAllowed(false);
 
         turnDetailsPanel.add(scrollPane, "cell 0 0, grow");
+        TouchScrollHandler.attach(scrollPane);
     }
 
     private class TurnDetailsTableModel extends AbstractTableModel {

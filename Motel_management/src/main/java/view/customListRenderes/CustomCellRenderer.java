@@ -6,6 +6,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
+import javax.swing.SwingUtilities;
 import javax.swing.table.TableCellRenderer;
 
 public class CustomCellRenderer extends JTextArea implements TableCellRenderer {
@@ -58,8 +59,18 @@ public class CustomCellRenderer extends JTextArea implements TableCellRenderer {
             int prefH = getPreferredSize().height;
             maxRowHeight = Math.max(maxRowHeight, prefH);
         }
-        if (table.getRowHeight(row) <= maxRowHeight) {
-            table.setRowHeight(row, maxRowHeight);
+        if (table.getRowHeight(row) < maxRowHeight) {
+            // Defer setRowHeight — calling it during paint triggers
+            // resizeAndRepaint() synchronously, causing repaint storms
+            // that make touch-drag scrolling jitter.
+            final int r = row;
+            final int h = maxRowHeight;
+            final JTable t = table;
+            SwingUtilities.invokeLater(() -> {
+                if (t.getRowHeight(r) < h) {
+                    t.setRowHeight(r, h);
+                }
+            });
         }
     }
 }

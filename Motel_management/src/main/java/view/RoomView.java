@@ -16,6 +16,7 @@ import net.miginfocom.swing.*;
 public class RoomView extends JPanel {
     public RoomView() {
 	initComponents();
+        FocusHighlighter.applyToAll(this);
     }
 
     private void initComponents() {

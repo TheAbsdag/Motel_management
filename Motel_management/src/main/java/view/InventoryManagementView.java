@@ -26,6 +26,7 @@ public class InventoryManagementView extends JPanel {
         this.cellFont = new Font("Segoe UI", Font.BOLD, 18);
         initComponents();
         initCustomTable();
+        FocusHighlighter.applyToAll(this);
     }
 
     private JTable inventoryTable;
@@ -52,6 +53,7 @@ public class InventoryManagementView extends JPanel {
         JScrollPane scrollPane = new JScrollPane(inventoryTable);
         inventoryTable.getTableHeader().setReorderingAllowed(false);
         inventoryPanel.add(scrollPane, "cell 0 0, grow");
+        TouchScrollHandler.attach(scrollPane);
     }
 
     /**

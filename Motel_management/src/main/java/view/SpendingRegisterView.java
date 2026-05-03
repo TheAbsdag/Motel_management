@@ -17,6 +17,7 @@ public class SpendingRegisterView extends JPanel {
     public SpendingRegisterView() {
         initComponents();
         prepareInternalListeners();
+        FocusHighlighter.applyToAll(this);
     }
 
     private void prepareInternalListeners() {

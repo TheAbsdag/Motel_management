@@ -59,6 +59,7 @@ public class RoomSummaryView extends JPanel {
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         containerPanel.add(scrollPane, "grow");
+        TouchScrollHandler.attach(scrollPane);
         containerPanel.revalidate();
         containerPanel.repaint();
     }

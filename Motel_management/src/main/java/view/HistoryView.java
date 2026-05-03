@@ -70,6 +70,7 @@ public class HistoryView extends JPanel {
         turnHistoryTable.getTableHeader().setReorderingAllowed(false);
 
         turnSelectionPanel.add(scrollPane, "cell 0 0, grow");
+        TouchScrollHandler.attach(scrollPane);
     }
 
     private void initCustomComponents() {

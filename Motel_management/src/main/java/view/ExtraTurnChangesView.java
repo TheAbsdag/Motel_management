@@ -19,6 +19,7 @@ public class ExtraTurnChangesView extends JPanel {
     public ExtraTurnChangesView() {
         initComponents();
         prepareInternalListeners();
+        FocusHighlighter.applyToAll(this);
     }
 
     private void prepareInternalListeners() {

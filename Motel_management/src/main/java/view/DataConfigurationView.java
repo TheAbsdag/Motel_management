@@ -14,6 +14,7 @@ import net.miginfocom.swing.*;
 public class DataConfigurationView extends JPanel {
     public DataConfigurationView() {
 	initComponents();
+        FocusHighlighter.applyToAll(this);
     }
 
     private void initComponents() {

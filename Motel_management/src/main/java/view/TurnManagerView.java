@@ -64,6 +64,7 @@ public class TurnManagerView extends JPanel {
         JScrollPane scrollPane = new JScrollPane(turnDetailsTable);
         turnDetailsTable.getTableHeader().setReorderingAllowed(false);
         turnDetailsPanel.add(scrollPane, "cell 0 0, grow");
+        TouchScrollHandler.attach(scrollPane);
 
         //intialize for the summarized table
         summarizedTurnTableModel = new SummarizedTurnTableModel();
@@ -78,6 +79,7 @@ public class TurnManagerView extends JPanel {
         JScrollPane summarizedScrollPane = new JScrollPane(getSummarizedTurnTable());
         getSummarizedTurnTable().getTableHeader().setReorderingAllowed(false);
         summarizedTurnInfoPanel.add(summarizedScrollPane, "cell 0 0, grow");
+        TouchScrollHandler.attach(summarizedScrollPane);
     }
 
     public TurnActivityData getCurrentSelectedItem(int selectedRow) {
