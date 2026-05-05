@@ -7,11 +7,12 @@ package view;
 import java.awt.*;
 import javax.swing.*;
 import net.miginfocom.swing.*;
+import view.interfaces.TimeLabelInterface;
 
 /**
  * @author Santiago
  */
-public class ManagementSelectView extends JPanel {
+public class ManagementSelectView extends JPanel implements TimeLabelInterface {
 
     /**
      * @return the programOptionsButton

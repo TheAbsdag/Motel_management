@@ -30,8 +30,6 @@ public class Room {
     private int extension;
     private Instant startStatus;
     private Instant endStatus;
-    private int[] defaultPriceArray;
-
     /**
      * Creates a new room with default FREE status.
      *
@@ -134,6 +132,9 @@ public class Room {
     }
 
     public void setExtension(int extension) {
+        if (endStatus != null) {
+            endStatus = endStatus.plus(Duration.ofHours(extension - this.extension));
+        }
         this.extension = extension;
     }
 

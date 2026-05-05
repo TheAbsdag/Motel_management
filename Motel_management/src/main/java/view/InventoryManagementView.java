@@ -1,5 +1,7 @@
 package view;
 
+import view.helpers.FocusHighlighter;
+import view.helpers.TouchScrollHandler;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,12 +13,13 @@ import javax.swing.text.AbstractDocument;
 import net.miginfocom.swing.*;
 import model.dto.InventoryItemData;
 import view.customListRenderes.*;
+import view.interfaces.TimeLabelInterface;
 
 /**
  * Inventory management view — displays and edits inventory items.
  * Uses typed {@link InventoryItemData} DTOs instead of raw JSON.
  */
-public class InventoryManagementView extends JPanel {
+public class InventoryManagementView extends JPanel implements TimeLabelInterface {
 
     public JButton getUpButton() { return upButton; }
     public JButton getDownButton() { return downButton; }

@@ -1,7 +1,6 @@
 package controller.sub;
 
 import java.util.List;
-import javax.swing.JTable;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import model.MotelManagement;
@@ -48,8 +47,10 @@ public class InventoryController {
         inventoryView.getAddBigPriceButton().addActionListener(e -> modifyPrice(1000));
         inventoryView.getSaveButton().addActionListener(e -> saveItem());
         inventoryView.getBackButton().addActionListener(e -> onBack.run());
-        inventoryView.getUpButton().addActionListener(e -> scrollTable(inventoryView.getInventoryTable(), -1));
-        inventoryView.getDownButton().addActionListener(e -> scrollTable(inventoryView.getInventoryTable(), 1));
+        inventoryView.getUpButton().addActionListener(e ->
+                ControllerUtils.scrollTable(inventoryView.getInventoryTable(), -1));
+        inventoryView.getDownButton().addActionListener(e ->
+                ControllerUtils.scrollTable(inventoryView.getInventoryTable(), 1));
 
         // Name field validation: enable save only when name is non-empty
         inventoryView.getNameTextField().getDocument().addDocumentListener(new DocumentListener() {
@@ -135,8 +136,18 @@ public class InventoryController {
     public void saveItem() {
         int rowSelected = inventoryView.getInventoryTable().getSelectedRow();
         String newName = inventoryView.getNameTextField().getText();
-        int newQuantity = Integer.parseInt(inventoryView.getQuantityTextField().getText());
-        long newPrice = Long.parseLong(inventoryView.getPriceTextField().getText());
+        int newQuantity;
+        long newPrice;
+        try {
+            newQuantity = Integer.parseInt(inventoryView.getQuantityTextField().getText());
+        } catch (NumberFormatException ex) {
+            newQuantity = 0;
+        }
+        try {
+            newPrice = Long.parseLong(inventoryView.getPriceTextField().getText());
+        } catch (NumberFormatException ex) {
+            newPrice = 0;
+        }
 
         if (rowSelected != -1) {
             InventoryItemData selectedItem = inventoryView.getCurrentSelectedItem(rowSelected);
@@ -193,13 +204,4 @@ public class InventoryController {
         inventoryView.updateInventory(motelManager.getInventoryItemDataList());
     }
 
-    /** Scrolls the inventory table by one row (touch-friendly). */
-    private void scrollTable(JTable table, int direction) {
-        int currentRow = table.getSelectedRow();
-        int targetRow = Math.max(0, Math.min(currentRow + direction, table.getRowCount() - 1));
-        if (targetRow >= 0) {
-            table.setRowSelectionInterval(targetRow, targetRow);
-            table.scrollRectToVisible(table.getCellRect(targetRow, 0, true));
-        }
-    }
 }

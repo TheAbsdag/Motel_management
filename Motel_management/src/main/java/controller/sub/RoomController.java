@@ -3,6 +3,7 @@ package controller.sub;
 import java.awt.Color;
 import javax.swing.JButton;
 import model.MotelManagement;
+import model.Room;
 import model.RoomStatus;
 import view.FloorView;
 import view.RoomChangeView;
@@ -108,10 +109,12 @@ public class RoomController {
      * @param room  room index
      */
     public void roomSelected(int tower, int floor, int room) {
+        // Store selection in model for cross-controller access (e.g., SellingController)
         motelManager.setCurrentFloorRoom(tower, floor, room);
         motelManager.setCurrentServiceDesired(0);
-        String roomText = motelManager.getRoom(tower, floor, room).getRoomString();
-        RoomStatus roomStatus = motelManager.getRoom(tower, floor, room).getStatus();
+        Room targetRoom = motelManager.getRoom(tower, floor, room);
+        String roomText = targetRoom.getRoomString();
+        RoomStatus roomStatus = targetRoom.getStatus();
 
         roomView.getRoomNumber().setText(roomText);
         roomView.getBooking12HoursButton().setBackground(Color.WHITE);
@@ -245,7 +248,12 @@ public class RoomController {
      * Adjusts the displayed room price by the given delta.
      */
     public void updateRoomPrice(long delta) {
-        long currentPrice = Long.parseLong(roomView.getPriceTextField().getText());
+        long currentPrice;
+        try {
+            currentPrice = Long.parseLong(roomView.getPriceTextField().getText());
+        } catch (NumberFormatException ex) {
+            currentPrice = 0;
+        }
         long newPrice = currentPrice + delta;
         if (newPrice > 0) {
             roomView.getPriceTextField().setText(String.valueOf(newPrice));
@@ -264,7 +272,12 @@ public class RoomController {
         int roomNumber = motelManager.getCurrentRoomViewed();
         int floorNumber = motelManager.getCurrentFloorViewed();
         int service = motelManager.getCurrentServiceDesired();
-        int price = Integer.parseInt(roomView.getPriceTextField().getText());
+        int price;
+        try {
+            price = Integer.parseInt(roomView.getPriceTextField().getText());
+        } catch (NumberFormatException ex) {
+            price = 0;
+        }
         boolean print = roomView.getPrintingCheckBox().isSelected();
 
         if (!print) {

@@ -3,6 +3,8 @@
  */
 package view;
 
+import view.helpers.FocusHighlighter;
+import view.helpers.TouchScrollHandler;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,11 +16,12 @@ import net.miginfocom.swing.*;
 import model.dto.InventoryItemData;
 import model.dto.SellingItemData;
 import view.customListRenderes.*;
+import view.interfaces.TimeLabelInterface;
 
 /**
  * @author Santiago
  */
-public class SellingView extends JPanel {
+public class SellingView extends JPanel implements TimeLabelInterface {
 
     private JTable itemTable;
     private JTable sellingTable;

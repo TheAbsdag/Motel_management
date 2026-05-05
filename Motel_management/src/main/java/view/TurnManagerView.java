@@ -3,6 +3,7 @@
  */
 package view;
 
+import view.helpers.TouchScrollHandler;
 import java.awt.*;
 import java.text.NumberFormat;
 import java.time.ZonedDateTime;
@@ -18,11 +19,12 @@ import model.dto.TurnActivityData;
 import model.dto.TurnSummaryItemData;
 import view.customListRenderes.CustomCellRenderer;
 import view.customListRenderes.CustomHeaderRenderer;
+import view.interfaces.TimeLabelInterface;
 
 /**
  * @author Santiago
  */
-public class TurnManagerView extends JPanel {
+public class TurnManagerView extends JPanel implements TimeLabelInterface {
 
     private JTable turnDetailsTable;
     private TurnDetailsTableModel turnDetailsTableModel;

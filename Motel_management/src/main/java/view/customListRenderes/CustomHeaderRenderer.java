@@ -27,9 +27,10 @@ public class CustomHeaderRenderer extends JLabel implements TableCellRenderer{
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            setText(value.toString());
+            setText((value == null) ? "" : value.toString());
             setFont(headerFont);
-            setBackground(Color.LIGHT_GRAY); // Customize header background if needed
+            setBackground(Color.LIGHT_GRAY);
+            setForeground(Color.BLACK);
             return this;
         }
     }

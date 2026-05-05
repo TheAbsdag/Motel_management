@@ -46,8 +46,6 @@ public class Turn {
     public Turn(Instant start, Instant end, int turnID, ZoneId zoneID, JSONArray turnData) {
         this.start = start;
         this.end = end;
-        this.turnHistory = new JSONArray();
-        this.turnNumber = 1;
         this.turnNumber = turnID;
         turnDetails = new JSONObject();
         this.zoneID = zoneID;
@@ -160,8 +158,8 @@ public class Turn {
 
     public JSONObject getBasicTurnInformation() {
         JSONObject basicTurn = new JSONObject();
-        basicTurn.put("turnStart", turnDetails.getString("turnStart"));
-        basicTurn.put("turnNumber", turnDetails.getInt("turnNumber"));
+        basicTurn.put("turnStart", turnDetails.optString("turnStart", ""));
+        basicTurn.put("turnNumber", turnDetails.optInt("turnNumber", 0));
         try{
             basicTurn.put("turnEnd", turnDetails.getString("turnEnd"));
         }
@@ -374,71 +372,22 @@ public class Turn {
         return basicTurn;
     }
 
+    /**
+     * Returns turn details with computed totals, reusing the summarized
+     * computation from {@link #getBasicTurnInformation()} to avoid
+     * duplicate iteration over the turn activity array.
+     */
     public JSONObject getDetailedTurnInformation() {
-        long totalSales = 0;
-        long totalItems = 0;
-        long totalRooms = 0;
-        long totalSpending = 0;
-        long totalRefunds = 0;
-        long totalTurn = 0;
-        long totalBankTransfers = 0;
-        long totalDeposits = 0;
-        long totalNet = 0;
-
-        for (int i = 0; i < turnHistory.length(); i++) {
-            JSONObject change = turnHistory.getJSONObject(i);
-            String changeType = change.getString("changeType");
-            if (changeType.equals("sale")) {
-                JSONArray register = change.getJSONArray("register");
-                for (int j = 0; j < register.length(); j++) {
-                    JSONObject currentItem = register.getJSONObject(j);
-                    long value = currentItem.getLong("price");
-                    totalSales += value;
-                    totalItems += value;
-                    totalTurn += value;
-                    totalNet += value;
-                }
-            } else if (changeType.equals("room") && change.getInt("roomStatus") == RoomStatus.OCCUPIED.getCode()) {
-                long value = change.getLong("price");
-                totalSales += value;
-                totalRooms += value;
-                totalTurn += value;
-                totalNet += value;
-            } else if (changeType.equals("spending")) {
-                long value = change.getLong("value");
-                totalSpending += value;
-                totalTurn += value;
-                totalNet += value;
-            } else if (changeType.equals("refund")) {
-                String type = change.getString("refundType");
-                long value = change.getLong("price");
-                totalTurn += value;
-                totalNet += value;
-                if (type.equals("roomRefund")) {
-                    totalRefunds += value;
-                } else if (type.equals("saleRefund")) {
-                    totalRefunds += value;
-                }
-            } else if (changeType.equals("extraChange")) {
-                String type = change.getString("extraType");
-                long value = change.getLong("value");
-                totalNet += value;
-                if (type.equals("bankTransfer")) {
-                    totalBankTransfers += value * -1L;
-                } else if (type.equals("safeDeposit")) {
-                    totalDeposits += value * -1L;
-                }
-            }
-        }
-        turnDetails.put("totalItems", totalItems);
-        turnDetails.put("totalSales", totalSales);
-        turnDetails.put("totalRooms", totalRooms);
-        turnDetails.put("totalSpending", totalSpending);
-        turnDetails.put("totalRefunds", totalRefunds);
-        turnDetails.put("totalTurn", totalTurn);
-        turnDetails.put("totalBankTransfers", totalBankTransfers);
-        turnDetails.put("totalDeposits", totalDeposits);
-        turnDetails.put("totalNet", totalNet);
+        JSONObject basic = getBasicTurnInformation();
+        turnDetails.put("totalItems", basic.optLong("totalItems"));
+        turnDetails.put("totalSales", basic.optLong("totalSales"));
+        turnDetails.put("totalRooms", basic.optLong("totalRooms"));
+        turnDetails.put("totalSpending", basic.optLong("totalSpending"));
+        turnDetails.put("totalRefunds", basic.optLong("totalRefunds"));
+        turnDetails.put("totalTurn", basic.optLong("totalTurn"));
+        turnDetails.put("totalBankTransfers", basic.optLong("totalBankTransfers"));
+        turnDetails.put("totalDeposits", basic.optLong("totalDeposits"));
+        turnDetails.put("totalNet", basic.optLong("totalNet"));
         return turnDetails;
     }
 
@@ -669,16 +618,17 @@ public class Turn {
         String changeDate = selectedFilteredItem.getString("changeDate");
         long itemID = selectedFilteredItem.getLong("itemID");
         long quantity = selectedFilteredItem.getLong("quantity");
-        for(int i = 0;i<turnHistory.length();i++){
+        for (int i = 0; i < turnHistory.length(); i++) {
             JSONObject currentRegisterChange = turnHistory.getJSONObject(i);
             String changeType = currentRegisterChange.getString("changeType");
-            if(changeType.equals("sale")
-                    &&changeDate.equals(currentRegisterChange.getString("changeDate"))
-                    && roomSoldTo.equals(currentRegisterChange.getString("roomSoldTo"))){
+            if (changeType.equals("sale")
+                    && changeDate.equals(currentRegisterChange.getString("changeDate"))
+                    && roomSoldTo.equals(currentRegisterChange.getString("roomSoldTo"))) {
                 JSONArray currentArray = currentRegisterChange.getJSONArray("register");
-                for(int j = 0;j<currentArray.length();j++){
+                // Iterate backwards to avoid index shift after removal
+                for (int j = currentArray.length() - 1; j >= 0; j--) {
                     JSONObject currentObject = currentArray.getJSONObject(j);
-                    if(currentObject.getLong("itemID") == itemID && currentObject.getLong("quantity") == quantity){
+                    if (currentObject.getLong("itemID") == itemID && currentObject.getLong("quantity") == quantity) {
                         currentArray.remove(j);
                     }
                 }

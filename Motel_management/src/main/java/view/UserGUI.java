@@ -8,6 +8,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import view.interfaces.TimeLabelInterface;
 
 /**
  *
@@ -18,7 +19,7 @@ public class UserGUI extends JFrame {
     private CardLayout cardLayout;
     private JPanel mainPanel;
 
-    private TurnSelectView turnSelectView;
+    private TurnSelectView turnSelect;
     private FloorView floorView;
     private RoomView roomView;
     private SellingView sellingView;
@@ -47,8 +48,8 @@ public class UserGUI extends JFrame {
         mainPanel = new JPanel(cardLayout);
 
         // Creation of the different views, and assignation to the cardLayout
-        turnSelectView = new TurnSelectView();
-        addView(turnSelectView, "turnSelectView");
+        turnSelect = new TurnSelectView();
+        addView(turnSelect, "turnSelectView");
 
         floorView = new FloorView();
         addView(floorView, "floorView");
@@ -97,36 +98,9 @@ public class UserGUI extends JFrame {
     private void addView(JPanel panel, String name) {
         panel.setName(name);
         mainPanel.add(panel, name);
-        if (panel instanceof FloorView fv) {
-            timeLabels.put(name, fv.getTimeLabel());
-            dateLabels.put(name, fv.getDateLabel());
-        } else if (panel instanceof TurnSelectView tsv) {
-            timeLabels.put(name, tsv.getTimeLabel());
-            dateLabels.put(name, tsv.getDateLabel());
-        } else if (panel instanceof RoomView rv) {
-            timeLabels.put(name, rv.getTimeLabel());
-            dateLabels.put(name, rv.getDateLabel());
-        } else if (panel instanceof SellingView sv) {
-            timeLabels.put(name, sv.getTimeLabel());
-            dateLabels.put(name, sv.getDateLabel());
-        } else if (panel instanceof ManagementSelectView msv) {
-            timeLabels.put(name, msv.getTimeLabel());
-            dateLabels.put(name, msv.getDateLabel());
-        } else if (panel instanceof TurnManagerView tmv) {
-            timeLabels.put(name, tmv.getTimeLabel());
-            dateLabels.put(name, tmv.getDateLabel());
-        } else if (panel instanceof InventoryManagementView imv) {
-            timeLabels.put(name, imv.getTimeLabel());
-            dateLabels.put(name, imv.getDateLabel());
-        } else if (panel instanceof HistoryView hv) {
-            timeLabels.put(name, hv.getTimeLabel());
-            dateLabels.put(name, hv.getDateLabel());
-        } else if (panel instanceof RoomChangeView rcv) {
-            timeLabels.put(name, rcv.getTimeLabel());
-            dateLabels.put(name, rcv.getDateLabel());
-        } else if (panel instanceof RoomSummaryView rsv) {
-            timeLabels.put(name, rsv.getTimeLabel());
-            dateLabels.put(name, rsv.getDateLabel());
+        if (panel instanceof TimeLabelInterface htl) {
+            timeLabels.put(name, htl.getTimeLabel());
+            dateLabels.put(name, htl.getDateLabel());
         }
     }
 
@@ -172,7 +146,7 @@ public class UserGUI extends JFrame {
         cardLayout.show(mainPanel, "floorView");
     }
 
-    public void setTurnSelectView() {
+    public void setTurnSelect() {
         currentCard = "turnSelectView";
         cardLayout.show(mainPanel, "turnSelectView");
     }
@@ -233,10 +207,10 @@ public class UserGUI extends JFrame {
     }
 
     /**
-     * @return the turnSelectView
+     * @return the turnSelect
      */
-    public TurnSelectView getTurnSelectView() {
-        return turnSelectView;
+    public TurnSelectView getTurnSelect() {
+        return turnSelect;
     }
 
     /**

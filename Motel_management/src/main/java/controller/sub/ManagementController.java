@@ -10,6 +10,8 @@ import view.UserGUI;
  *
  * <p>Routes to specific management sub-views via Runnable callbacks
  * provided by the main Controller to avoid circular dependencies.
+ * Spending register, extra changes, and room summary are handled
+ * directly by this controller since they have no external dependencies.
  */
 public class ManagementController {
 
@@ -18,36 +20,17 @@ public class ManagementController {
     private final Runnable onInventorySelected;
     private final Runnable onHistorySelected;
     private final Runnable onAppOptionsSelected;
-    private final Runnable onSpendingRegisterSelected;
-    private final Runnable onExtraChangesSelected;
-    private final Runnable onRoomSummarySelected;
 
-    /**
-     * @param userInterface              the main window for view switching
-     * @param onTurnSelected             callback to open turn management
-     * @param onInventorySelected        callback to open inventory management
-     * @param onHistorySelected          callback to open history view
-     * @param onAppOptionsSelected       callback to open app options
-     * @param onSpendingRegisterSelected callback to open spending register
-     * @param onExtraChangesSelected     callback to open extra changes (bank transfer/safe deposit)
-     * @param onRoomSummarySelected      callback to open room summary dashboard
-     */
     public ManagementController(UserGUI userInterface,
                                 Runnable onTurnSelected,
                                 Runnable onInventorySelected,
                                 Runnable onHistorySelected,
-                                Runnable onAppOptionsSelected,
-                                Runnable onSpendingRegisterSelected,
-                                Runnable onExtraChangesSelected,
-                                Runnable onRoomSummarySelected) {
+                                Runnable onAppOptionsSelected) {
         this.userInterface = userInterface;
         this.onTurnSelected = onTurnSelected;
         this.onInventorySelected = onInventorySelected;
         this.onHistorySelected = onHistorySelected;
         this.onAppOptionsSelected = onAppOptionsSelected;
-        this.onSpendingRegisterSelected = onSpendingRegisterSelected;
-        this.onExtraChangesSelected = onExtraChangesSelected;
-        this.onRoomSummarySelected = onRoomSummarySelected;
     }
 
     /** Registers action listeners for the management select view. */
@@ -57,17 +40,15 @@ public class ManagementController {
         userInterface.getManagementSelection().getInventoryButton().addActionListener(e -> onInventorySelected.run());
         userInterface.getManagementSelection().getHistoryButton().addActionListener(e -> onHistorySelected.run());
         userInterface.getManagementSelection().getAppOptionsButton().addActionListener(e -> onAppOptionsSelected.run());
-        userInterface.getManagementSelection().getRoomSummaryButton().addActionListener(e -> onRoomSummarySelected.run());
-        userInterface.getManagementSelection().getExtraChangesButton().addActionListener(e -> onExtraChangesSelected.run());
-        userInterface.getManagementSelection().getRegisterSpendingButton().addActionListener(e -> onSpendingRegisterSelected.run());
+        userInterface.getManagementSelection().getRoomSummaryButton().addActionListener(e -> showRoomSummary());
+        userInterface.getManagementSelection().getExtraChangesButton().addActionListener(e -> showExtraChanges());
+        userInterface.getManagementSelection().getRegisterSpendingButton().addActionListener(e -> showSpendingRegister());
 
         // Spending register view listeners
         userInterface.getSpendingRegisterView().getCancellationButton().addActionListener(e -> showManagementOptions());
-        userInterface.getSpendingRegisterView().getConfirmationButton().addActionListener(e -> registerSpending());
 
         // Extra turn changes view listeners
         userInterface.getExtraTurnChangesView().getBackButton().addActionListener(e -> showManagementOptions());
-        userInterface.getExtraTurnChangesView().getConfirmationButton().addActionListener(e -> registerExtraChanges());
         userInterface.getExtraTurnChangesView().getBankTransferBox().addItemListener(new CheckBoxListener(userInterface));
         userInterface.getExtraTurnChangesView().getSaveDespositBox().addItemListener(new CheckBoxListener(userInterface));
 
@@ -94,11 +75,6 @@ public class ManagementController {
         userInterface.setSpendingRegisterView();
     }
 
-    /** Called when the user confirms a spending registration. */
-    public void registerSpending() {
-        // This method is wired via callbacks in Controller to access motelManager
-    }
-
     // ========== Extra Changes (Bank Transfer / Safe Deposit) ==========
 
     /** Opens the extra turn changes view. */
@@ -109,11 +85,6 @@ public class ManagementController {
         userInterface.getExtraTurnChangesView().getBankTransferBox().setSelected(false);
         userInterface.getExtraTurnChangesView().getSaveDespositBox().setSelected(false);
         userInterface.setExtraTurnChangesView();
-    }
-
-    /** Called when the user confirms an extra change registration. */
-    public void registerExtraChanges() {
-        // This method is wired via callbacks in Controller to access motelManager
     }
 
     // ========== Room Summary ==========

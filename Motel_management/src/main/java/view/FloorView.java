@@ -7,6 +7,7 @@ import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.Insets;
 import java.util.ArrayList;
+import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
@@ -20,11 +21,12 @@ import javax.swing.SwingConstants;
 import javax.swing.Timer;
 import javax.swing.border.TitledBorder;
 import net.miginfocom.swing.MigLayout;
+import view.interfaces.TimeLabelInterface;
 
 /**
  * @author Santiago
  */
-public class FloorView extends JPanel {
+public class FloorView extends JPanel implements TimeLabelInterface {
 
     private ArrayList<ArrayList<ArrayList<JButton>>> roomButtonGridByTower;
     private int currentFloorIndex;
@@ -144,7 +146,7 @@ public class FloorView extends JPanel {
         scrollTimer = new Timer(2000, e -> autoScrollWarnings());
     }
 
-    public void updateWarnings(ArrayList<String> newWarnings) {
+    public void updateWarnings(List<String> newWarnings) {
         if (!currentWarnings.equals(newWarnings)) {
             currentWarnings = new ArrayList<>(newWarnings);
             warningListModel.removeAllElements();

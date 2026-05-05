@@ -8,6 +8,7 @@ import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 import javax.swing.table.TableCellRenderer;
+import view.helpers.TouchScrollHandler;
 
 public class CustomCellRenderer extends JTextArea implements TableCellRenderer {
 
@@ -27,10 +28,10 @@ public class CustomCellRenderer extends JTextArea implements TableCellRenderer {
 
         // Apply background color based on change type
         Object changeType = null;
-        if(table.getColumnCount()>2){
+        if (table.getColumnCount() > 2) {
             changeType = table.getValueAt(row, 2);
         }
-        
+
         if (changeType != null && changeType.toString().contains("Alquiler")) {
             setBackground(Color.CYAN);
         } else {
@@ -44,27 +45,38 @@ public class CustomCellRenderer extends JTextArea implements TableCellRenderer {
         } else {
             setForeground(table.getForeground());
         }
-        // Adjust row height for wrapping text
-        adjustRowHeight(table, row);
-        
+        // Adjust row height for wrapping text in this cell only.
+        // Each column's renderer call adjusts for its own content;
+        // across all columns the row ends up at the max height.
+        adjustRowHeight(table, row, column);
 
         return this;
     }
 
-    private void adjustRowHeight(JTable table, int row) {
-        int maxRowHeight = 0;
-        for (int column = 0; column < table.getColumnCount(); column++) {
-            int cWidth = table.getTableHeader().getColumnModel().getColumn(column).getWidth();
-            setSize(new Dimension(cWidth, Short.MAX_VALUE));
-            int prefH = getPreferredSize().height;
-            maxRowHeight = Math.max(maxRowHeight, prefH);
+    private void adjustRowHeight(JTable table, int row, int column) {
+        boolean scrolling = TouchScrollHandler.isScrolling();
+        int currentRowHeight = table.getRowHeight(row);
+        int cWidth = table.getTableHeader().getColumnModel().getColumn(column).getWidth();
+        setSize(new Dimension(cWidth, Short.MAX_VALUE));
+        int prefH = getPreferredSize().height;
+
+        // Bump the table's default row height so newly-exposed rows
+        // enter at a reasonable height even during scroll, when
+        // per-row setRowHeight is suppressed.
+        if (table.getRowHeight() < prefH) {
+            table.setRowHeight(prefH);
         }
-        if (table.getRowHeight(row) < maxRowHeight) {
-            // Defer setRowHeight — calling it during paint triggers
-            // resizeAndRepaint() synchronously, causing repaint storms
-            // that make touch-drag scrolling jitter.
+
+        // Skip per-row row-height changes during touch-drag scrolling.
+        // setRowHeight(row) triggers resizeAndRepaint() which revalidates
+        // the scroll-pane layout and shifts the viewport position,
+        // fighting the user's finger and causing choppiness.
+        if (scrolling) {
+            return;
+        }
+        if (currentRowHeight < prefH) {
             final int r = row;
-            final int h = maxRowHeight;
+            final int h = prefH;
             final JTable t = table;
             SwingUtilities.invokeLater(() -> {
                 if (t.getRowHeight(r) < h) {

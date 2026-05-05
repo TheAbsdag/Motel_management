@@ -8,6 +8,9 @@ import controller.sub.ManagementController;
 import controller.sub.RoomController;
 import controller.sub.SellingController;
 import controller.sub.TurnController;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import model.MotelManagement;
 import model.RoomStatus;
@@ -29,6 +32,9 @@ import view.UserGUI;
  *   <li>{@link AppOptionsController} — printer selection and configuration</li>
  * </ul>
  *
+ * <p><b>Threading:</b> File I/O (saves and backups) is dispatched to a
+ * single-threaded background executor so the EDT is never blocked on disk writes.
+ *
  * @author Santiago
  */
 public class Controller {
@@ -41,6 +47,13 @@ public class Controller {
 
     private final MotelManagement motelManager;
     private final UserGUI userInterface;
+
+    // Single-thread executor for all file I/O — preserves write order, never blocks the EDT
+    private final ExecutorService saveExecutor = Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "FileSaveWorker");
+        t.setDaemon(true);
+        return t;
+    });
 
     // Sub-controllers
     private final FloorController floorController;
@@ -83,24 +96,10 @@ public class Controller {
                 userInterface.getRoomView(), userInterface.getRoomChangeView(), userInterface,
                 () -> sellingController.roomSale(false), this::saveBackupFilesOperation);
         managementController = new ManagementController(userInterface,
-                () -> { turnController.showTurnManagement(); },
-                () -> { inventoryController.openView(); userInterface.setInventoryView(); },
-                () -> { historyController.openView(); userInterface.setHistoryView(); },
-                () -> { appOptionsController.showOptions(); userInterface.setAppOptionsView(); },
-                () -> {
-                    userInterface.getSpendingRegisterView().getValueTextField().setText("0");
-                    userInterface.getSpendingRegisterView().getDescriptionChangeText().setText("");
-                    userInterface.setSpendingRegisterView();
-                },
-                () -> {
-                    userInterface.getExtraTurnChangesView().getDescriptionText().setText("");
-                    userInterface.getExtraTurnChangesView().getValueTextField().setText("0");
-                    userInterface.getExtraTurnChangesView().getConfirmationButton().setEnabled(false);
-                    userInterface.getExtraTurnChangesView().getBankTransferBox().setSelected(false);
-                    userInterface.getExtraTurnChangesView().getSaveDespositBox().setSelected(false);
-                    userInterface.setExtraTurnChangesView();
-                },
-                () -> userInterface.setRoomSummaryView()
+                this::openTurnManagement,
+                this::openInventoryView,
+                this::openHistoryView,
+                this::openAppOptionsView
         );
 
         // Wire spending and extra changes confirmation actions
@@ -143,7 +142,7 @@ public class Controller {
             userInterface.setFloorView();
         } else {
             System.out.println("No previous turn found");
-            userInterface.setTurnSelectView();
+            userInterface.setTurnSelect();
         }
 
         setupListeners();
@@ -188,11 +187,36 @@ public class Controller {
         userInterface.setManagementSelection();
     }
 
+    private void openTurnManagement() {
+        turnController.showTurnManagement();
+    }
+
+    private void openInventoryView() {
+        inventoryController.openView();
+        userInterface.setInventoryView();
+    }
+
+    private void openHistoryView() {
+        historyController.openView();
+        userInterface.setHistoryView();
+    }
+
+    private void openAppOptionsView() {
+        appOptionsController.showOptions();
+        userInterface.setAppOptionsView();
+    }
+
     // ========== Spending / Extra Changes ==========
 
     private void registerSpending() {
         String conceptSpending = userInterface.getSpendingRegisterView().getDescriptionChangeText().getText();
-        long value = Long.parseLong(userInterface.getSpendingRegisterView().getValueTextField().getText());
+        long value;
+        try {
+            value = Long.parseLong(userInterface.getSpendingRegisterView().getValueTextField().getText());
+        } catch (NumberFormatException ex) {
+            userInterface.showInfoMessage("El valor ingresado no es un numero valido", "ERROR");
+            return;
+        }
         if (value != 0L && !conceptSpending.isEmpty()) {
             motelManager.addSpendingTransaction(conceptSpending, value);
             saveMainFiles();
@@ -203,13 +227,15 @@ public class Controller {
 
     private void registerExtraChanges() {
         String conceptSpending = userInterface.getExtraTurnChangesView().getDescriptionText().getText();
-        long value = Long.parseLong(userInterface.getExtraTurnChangesView().getValueTextField().getText());
-        String type;
-        if (userInterface.getExtraTurnChangesView().getBankTransferBox().isSelected()) {
-            type = "bankTransfer";
-        } else {
-            type = "safeDeposit";
+        long value;
+        try {
+            value = Long.parseLong(userInterface.getExtraTurnChangesView().getValueTextField().getText());
+        } catch (NumberFormatException ex) {
+            userInterface.showInfoMessage("El valor ingresado no es un numero valido", "ERROR");
+            return;
         }
+        String type = userInterface.getExtraTurnChangesView().getBankTransferBox().isSelected()
+                ? "bankTransfer" : "safeDeposit";
         motelManager.addExtraChangeTransaction(conceptSpending, value, type);
         saveMainFiles();
         saveBackupFilesOperation();
@@ -221,8 +247,8 @@ public class Controller {
     private void startTimers() {
         timerForTimeUpdates = new Timer(CLOCK_UPDATE_INTERVAL_MS, e -> updateTime());
         timerForBackupFiles = new Timer(BACKUP_SAVE_INTERVAL_MS, e -> saveBackupFiles("backup"));
-        timerForCurrentFile = new Timer(MAIN_FILE_SAVE_INTERVAL_MS, e -> motelManager.saveFilesForMainService());
-        timerForAutomaticFloorChange = new Timer(FLOOR_ROTATION_INTERVAL_MS, e -> floorController.automaticFloorChange());
+        timerForCurrentFile = new Timer(MAIN_FILE_SAVE_INTERVAL_MS, e -> saveMainFiles());
+        timerForAutomaticFloorChange = new Timer(FLOOR_ROTATION_INTERVAL_MS, e -> automaticRotation());
         timerForOvertimeWarning = new Timer(OVERTIME_WARNING_INTERVAL_MS, e -> updateOvertimeWarning());
         timerForTimeUpdates.start();
         timerForBackupFiles.start();
@@ -233,8 +259,9 @@ public class Controller {
 
     /**
      * Called every ~80ms by the time update timer.
-     * Updates the current time/date display and room status visual indicators
-     * depending on which view is currently shown.
+     * Updates only the time/date display and the currently visible view panel.
+     * The room grid on the floor view is NOT rebuilt here — it updates via
+     * the {@link #updateRoomButtonsSelective()} call for the visible floor only.
      */
     public void updateTime() {
         motelManager.timeInformationUpdate();
@@ -289,40 +316,71 @@ public class Controller {
      * Flashes the warning icon when rooms are in overtime.
      */
     private void updateOvertimeWarning() {
+        var warningLabel = userInterface.getFloorView().getWarningIconLabel();
         if (motelManager.getOvertimeList().isEmpty()) {
-            userInterface.getFloorView().getWarningIconLabel().setVisible(false);
-        } else if (userInterface.getFloorView().getWarningIconLabel().isVisible()) {
-            userInterface.getFloorView().getWarningIconLabel().setVisible(false);
+            warningLabel.setVisible(false);
         } else {
-            userInterface.getFloorView().getWarningIconLabel().setVisible(true);
+            warningLabel.setVisible(!warningLabel.isVisible());
         }
-
         userInterface.getFloorView().updateWarnings(motelManager.getOvertimeList());
     }
 
-    // ========== File Persistence ==========
+    /**
+     * Automatic rotation: cycles through floors, and when all floors of the current
+     * tower have been shown, advances to the next tower (if multiple towers exist).
+     */
+    private void automaticRotation() {
+        floorController.automaticFloorChange();
+        // After floor change, check if we should also advance the tower
+        int[][] roomArray = motelManager.getRoomsArray();
+        if (roomArray.length > 1) {
+            // Tower rotation is handled by FloorController via automaticTowerRotation
+            floorController.automaticTowerRotation();
+        }
+    }
+
+    // ========== File Persistence (Background Threads) ==========
 
     /**
-     * Saves the main data files.
+     * Saves the main data files on a background thread so the EDT is never blocked.
      */
     public void saveMainFiles() {
-        motelManager.saveFilesForMainService();
+        saveExecutor.submit(() -> {
+            try {
+                motelManager.saveFilesForMainService();
+            } catch (Exception e) {
+                System.err.println("Error saving main files: " + e.getMessage());
+            }
+        });
     }
 
     /**
-     * Saves backup copies of all data files with a timestamped folder.
+     * Saves backup copies of all data files on a background thread.
      *
      * @param saveType label for the backup (e.g. "backup", "operation")
      */
     public void saveBackupFiles(String saveType) {
-        motelManager.saveFilesForBackup(saveType);
+        saveExecutor.submit(() -> {
+            try {
+                motelManager.saveFilesForBackup(saveType);
+            } catch (Exception e) {
+                System.err.println("Error saving backup files: " + e.getMessage());
+            }
+        });
     }
 
     /**
      * Triggers a backup save with the "operation" label.
      * Called after significant user operations (room booking, sales, etc.).
+     * Runs on a background thread.
      */
     public void saveBackupFilesOperation() {
-        motelManager.saveFilesForBackup("operation");
+        saveExecutor.submit(() -> {
+            try {
+                motelManager.saveFilesForBackup("operation");
+            } catch (Exception e) {
+                System.err.println("Error saving backup files (operation): " + e.getMessage());
+            }
+        });
     }
 }

@@ -194,33 +194,49 @@ public class RoomManager {
     }
 
     public Room getRoom(int tower, int floor, int room) {
-        if (floor < 0 || room < 0) {
+        if (tower < 0 || floor < 0 || room < 0
+                || tower >= rooms.size()
+                || floor >= rooms.get(tower).size()
+                || room >= rooms.get(tower).get(floor).size()) {
             return reception;
         }
         return rooms.get(tower).get(floor).get(room);
     }
 
     public String getRemainingTimeRoom(int tower, int floor, int room, Instant currentTime) {
-        Duration duration = Duration.between(currentTime, getRoom(tower, floor, room).getEndStatus());
+        Room target = getRoom(tower, floor, room);
+        Instant endStatus = target.getEndStatus();
+        if (endStatus == null) {
+            return "0:0";
+        }
+        Duration duration = Duration.between(currentTime, endStatus);
         long hours = duration.toHours();
         long minutes = duration.minusHours(hours).toMinutes();
         return hours + ":" + minutes;
     }
 
     public String getStartTimeRoom(int tower, int floor, int room) {
+        Instant startStatus = getRoom(tower, floor, room).getStartStatus();
+        if (startStatus == null) {
+            return "N/A";
+        }
         DateTimeFormatter formatter = new DateTimeFormatterBuilder()
                 .appendPattern("hh:mm:ss").appendLiteral(' ')
                 .appendText(ChronoField.AMPM_OF_DAY, new HashMap<Long, String>() {{
                     put(0L, "\tAM"); put(1L, "\tPM");
                 }})
                 .toFormatter();
-        ZonedDateTime start = getRoom(tower, floor, room).getStartStatus().atZone(zoneID);
+        ZonedDateTime start = startStatus.atZone(zoneID);
         return start.format(formatter);
     }
 
     public String getStartDateRoom(int tower, int floor, int room) {
+        Instant startStatus = getRoom(tower, floor, room).getStartStatus();
+        if (startStatus == null) {
+            return "N/A";
+        }
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d 'de' MMMM yyyy", new Locale("es", "ES"));
-        ZonedDateTime start = getRoom(tower, floor, room).getStartStatus().atZone(zoneID);
+        ZonedDateTime start = startStatus.atZone(zoneID);
         return start.format(formatter);
     }
 

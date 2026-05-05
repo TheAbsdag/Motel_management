@@ -3,6 +3,7 @@
  */
 package view;
 
+import view.helpers.TouchScrollHandler;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,11 +14,12 @@ import net.miginfocom.swing.*;
 import model.dto.TurnHistoryData;
 import view.customListRenderes.CustomCellRenderer;
 import view.customListRenderes.CustomHeaderRenderer;
+import view.interfaces.TimeLabelInterface;
 
 /**
  * @author Santiago
  */
-public class HistoryView extends JPanel {
+public class HistoryView extends JPanel implements TimeLabelInterface {
 
     /**
      * @return the upButton

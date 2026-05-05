@@ -1,0 +1,79 @@
+JFDML JFormDesigner: "8.2.2.0.382" Java: "25.0.2" encoding: "UTF-8"
+
+new FormModel {
+	contentType: "form/swing"
+	root: new FormRoot {
+		add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
+			"$layoutConstraints": "fill,hidemode 3,insets 65 196 53 196,align center center"
+			"$columnConstraints": "[grow,center]"
+			"$rowConstraints": "[][grow][][]"
+		} ) {
+			name: "this"
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "turnSelectLabel"
+				"text": "SELECCIONE TURNO"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 54 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 0,align center,gapbottom 111"
+			} )
+			add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
+				"$layoutConstraints": "insets 0"
+				"$columnConstraints": "[186][39][186][39][186]"
+				"$rowConstraints": "[162]"
+			} ) {
+				name: "buttonPanel"
+				add( new FormComponent( "javax.swing.JButton" ) {
+					name: "turn1Button"
+					"text": "1"
+					"font": new java.awt.Font( "Segoe UI Black", 0, 48 )
+				}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+					"value": "cell 0 0,w 186,h 162"
+				} )
+				add( new FormComponent( "javax.swing.JButton" ) {
+					name: "turn2Button"
+					"text": "2"
+					"font": new java.awt.Font( "Segoe UI Black", 0, 48 )
+				}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+					"value": "cell 2 0,w 186,h 162"
+				} )
+				add( new FormComponent( "javax.swing.JButton" ) {
+					name: "turn3Button"
+					"text": "3"
+					"font": new java.awt.Font( "Segoe UI Black", 0, 48 )
+				}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+					"value": "cell 4 0,w 186,h 162"
+				} )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 1,align center,gapbottom 89"
+			} )
+			add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
+				"$layoutConstraints": "insets 0"
+				"$columnConstraints": "[grow,center][grow,center]"
+				"$rowConstraints": "[]"
+			} ) {
+				name: "infoPanel"
+				add( new FormComponent( "javax.swing.JLabel" ) {
+					name: "timeLabel"
+					"text": "00:00 AM"
+					"font": new java.awt.Font( "Segoe UI Black", 0, 36 )
+					"horizontalAlignment": 0
+				}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+					"value": "cell 0 0"
+				} )
+				add( new FormComponent( "javax.swing.JLabel" ) {
+					name: "dateLabel"
+					"text": "DATE"
+					"font": new java.awt.Font( "Segoe UI Black", 0, 36 )
+					"horizontalAlignment": 0
+				}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+					"value": "cell 1 0"
+				} )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 2,align center"
+			} )
+		}, new FormLayoutConstraints( null ) {
+			"location": new java.awt.Point( 45, 5 )
+			"size": new java.awt.Dimension( 950, 545 )
+		} )
+	}
+}

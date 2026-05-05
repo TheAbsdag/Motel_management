@@ -38,17 +38,18 @@ public class App {
         try {
             Files.createDirectories(Path.of(LOCK_DIR));
 
-            @SuppressWarnings("resource")
             RandomAccessFile raf = new RandomAccessFile(LOCK_FILE, "rw");
             FileChannel channel = raf.getChannel();
             FileLock lock = channel.tryLock();
 
             if (lock != null) {
                 // Keep the lock for the lifetime of this instance.
-                // It is released automatically when the JVM exits.
+                // The RAF and channel must stay open to hold the lock; they are released on JVM exit.
                 return true;
             }
 
+            // Lock failed — another instance is running
+            raf.close();
             JOptionPane.showMessageDialog(null,
                     "El programa ya se encuentra en ejecucion.\n"
                     + "Cierre la otra instancia antes de abrir una nueva.",

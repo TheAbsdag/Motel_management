@@ -1,6 +1,7 @@
 package model;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -15,6 +16,7 @@ public class Register {
 
     private ArrayList<Item> inventory;
     private JSONArray sellingList;
+    private boolean sellingListConsumed = false;
 
     private long historyID;
 
@@ -31,12 +33,12 @@ public class Register {
 
     public void createItem(String name, long value, long quantity, long itemIDInput) {
         long itemID = itemIDInput;
-        //Double take so each item has unique ID
-        for (int i = 0; i < inventory.size(); i++) {
-            if (inventory.get(i).getItemID() == itemID) {
-                itemID++;
-                i = 0;
-            }
+        HashSet<Long> usedIds = new HashSet<>();
+        for (Item item : inventory) {
+            usedIds.add(item.getItemID());
+        }
+        while (usedIds.contains(itemID)) {
+            itemID++;
         }
         Item newItem = new Item(name, value, quantity, itemID);
         inventory.add(newItem);
@@ -44,11 +46,12 @@ public class Register {
 
     public void createNewItem(String name, long value, long quantity) {
         long itemID = 0;
-        for (int i = 0; i < inventory.size(); i++) {
-            if (inventory.get(i).getItemID() == itemID) {
-                itemID++;
-                i = 0;
-            }
+        HashSet<Long> usedIds = new HashSet<>();
+        for (Item item : inventory) {
+            usedIds.add(item.getItemID());
+        }
+        while (usedIds.contains(itemID)) {
+            itemID++;
         }
         Item newItem = new Item(name, value, quantity, itemID);
         inventory.add(newItem);
@@ -71,16 +74,19 @@ public class Register {
         }
     }
 
-    public void saveItemInformation(Item item) {
+    public boolean saveItemInformation(Item item) {
         for (int i = 0; i < inventory.size(); i++) {
             if (inventory.get(i).getItemID() == item.getItemID()) {
                 inventory.set(i, item);
+                return true;
             }
         }
+        return false;
     }
 
     public void newSellingList() {
         sellingList.clear();
+        sellingListConsumed = false;
     }
 
     public void removeFromList(Item item) {
@@ -99,8 +105,10 @@ public class Register {
         for (int i = 0; i < sellingList.length(); i++) {
             JSONObject sellingItem = sellingList.getJSONObject(i);
             if (item.getItemID() == sellingItem.getLong("itemID")) {
-                sellingItem.put("quantity", quantity + sellingItem.getLong("quantity"));
-                sellingItem.put("price", item.getPrice() * sellingItem.getLong("quantity"));
+                long newQuantity = quantity + sellingItem.getLong("quantity");
+                long newPrice = item.getPrice() * newQuantity;
+                sellingItem.put("quantity", newQuantity);
+                sellingItem.put("price", newPrice);
                 alreadyExists = true;
                 sellingList.put(i, sellingItem);
                 break;
@@ -126,7 +134,16 @@ public class Register {
         sellingList.put(newItem);
     }
 
-    public JSONArray getRegisterListSaleMade() {
+    /**
+     * Consumes the current selling list by decrementing inventory quantities
+     * and returns the list for transaction recording.
+     * Safe against double-call: subsequent calls return an empty list.
+     */
+    public JSONArray consumeRegisterListForSale() {
+        if (sellingListConsumed) {
+            return new JSONArray();
+        }
+        sellingListConsumed = true;
         for (int i = 0; i < sellingList.length(); i++) {
             JSONObject itemSold = sellingList.getJSONObject(i);
             for (int j = 0; j < inventory.size(); j++) {

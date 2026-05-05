@@ -3,6 +3,7 @@
  */
 package view;
 
+import view.helpers.TouchScrollHandler;
 import java.awt.*;
 import java.text.NumberFormat;
 import java.time.ZonedDateTime;

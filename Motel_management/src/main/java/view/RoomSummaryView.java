@@ -1,5 +1,6 @@
 package view;
 
+import view.helpers.TouchScrollHandler;
 import java.awt.Color;
 import java.awt.Font;
 import java.util.HashMap;
@@ -12,13 +13,14 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
 import net.miginfocom.swing.MigLayout;
 import model.RoomStatus;
+import view.interfaces.TimeLabelInterface;
 
 /**
  * Visual dashboard showing all rooms across all towers and floors,
  * color-coded by current status.
  * @author Santiago
  */
-public class RoomSummaryView extends JPanel {
+public class RoomSummaryView extends JPanel implements TimeLabelInterface {
 
     private Map<String, JLabel> roomLabels;
 

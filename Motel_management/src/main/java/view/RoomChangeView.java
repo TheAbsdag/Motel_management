@@ -8,11 +8,12 @@ import java.util.ArrayList;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import net.miginfocom.swing.*;
+import view.interfaces.TimeLabelInterface;
 
 /**
  * @author Santiago
  */
-public class RoomChangeView extends JPanel {
+public class RoomChangeView extends JPanel implements TimeLabelInterface {
 
     private ArrayList<ArrayList<ArrayList<JButton>>> roomButtonGridByTower;
     private int currentFloorIndex;

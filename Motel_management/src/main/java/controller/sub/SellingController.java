@@ -102,7 +102,13 @@ public class SellingController {
     public void addItemToRegisterList() {
         InventoryItemData itemSelected = sellingView.getCurrentSelectedItemListed(
                 sellingView.getItemTable().getSelectedRow());
-        int quantity = Integer.parseInt(sellingView.getQuantityTextField().getText());
+        int quantity;
+        try {
+            quantity = Integer.parseInt(sellingView.getQuantityTextField().getText());
+        } catch (NumberFormatException ex) {
+            quantity = 1;
+            sellingView.getQuantityTextField().setText("1");
+        }
         long itemID = itemSelected.itemID();
         sellingView.getFinishSaleButton().setEnabled(true);
         motelManager.addItemToSelling(itemID, quantity, false);
@@ -145,7 +151,13 @@ public class SellingController {
     public void addCourtesyItemToRegister() {
         InventoryItemData itemSelected = sellingView.getCurrentSelectedItemListed(
                 sellingView.getItemTable().getSelectedRow());
-        int quantity = Integer.parseInt(sellingView.getQuantityTextField().getText());
+        int quantity;
+        try {
+            quantity = Integer.parseInt(sellingView.getQuantityTextField().getText());
+        } catch (NumberFormatException ex) {
+            quantity = 1;
+            sellingView.getQuantityTextField().setText("1");
+        }
         long itemID = itemSelected.itemID();
         sellingView.getFinishSaleButton().setEnabled(true);
         motelManager.addItemToSelling(itemID, quantity, true);

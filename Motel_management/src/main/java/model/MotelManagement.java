@@ -45,8 +45,8 @@ public class MotelManagement {
     private Instant currentTime;
     private ZonedDateTime localizedTime;
     private final ZoneId zoneID;
-    private ArrayList<Turn> turnHistory;
-    private ArrayList<String> overtimeList;
+    private List<Turn> turnHistory;
+    private List<String> overtimeList;
 
     public MotelManagement() {
         files = new FileManager();
@@ -261,8 +261,8 @@ public class MotelManagement {
     }
 
     /** DTO-based method for saving item information. */
-    public void saveItemInformation(InventoryItemData item) {
-        register.saveItemInformation(new Item(item.name(), item.price(), item.quantity(), item.itemID()));
+    public boolean saveItemInformation(InventoryItemData item) {
+        return register.saveItemInformation(new Item(item.name(), item.price(), item.quantity(), item.itemID()));
     }
 
     /** DTO-based method for creating a new item. */
@@ -295,7 +295,7 @@ public class MotelManagement {
         addConsecutiveTransaction();
         Room roomSoldTo = roomManager.getRoomForSale();
         JSONObject transaction = turn.saveTransactionInformation(
-                new JSONArray(register.getRegisterListSaleMade()),
+                new JSONArray(register.consumeRegisterListForSale()),
                 roomSoldTo, currentTime, programConfig.getConsecutiveTransaction());
         printer.printItemSold(transaction, programConfig.getConsecutiveTransaction(), !print);
     }
@@ -370,7 +370,7 @@ public class MotelManagement {
         overtimeList.remove(roomString);
     }
 
-    public ArrayList<String> getOvertimeList() {
+    public List<String> getOvertimeList() {
         return overtimeList;
     }
 

@@ -28,8 +28,11 @@ public class NumericDocumentFilter extends DocumentFilter {
     }
 
     private boolean isNumeric(String text) {
+        if (text == null || text.isEmpty()) {
+            return false;
+        }
         try {
-            Integer.parseInt(text);
+            Long.parseLong(text);
             return true;
         } catch (NumberFormatException e) {
             return false;

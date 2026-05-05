@@ -4,16 +4,18 @@
 
 package view;
 
+import view.helpers.FocusHighlighter;
 import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.text.AbstractDocument;
 import net.miginfocom.swing.*;
+import view.interfaces.TimeLabelInterface;
 
 /**
  * @author Santiago
  */
-public class RoomView extends JPanel {
+public class RoomView extends JPanel implements TimeLabelInterface {
     public RoomView() {
 	initComponents();
         FocusHighlighter.applyToAll(this);

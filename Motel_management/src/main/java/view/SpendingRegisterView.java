@@ -1,5 +1,6 @@
 package view;
 
+import view.helpers.FocusHighlighter;
 import java.awt.Font;
 import javax.swing.JButton;
 import javax.swing.JLabel;

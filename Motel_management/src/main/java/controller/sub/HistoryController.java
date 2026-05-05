@@ -1,10 +1,6 @@
 package controller.sub;
 
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.util.List;
-import javax.swing.JCheckBox;
-import javax.swing.JTable;
 import model.MotelManagement;
 import model.dto.TurnHistoryData;
 import view.HistoryView;
@@ -44,16 +40,24 @@ public class HistoryController {
         historyView.getTurnDetailsButton().addActionListener(e -> turnHistoryDetails());
         historyView.getTurnDetailsView().getBackButton().addActionListener(e -> closeHistoryDetails());
 
-        // Print checkbox listeners for history turn details
-        historyView.getTurnDetailsView().getNoPrintCheckBox().addItemListener(new PrintCheckboxListener(historyView));
-        historyView.getTurnDetailsView().getSummarizedPrintCheckBox().addItemListener(new PrintCheckboxListener(historyView));
-        historyView.getTurnDetailsView().getDetailedPrintCheckBox().addItemListener(new PrintCheckboxListener(historyView));
+        // Print checkbox listeners for history turn details (shared utility)
+        var printListener = ControllerUtils.createPrintCheckboxListener(
+                historyView.getTurnDetailsView().getNoPrintCheckBox(),
+                historyView.getTurnDetailsView().getSummarizedPrintCheckBox(),
+                historyView.getTurnDetailsView().getDetailedPrintCheckBox(),
+                historyView.getTurnDetailsView().getPrintButton(),
+                null);
+        historyView.getTurnDetailsView().getNoPrintCheckBox().addItemListener(printListener);
+        historyView.getTurnDetailsView().getSummarizedPrintCheckBox().addItemListener(printListener);
+        historyView.getTurnDetailsView().getDetailedPrintCheckBox().addItemListener(printListener);
 
         historyView.getTurnDetailsView().getPrintButton().addActionListener(e -> printHistoryTurn());
 
-        // Table scrolling (touch-friendly, replaces Robot simulation)
-        historyView.getUpButton().addActionListener(e -> scrollTable(historyView.getTurnHistoryTable(), -1));
-        historyView.getDownButton().addActionListener(e -> scrollTable(historyView.getTurnHistoryTable(), 1));
+        // Table scrolling (touch-friendly, shared utility)
+        historyView.getUpButton().addActionListener(e ->
+                ControllerUtils.scrollTable(historyView.getTurnHistoryTable(), -1));
+        historyView.getDownButton().addActionListener(e ->
+                ControllerUtils.scrollTable(historyView.getTurnHistoryTable(), 1));
 
         // Turn history table selection listener
         historyView.getTurnHistoryTable().getSelectionModel().addListSelectionListener(event -> {
@@ -104,45 +108,4 @@ public class HistoryController {
         } else if (historyView.getTurnDetailsView().getDetailedPrintCheckBox().isSelected()) {
             motelManager.turnHistoryPrint(3, selectedRow);
         }
-    }
-
-    // ========== Table Scrolling (Touch-Friendly) ==========
-
-    /** Scrolls the table by one row in the given direction. */
-    private void scrollTable(JTable table, int direction) {
-        int currentRow = table.getSelectedRow();
-        int targetRow = Math.max(0, Math.min(currentRow + direction, table.getRowCount() - 1));
-        if (targetRow >= 0) {
-            table.setRowSelectionInterval(targetRow, targetRow);
-            table.scrollRectToVisible(table.getCellRect(targetRow, 0, true));
-        }
-    }
-
-    // ========== Print Checkbox Listener ==========
-
-    /**
-     * Manages the mutually exclusive print checkboxes in the HistoryView's
-     * TurnDetailsView (embedded popup).
-     */
-    private static class PrintCheckboxListener implements ItemListener {
-        private final HistoryView view;
-
-        PrintCheckboxListener(HistoryView view) {
-            this.view = view;
-        }
-
-        @Override
-        public void itemStateChanged(ItemEvent e) {
-            JCheckBox selected = (JCheckBox) e.getSource();
-            if (selected.isSelected()) {
-                view.getTurnDetailsView().getPrintButton().setEnabled(true);
-                if (selected != view.getTurnDetailsView().getNoPrintCheckBox())
-                    view.getTurnDetailsView().getNoPrintCheckBox().setSelected(false);
-                if (selected != view.getTurnDetailsView().getSummarizedPrintCheckBox())
-                    view.getTurnDetailsView().getSummarizedPrintCheckBox().setSelected(false);
-                if (selected != view.getTurnDetailsView().getDetailedPrintCheckBox())
-                    view.getTurnDetailsView().getDetailedPrintCheckBox().setSelected(false);
-            }
-        }
-    }
-}
+    }}

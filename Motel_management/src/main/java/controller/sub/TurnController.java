@@ -1,10 +1,6 @@
 package controller.sub;
 
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.util.List;
-import javax.swing.JCheckBox;
-import javax.swing.JTable;
 import model.MotelManagement;
 import model.dto.TurnActivityData;
 import model.dto.TurnSummaryItemData;
@@ -49,23 +45,31 @@ public class TurnController {
     /** Registers action listeners for the turn manager view and turn select view. */
     public void initListeners() {
         // Turn select buttons (registered here since TurnController manages turn start)
-        userInterface.getTurnSelectView().getTurn1Button().addActionListener(e -> startTurn(1));
-        userInterface.getTurnSelectView().getTurn2Button().addActionListener(e -> startTurn(2));
-        userInterface.getTurnSelectView().getTurn3Button().addActionListener(e -> startTurn(3));
+        userInterface.getTurnSelect().getTurn1Button().addActionListener(e -> startTurn(1));
+        userInterface.getTurnSelect().getTurn2Button().addActionListener(e -> startTurn(2));
+        userInterface.getTurnSelect().getTurn3Button().addActionListener(e -> startTurn(3));
 
         // Turn management buttons
         turnManagerView.getBackButton().addActionListener(e -> onBack.run());
         turnManagerView.getPrintButton().addActionListener(e -> printCurrentTurn());
         turnManagerView.getEndTurnButton().addActionListener(e -> endTurn());
 
-        // Print checkbox listeners
-        turnManagerView.getNoPrintCheckBox().addItemListener(new PrintCheckboxListener(turnManagerView));
-        turnManagerView.getSummarizedPrintCheckBox().addItemListener(new PrintCheckboxListener(turnManagerView));
-        turnManagerView.getDetailedPrintCheckBox().addItemListener(new PrintCheckboxListener(turnManagerView));
+        // Print checkbox listeners (shared utility)
+        var printListener = ControllerUtils.createPrintCheckboxListener(
+                turnManagerView.getNoPrintCheckBox(),
+                turnManagerView.getSummarizedPrintCheckBox(),
+                turnManagerView.getDetailedPrintCheckBox(),
+                turnManagerView.getPrintButton(),
+                turnManagerView.getEndTurnButton());
+        turnManagerView.getNoPrintCheckBox().addItemListener(printListener);
+        turnManagerView.getSummarizedPrintCheckBox().addItemListener(printListener);
+        turnManagerView.getDetailedPrintCheckBox().addItemListener(printListener);
 
-        // Table scrolling (touch-friendly, replaces Robot simulation)
-        turnManagerView.getUpButton().addActionListener(e -> scrollTable(turnManagerView.getTurnDetailsTable(), -1));
-        turnManagerView.getDownButton().addActionListener(e -> scrollTable(turnManagerView.getTurnDetailsTable(), 1));
+        // Table scrolling (touch-friendly, shared utility)
+        turnManagerView.getUpButton().addActionListener(e ->
+                ControllerUtils.scrollTable(turnManagerView.getTurnDetailsTable(), -1));
+        turnManagerView.getDownButton().addActionListener(e ->
+                ControllerUtils.scrollTable(turnManagerView.getTurnDetailsTable(), 1));
 
         // Turn details table selection listener — enables delete for sale and room types
         // that have not already been refunded
@@ -152,7 +156,7 @@ public class TurnController {
         }
         motelManager.timeInformationUpdate();
         turnManagerView.getBackButton().setEnabled(false);
-        turnManagerView.getEndTurnButton().setEnabled(true);
+        turnManagerView.getEndTurnButton().setEnabled(false);
         motelManager.turnEnded();
         if (turnManagerView.getNoPrintCheckBox().isSelected()) {
             motelManager.turnEndPrint(1);
@@ -161,7 +165,7 @@ public class TurnController {
         } else if (turnManagerView.getDetailedPrintCheckBox().isSelected()) {
             motelManager.turnEndPrint(3);
         }
-        userInterface.setTurnSelectView();
+        userInterface.setTurnSelect();
     }
 
     // ========== Turn Details ==========
@@ -217,44 +221,4 @@ public class TurnController {
         turnManagerView.getSummarizedPopup().setVisible(false);
     }
 
-    // ========== Table Scrolling (Touch-Friendly) ==========
-
-    /**
-     * Scrolls the given table by one row.
-     * Replaces the Robot-based key simulation.
-     */
-    private void scrollTable(JTable table, int direction) {
-        int currentRow = table.getSelectedRow();
-        int targetRow = Math.max(0, Math.min(currentRow + direction, table.getRowCount() - 1));
-        if (targetRow >= 0) {
-            table.setRowSelectionInterval(targetRow, targetRow);
-            table.scrollRectToVisible(table.getCellRect(targetRow, 0, true));
-        }
-    }
-
-    // ========== Print Checkbox Listener ==========
-
-    /**
-     * Manages the mutually exclusive print checkboxes (No Print / Summarized / Detailed)
-     * in the TurnManagerView.
-     */
-    private static class PrintCheckboxListener implements ItemListener {
-        private final TurnManagerView view;
-
-        PrintCheckboxListener(TurnManagerView view) {
-            this.view = view;
-        }
-
-        @Override
-        public void itemStateChanged(ItemEvent e) {
-            JCheckBox selected = (JCheckBox) e.getSource();
-            if (selected.isSelected()) {
-                view.getPrintButton().setEnabled(true);
-                view.getEndTurnButton().setEnabled(true);
-                if (selected != view.getNoPrintCheckBox()) view.getNoPrintCheckBox().setSelected(false);
-                if (selected != view.getSummarizedPrintCheckBox()) view.getSummarizedPrintCheckBox().setSelected(false);
-                if (selected != view.getDetailedPrintCheckBox()) view.getDetailedPrintCheckBox().setSelected(false);
-            }
-        }
-    }
 }

@@ -58,7 +58,11 @@ public class FloorController {
      * Direction reverses when reaching the top or bottom floor.
      */
     public void automaticFloorChange() {
-        int maxFloor = motelManager.getRoomsArray()[0].length;
+        int[][] roomArray = motelManager.getRoomsArray();
+        if (roomArray.length == 0 || roomArray[0].length == 0) {
+            return;
+        }
+        int maxFloor = roomArray[0].length;
         if (goingUp) {
             if (floorView.getCurrentFloorIndex() < maxFloor - 1) {
                 changeFloor(1);
@@ -72,6 +76,21 @@ public class FloorController {
                 goingUp = true;
             }
         }
+    }
+
+    /**
+     * Automatically advances to the next tower. Only meaningful when multiple
+     * towers exist. Called alongside {@link #automaticFloorChange()} so the
+     * display cycles through all towers over time.
+     */
+    public void automaticTowerRotation() {
+        int towerCount = motelManager.getRoomsArray().length;
+        if (towerCount <= 1) {
+            return;
+        }
+        int currentTower = floorView.getCurrentTowerIndex();
+        int nextTower = (currentTower + 1) % towerCount;
+        floorView.switchTower(nextTower);
     }
 
     /**
