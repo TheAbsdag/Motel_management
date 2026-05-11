@@ -2,7 +2,7 @@ package controller.sub;
 
 import java.util.List;
 import javax.swing.DefaultListModel;
-import model.MotelManagement;
+import model.modelManagers.MotelManagement;
 import view.AppOptionsView;
 
 /**

@@ -2,7 +2,7 @@ package controller.sub;
 
 import java.awt.Color;
 import javax.swing.JButton;
-import model.MotelManagement;
+import model.modelManagers.MotelManagement;
 import model.RoomStatus;
 import view.FloorView;
 

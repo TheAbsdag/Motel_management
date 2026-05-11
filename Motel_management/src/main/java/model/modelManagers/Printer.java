@@ -1,5 +1,6 @@
-package model;
+package model.modelManagers;
 
+import model.modelManagers.FileManager;
 import java.io.FileOutputStream;
 import java.text.NumberFormat;
 import java.time.ZonedDateTime;
@@ -112,15 +113,15 @@ public class Printer {
         document = printLayout.getStyledDocument();
         String fontFamily = "Calibri";
 
-        addStyle("HeaderStyle", 12, false, fontFamily);
-        addStyle("LargeStyle", 28, false, fontFamily);
+        addStyle("HeaderStyle", 10, false, fontFamily);
+        addStyle("LargeStyle", 19, false, fontFamily);
         addStyle("DefaultStyle", 10, false, fontFamily);
         addStyle("TransactionStyle", 9, false, fontFamily);
         addStyle("FooterStyle", 8, false, fontFamily);
         addStyle("SecondLastStyle", 7, false, fontFamily);
 
-        addStyle("HeaderStyleBold", 12, true, fontFamily);
-        addStyle("LargeStyleBold", 28, true, fontFamily);
+        addStyle("HeaderStyleBold", 10, true, fontFamily);
+        addStyle("LargeStyleBold", 19, true, fontFamily);
         addStyle("DefaultStyleBold", 10, true, fontFamily);
         addStyle("TransactionStyleBold", 9, true, fontFamily);
         addStyle("FooterStyleBold", 8, true, fontFamily);
@@ -159,16 +160,21 @@ public class Printer {
     }
 
     /**
-     * Prints the standard header: MOTEL + name + address + NIT + optional subtitle + separator.
+     * Prints the standard header: name + address + NIT + legal text + separator.
      */
-    private void printHeader(String subtitle) throws BadLocationException {
-        document.insertString(document.getLength(), spaces(2) + "MOTEL", document.getStyle("HeaderStyle"));
-        document.insertString(document.getLength(), spaces(1) + motelName + "\n", document.getStyle("LargeStyle"));
-        document.insertString(document.getLength(), spaces(6) + motelAddress + "\n", document.getStyle("FooterStyleBold"));
+    private void printHeader() throws BadLocationException {
+        document.insertString(document.getLength(), motelName + "\n", document.getStyle("LargeStyle"));
+        document.insertString(document.getLength(), spaces(3) + motelAddress + "\n", document.getStyle("FooterStyleBold"));
         document.insertString(document.getLength(), spaces(3) + motelID + "\n", document.getStyle("FooterStyleBold"));
-        if (subtitle != null && !subtitle.isEmpty()) {
-            document.insertString(document.getLength(), spaces(1) + subtitle + "\n", document.getStyle("FooterStyleBold"));
-        }
+        document.insertString(document.getLength(), spaces(2) + "PERSONA NATURAL.\n NO RESPONSABLE DE IVA\n", document.getStyle("SecondLastStyleBold"));
+        printSeparator();
+    }
+
+    /**
+     * Prints a turn report subtitle (e.g. "RESUMEN VENTAS TURNO") after the standard header.
+     */
+    private void printTurnReportSubtitle(String subtitle) throws BadLocationException {
+        document.insertString(document.getLength(), spaces(1) + subtitle + "\n", document.getStyle("FooterStyleBold"));
         printSeparator();
     }
 
@@ -230,7 +236,7 @@ public class Printer {
         String dateService = fullDateHourService.format(dateFormatter);
 
         try {
-            printHeader(null);
+            printHeader();
             printTransactionNumber(consecutiveTransaction);
 
             printFillerLines(1);
@@ -272,7 +278,7 @@ public class Printer {
         long totalPrice = 0;
 
         try {
-            printHeader(null);
+            printHeader();
 
             printFillerLines(1);
             document.insertString(document.getLength(), spaces(2) + "VENTA A LA HABITACI\u00d3N: ", document.getStyle("DefaultStyle"));
@@ -331,7 +337,8 @@ public class Printer {
         int turnNumber = summarizedTurn.getInt("turnNumber");
 
         try {
-            printHeader("RESUMEN VENTAS TURNO");
+            printHeader();
+            printTurnReportSubtitle("RESUMEN VENTAS TURNO");
             printFillerLines(1);
 
             String startDate = fullDateTurnStart.format(TURN_DATE_SECTION_FORMATTER);
@@ -472,7 +479,8 @@ public class Printer {
         int turnNumber = detailedTurn.getInt("turnNumber");
 
         try {
-            printHeader("DETALLE VENTAS TURNO");
+            printHeader();
+            printTurnReportSubtitle("DETALLE VENTAS TURNO");
             printFillerLines(1);
 
             String startDate = fullDateTurnStart.format(TURN_DATE_SECTION_FORMATTER);

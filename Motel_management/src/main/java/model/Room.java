@@ -25,6 +25,9 @@ public class Room {
     private final int floorNumber;
     private RoomStatus status;
     private final int towerNumber;
+    
+    //TODO: Finish implementation for dynamic pricing
+    private RoomTime[] customRoomTimeData;
 
     private int service;
     private int extension;

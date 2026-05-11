@@ -1,5 +1,6 @@
-package model;
+package model.modelManagers;
 
+import model.modelManagers.FileManager;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -11,6 +12,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import model.Item;
+import model.ProgramConfig;
+import model.Register;
+import model.Room;
+import model.Turn;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import model.dto.InventoryItemData;
@@ -45,7 +51,7 @@ public class MotelManagement {
     private Instant currentTime;
     private ZonedDateTime localizedTime;
     private final ZoneId zoneID;
-    private List<Turn> turnHistory;
+    private List<Turn> turnHistory; //TODO: change, history management to be built on outside platform as well, turns can expand more than a thousand in a year, this would eat the memory like crazy 
     private List<String> overtimeList;
 
     public MotelManagement() {
@@ -471,6 +477,14 @@ public class MotelManagement {
         return turn.getActivityDataList();
     }
 
+    /**
+     * Returns the current turn's detailed information including all computed totals.
+     * Used by TurnController to populate the turn manager view.
+     */
+    public JSONObject getCurrentTurnDetailedInfo() {
+        return turn.getDetailedTurnInformation();
+    }
+
     public List<TurnSummaryItemData> getTurnSummaryDataList() {
         return turn.getSummaryDataList();
     }
@@ -500,10 +514,18 @@ public class MotelManagement {
                 long totalSales = currentTurn.optLong("totalSales");
                 long totalItems = currentTurn.optLong("totalItems");
                 long totalRooms = currentTurn.optLong("totalRooms");
+                long totalRefunds = currentTurn.optLong("totalRefunds");
+                long totalSpending = currentTurn.optLong("totalSpending");
+                long totalTurnVal = currentTurn.optLong("totalTurn");
+                long totalBankTransfers = currentTurn.optLong("totalBankTransfers");
+                long totalDeposits = currentTurn.optLong("totalDeposits");
+                long totalNet = currentTurn.optLong("totalNet");
 
                 result.add(new TurnHistoryData(
                         turnNum, turnStartZ, turnEndZ,
                         totalSales, totalItems, totalRooms,
+                        totalRefunds, totalSpending, totalTurnVal,
+                        totalBankTransfers, totalDeposits, totalNet,
                         turnStartZ.format(dateFormatter), duration,
                         turnStartZ.format(formatter), turnEndZ.format(formatter),
                         historyTurn.getActivityDataList()

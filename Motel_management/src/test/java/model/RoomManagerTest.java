@@ -1,5 +1,6 @@
 package model;
 
+import model.modelManagers.RoomManager;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;

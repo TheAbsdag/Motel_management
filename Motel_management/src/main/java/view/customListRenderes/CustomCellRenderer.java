@@ -26,14 +26,36 @@ public class CustomCellRenderer extends JTextArea implements TableCellRenderer {
         setText((value == null) ? "" : value.toString());
         setFont(cellFont);
 
-        // Apply background color based on change type
+        // Determine background color from the "Accion" (column 3) and "Valor" (column 4) columns
         Object changeType = null;
-        if (table.getColumnCount() > 2) {
-            changeType = table.getValueAt(row, 2);
+        long changeValue = 0L;
+
+        if (table.getColumnCount() > 3) {
+            changeType = table.getValueAt(row, 3);
+        }
+
+        if (table.getColumnCount() > 4) {
+            try {
+                changeValue = Long.parseLong(table.getValueAt(row, 4).toString());
+            } catch (NumberFormatException ex) {
+                changeValue = 0L;
+            }
         }
 
         if (changeType != null && changeType.toString().contains("Alquiler")) {
-            setBackground(Color.CYAN);
+            // Room booking rows: alternating blue/cyan
+            if (row % 2 == 0) {
+                setBackground(new Color(120, 207, 214));
+            } else {
+                setBackground(new Color(105, 235, 245));
+            }
+        } else if (changeValue < 0L) {
+            // Negative-value rows (refunds, spending, extra changes): alternating red
+            if (row % 2 == 0) {
+                setBackground(new Color(227, 136, 136));
+            } else {
+                setBackground(new Color(228, 107, 107));
+            }
         } else {
             setBackground(table.getBackground());
         }

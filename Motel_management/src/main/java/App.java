@@ -1,6 +1,6 @@
 import controller.Controller;
 import view.UserGUI;
-import model.MotelManagement;
+import model.modelManagers.MotelManagement;
 import java.io.*;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;

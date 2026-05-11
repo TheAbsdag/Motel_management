@@ -2,7 +2,7 @@ package controller.sub;
 
 import java.awt.Color;
 import javax.swing.JButton;
-import model.MotelManagement;
+import model.modelManagers.MotelManagement;
 import model.Room;
 import model.RoomStatus;
 import view.FloorView;
@@ -221,14 +221,14 @@ public class RoomController {
         roomView.getAddTimeButton().setEnabled(true);
         switch (amount) {
             case 3 -> {
-                roomView.getPriceTextField().setText("30000");
+                roomView.getPriceTextField().setText("40000");
                 roomView.getBooking3HoursButton().setBackground(new Color(103, 159, 51));
                 roomView.getBooking12HoursButton().setBackground(Color.WHITE);
                 roomView.getBooking24HoursButton().setBackground(Color.WHITE);
                 motelManager.setCurrentServiceDesired(amount);
             }
             case 12 -> {
-                roomView.getPriceTextField().setText("35000");
+                roomView.getPriceTextField().setText("45000");
                 roomView.getBooking3HoursButton().setBackground(Color.WHITE);
                 roomView.getBooking12HoursButton().setBackground(new Color(103, 159, 51));
                 roomView.getBooking24HoursButton().setBackground(Color.WHITE);

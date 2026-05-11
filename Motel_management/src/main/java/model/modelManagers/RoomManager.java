@@ -1,4 +1,4 @@
-package model;
+package model.modelManagers;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -10,6 +10,8 @@ import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
+import model.Room;
+import model.RoomStatus;
 import org.json.JSONArray;
 import org.json.JSONObject;
 

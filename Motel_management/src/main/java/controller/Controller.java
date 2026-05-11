@@ -12,7 +12,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
-import model.MotelManagement;
+import model.modelManagers.MotelManagement;
 import model.RoomStatus;
 import view.UserGUI;
 

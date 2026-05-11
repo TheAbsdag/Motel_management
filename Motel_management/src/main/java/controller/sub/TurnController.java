@@ -1,7 +1,7 @@
 package controller.sub;
 
 import java.util.List;
-import model.MotelManagement;
+import model.modelManagers.MotelManagement;
 import model.dto.TurnActivityData;
 import model.dto.TurnSummaryItemData;
 import org.json.JSONObject;
@@ -113,14 +113,12 @@ public class TurnController {
         turnManagerView.getPrintButton().setEnabled(false);
 
         List<TurnActivityData> activities = motelManager.getTurnActivityDataList();
-        long totalRooms = 0, totalItems = 0;
-        for (TurnActivityData a : activities) {
-            if ("room".equals(a.getChangeType())) totalRooms += a.getPrice();
-            else if ("sale".equals(a.getChangeType())) totalItems += a.getPrice();
-        }
-        long totalSales = totalRooms + totalItems;
+        JSONObject totals = motelManager.getCurrentTurnDetailedInfo();
 
-        turnManagerView.setTurnDetailsData(activities, totalRooms, totalItems, totalSales);
+        turnManagerView.setTurnDetailsData(activities,
+                totals.optLong("totalRooms"), totals.optLong("totalItems"), totals.optLong("totalSales"),
+                totals.optLong("totalRefunds"), totals.optLong("totalSpending"), totals.optLong("totalTurn"),
+                totals.optLong("totalBankTransfers"), totals.optLong("totalDeposits"), totals.optLong("totalNet"));
         turnManagerView.getNoPrintCheckBox().setSelected(false);
         turnManagerView.getSummarizedPrintCheckBox().setSelected(false);
         turnManagerView.getDetailedPrintCheckBox().setSelected(false);
@@ -200,13 +198,11 @@ public class TurnController {
 
         // Refresh the table
         List<TurnActivityData> activities = motelManager.getTurnActivityDataList();
-        long totalRooms = 0, totalItems = 0;
-        for (TurnActivityData a : activities) {
-            if ("room".equals(a.getChangeType())) totalRooms += a.getPrice();
-            else if ("sale".equals(a.getChangeType())) totalItems += a.getPrice();
-        }
-        long totalSales = totalRooms + totalItems;
-        turnManagerView.setTurnDetailsData(activities, totalRooms, totalItems, totalSales);
+        JSONObject totals = motelManager.getCurrentTurnDetailedInfo();
+        turnManagerView.setTurnDetailsData(activities,
+                totals.optLong("totalRooms"), totals.optLong("totalItems"), totals.optLong("totalSales"),
+                totals.optLong("totalRefunds"), totals.optLong("totalSpending"), totals.optLong("totalTurn"),
+                totals.optLong("totalBankTransfers"), totals.optLong("totalDeposits"), totals.optLong("totalNet"));
         turnManagerView.getDeleteActionButton().setEnabled(false);
     }
 

@@ -23,13 +23,14 @@ public class FocusHighlighter {
 
     private static final Color FOCUS_COLOR = new Color(0x0078D7);
     private static final int FOCUS_THICKNESS = 3;
-
+    
     private FocusHighlighter() {
     }
 
     /**
      * Walks the container tree and adds focus highlighting to every
-     * {@link JTextField} found.
+     * {@link JTextField} found. On Linux, also wires virtual-keyboard
+     * show/hide behavior.
      */
     public static void applyToAll(Container root) {
         Map<JTextField, Border> originalBorders = new HashMap<>();

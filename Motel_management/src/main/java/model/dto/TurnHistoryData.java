@@ -15,6 +15,12 @@ public class TurnHistoryData {
     private final long totalSales;
     private final long totalItems;
     private final long totalRooms;
+    private final long totalRefunds;
+    private final long totalSpending;
+    private final long totalTurn;
+    private final long totalBankTransfers;
+    private final long totalDeposits;
+    private final long totalNet;
     private final String startDate;
     private final String duration;
     private final String startString;
@@ -24,20 +30,28 @@ public class TurnHistoryData {
     /**
      * Full constructor for TurnHistoryData.
      *
-     * @param turnNumber  the turn identifier
-     * @param turnStart   turn start timestamp
-     * @param turnEnd     turn end timestamp
-     * @param totalSales  total sales amount in COP
-     * @param totalItems  total item sales amount
-     * @param totalRooms  total room booking amount
-     * @param startDate   formatted start date string (Spanish locale)
-     * @param duration    human-readable duration string
-     * @param startString formatted start datetime string
-     * @param endString   formatted end datetime string
-     * @param activities  list of turn activity entries
+     * @param turnNumber         the turn identifier
+     * @param turnStart          turn start timestamp
+     * @param turnEnd            turn end timestamp
+     * @param totalSales         total sales amount in COP
+     * @param totalItems         total item sales amount
+     * @param totalRooms         total room booking amount
+     * @param totalRefunds       total refunds amount
+     * @param totalSpending      total spending/expenses amount
+     * @param totalTurn          gross turn total
+     * @param totalBankTransfers total bank transfer amount
+     * @param totalDeposits      total safe deposit amount
+     * @param totalNet           net turn total
+     * @param startDate          formatted start date string (Spanish locale)
+     * @param duration           human-readable duration string
+     * @param startString        formatted start datetime string
+     * @param endString          formatted end datetime string
+     * @param activities         list of turn activity entries
      */
     public TurnHistoryData(int turnNumber, ZonedDateTime turnStart, ZonedDateTime turnEnd,
                            long totalSales, long totalItems, long totalRooms,
+                           long totalRefunds, long totalSpending, long totalTurn,
+                           long totalBankTransfers, long totalDeposits, long totalNet,
                            String startDate, String duration, String startString,
                            String endString, List<TurnActivityData> activities) {
         this.turnNumber = turnNumber;
@@ -46,6 +60,12 @@ public class TurnHistoryData {
         this.totalSales = totalSales;
         this.totalItems = totalItems;
         this.totalRooms = totalRooms;
+        this.totalRefunds = totalRefunds;
+        this.totalSpending = totalSpending;
+        this.totalTurn = totalTurn;
+        this.totalBankTransfers = totalBankTransfers;
+        this.totalDeposits = totalDeposits;
+        this.totalNet = totalNet;
         this.startDate = startDate;
         this.duration = duration;
         this.startString = startString;
@@ -61,6 +81,12 @@ public class TurnHistoryData {
     public long getTotalSales() { return totalSales; }
     public long getTotalItems() { return totalItems; }
     public long getTotalRooms() { return totalRooms; }
+    public long getTotalRefunds() { return totalRefunds; }
+    public long getTotalSpending() { return totalSpending; }
+    public long getTotalTurn() { return totalTurn; }
+    public long getTotalBankTransfers() { return totalBankTransfers; }
+    public long getTotalDeposits() { return totalDeposits; }
+    public long getTotalNet() { return totalNet; }
     public String getStartDate() { return startDate; }
     public String getDuration() { return duration; }
     public String getStartString() { return startString; }

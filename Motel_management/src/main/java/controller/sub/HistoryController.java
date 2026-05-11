@@ -1,7 +1,7 @@
 package controller.sub;
 
 import java.util.List;
-import model.MotelManagement;
+import model.modelManagers.MotelManagement;
 import model.dto.TurnHistoryData;
 import view.HistoryView;
 

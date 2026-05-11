@@ -3,6 +3,7 @@
  */
 package view;
 
+import view.helpers.NumericDocumentFilter;
 import view.helpers.FocusHighlighter;
 import view.helpers.TouchScrollHandler;
 import java.awt.*;

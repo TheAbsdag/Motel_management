@@ -1,7 +1,7 @@
 package controller.sub;
 
 import javax.swing.JTable;
-import model.MotelManagement;
+import model.modelManagers.MotelManagement;
 import model.dto.InventoryItemData;
 import model.dto.SellingItemData;
 import view.SellingView;

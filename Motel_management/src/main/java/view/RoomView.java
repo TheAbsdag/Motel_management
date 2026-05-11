@@ -4,6 +4,7 @@
 
 package view;
 
+import view.helpers.NumericDocumentFilter;
 import view.helpers.FocusHighlighter;
 import java.awt.*;
 import javax.swing.*;

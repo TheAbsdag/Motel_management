@@ -3,7 +3,7 @@ package controller.sub;
 import java.util.List;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import model.MotelManagement;
+import model.modelManagers.MotelManagement;
 import model.dto.InventoryItemData;
 import view.InventoryManagementView;
 

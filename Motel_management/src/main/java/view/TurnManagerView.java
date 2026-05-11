@@ -41,11 +41,20 @@ public class TurnManagerView extends JPanel implements TimeLabelInterface {
         initCustomComponents();
     }
 
-    public void setTurnDetailsData(List<TurnActivityData> activities, long totalRooms, long totalItems, long totalSales) {
+    public void setTurnDetailsData(List<TurnActivityData> activities,
+                                    long totalRooms, long totalItems, long totalSales,
+                                    long totalRefunds, long totalSpending, long totalTurnVal,
+                                    long totalBankTransfers, long totalDeposits, long totalNet) {
         turnDetailsTableModel.updateData(activities);
         totalRoomsLabel.setText(numberFormat.format(totalRooms));
         totalItemsLabel.setText(numberFormat.format(totalItems));
         totalSalesLabel.setText(numberFormat.format(totalSales));
+        totalRefundLabel.setText(numberFormat.format(totalRefunds));
+        totalSpendingLabel.setText(numberFormat.format(totalSpending));
+        totalTurnLabel.setText(numberFormat.format(totalTurnVal));
+        totalTransferLabel.setText(numberFormat.format(totalBankTransfers));
+        totalDepositLabel.setText(numberFormat.format(totalDeposits));
+        totalNetLabel.setText(numberFormat.format(totalNet));
         turnDetailsTable.repaint();
     }
 
@@ -63,6 +72,8 @@ public class TurnManagerView extends JPanel implements TimeLabelInterface {
         }
 
         turnDetailsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        columnModel.getColumn(0).setPreferredWidth(45);
+        columnModel.getColumn(0).setMaxWidth(55);
         JScrollPane scrollPane = new JScrollPane(turnDetailsTable);
         turnDetailsTable.getTableHeader().setReorderingAllowed(false);
         turnDetailsPanel.add(scrollPane, "cell 0 0, grow");
@@ -94,7 +105,7 @@ public class TurnManagerView extends JPanel implements TimeLabelInterface {
 
     private class TurnDetailsTableModel extends AbstractTableModel {
 
-        private final String[] columnNames = {"Habitacion", "Tiempo", "Accion", "Valor"};
+        private final String[] columnNames = {"#", "Habitacion", "Tiempo", "Accion", "Valor"};
         private List<TurnActivityData> filteredTurnDetails;
 
         public TurnDetailsTableModel() {
@@ -124,17 +135,18 @@ public class TurnManagerView extends JPanel implements TimeLabelInterface {
             String formattedDate = item.getChangeDate().format(formatter);
 
             return switch (columnIndex) {
-                case 0 -> {
+                case 0 -> rowIndex + 1;
+                case 1 -> {
                     if ("sale".equals(changeType)) yield item.getRoomSoldTo();
                     else if ("room".equals(changeType)) yield item.getRoomString();
                     else if ("roomSwap".equals(changeType)) yield item.getOriginalRoom();
                     else if ("refund".equals(changeType)) yield item.getRoomString();
-                    else if ("spending".equals(changeType)) yield "";
-                    else if ("extraChange".equals(changeType)) yield "";
+                    else if ("spending".equals(changeType)) yield "N/A";
+                    else if ("extraChange".equals(changeType)) yield "N/A";
                     else yield "";
                 }
-                case 1 -> formattedDate;
-                case 2 -> {
+                case 2 -> formattedDate;
+                case 3 -> {
                     if ("sale".equals(changeType)) yield item.getQuantity() + " de " + item.getItemName();
                     else if ("room".equals(changeType)) yield "Alquiler " + item.getEffectiveService();
                     else if ("roomSwap".equals(changeType)) yield "Cambio de habitacion a: " + item.getSwappedRoom();
@@ -153,7 +165,7 @@ public class TurnManagerView extends JPanel implements TimeLabelInterface {
                     }
                     else yield "";
                 }
-                case 3 -> {
+                case 4 -> {
                     if ("sale".equals(changeType) || "room".equals(changeType)
                             || "refund".equals(changeType) || "spending".equals(changeType)
                             || "extraChange".equals(changeType)) yield item.getPrice();
@@ -170,7 +182,7 @@ public class TurnManagerView extends JPanel implements TimeLabelInterface {
 
         @Override
         public Class<?> getColumnClass(int columnIndex) {
-            return String.class;
+            return columnIndex == 0 ? Integer.class : String.class;
         }
     }
 
@@ -232,6 +244,18 @@ public class TurnManagerView extends JPanel implements TimeLabelInterface {
 	totalItemsLabel = new JLabel();
 	totalSalesInformativeLabel = new JLabel();
 	totalSalesLabel = new JLabel();
+	totalRefundInformativeLabel = new JLabel();
+	totalRefundLabel = new JLabel();
+	totalSpendingInformativeLabel = new JLabel();
+	totalSpendingLabel = new JLabel();
+	totalTurnInformativeLabel = new JLabel();
+	totalTurnLabel = new JLabel();
+	totalTransferInformativeLabel = new JLabel();
+	totalTransferLabel = new JLabel();
+	totalDepositInformativeLabel = new JLabel();
+	totalDepositLabel = new JLabel();
+	totalNetInformativeLabel = new JLabel();
+	totalNetLabel = new JLabel();
 	noPrintCheckBox = new JCheckBox();
 	summarizedPrintCheckBox = new JCheckBox();
 	detailedPrintCheckBox = new JCheckBox();
@@ -252,21 +276,27 @@ public class TurnManagerView extends JPanel implements TimeLabelInterface {
 	    "[grow,fill]" +
 	    "[grow,fill]" +
 	    "[grow,fill]" +
-	    "[grow,fill]" +
-	    "[grow,fill]",
+	    "[fill]" +
+	    "[fill]",
 	    // rows
 	    "[77]" +
 	    "[grow]" +
 	    "[]" +
-	    "[grow]" +
-	    "[grow]" +
+	    "[]" +
+	    "[]" +
+	    "[]" +
+	    "[]" +
+	    "[]" +
+	    "[]" +
+	    "[]" +
+	    "[]" +
 	    "[grow]" +
 	    "[grow]" +
 	    "[25]" +
 	    "[grow]"));
 
 	//---- deleteActionButton ----
-	deleteActionButton.setText("ELIMINAR");
+	deleteActionButton.setText("REEMBOLSO");
 	deleteActionButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 24));
 	add(deleteActionButton, "cell 0 0,growy");
 
@@ -292,7 +322,7 @@ public class TurnManagerView extends JPanel implements TimeLabelInterface {
 		// rows
 		"[grow,fill]"));
 	}
-	add(turnDetailsPanel, "cell 0 1 5 7,growy");
+	add(turnDetailsPanel, "cell 0 1 5 13,growy");
 
 	//---- timeLabel ----
 	timeLabel.setText("time");
@@ -327,7 +357,7 @@ public class TurnManagerView extends JPanel implements TimeLabelInterface {
 	add(totalItemsLabel, "cell 6 3");
 
 	//---- totalSalesInformativeLabel ----
-	totalSalesInformativeLabel.setText("TOTAL");
+	totalSalesInformativeLabel.setText("TOTAL VENTAS");
 	totalSalesInformativeLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
 	add(totalSalesInformativeLabel, "cell 5 4");
 
@@ -336,40 +366,100 @@ public class TurnManagerView extends JPanel implements TimeLabelInterface {
 	totalSalesLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
 	add(totalSalesLabel, "cell 6 4");
 
+	//---- totalRefundInformativeLabel ----
+	totalRefundInformativeLabel.setText("REEMBOLSO");
+	totalRefundInformativeLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
+	add(totalRefundInformativeLabel, "cell 5 5");
+
+	//---- totalRefundLabel ----
+	totalRefundLabel.setText("text");
+	totalRefundLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
+	add(totalRefundLabel, "cell 6 5");
+
+	//---- totalSpendingInformativeLabel ----
+	totalSpendingInformativeLabel.setText("GASTOS");
+	totalSpendingInformativeLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
+	add(totalSpendingInformativeLabel, "cell 5 6");
+
+	//---- totalSpendingLabel ----
+	totalSpendingLabel.setText("text");
+	totalSpendingLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
+	add(totalSpendingLabel, "cell 6 6");
+
+	//---- totalTurnInformativeLabel ----
+	totalTurnInformativeLabel.setText("TOTAL TURNO");
+	totalTurnInformativeLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
+	add(totalTurnInformativeLabel, "cell 5 7");
+
+	//---- totalTurnLabel ----
+	totalTurnLabel.setText("text");
+	totalTurnLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
+	add(totalTurnLabel, "cell 6 7");
+
+	//---- totalTransferInformativeLabel ----
+	totalTransferInformativeLabel.setText("TOTAL TRANSFERENCIA");
+	totalTransferInformativeLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
+	add(totalTransferInformativeLabel, "cell 5 8");
+
+	//---- totalTransferLabel ----
+	totalTransferLabel.setText("text");
+	totalTransferLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
+	add(totalTransferLabel, "cell 6 8");
+
+	//---- totalDepositInformativeLabel ----
+	totalDepositInformativeLabel.setText("TOTAL DEPOSITO");
+	totalDepositInformativeLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
+	add(totalDepositInformativeLabel, "cell 5 9");
+
+	//---- totalDepositLabel ----
+	totalDepositLabel.setText("text");
+	totalDepositLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
+	add(totalDepositLabel, "cell 6 9");
+
+	//---- totalNetInformativeLabel ----
+	totalNetInformativeLabel.setText("TOTAL NETO");
+	totalNetInformativeLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
+	add(totalNetInformativeLabel, "cell 5 10");
+
+	//---- totalNetLabel ----
+	totalNetLabel.setText("text");
+	totalNetLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
+	add(totalNetLabel, "cell 6 10");
+
 	//---- noPrintCheckBox ----
 	noPrintCheckBox.setText("NO IMPRIMIR");
 	noPrintCheckBox.setFont(new Font("Segoe UI Black", Font.PLAIN, 26));
-	add(noPrintCheckBox, "cell 5 5 2 1,growy");
+	add(noPrintCheckBox, "cell 5 11 2 1,growy");
 
 	//---- summarizedPrintCheckBox ----
 	summarizedPrintCheckBox.setText("RESUMIDO");
 	summarizedPrintCheckBox.setFont(new Font("Segoe UI Black", Font.PLAIN, 26));
-	add(summarizedPrintCheckBox, "cell 5 6 2 1,growy");
+	add(summarizedPrintCheckBox, "cell 5 12 2 1,growy");
 
 	//---- detailedPrintCheckBox ----
 	detailedPrintCheckBox.setText("DETALLADO");
 	detailedPrintCheckBox.setFont(new Font("Segoe UI Black", Font.PLAIN, 26));
-	add(detailedPrintCheckBox, "cell 5 7 2 1,growy");
+	add(detailedPrintCheckBox, "cell 5 13 2 1,growy");
 
 	//---- backButton ----
 	backButton.setText("VOLVER");
 	backButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 28));
-	add(backButton, "cell 0 8,growy");
+	add(backButton, "cell 0 14,growy");
 
 	//---- printButton ----
-	printButton.setText("IMPRIMIR");
+	printButton.setText("IMPRIMIR PARCIAL");
 	printButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 28));
-	add(printButton, "cell 3 8 2 1,growy");
+	add(printButton, "cell 2 14 3 1,growy");
 
 	//---- endTurnButton ----
 	endTurnButton.setText("FIN TURNO");
 	endTurnButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 28));
-	add(endTurnButton, "cell 5 8 2 1,growy");
+	add(endTurnButton, "cell 5 14 2 1,growy");
 
 	//======== summarizedPopup ========
 	{
 	    summarizedPopup.setAlwaysOnTop(true);
-	    Container summarizedPopupContentPane = summarizedPopup.getContentPane();
+	    var summarizedPopupContentPane = summarizedPopup.getContentPane();
 	    summarizedPopupContentPane.setLayout(new MigLayout(
 		"fill,hidemode 3",
 		// columns
@@ -422,6 +512,18 @@ public class TurnManagerView extends JPanel implements TimeLabelInterface {
     private JLabel totalItemsLabel;
     private JLabel totalSalesInformativeLabel;
     private JLabel totalSalesLabel;
+    private JLabel totalRefundInformativeLabel;
+    private JLabel totalRefundLabel;
+    private JLabel totalSpendingInformativeLabel;
+    private JLabel totalSpendingLabel;
+    private JLabel totalTurnInformativeLabel;
+    private JLabel totalTurnLabel;
+    private JLabel totalTransferInformativeLabel;
+    private JLabel totalTransferLabel;
+    private JLabel totalDepositInformativeLabel;
+    private JLabel totalDepositLabel;
+    private JLabel totalNetInformativeLabel;
+    private JLabel totalNetLabel;
     private JCheckBox noPrintCheckBox;
     private JCheckBox summarizedPrintCheckBox;
     private JCheckBox detailedPrintCheckBox;
@@ -537,6 +639,90 @@ public class TurnManagerView extends JPanel implements TimeLabelInterface {
      */
     public JTable getSummarizedTurnTable() {
         return summarizedTurnTable;
+    }
+
+    /**
+     * @return the totalRefundInformativeLabel
+     */
+    public JLabel getTotalRefundInformativeLabel() {
+        return totalRefundInformativeLabel;
+    }
+
+    /**
+     * @return the totalRefundLabel
+     */
+    public JLabel getTotalRefundLabel() {
+        return totalRefundLabel;
+    }
+
+    /**
+     * @return the totalSpendingInformativeLabel
+     */
+    public JLabel getTotalSpendingInformativeLabel() {
+        return totalSpendingInformativeLabel;
+    }
+
+    /**
+     * @return the totalSpendingLabel
+     */
+    public JLabel getTotalSpendingLabel() {
+        return totalSpendingLabel;
+    }
+
+    /**
+     * @return the totalTurnInformativeLabel
+     */
+    public JLabel getTotalTurnInformativeLabel() {
+        return totalTurnInformativeLabel;
+    }
+
+    /**
+     * @return the totalTurnLabel
+     */
+    public JLabel getTotalTurnLabel() {
+        return totalTurnLabel;
+    }
+
+    /**
+     * @return the totalTransferInformativeLabel
+     */
+    public JLabel getTotalTransferInformativeLabel() {
+        return totalTransferInformativeLabel;
+    }
+
+    /**
+     * @return the totalTransferLabel
+     */
+    public JLabel getTotalTransferLabel() {
+        return totalTransferLabel;
+    }
+
+    /**
+     * @return the totalDepositInformativeLabel
+     */
+    public JLabel getTotalDepositInformativeLabel() {
+        return totalDepositInformativeLabel;
+    }
+
+    /**
+     * @return the totalDepositLabel
+     */
+    public JLabel getTotalDepositLabel() {
+        return totalDepositLabel;
+    }
+
+    /**
+     * @return the totalNetInformativeLabel
+     */
+    public JLabel getTotalNetInformativeLabel() {
+        return totalNetInformativeLabel;
+    }
+
+    /**
+     * @return the totalNetLabel
+     */
+    public JLabel getTotalNetLabel() {
+        return totalNetLabel;
     }
 
     /**
