@@ -105,6 +105,7 @@ public class MotelManagement {
                 this.timeInformationUpdate();
                 turn.turnEnd(currentTime);
                 files.saveHistoryData(turn.getDetailedTurnInformationAsJson(), "turnClosedImproperly", localizedTime);
+                TurnReportGenerator.generateReport(turn.getDetailedTurnInformation());
             }
         }
         if (!(inventoryData == null || inventoryData.isEmpty())) {
@@ -234,8 +235,9 @@ public class MotelManagement {
     }
 
     public void turnEndPrint(int option) {
-        TurnDetails details = turn.getBasicTurnInformation();
+        TurnDetails details = turn.getDetailedTurnInformation();
         files.saveHistoryData(details.toJson(), "turn", localizedTime);
+        TurnReportGenerator.generateReport(details);
         switch (option) {
             case 1 -> { printer.printSummarizedTurn(details, true);  printer.printDetailedTurn(details, true); }
             case 2 -> { printer.printSummarizedTurn(details, false); printer.printDetailedTurn(details, true); }
@@ -468,6 +470,11 @@ public class MotelManagement {
             turnHistory.add(newTurn);
         }
         return currentHistory;
+    }
+
+    public void generateHistoryTurnReport(int selectedRow) {
+        TurnDetails details = turnHistory.get(selectedRow).getDetailedTurnInformation();
+        TurnReportGenerator.generateReport(details);
     }
 
     // ========== DTO Access Methods ==========

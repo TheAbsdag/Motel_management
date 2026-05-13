@@ -92,12 +92,12 @@ public class TurnController {
                             && !selectedItem.isRefunded()) {
                         enabled = true;
                     }
-                    turnManagerView.getDeleteActionButton().setEnabled(enabled);
+                    turnManagerView.getRefundButton().setEnabled(enabled);
                     isListAdjusting = false;
                 }
             }
         });
-        turnManagerView.getDeleteActionButton().addActionListener(e -> deleteRegisterFromTurn());
+        turnManagerView.getRefundButton().addActionListener(e -> deleteRegisterFromTurn());
         turnManagerView.getSummarizedTurnButton().addActionListener(e -> showCurrentSummarizedTurn());
         turnManagerView.getBackFromSummarizedTurn().addActionListener(e -> closeSummarizedPopup());
     }
@@ -129,7 +129,7 @@ public class TurnController {
         turnManagerView.getNoPrintCheckBox().setSelected(false);
         turnManagerView.getSummarizedPrintCheckBox().setSelected(false);
         turnManagerView.getDetailedPrintCheckBox().setSelected(false);
-        turnManagerView.getDeleteActionButton().setEnabled(false);
+        turnManagerView.getRefundButton().setEnabled(false);
         turnManagerView.getBackButton().setEnabled(true);
         userInterface.setTurnManagerView();
     }
@@ -197,7 +197,7 @@ public class TurnController {
                 totals.getTotalRooms(), totals.getTotalItems(), totals.getTotalSales(),
                 totals.getTotalRefunds(), totals.getTotalSpending(), totals.getTotalTurn(),
                 totals.getTotalBankTransfers(), totals.getTotalDeposits(), totals.getTotalNet());
-        turnManagerView.getDeleteActionButton().setEnabled(false);
+        turnManagerView.getRefundButton().setEnabled(false);
         saveMainFiles.run();
         saveBackupFilesTransaction.run();
     }

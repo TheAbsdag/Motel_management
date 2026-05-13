@@ -20,6 +20,8 @@ public class TurnDetails {
     private long totalSales;
     private long totalRooms;
     private long totalRefunds;
+    private long totalItemRefunds;
+    private long totalRoomRefunds;
     private long totalSpending;
     private long totalTurn;
     private long totalBankTransfers;
@@ -63,6 +65,8 @@ public class TurnDetails {
         totalSales = 0;
         totalRooms = 0;
         totalRefunds = 0;
+        totalItemRefunds = 0;
+        totalRoomRefunds = 0;
         totalSpending = 0;
         totalTurn = 0;
         totalBankTransfers = 0;
@@ -128,6 +132,7 @@ public class TurnDetails {
                     totalTurn += price;
                     totalNet += price;
                     if (r.refundType() == RefundType.SALE_REFUND) {
+                        totalItemRefunds += price;
                         boolean found = false;
                         for (int j = 0; j < newSummary.size(); j++) {
                             TurnSummaryItemData si = newSummary.get(j);
@@ -141,6 +146,7 @@ public class TurnDetails {
                             newSummary.add(new TurnSummaryItemData("itemRefund", (int) r.quantity(), price, r.itemName(), 0));
                         }
                     } else {
+                        totalRoomRefunds += price;
                         int service = r.refundService();
                         boolean found = false;
                         for (int j = 0; j < newSummary.size(); j++) {
@@ -208,6 +214,8 @@ public class TurnDetails {
         json.put("totalSales", totalSales);
         json.put("totalRooms", totalRooms);
         json.put("totalRefunds", totalRefunds);
+        json.put("totalItemRefunds", totalItemRefunds);
+        json.put("totalRoomRefunds", totalRoomRefunds);
         json.put("totalSpending", totalSpending);
         json.put("totalTurn", totalTurn);
         json.put("totalBankTransfers", totalBankTransfers);
@@ -274,6 +282,8 @@ public class TurnDetails {
     public long getTotalSales() { computeTotalsAndSummary(); return totalSales; }
     public long getTotalRooms() { computeTotalsAndSummary(); return totalRooms; }
     public long getTotalRefunds() { computeTotalsAndSummary(); return totalRefunds; }
+    public long getTotalItemRefunds() { computeTotalsAndSummary(); return totalItemRefunds; }
+    public long getTotalRoomRefunds() { computeTotalsAndSummary(); return totalRoomRefunds; }
     public long getTotalSpending() { computeTotalsAndSummary(); return totalSpending; }
     public long getTotalTurn() { computeTotalsAndSummary(); return totalTurn; }
     public long getTotalBankTransfers() { computeTotalsAndSummary(); return totalBankTransfers; }

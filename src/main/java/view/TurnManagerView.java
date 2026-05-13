@@ -234,7 +234,7 @@ public class TurnManagerView extends JPanel implements TimeLabelInterface {
     private void initComponents() {
 	// JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents  @formatter:off
 	// Generated using JFormDesigner Educational license - Santiago Esteban Castelblanco Castiblanco (saecastelblancoc)
-	deleteActionButton = new JButton();
+	refundButton = new JButton();
 	upButton = new JButton();
 	downButton = new JButton();
 	summarizedTurnButton = new JButton();
@@ -298,10 +298,10 @@ public class TurnManagerView extends JPanel implements TimeLabelInterface {
 	    "[25]" +
 	    "[grow]"));
 
-	//---- deleteActionButton ----
-	deleteActionButton.setText("REEMBOLSO");
-	deleteActionButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 24));
-	add(deleteActionButton, "cell 0 0,growy");
+	//---- refundButton ----
+	refundButton.setText("REEMBOLSO");
+	refundButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 24));
+	add(refundButton, "cell 0 0,growy");
 
 	//---- upButton ----
 	upButton.setIcon(new ImageIcon(getClass().getResource("/up.png")));
@@ -502,7 +502,7 @@ public class TurnManagerView extends JPanel implements TimeLabelInterface {
 
     // JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables  @formatter:off
     // Generated using JFormDesigner Educational license - Santiago Esteban Castelblanco Castiblanco (saecastelblancoc)
-    private JButton deleteActionButton;
+    private JButton refundButton;
     private JButton upButton;
     private JButton downButton;
     private JButton summarizedTurnButton;
@@ -612,8 +612,8 @@ public class TurnManagerView extends JPanel implements TimeLabelInterface {
     /**
      * @return the deleteActionButton
      */
-    public JButton getDeleteActionButton() {
-        return deleteActionButton;
+    public JButton getRefundButton() {
+        return refundButton;
     }
 
     /**

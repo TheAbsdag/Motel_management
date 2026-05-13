@@ -21,12 +21,13 @@
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
-/Motel_management/nbproject/private/
-/Motel_management/build/
-/Motel_management/target/
-/Motel_management/data/
-/Motel_management/backup/
-/Motel_management/history/
-/Motel_management/receiptPrints/
-/Motel_management/data
+/nbproject/private/
+/build/
+/target/
+/data/
+/backup/
+/history/
+/receiptPrints/
+/data
 /.agents
+/reports

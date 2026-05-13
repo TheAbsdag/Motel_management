@@ -372,25 +372,18 @@ public class Printer {
             printFillerLines(1);
 
             List<TurnSummaryItemData> summaryItems = turnDetails.getSummaryItems();
-            long totalSales = 0;
-            long totalItems = 0;
-            long totalRooms = 0;
             for (TurnSummaryItemData si : summaryItems) {
                 String change = si.summaryType();
                 if ("room".equals(change)) {
-                    totalSales += si.price();
-                    totalRooms += si.price();
                     document.insertString(document.getLength(), spaces(3) + si.quantity() + " Alquiler " + si.service()
                             + "\t" + numberFormat.format(si.price()) + "\n", document.getStyle("TransactionStyle"));
                 } else if ("item".equals(change)) {
                     document.insertString(document.getLength(), spaces(3) + si.quantity() + spaces(2) + si.name()
                             + "\t" + numberFormat.format(si.price()) + "\n", document.getStyle("TransactionStyle"));
-                    totalSales += si.price();
-                    totalItems += si.price();
                 }
             }
 
-            printTurnTotals(totalRooms, totalItems, totalSales);
+            printTurnTotals(turnDetails.getTotalRooms(), turnDetails.getTotalItems(), turnDetails.getTotalSales());
 
             if (isCurrent) {
                 printSummarizedTurnExtras(turnDetails);
@@ -415,19 +408,15 @@ public class Printer {
         printSeparator();
         printFillerLines(1);
 
-        long totalRefunds = 0;
-        long totalItemRefunds = 0;
-        long totalRoomRefunds = 0;
+        long totalRefunds = turnDetails.getTotalRefunds();
+        long totalItemRefunds = turnDetails.getTotalItemRefunds();
+        long totalRoomRefunds = turnDetails.getTotalRoomRefunds();
         for (TurnSummaryItemData si : turnDetails.getSummaryItems()) {
             String change = si.summaryType();
             if ("roomRefund".equals(change)) {
-                totalRefunds += si.price();
-                totalRoomRefunds += si.price();
                 document.insertString(document.getLength(), spaces(1) + si.quantity() + " Alquiler " + si.service()
                         + "\t" + numberFormat.format(si.price()) + "\n", document.getStyle("TransactionStyle"));
             } else if ("itemRefund".equals(change)) {
-                totalRefunds += si.price();
-                totalItemRefunds += si.price();
                 document.insertString(document.getLength(), spaces(1) + si.quantity() + spaces(2) + si.name()
                         + "\t" + numberFormat.format(si.price()) + "\n", document.getStyle("TransactionStyle"));
             }
@@ -498,9 +487,6 @@ public class Printer {
             printSeparator();
 
             List<TurnActivity> activities = turnDetails.getActivities();
-            long totalSales = 0;
-            long totalItems = 0;
-            long totalRooms = 0;
             for (TurnActivity activity : activities) {
                 ZonedDateTime changeDate = activity.changeDate();
                 String formattedDate = changeDate.format(DETAILED_TURN_DATE_FORMATTER);
@@ -512,14 +498,10 @@ public class Printer {
                                     spaces(1) + formattedDate + "|" + s.roomSoldTo()
                                             + "|" + item.itemName() + "|" + item.price() + "\n",
                                     document.getStyle("TransactionStyle"));
-                            totalSales += item.price();
-                            totalItems += item.price();
                         }
                     }
                     case RoomBookingActivity r -> {
                         if (r.isOccupied()) {
-                            totalSales += r.price();
-                            totalRooms += r.price();
                             int displayedService = r.getEffectiveService();
                             document.insertString(document.getLength(),
                                     spaces(1) + formattedDate + "|" + r.roomString()
@@ -568,7 +550,7 @@ public class Printer {
                 }
             }
 
-            printTurnTotals(totalRooms, totalItems, totalSales);
+            printTurnTotals(turnDetails.getTotalRooms(), turnDetails.getTotalItems(), turnDetails.getTotalSales());
 
             if (isCurrent) {
                 printDetailedTurnExtras(turnDetails);
