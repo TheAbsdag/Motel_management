@@ -10,7 +10,17 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import model.dto.TurnActivityData;
 import model.dto.TurnSummaryItemData;
-import model.RoomStatus;
+import model.turn.ExtraChangeActivity;
+import model.turn.ExtraChangeType;
+import model.turn.RefundActivity;
+import model.turn.RefundType;
+import model.turn.RoomBookingActivity;
+import model.turn.RoomSwapActivity;
+import model.turn.SaleActivity;
+import model.turn.SaleItem;
+import model.turn.SpendingActivity;
+import model.turn.TurnActivity;
+import model.turn.TurnDetails;
 
 /**
  *
@@ -28,611 +38,388 @@ public class Turn {
     private Instant start;
     private Instant end;
     private long turnNumber;
-    private JSONArray turnHistory;
-    private JSONObject turnDetails;
+    private TurnDetails turnDetails;
     private ZoneId zoneID;
     private boolean isTurnActive;
 
     public Turn(Instant start, ZoneId zoneID) {
         this.start = start;
-        this.turnHistory = new JSONArray();
         this.turnNumber = 1;
-        turnDetails = new JSONObject();
+        this.turnDetails = new TurnDetails();
         this.zoneID = zoneID;
         isTurnActive = false;
     }
 
-    //Specific turn information for history purposes.
     public Turn(Instant start, Instant end, int turnID, ZoneId zoneID, JSONArray turnData) {
         this.start = start;
         this.end = end;
         this.turnNumber = turnID;
-        turnDetails = new JSONObject();
         this.zoneID = zoneID;
         isTurnActive = false;
-        this.turnHistory = turnData;
-
-        String dateLocalized = this.start.atZone(zoneID).toString();
-        turnDetails.put("turnNumber", this.turnNumber);
-        turnDetails.put("turnStart", dateLocalized);
-        dateLocalized = this.end.atZone(zoneID).toString();
-        turnDetails.put("turnEnd", dateLocalized);
-        turnDetails.put("turnActivity", turnData);
+        this.turnDetails = TurnDetails.fromJson(buildHistoryJson(start, end, turnID, turnData));
     }
 
-    public JSONObject registerRoomChange(Room room, Instant time, long price, int extended, int consecutiveTransaction) {
-        //Setting temporary information for the change.
-        String dateLocalized = time.atZone(zoneID).toString();
-        JSONObject change = new JSONObject();
+    private JSONObject buildHistoryJson(Instant start, Instant end, int turnID, JSONArray turnData) {
+        JSONObject json = new JSONObject();
+        json.put("turnNumber", turnID);
+        json.put("turnStart", start.atZone(zoneID).toString());
+        json.put("turnEnd", end.atZone(zoneID).toString());
+        json.put("isTurnActive", false);
+        json.put("turnActivity", turnData);
+        return json;
+    }
+
+    public RoomBookingActivity registerRoomChange(Room room, Instant time, long price, int extended, int consecutiveTransaction) {
+        ZonedDateTime changeDate = time.atZone(zoneID);
         RoomStatus roomStatus = room.getStatus();
 
-        change.put("changeDate", dateLocalized);
-        change.put("changeType", "room");
-        change.put("roomString", room.getRoomString());
-        change.put("roomNumber", room.getRoomNumber());
-        change.put("floorNumber", room.getFloorNumber());
-        change.put("towerNumber", room.getTowerNumber());
-        change.put("roomStatus", roomStatus.getCode());
-        //Validation of the time
-        dateLocalized = room.getStartStatus().atZone(zoneID).toString();
-        change.put("startStatus", dateLocalized);
-        if (roomStatus == RoomStatus.OCCUPIED) {
-            dateLocalized = room.getEndStatus().atZone(zoneID).toString();
-            change.put("endStatus", dateLocalized);
-            change.put("price", price);
-            change.put("service", room.getService());
-            change.put("extension", room.getExtension());
-
-            //Current extension for this change (separate from total extension).
-            change.put("servicedExtension", extended);
-            change.put("consecutiveTrans", consecutiveTransaction);
-            change.put("refunded", false);
-        }
-        if (consecutiveTransaction > 0) {
-            change.put("consecutiveTrans", consecutiveTransaction);
-        }
-        turnHistory.put(change);
-        saveCurrentTurnHistory();
-        return change;
+        RoomBookingActivity activity = new RoomBookingActivity(
+                changeDate,
+                room.getRoomString(),
+                room.getRoomNumber(),
+                room.getFloorNumber(),
+                room.getTowerNumber(),
+                roomStatus,
+                room.getStartStatus().atZone(zoneID),
+                roomStatus == RoomStatus.OCCUPIED ? room.getEndStatus().atZone(zoneID) : null,
+                price,
+                room.getService(),
+                room.getExtension(),
+                extended,
+                consecutiveTransaction,
+                false
+        );
+        turnDetails.addActivity(activity);
+        return activity;
     }
 
     public void registerRoomSwap(Room originalRoom, Room swapedRoom, Instant time) {
-        JSONObject change = new JSONObject();
-        String dateLocalized = time.atZone(zoneID).toString();
-        change.put("changeDate", dateLocalized);
-        change.put("changeType", "roomSwap");
-        change.put("originalRoom", originalRoom.getRoomString());
-        change.put("swapedRoom", swapedRoom.getRoomString());
-        change.put("originalRoomNumber", originalRoom.getRoomNumber());
-        change.put("originalFloorNumber", originalRoom.getFloorNumber());
-        change.put("originalTowerNumber", originalRoom.getTowerNumber());
-
-        change.put("swapedRoomNumber", swapedRoom.getRoomNumber());
-        change.put("swapedFloorNumber", swapedRoom.getFloorNumber());
-        change.put("swapedTowerNumber", swapedRoom.getTowerNumber());
-
-        turnHistory.put(change);
-        saveCurrentTurnHistory();
+        ZonedDateTime changeDate = time.atZone(zoneID);
+        RoomSwapActivity activity = new RoomSwapActivity(
+                changeDate,
+                originalRoom.getRoomString(),
+                originalRoom.getRoomNumber(),
+                originalRoom.getFloorNumber(),
+                originalRoom.getTowerNumber(),
+                swapedRoom.getRoomString(),
+                swapedRoom.getRoomNumber(),
+                swapedRoom.getFloorNumber(),
+                swapedRoom.getTowerNumber()
+        );
+        turnDetails.addActivity(activity);
     }
 
-    public JSONObject saveTransactionInformation(JSONArray registerJson, Room roomSoldTo, Instant time, int transactionNumber) {
-        JSONObject change = new JSONObject();
-        String dateLocalized = time.atZone(zoneID).toString();
-        change.put("changeDate", dateLocalized);
-        change.put("changeType", "sale");
-        change.put("roomSoldTo", roomSoldTo.getRoomString());
-        change.put("register", registerJson);
-        change.put("consecutiveTrans", transactionNumber);
-        turnHistory.put(change);
-        saveCurrentTurnHistory();
-        return change;
-    }
-
-    private void saveCurrentTurnHistory() {
-        turnDetails.remove("turnActivity");
-        turnDetails.put("turnActivity", turnHistory);
+    public SaleActivity saveTransactionInformation(JSONArray registerJson, Room roomSoldTo, Instant time, int transactionNumber) {
+        ZonedDateTime changeDate = time.atZone(zoneID);
+        List<SaleItem> items = new ArrayList<>();
+        for (int i = 0; i < registerJson.length(); i++) {
+            items.add(SaleItem.fromJson(registerJson.getJSONObject(i)));
+        }
+        SaleActivity activity = new SaleActivity(
+                changeDate,
+                roomSoldTo.getRoomString(),
+                items,
+                transactionNumber
+        );
+        turnDetails.addActivity(activity);
+        return activity;
     }
 
     public void setNewTurn(long turnID, Instant start) {
         this.turnNumber = turnID;
         this.start = start;
-        String dateLocalized = start.atZone(zoneID).toString();
-        turnHistory.clear();
+        ZonedDateTime localizedStart = start.atZone(zoneID);
         turnDetails.clear();
-        turnDetails.put("turnNumber", turnNumber);
-        turnDetails.put("turnStart", dateLocalized);
+        turnDetails.setTurnNumber(turnNumber);
+        turnDetails.setTurnStart(localizedStart);
         isTurnActive = true;
-        turnDetails.put("isTurnActive", isTurnActive);
+        turnDetails.setTurnActive(true);
     }
 
-    //TurnEnd must be called before any turn information is requested
     public void turnEnd(Instant end) {
         this.end = end;
-        String dateLocalized = this.end.atZone(zoneID).toString();
-        turnDetails.put("turnEnd", dateLocalized);
-        turnDetails.put("turnActivity", turnHistory);
+        turnDetails.setTurnEnd(end.atZone(zoneID));
         isTurnActive = false;
-        turnDetails.put("isTurnActive", isTurnActive);
-
+        turnDetails.setTurnActive(false);
     }
 
-    public JSONObject getBasicTurnInformation() {
-        JSONObject basicTurn = new JSONObject();
-        basicTurn.put("turnStart", turnDetails.optString("turnStart", ""));
-        basicTurn.put("turnNumber", turnDetails.optInt("turnNumber", 0));
-        try{
-            basicTurn.put("turnEnd", turnDetails.getString("turnEnd"));
-        }
-        catch(JSONException e){
-            //This should only trigger if turnEnd does not exists
-            basicTurn.put("turnEnd", "not finished");
-        }
-
-        JSONArray turnHistorySummary = new JSONArray();
-
-        //Going through each transaction made within it.
-        long totalSales = 0;
-        long totalItems = 0;
-        long totalRooms = 0;
-        long totalRefunds = 0;
-        long totalSpending = 0;
-        long totalTurn = 0;
-        long totalBankTransfer = 0;
-        long totalSafeDeposit = 0;
-        long totalNet = 0;
-        for (int i = 0; i < turnHistory.length(); i++) {
-            JSONObject change = turnHistory.getJSONObject(i);
-            String changeType = change.getString("changeType");
-
-            // Validation for the room summary
-            if (changeType.equals("room")) {
-                int statusCode = change.getInt("roomStatus");
-
-                // A room was booked on the turn, so we capture the data for the summary
-                if (statusCode == RoomStatus.OCCUPIED.getCode()) {
-                    long price = change.getLong("price");
-                    int service = change.getInt("service");
-                    int servicedExtension = change.getInt("servicedExtension");
-                    int serviceKey = servicedExtension == 0 ? service : servicedExtension;
-                    totalSales += price;
-                    totalRooms += price;
-                    totalTurn += price;
-                    totalNet += price;
-
-                    boolean roomServiceExisting = false;
-
-                    // Going through the current turnHistorySummary to find if the key exists
-                    for (int j = 0; j < turnHistorySummary.length(); j++) {
-                        JSONObject summaryItem = turnHistorySummary.getJSONObject(j);
-                        if ("room".equals(summaryItem.getString("summaryType")) && summaryItem.getInt("service") == serviceKey) {
-                            // It exists, we update values, and we exit the loop
-                            roomServiceExisting = true;
-                            summaryItem.put("quantity", summaryItem.getInt("quantity") + 1);
-                            summaryItem.put("price", summaryItem.getLong("price") + price);
-                            break;
-                        }
-                    }
-
-                    // If the roomService was never found, we just create a new one
-                    if (!roomServiceExisting) {
-                        JSONObject newSummaryItem = new JSONObject();
-                        newSummaryItem.put("summaryType", "room");
-                        newSummaryItem.put("service", serviceKey);
-                        newSummaryItem.put("quantity", 1);
-                        newSummaryItem.put("price", price);
-                        turnHistorySummary.put(newSummaryItem);
-                    }
-                }
-            }
-
-            //Validation for the items summary
-            if (changeType.equals("sale")) {
-                JSONArray itemList = change.getJSONArray("register");
-                for (int itemSold = 0; itemSold < itemList.length(); itemSold++) {
-                    JSONObject item = itemList.getJSONObject(itemSold);
-                    long itemID = item.getLong("itemID");
-                    long price = item.getLong("price");
-                    long quantity = item.getLong("quantity");
-                    totalSales += price;
-                    totalItems += price;
-                    totalTurn += price;
-                    totalNet += price;
-                    //Going through the current list to see if the item is found
-                    boolean itemExists = false;
-                    for (int j = 0; j < turnHistorySummary.length(); j++) {
-                        JSONObject summaryItem = turnHistorySummary.getJSONObject(j);
-                        if ("item".equals(summaryItem.getString("summaryType"))) {
-                            //We found the item, updating quantity and price
-                            if (itemID == summaryItem.getLong("itemID")) {
-                                summaryItem.put("quantity", summaryItem.getLong("quantity") + quantity);
-                                summaryItem.put("price", summaryItem.getLong("price") + price);
-
-                                itemExists = true;
-                                break;
-                            }
-                        }
-                    }
-
-                    //The item summary does not exists, creation required
-                    if (!itemExists) {
-                        JSONObject newSummaryItem = new JSONObject();
-                        newSummaryItem.put("summaryType", "item");
-                        newSummaryItem.put("itemName", item.getString("itemName"));
-                        newSummaryItem.put("itemID", itemID);
-                        newSummaryItem.put("quantity", quantity);
-                        newSummaryItem.put("price", price);
-                        turnHistorySummary.put(newSummaryItem);
-                    }
-                }
-            }
-
-            // Validation for refunds
-            if (changeType.equals("refund")) {
-                if (change.getString("refundType").equals("saleRefund")) {
-                    long itemID = change.getLong("itemID");
-                    long price = change.getLong("price");
-                    long quantity = change.getLong("quantity");
-                    totalRefunds += price;
-                    totalTurn += price;
-                    totalNet += price;
-                    boolean itemRefundExists = false;
-                    for (int j = 0; j < turnHistorySummary.length(); j++) {
-                        JSONObject summaryItem = turnHistorySummary.getJSONObject(j);
-                        if ("itemRefund".equals(summaryItem.getString("summaryType")) && itemID == summaryItem.getLong("itemID")) {
-                            summaryItem.put("quantity", summaryItem.getLong("quantity") + quantity);
-                            summaryItem.put("price", summaryItem.getLong("price") + price);
-                            itemRefundExists = true;
-                            break;
-                        }
-                    }
-                    if (!itemRefundExists) {
-                        JSONObject newSummaryItem = new JSONObject();
-                        newSummaryItem.put("summaryType", "itemRefund");
-                        newSummaryItem.put("itemName", change.getString("itemName"));
-                        newSummaryItem.put("itemID", itemID);
-                        newSummaryItem.put("quantity", quantity);
-                        newSummaryItem.put("price", price);
-                        turnHistorySummary.put(newSummaryItem);
-                    }
-                } else if (change.getString("refundType").equals("roomRefund")) {
-                    long price = change.getLong("price");
-                    int service = change.getInt("refundService");
-                    totalRefunds += price;
-                    totalTurn += price;
-                    totalNet += price;
-                    boolean roomRefundExisting = false;
-                    for (int j = 0; j < turnHistorySummary.length(); j++) {
-                        JSONObject summaryItem = turnHistorySummary.getJSONObject(j);
-                        if ("roomRefund".equals(summaryItem.getString("summaryType")) && summaryItem.getInt("service") == service) {
-                            roomRefundExisting = true;
-                            summaryItem.put("quantity", summaryItem.getInt("quantity") + 1);
-                            summaryItem.put("price", summaryItem.getLong("price") + price);
-                            break;
-                        }
-                    }
-                    if (!roomRefundExisting) {
-                        JSONObject newSummaryItem = new JSONObject();
-                        newSummaryItem.put("summaryType", "roomRefund");
-                        newSummaryItem.put("service", service);
-                        newSummaryItem.put("quantity", 1);
-                        newSummaryItem.put("price", price);
-                        turnHistorySummary.put(newSummaryItem);
-                    }
-                }
-            }
-
-            // Validation for spending
-            if (changeType.equals("spending")) {
-                long value = change.getLong("value");
-                totalSpending += value;
-                totalTurn += value;
-                totalNet += value;
-            }
-
-            // Validation for extra changes (bank transfer / safe deposit)
-            if (changeType.equals("extraChange")) {
-                String extraType = change.getString("extraType");
-                long value = change.getLong("value");
-                if (extraType.equals("bankTransfer")) {
-                    totalBankTransfer += value * -1L;
-                } else if (extraType.equals("safeDeposit")) {
-                    totalSafeDeposit += value * -1L;
-                }
-                totalNet += value;
-                boolean extraChangeExisting = false;
-                for (int j = 0; j < turnHistorySummary.length(); j++) {
-                    JSONObject summaryItem = turnHistorySummary.getJSONObject(j);
-                    if ("extraChange".equals(summaryItem.getString("summaryType")) && extraType.equals(summaryItem.getString("extraType"))) {
-                        extraChangeExisting = true;
-                        summaryItem.put("quantity", summaryItem.getInt("quantity") + 1);
-                        summaryItem.put("price", summaryItem.getLong("price") + value);
-                        break;
-                    }
-                }
-                if (!extraChangeExisting) {
-                    JSONObject newSummaryItem = new JSONObject();
-                    newSummaryItem.put("summaryType", "extraChange");
-                    newSummaryItem.put("extraType", extraType);
-                    newSummaryItem.put("quantity", 1);
-                    newSummaryItem.put("price", value);
-                    turnHistorySummary.put(newSummaryItem);
-                }
-            }
-        }
-        basicTurn.put("totalItems", totalItems);
-        basicTurn.put("totalSales", totalSales);
-        basicTurn.put("totalRooms", totalRooms);
-        basicTurn.put("totalRefunds", totalRefunds);
-        basicTurn.put("totalSpending", totalSpending);
-        basicTurn.put("totalTurn", totalTurn);
-        basicTurn.put("totalBankTransfers", totalBankTransfer);
-        basicTurn.put("totalDeposits", totalSafeDeposit);
-        basicTurn.put("totalNet", totalNet);
-        basicTurn.put("turnSummary", turnHistorySummary);
-        return basicTurn;
-    }
-
-    /**
-     * Returns turn details with computed totals, reusing the summarized
-     * computation from {@link #getBasicTurnInformation()} to avoid
-     * duplicate iteration over the turn activity array.
-     */
-    public JSONObject getDetailedTurnInformation() {
-        JSONObject basic = getBasicTurnInformation();
-        turnDetails.put("totalItems", basic.optLong("totalItems"));
-        turnDetails.put("totalSales", basic.optLong("totalSales"));
-        turnDetails.put("totalRooms", basic.optLong("totalRooms"));
-        turnDetails.put("totalSpending", basic.optLong("totalSpending"));
-        turnDetails.put("totalRefunds", basic.optLong("totalRefunds"));
-        turnDetails.put("totalTurn", basic.optLong("totalTurn"));
-        turnDetails.put("totalBankTransfers", basic.optLong("totalBankTransfers"));
-        turnDetails.put("totalDeposits", basic.optLong("totalDeposits"));
-        turnDetails.put("totalNet", basic.optLong("totalNet"));
+    public TurnDetails getBasicTurnInformation() {
+        turnDetails.computeTotalsAndSummary();
         return turnDetails;
     }
 
+    public TurnDetails getDetailedTurnInformation() {
+        turnDetails.computeTotalsAndSummary();
+        return turnDetails;
+    }
+
+    public JSONObject getDetailedTurnInformationAsJson() {
+        return turnDetails.toJson();
+    }
+
     public boolean setPreviousTurnJSON(JSONObject previousTurn) {
-        turnHistory.clear();
         turnDetails.clear();
-        start = ZonedDateTime.parse(previousTurn.getString("turnStart")).toInstant();
+        ZonedDateTime turnStartZ = ZonedDateTime.parse(previousTurn.getString("turnStart"));
+        start = turnStartZ.toInstant();
         turnNumber = previousTurn.getLong("turnNumber");
-        String dateLocalized = start.atZone(zoneID).toString();
-        turnDetails.put("turnNumber", turnNumber);
-        turnDetails.put("turnStart", dateLocalized);
+        turnDetails.setTurnNumber(turnNumber);
+        turnDetails.setTurnStart(turnStartZ);
 
         isTurnActive = previousTurn.getBoolean("isTurnActive");
-        turnDetails.put("isTurnActive", isTurnActive);
+        turnDetails.setTurnActive(isTurnActive);
         try {
-            turnHistory = previousTurn.getJSONArray("turnActivity");
-            saveCurrentTurnHistory();
+            JSONArray activityArray = previousTurn.getJSONArray("turnActivity");
+            for (int i = 0; i < activityArray.length(); i++) {
+                JSONObject obj = activityArray.getJSONObject(i);
+                String type = obj.getString("changeType");
+                TurnActivity activity = parseActivityFromJson(obj, type);
+                if (activity != null) {
+                    turnDetails.addActivity(activity);
+                }
+            }
         } catch (JSONException ex) {
             System.out.println("Previous turn found, no previous activity found");
         }
         return isTurnActive;
     }
 
-    /**
-     * Returns the turn activity log as a list of typed DTOs for view consumption.
-     * Each JSONObject in the internal turnHistory is converted to a TurnActivityData.
-     */
+    private static TurnActivity parseActivityFromJson(JSONObject obj, String type) {
+        return switch (type) {
+            case "room" -> RoomBookingActivity.fromJson(obj);
+            case "sale" -> SaleActivity.fromJson(obj);
+            case "roomSwap" -> RoomSwapActivity.fromJson(obj);
+            case "refund" -> RefundActivity.fromJson(obj);
+            case "spending" -> SpendingActivity.fromJson(obj);
+            case "extraChange" -> ExtraChangeActivity.fromJson(obj);
+            default -> {
+                System.out.println("Unknown changeType in activity: " + type);
+                yield null;
+            }
+        };
+    }
+
     public List<TurnActivityData> getActivityDataList() {
         List<TurnActivityData> result = new ArrayList<>();
-        for (int i = 0; i < turnHistory.length(); i++) {
-            JSONObject item = turnHistory.getJSONObject(i);
-            String changeType = item.getString("changeType");
-            ZonedDateTime changeDate = ZonedDateTime.parse(item.getString("changeDate"));
-            int consecutiveTrans = item.optInt("consecutiveTrans", 0);
-
+        for (TurnActivity activity : turnDetails.getActivities()) {
             try {
-                if ("sale".equals(changeType)) {
-                    JSONArray registerArray = item.getJSONArray("register");
-                    String roomSoldTo = item.getString("roomSoldTo");
-                    for (int j = 0; j < registerArray.length(); j++) {
-                        JSONObject reg = registerArray.getJSONObject(j);
-                        boolean refunded = reg.optBoolean("refunded", false);
-                        result.add(TurnActivityData.forSale(
-                                changeDate, roomSoldTo,
-                                reg.getString("itemName"),
-                                reg.getLong("itemID"),
-                                reg.getLong("quantity"),
-                                reg.getLong("price"),
-                                consecutiveTrans,
-                                refunded
+                switch (activity) {
+                    case SaleActivity s -> {
+                        for (SaleItem item : s.items()) {
+                            result.add(TurnActivityData.forSale(
+                                    s.changeDate(), s.roomSoldTo(),
+                                    item.itemName(), item.itemID(),
+                                    item.quantity(), item.price(),
+                                    s.consecutiveTrans(),
+                                    item.refunded()
+                            ));
+                        }
+                    }
+                    case RoomBookingActivity r -> {
+                        if (r.isOccupied()) {
+                            result.add(TurnActivityData.forRoomBooking(
+                                    r.changeDate(), r.roomString(),
+                                    r.roomStatus().getCode(),
+                                    r.price(), r.service(),
+                                    r.servicedExtension(),
+                                    r.consecutiveTrans(),
+                                    r.refunded()
+                            ));
+                        }
+                    }
+                    case RoomSwapActivity s -> {
+                        result.add(TurnActivityData.forRoomSwap(
+                                s.changeDate(),
+                                s.originalRoom(),
+                                s.swappedRoom()
                         ));
                     }
-                } else if ("room".equals(changeType) && item.getInt("roomStatus") == RoomStatus.OCCUPIED.getCode()) {
-                    boolean refunded = item.optBoolean("refunded", false);
-                    result.add(TurnActivityData.forRoomBooking(
-                            changeDate, item.getString("roomString"),
-                            item.getInt("roomStatus"),
-                            item.getLong("price"),
-                            item.getInt("service"),
-                            item.optInt("servicedExtension", 0),
-                            consecutiveTrans,
-                            refunded
-                    ));
-                } else if ("roomSwap".equals(changeType)) {
-                    result.add(TurnActivityData.forRoomSwap(
-                            changeDate,
-                            item.getString("originalRoom"),
-                            item.getString("swapedRoom")
-                    ));
-                } else if ("refund".equals(changeType)) {
-                    String refundType = item.getString("refundType");
-                    long price = item.getLong("price");
-                    if ("saleRefund".equals(refundType)) {
-                        result.add(TurnActivityData.forRefund(
-                                changeDate, refundType,
-                                item.getString("refundRoom"), price,
-                                item.getLong("itemID"), item.getLong("quantity"),
-                                item.getString("itemName"), 0
-                        ));
-                    } else if ("roomRefund".equals(refundType)) {
-                        result.add(TurnActivityData.forRefund(
-                                changeDate, refundType,
-                                item.getString("refundRoom"), price,
-                                0, 0, null,
-                                item.getInt("refundService")
+                    case RefundActivity r -> {
+                        if (r.refundType() == RefundType.SALE_REFUND) {
+                            result.add(TurnActivityData.forRefund(
+                                    r.changeDate(), r.refundType().getValue(),
+                                    r.refundRoom(), r.price(),
+                                    r.itemID(), r.quantity(),
+                                    r.itemName(), 0
+                            ));
+                        } else {
+                            result.add(TurnActivityData.forRefund(
+                                    r.changeDate(), r.refundType().getValue(),
+                                    r.refundRoom(), r.price(),
+                                    0, 0, null,
+                                    r.refundService()
+                            ));
+                        }
+                    }
+                    case SpendingActivity s -> {
+                        result.add(TurnActivityData.forSpending(
+                                s.changeDate(),
+                                s.description(),
+                                s.value()
                         ));
                     }
-                } else if ("spending".equals(changeType)) {
-                    result.add(TurnActivityData.forSpending(
-                            changeDate,
-                            item.getString("spendingDescription"),
-                            item.getLong("value")
-                    ));
-                } else if ("extraChange".equals(changeType)) {
-                    result.add(TurnActivityData.forExtraChange(
-                            changeDate,
-                            item.getString("extraType"),
-                            item.getString("extraChangeDescription"),
-                            item.getLong("value")
-                    ));
+                    case ExtraChangeActivity e -> {
+                        result.add(TurnActivityData.forExtraChange(
+                                e.changeDate(),
+                                e.extraType().getValue(),
+                                e.description(),
+                                e.value()
+                        ));
+                    }
                 }
-            } catch (JSONException e) {
-                System.out.println("Skipping malformed turn activity entry at index " + i);
+            } catch (Exception e) {
+                System.out.println("Skipping malformed turn activity entry");
             }
         }
         return result;
     }
 
-    /**
-     * Returns the turn summary as a list of typed DTOs.
-     * Summarizes room bookings, item sales, refunds, and extra changes grouped by type.
-     */
     public List<TurnSummaryItemData> getSummaryDataList() {
-        List<TurnSummaryItemData> result = new ArrayList<>();
-        JSONArray summaryArray = getBasicTurnInformation().optJSONArray("turnSummary");
-        if (summaryArray == null) return result;
-        for (int i = 0; i < summaryArray.length(); i++) {
-            JSONObject obj = summaryArray.getJSONObject(i);
-            String summaryType = obj.getString("summaryType");
-            int quantity = obj.getInt("quantity");
-            long price = obj.getLong("price");
-            switch (summaryType) {
-                case "room" ->
-                    result.add(new TurnSummaryItemData(summaryType, quantity, price, null, obj.getInt("service")));
-                case "item" ->
-                    result.add(new TurnSummaryItemData(summaryType, quantity, price, obj.getString("itemName"), 0));
-                case "itemRefund" ->
-                    result.add(new TurnSummaryItemData(summaryType, quantity, price, obj.getString("itemName"), 0));
-                case "roomRefund" ->
-                    result.add(new TurnSummaryItemData(summaryType, quantity, price, null, obj.getInt("service")));
-                case "extraChange" ->
-                    result.add(new TurnSummaryItemData(summaryType, quantity, price, obj.getString("extraType"), 0));
-            }
-        }
-        return result;
+        return new ArrayList<>(turnDetails.getSummaryItems());
     }
 
     public void registerSpendingTransaction(String description, long value, int consecutiveTransaction, Instant time) {
-        String dateLocalized = time.atZone(zoneID).toString();
-        JSONObject spending = new JSONObject();
-        spending.put("changeDate", dateLocalized);
-        spending.put("changeType", "spending");
-        spending.put("value", value);
-        spending.put("consecutiveTrans", consecutiveTransaction);
-        spending.put("spendingDescription", description);
-        turnHistory.put(spending);
-        saveCurrentTurnHistory();
+        ZonedDateTime changeDate = time.atZone(zoneID);
+        SpendingActivity activity = new SpendingActivity(changeDate, description, value, consecutiveTransaction);
+        turnDetails.addActivity(activity);
     }
 
     public void registerExtraChangeTransaction(String description, long value, String type, int consecutiveTransaction, Instant time) {
-        String dateLocalized = time.atZone(zoneID).toString();
-        JSONObject extraChange = new JSONObject();
-        extraChange.put("changeDate", dateLocalized);
-        extraChange.put("changeType", "extraChange");
-        extraChange.put("extraType", type);
-        extraChange.put("value", value);
-        extraChange.put("consecutiveTrans", consecutiveTransaction);
-        extraChange.put("extraChangeDescription", description);
-        turnHistory.put(extraChange);
-        saveCurrentTurnHistory();
+        ZonedDateTime changeDate = time.atZone(zoneID);
+        ExtraChangeActivity activity = new ExtraChangeActivity(
+                changeDate,
+                ExtraChangeType.fromString(type),
+                description,
+                value,
+                consecutiveTransaction
+        );
+        turnDetails.addActivity(activity);
     }
 
-    /**
-     * Creates a refund entry in the turn history and marks the original transaction as refunded.
-     * Handles both room refunds and sale refunds.
-     */
-    public void refundTransactionFromTurn(JSONObject selectedFilteredTransaction, int transactionNumber, Instant time) {
-        String dateLocalized = time.atZone(zoneID).toString();
-        String originalChange = selectedFilteredTransaction.getString("changeType");
-        JSONObject refundObject = new JSONObject();
-        refundObject.put("changeType", "refund");
-        refundObject.put("changeDate", dateLocalized);
-        refundObject.put("consecutiveTrans", transactionNumber);
+    public void refundTransactionFromTurn(TurnActivity selectedActivity, int transactionNumber, Instant time, long specificItemID, long specificQuantity) {
+        ZonedDateTime changeDate = time.atZone(zoneID);
 
-        try {
-            refundObject.put("refundConsecutiveTrans", selectedFilteredTransaction.get("consecutiveTrans"));
-        } catch (Exception ex) {
-            System.out.println("Previous format - no consecutiveTrans");
-        }
-
-        if (originalChange.equals("room")) {
-            refundObject.put("refundType", "roomRefund");
-            refundObject.put("refundRoom", selectedFilteredTransaction.getString("roomString"));
-            refundObject.put("price", selectedFilteredTransaction.getLong("price") * -1L);
-            refundObject.put("refundService", selectedFilteredTransaction.getLong("service"));
-
-            for (int i = 0; i < turnHistory.length(); i++) {
-                JSONObject transaction = turnHistory.getJSONObject(i);
-                if (transaction.has("consecutiveTrans")
-                        && transaction.getInt("consecutiveTrans") == selectedFilteredTransaction.getInt("consecutiveTrans")
-                        && transaction.getString("changeType").equals("room")) {
-                    transaction.put("refunded", true);
-                    break;
-                }
-            }
-        } else if (originalChange.equals("sale")) {
-            refundObject.put("refundType", "saleRefund");
-            refundObject.put("refundRoom", selectedFilteredTransaction.getString("roomSoldTo"));
-
-            for (int i = 0; i < turnHistory.length(); i++) {
-                JSONObject transaction = turnHistory.getJSONObject(i);
-                if (transaction.has("consecutiveTrans")
-                        && transaction.getInt("consecutiveTrans") == selectedFilteredTransaction.getInt("consecutiveTrans")
-                        && transaction.getString("changeType").equals("sale")) {
-                    JSONArray register = transaction.getJSONArray("register");
-                    for (int j = 0; j < register.length(); j++) {
-                        JSONObject item = register.getJSONObject(j);
-                        if (item.getInt("itemID") == selectedFilteredTransaction.getInt("itemID")) {
-                            item.put("refunded", true);
-                        }
+        if (selectedActivity instanceof RoomBookingActivity r) {
+            RefundActivity refundActivity = new RefundActivity(
+                    changeDate,
+                    RefundType.ROOM_REFUND,
+                    transactionNumber,
+                    r.consecutiveTrans(),
+                    r.roomString(),
+                    r.price() * -1L,
+                    r.service(),
+                    0, 0, null
+            );
+            markActivityRefunded(r, 0);
+            turnDetails.addActivity(refundActivity);
+        } else if (selectedActivity instanceof SaleActivity s) {
+            String roomString = s.roomSoldTo();
+            if (specificItemID > 0) {
+                SaleItem targetItem = null;
+                for (SaleItem item : s.items()) {
+                    if (item.itemID() == specificItemID && item.quantity() == specificQuantity) {
+                        targetItem = item;
+                        break;
                     }
-                    break;
                 }
+                if (targetItem != null) {
+                    RefundActivity refundActivity = new RefundActivity(
+                            changeDate,
+                            RefundType.SALE_REFUND,
+                            transactionNumber,
+                            s.consecutiveTrans(),
+                            roomString,
+                            targetItem.price() * -1L,
+                            0,
+                            targetItem.itemID(),
+                            targetItem.quantity(),
+                            targetItem.itemName()
+                    );
+                    markActivityRefunded(s, specificItemID);
+                    turnDetails.addActivity(refundActivity);
+                }
+            } else {
+                for (SaleItem item : s.items()) {
+                    RefundActivity refundActivity = new RefundActivity(
+                            changeDate,
+                            RefundType.SALE_REFUND,
+                            transactionNumber,
+                            s.consecutiveTrans(),
+                            roomString,
+                            item.price() * -1L,
+                            0,
+                            item.itemID(),
+                            item.quantity(),
+                            item.itemName()
+                    );
+                    turnDetails.addActivity(refundActivity);
+                }
+                markActivityRefunded(s, 0);
             }
-
-            refundObject.put("itemID", selectedFilteredTransaction.getLong("itemID"));
-            refundObject.put("quantity", selectedFilteredTransaction.getLong("quantity"));
-            refundObject.put("itemName", selectedFilteredTransaction.getString("itemName"));
-            refundObject.put("price", selectedFilteredTransaction.getLong("price") * -1L);
         }
-
-        turnHistory.put(refundObject);
-        saveCurrentTurnHistory();
     }
 
-    public void reverseItemSaleFromTurn(JSONObject selectedFilteredItem) {
-        String roomSoldTo = selectedFilteredItem.getString("roomSoldTo");
-        String changeDate = selectedFilteredItem.getString("changeDate");
-        long itemID = selectedFilteredItem.getLong("itemID");
-        long quantity = selectedFilteredItem.getLong("quantity");
-        for (int i = 0; i < turnHistory.length(); i++) {
-            JSONObject currentRegisterChange = turnHistory.getJSONObject(i);
-            String changeType = currentRegisterChange.getString("changeType");
-            if (changeType.equals("sale")
-                    && changeDate.equals(currentRegisterChange.getString("changeDate"))
-                    && roomSoldTo.equals(currentRegisterChange.getString("roomSoldTo"))) {
-                JSONArray currentArray = currentRegisterChange.getJSONArray("register");
-                // Iterate backwards to avoid index shift after removal
-                for (int j = currentArray.length() - 1; j >= 0; j--) {
-                    JSONObject currentObject = currentArray.getJSONObject(j);
-                    if (currentObject.getLong("itemID") == itemID && currentObject.getLong("quantity") == quantity) {
-                        currentArray.remove(j);
-                    }
+    private void markActivityRefunded(TurnActivity activity, long specificItemID) {
+        int idx = turnDetails.getActivities().indexOf(activity);
+        if (idx < 0) return;
+
+        if (activity instanceof RoomBookingActivity r) {
+            turnDetails.getActivities().set(idx, new RoomBookingActivity(
+                    r.changeDate(), r.roomString(), r.roomNumber(), r.floorNumber(), r.towerNumber(),
+                    r.roomStatus(), r.startStatus(), r.endStatus(),
+                    r.price(), r.service(), r.extension(), r.servicedExtension(),
+                    r.consecutiveTrans(), true
+            ));
+        } else if (activity instanceof SaleActivity s) {
+            List<SaleItem> updatedItems = new ArrayList<>();
+            for (SaleItem item : s.items()) {
+                if (specificItemID == 0 || item.itemID() == specificItemID) {
+                    updatedItems.add(new SaleItem(item.itemName(), item.itemID(), item.quantity(), item.price(), true));
+                } else {
+                    updatedItems.add(item);
                 }
             }
+            turnDetails.getActivities().set(idx, new SaleActivity(
+                    s.changeDate(), s.roomSoldTo(), updatedItems, s.consecutiveTrans()
+            ));
         }
+    }
+
+    public void reverseItemSaleFromTurn(TurnActivity activity, long itemID, long quantity) {
+        if (!(activity instanceof SaleActivity s)) return;
+
+        int idx = turnDetails.getActivities().indexOf(activity);
+        if (idx < 0) return;
+
+        List<SaleItem> updatedItems = new ArrayList<>();
+        for (SaleItem item : s.items()) {
+            if (item.itemID() != itemID || item.quantity() != quantity) {
+                updatedItems.add(item);
+            }
+        }
+        if (updatedItems.isEmpty()) {
+            turnDetails.getActivities().remove(idx);
+        } else {
+            turnDetails.getActivities().set(idx, new SaleActivity(
+                    s.changeDate(), s.roomSoldTo(), updatedItems, s.consecutiveTrans()
+            ));
+        }
+    }
+
+    public TurnActivity findActivity(int consecutiveTrans, String changeType) {
+        for (TurnActivity a : turnDetails.getActivities()) {
+            if (a.consecutiveTrans() == consecutiveTrans && consecutiveTrans > 0) {
+                if (a instanceof RoomBookingActivity && "room".equals(changeType)) return a;
+                if (a instanceof SaleActivity && "sale".equals(changeType)) return a;
+            }
+        }
+        return null;
+    }
+
+    public List<TurnActivity> getActivities() {
+        return turnDetails.getActivities();
+    }
+
+    public TurnActivity getActivity(int index) {
+        return turnDetails.getActivities().get(index);
     }
 }

@@ -74,6 +74,8 @@ public class TurnManagerView extends JPanel implements TimeLabelInterface {
         turnDetailsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         columnModel.getColumn(0).setPreferredWidth(45);
         columnModel.getColumn(0).setMaxWidth(55);
+        columnModel.getColumn(5).setPreferredWidth(45);
+        columnModel.getColumn(5).setMaxWidth(55);
         JScrollPane scrollPane = new JScrollPane(turnDetailsTable);
         turnDetailsTable.getTableHeader().setReorderingAllowed(false);
         turnDetailsPanel.add(scrollPane, "cell 0 0, grow");
@@ -105,7 +107,7 @@ public class TurnManagerView extends JPanel implements TimeLabelInterface {
 
     private class TurnDetailsTableModel extends AbstractTableModel {
 
-        private final String[] columnNames = {"#", "Habitacion", "Tiempo", "Accion", "Valor"};
+        private final String[] columnNames = {"#", "Habitacion", "Tiempo", "Accion", "Valor", "Dev."};
         private List<TurnActivityData> filteredTurnDetails;
 
         public TurnDetailsTableModel() {
@@ -171,6 +173,7 @@ public class TurnManagerView extends JPanel implements TimeLabelInterface {
                             || "extraChange".equals(changeType)) yield item.getPrice();
                     else yield "";
                 }
+                case 5 -> ("sale".equals(changeType) || "room".equals(changeType)) && item.isRefunded() ? "Si" : "";
                 default -> null;
             };
         }

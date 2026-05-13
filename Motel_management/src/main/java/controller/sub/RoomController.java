@@ -30,7 +30,8 @@ public class RoomController {
     private final RoomChangeView roomChangeView;
     private final UserGUI userInterface;
     private final Runnable onRoomSale;
-    private final Runnable saveBackupFilesOperation;
+    private final Runnable saveMainFiles;
+    private final Runnable saveBackupFilesRoomSwap;
     private boolean isListAdjusting = false;
 
     /**
@@ -40,19 +41,21 @@ public class RoomController {
      * @param roomChangeView            the room change view
      * @param userInterface             the main window for view switching
      * @param onRoomSale                callback to start a room charge sale
-     * @param saveBackupFilesOperation  callback to save backup files after an operation
+     * @param saveMainFiles             callback to save main data files
+     * @param saveBackupFilesRoomSwap   callback to save backup files as room operation
      */
     public RoomController(MotelManagement motelManager, FloorView floorView,
                           RoomView roomView, RoomChangeView roomChangeView,
                           UserGUI userInterface, Runnable onRoomSale,
-                          Runnable saveBackupFilesOperation) {
+                          Runnable saveMainFiles, Runnable saveBackupFilesRoomSwap) {
         this.motelManager = motelManager;
         this.floorView = floorView;
         this.roomView = roomView;
         this.roomChangeView = roomChangeView;
         this.userInterface = userInterface;
         this.onRoomSale = onRoomSale;
-        this.saveBackupFilesOperation = saveBackupFilesOperation;
+        this.saveMainFiles = saveMainFiles;
+        this.saveBackupFilesRoomSwap = saveBackupFilesRoomSwap;
     }
 
     /** Registers action listeners for room view and room change view buttons. */
@@ -285,14 +288,14 @@ public class RoomController {
             if (noPrintingConfirmation) {
                 motelManager.registerRoomTimeAdded(towerNumber, floorNumber, roomNumber, service, price, false);
                 userInterface.setFloorView();
-                motelManager.saveFilesForMainService();
-                saveBackupFilesOperation.run();
+                saveMainFiles.run();
+                saveBackupFilesRoomSwap.run();
             }
         } else {
             motelManager.registerRoomTimeAdded(towerNumber, floorNumber, roomNumber, service, price, true);
             userInterface.setFloorView();
-            motelManager.saveFilesForMainService();
-            saveBackupFilesOperation.run();
+            saveMainFiles.run();
+            saveBackupFilesRoomSwap.run();
         }
     }
 
@@ -306,6 +309,8 @@ public class RoomController {
         int roomNumber = motelManager.getCurrentRoomViewed();
         int floorNumber = motelManager.getCurrentFloorViewed();
         motelManager.registerRoomTimeEnd(towerNumber, floorNumber, roomNumber);
+        saveMainFiles.run();
+        saveBackupFilesRoomSwap.run();
         userInterface.setFloorView();
     }
 
@@ -345,6 +350,8 @@ public class RoomController {
         motelManager.timeInformationUpdate();
         boolean validReturn = motelManager.changeRoomTimeToAnother();
         if (validReturn) {
+            saveMainFiles.run();
+            saveBackupFilesRoomSwap.run();
             userInterface.setFloorView();
         }
     }

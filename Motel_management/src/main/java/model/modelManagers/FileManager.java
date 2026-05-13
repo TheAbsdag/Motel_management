@@ -13,6 +13,8 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
@@ -28,8 +30,19 @@ public class FileManager {
 
     public static final String PATH = System.getProperty("user.dir");
     private static final String DATA_PATH = PATH + File.separator + "data";
+    private static final String STAGING_DIR = DATA_PATH + File.separator + ".staging";
     private static final String BACKUP_PATH = PATH + File.separator + "backup";
     private static final String HISTORY_PATH = PATH + File.separator + "history";
+
+    private static String sanitizeFileName(String name) {
+        if (name == null || name.isEmpty()) {
+            return "unnamed";
+        }
+        return name.replace('\\', '_')
+                   .replace('/', '_')
+                   .replace("..", "_")
+                   .replace("\0", "_");
+    }
 
     public FileManager() {
         System.out.println("FileManager initialized");
@@ -44,6 +57,7 @@ public class FileManager {
         prepareBackup.mkdirs();
         File prepareHistory = new File(HISTORY_PATH);
         prepareHistory.mkdirs();
+        deleteDirectory(new File(STAGING_DIR));
         System.out.println("Folders created");
     }
 
@@ -56,7 +70,8 @@ public class FileManager {
         * applicationProperties
      */
     public JSONObject getJsonData(String dataNeeded) {
-        File file = new File(DATA_PATH + File.separator + dataNeeded);
+        String safeName = sanitizeFileName(dataNeeded);
+        File file = new File(DATA_PATH + File.separator + safeName);
         if (!file.exists()) {
             System.out.println("No se ha encontrado archivo de " + dataNeeded);
             return null;
@@ -80,9 +95,10 @@ public class FileManager {
     }
 
     public synchronized void saveJsonMainDataPath(JSONObject data, String dataToSave) {
+        String safeName = sanitizeFileName(dataToSave);
         String saveString = data.toString();
-        File targetFile = new File(DATA_PATH + File.separator + dataToSave);
-        File tmpFile = new File(DATA_PATH + File.separator + dataToSave + ".tmp");
+        File targetFile = new File(DATA_PATH + File.separator + safeName);
+        File tmpFile = new File(DATA_PATH + File.separator + safeName + ".tmp");
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(tmpFile))) {
             writer.write(saveString);
         } catch (IOException ex) {
@@ -101,16 +117,70 @@ public class FileManager {
         }
     }
 
+    public synchronized void saveAllMainDataAtomic(Map<String, JSONObject> dataMap) {
+        File stagingDir = new File(STAGING_DIR);
+        deleteDirectory(stagingDir);
+        stagingDir.mkdirs();
+
+        for (Map.Entry<String, JSONObject> entry : dataMap.entrySet()) {
+            String safeName = sanitizeFileName(entry.getKey());
+            File stagingFile = new File(stagingDir, safeName);
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(stagingFile))) {
+                writer.write(entry.getValue().toString());
+            } catch (IOException ex) {
+                Logger.getLogger(FileManager.class.getName()).log(Level.SEVERE, "Failed to write staging: " + safeName, ex);
+                deleteDirectory(stagingDir);
+                return;
+            }
+        }
+
+        for (Map.Entry<String, JSONObject> entry : dataMap.entrySet()) {
+            String safeName = sanitizeFileName(entry.getKey());
+            File stagingFile = new File(stagingDir, safeName);
+            File targetFile = new File(DATA_PATH + File.separator + safeName);
+            try {
+                Files.move(stagingFile.toPath(), targetFile.toPath(),
+                        StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            } catch (IOException ex) {
+                Logger.getLogger(FileManager.class.getName()).log(Level.SEVERE,
+                        "Atomic move failed for " + safeName + ", falling back", ex);
+                try {
+                    Files.move(stagingFile.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                } catch (IOException ex2) {
+                    Logger.getLogger(FileManager.class.getName()).log(Level.SEVERE,
+                            "Fallback also failed for " + safeName, ex2);
+                }
+            }
+        }
+
+        deleteDirectory(stagingDir);
+    }
+
     public synchronized void saveJsonBackupDataPath(JSONObject data, String dataToSave, ZonedDateTime time, String saveType) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss");
-        String currentFilePath = BACKUP_PATH + File.separator + time.format(formatter) + "-" + saveType;
-        File newFolderBackup = new File(currentFilePath);
+        String safeFolder = sanitizeFileName(time.format(formatter) + "-" + saveType);
+        String folderPath = BACKUP_PATH + File.separator + safeFolder;
+        File newFolderBackup = new File(folderPath);
         newFolderBackup.mkdirs();
+        String safeName = sanitizeFileName(dataToSave);
         String saveString = data.toString();
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(currentFilePath + File.separator + dataToSave))) {
+        File targetFile = new File(folderPath + File.separator + safeName);
+        File tmpFile = new File(folderPath + File.separator + safeName + ".tmp");
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(tmpFile))) {
             writer.write(saveString);
         } catch (IOException ex) {
             Logger.getLogger(FileManager.class.getName()).log(Level.SEVERE, null, ex);
+            return;
+        }
+        try {
+            Files.move(tmpFile.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+        } catch (IOException ex) {
+            Logger.getLogger(FileManager.class.getName()).log(Level.SEVERE, "Atomic move failed for backup, falling back", ex);
+            try {
+                Files.move(tmpFile.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException ex2) {
+                Logger.getLogger(FileManager.class.getName()).log(Level.SEVERE, "Fallback move also failed for backup", ex2);
+            }
         }
     }
     
@@ -137,8 +207,9 @@ public class FileManager {
     public synchronized void saveHistoryData(JSONObject data, String dataToSave, ZonedDateTime time) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss");
         String timeString = time.format(formatter);
+        String safeName = sanitizeFileName(dataToSave);
         String saveString = data.toString();
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(HISTORY_PATH + File.separator + dataToSave + "-" + timeString))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(HISTORY_PATH + File.separator + safeName + "-" + timeString))) {
             writer.write(saveString);
         } catch (IOException ex) {
             Logger.getLogger(FileManager.class.getName()).log(Level.SEVERE, null, ex);

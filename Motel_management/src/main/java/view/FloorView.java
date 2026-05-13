@@ -1,5 +1,6 @@
 package view;
 
+import java.awt.*;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -8,6 +9,7 @@ import java.awt.GridLayout;
 import java.awt.Insets;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.*;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
@@ -209,122 +211,123 @@ public class FloorView extends JPanel implements TimeLabelInterface {
 
     private void initComponents() {
         // JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents  @formatter:off
-        // Generated using JFormDesigner Educational license - Santiago Esteban Castelblanco Castiblanco (saecastelblancoc)
-        containerPanel = new JPanel();
-        dateLabel = new JLabel();
-        timeLabel = new JLabel();
-        turnNumberLabel = new JLabel();
-        warningIconLabel = new JLabel();
-        warningScrollPane = new JScrollPane();
-        towerLabelInforfmation = new JLabel();
-        previousTowerButton = new JButton();
-        nextTowerButton = new JButton();
-        floorLabelInformation = new JLabel();
-        floorUpButton = new JButton();
-        floorDownButton = new JButton();
-        receptionSellButton = new JButton();
-        managementOptionsButton = new JButton();
+	// Generated using JFormDesigner Educational license - Santiago Esteban Castelblanco Castiblanco (saecastelblancoc)
+	containerPanel = new JPanel();
+	dateLabel = new JLabel();
+	timeLabel = new JLabel();
+	turnNumberLabel = new JLabel();
+	warningIconLabel = new JLabel();
+	warningScrollPane = new JScrollPane();
+	towerLabelInforfmation = new JLabel();
+	previousTowerButton = new JButton();
+	nextTowerButton = new JButton();
+	floorLabelInformation = new JLabel();
+	floorUpButton = new JButton();
+	floorDownButton = new JButton();
+	receptionSellButton = new JButton();
+	managementOptionsButton = new JButton();
 
-        //======== this ========
-        setLayout(new MigLayout(
-            "fill,hidemode 3",
-            // columns
-            "[498,grow,shrink 0,fill]" +
-            "[fill]" +
-            "[fill]",
-            // rows
-            "[]" +
-            "[]" +
-            "[]" +
-            "[]" +
-            "[]" +
-            "[]" +
-            "[]" +
-            "[grow]" +
-            "[grow]"));
+	//======== this ========
+	setLayout(new MigLayout(
+	    "fill,hidemode 3",
+	    // columns
+	    "[498,grow,shrink 0,fill]" +
+	    "[fill]" +
+	    "[fill]",
+	    // rows
+	    "[]" +
+	    "[]" +
+	    "[]" +
+	    "[]" +
+	    "[]" +
+	    "[]" +
+	    "[]" +
+	    "[grow]" +
+	    "[grow]"));
 
-        //======== containerPanel ========
-        containerPanel.setLayout(null);
-        containerPanel.setLayout(cardLayout);
-        add(containerPanel, "cell 0 0 1 9,grow");
+	//======== containerPanel ========
+	{
+	    containerPanel.setLayout(null);
+	    containerPanel.setLayout(cardLayout);
+	}
+	add(containerPanel, "cell 0 0 1 9,grow");
 
-        //---- dateLabel ----
-        dateLabel.setText("date");
-        dateLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
-        dateLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        add(dateLabel, "cell 1 0 2 1,growy");
+	//---- dateLabel ----
+	dateLabel.setText("date");
+	dateLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
+	dateLabel.setHorizontalAlignment(SwingConstants.CENTER);
+	add(dateLabel, "cell 1 0 2 1,growy");
 
-        //---- timeLabel ----
-        timeLabel.setText("time");
-        timeLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 20));
-        timeLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        add(timeLabel, "cell 1 1,growy");
+	//---- timeLabel ----
+	timeLabel.setText("time");
+	timeLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 20));
+	timeLabel.setHorizontalAlignment(SwingConstants.CENTER);
+	add(timeLabel, "cell 1 1,growy");
 
-        //---- turnNumberLabel ----
-        turnNumberLabel.setText("turnN");
-        turnNumberLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        turnNumberLabel.setFont(new Font("Segoe UI Black", Font.BOLD, 22));
-        add(turnNumberLabel, "cell 2 1");
+	//---- turnNumberLabel ----
+	turnNumberLabel.setText("turnN");
+	turnNumberLabel.setHorizontalAlignment(SwingConstants.CENTER);
+	turnNumberLabel.setFont(new Font("Segoe UI Black", Font.BOLD, 22));
+	add(turnNumberLabel, "cell 2 1");
 
-        //---- warningIconLabel ----
-        warningIconLabel.setMinimumSize(new Dimension(120, 120));
-        warningIconLabel.setMaximumSize(new Dimension(120, 120));
-        warningIconLabel.setIconTextGap(0);
-        warningIconLabel.setIcon(new ImageIcon(new ImageIcon(getClass().getResource("/warning.png")).getImage().getScaledInstance(120, 120, java.awt.Image.SCALE_SMOOTH)));
-        add(warningIconLabel, "cell 1 2,growy");
+	//---- warningIconLabel ----
+	warningIconLabel.setMinimumSize(new Dimension(120, 120));
+	warningIconLabel.setMaximumSize(new Dimension(120, 120));
+	warningIconLabel.setIconTextGap(0);
+	add(warningIconLabel, "cell 1 2,growy");
 
-        //---- warningScrollPane ----
-        warningScrollPane.setPreferredSize(new Dimension(120, 150));
-        warningScrollPane.setMaximumSize(new Dimension(120, 250));
-        warningScrollPane.setMinimumSize(new Dimension(120, 120));
-        warningScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        warningScrollPane.setFont(new Font("Segoe UI Black", Font.PLAIN, 20));
-        warningScrollPane.setAlignmentX(0.0F);
-        add(warningScrollPane, "cell 2 2,grow");
+	//---- warningScrollPane ----
+	warningScrollPane.setPreferredSize(new Dimension(120, 150));
+	warningScrollPane.setMaximumSize(new Dimension(120, 250));
+	warningScrollPane.setMinimumSize(new Dimension(120, 120));
+	warningScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+	warningScrollPane.setFont(new Font("Segoe UI Black", Font.PLAIN, 20));
+	warningScrollPane.setAlignmentX(0.0F);
+	add(warningScrollPane, "cell 2 2,grow");
 
-        //---- towerLabelInforfmation ----
-        towerLabelInforfmation.setText("TORRE: N ");
-        towerLabelInforfmation.setHorizontalAlignment(SwingConstants.CENTER);
-        towerLabelInforfmation.setFont(new Font("Segoe UI Black", Font.BOLD, 30));
-        add(towerLabelInforfmation, "cell 1 3 2 1");
+	//---- towerLabelInforfmation ----
+	towerLabelInforfmation.setText("TORRE: N ");
+	towerLabelInforfmation.setHorizontalAlignment(SwingConstants.CENTER);
+	towerLabelInforfmation.setFont(new Font("Segoe UI Black", Font.BOLD, 30));
+	add(towerLabelInforfmation, "cell 1 3 2 1");
 
-        //---- previousTowerButton ----
-        previousTowerButton.setIcon(new ImageIcon(getClass().getResource("/left.png")));
-        previousTowerButton.setMargin(new Insets(0, 0, 0, 0));
-        previousTowerButton.setPreferredSize(new Dimension(120, 120));
-        add(previousTowerButton, "cell 1 4,growy");
+	//---- previousTowerButton ----
+	previousTowerButton.setIcon(new ImageIcon(getClass().getResource("/left.png")));
+	previousTowerButton.setMargin(new Insets(0, 0, 0, 0));
+	previousTowerButton.setPreferredSize(new Dimension(120, 120));
+	add(previousTowerButton, "cell 1 4,growy");
 
-        //---- nextTowerButton ----
-        nextTowerButton.setIcon(new ImageIcon(getClass().getResource("/right.png")));
-        nextTowerButton.setMargin(new Insets(0, 0, 0, 0));
-        nextTowerButton.setPreferredSize(new Dimension(120, 120));
-        add(nextTowerButton, "cell 2 4,growy");
+	//---- nextTowerButton ----
+	nextTowerButton.setIcon(new ImageIcon(getClass().getResource("/right.png")));
+	nextTowerButton.setMargin(new Insets(0, 0, 0, 0));
+	nextTowerButton.setPreferredSize(new Dimension(120, 120));
+	add(nextTowerButton, "cell 2 4,growy");
 
-        //---- floorLabelInformation ----
-        floorLabelInformation.setText("PISO: N ");
-        floorLabelInformation.setHorizontalAlignment(SwingConstants.CENTER);
-        floorLabelInformation.setFont(new Font("Segoe UI Black", Font.BOLD, 30));
-        add(floorLabelInformation, "cell 1 5 2 1");
+	//---- floorLabelInformation ----
+	floorLabelInformation.setText("PISO: N ");
+	floorLabelInformation.setHorizontalAlignment(SwingConstants.CENTER);
+	floorLabelInformation.setFont(new Font("Segoe UI Black", Font.BOLD, 30));
+	add(floorLabelInformation, "cell 1 5 2 1");
 
-        //---- floorUpButton ----
-        floorUpButton.setIcon(new ImageIcon(getClass().getResource("/up.png")));
-        floorUpButton.setPreferredSize(new Dimension(120, 120));
-        add(floorUpButton, "cell 1 6,growy");
+	//---- floorUpButton ----
+	floorUpButton.setIcon(new ImageIcon(getClass().getResource("/up.png")));
+	floorUpButton.setPreferredSize(new Dimension(120, 120));
+	add(floorUpButton, "cell 1 6,growy");
 
-        //---- floorDownButton ----
-        floorDownButton.setIcon(new ImageIcon(getClass().getResource("/down.png")));
-        floorDownButton.setPreferredSize(new Dimension(120, 120));
-        add(floorDownButton, "cell 2 6,grow");
+	//---- floorDownButton ----
+	floorDownButton.setIcon(new ImageIcon(getClass().getResource("/down.png")));
+	floorDownButton.setPreferredSize(new Dimension(120, 120));
+	add(floorDownButton, "cell 2 6,grow");
 
-        //---- receptionSellButton ----
-        receptionSellButton.setText("VENTA RECEPCION");
-        receptionSellButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 16));
-        add(receptionSellButton, "cell 1 7 2 1,growy");
+	//---- receptionSellButton ----
+	receptionSellButton.setText("VENTA RECEPCION");
+	receptionSellButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 16));
+	add(receptionSellButton, "cell 1 7 2 1,growy");
 
-        //---- managementOptionsButton ----
-        managementOptionsButton.setText("OPCIONES");
-        managementOptionsButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 16));
-        add(managementOptionsButton, "cell 1 8 2 1,growy");
+	//---- managementOptionsButton ----
+	managementOptionsButton.setText("OPCIONES");
+	managementOptionsButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 16));
+	add(managementOptionsButton, "cell 1 8 2 1,growy");
         // JFormDesigner - End of component initialization  //GEN-END:initComponents  @formatter:on
     }
 

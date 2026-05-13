@@ -13,6 +13,10 @@ import org.junit.jupiter.api.BeforeEach;
 
 import model.dto.TurnActivityData;
 import model.dto.TurnSummaryItemData;
+import model.turn.RoomBookingActivity;
+import model.turn.SaleActivity;
+import model.turn.TurnActivity;
+import model.turn.TurnDetails;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -37,18 +41,18 @@ class TurnTest {
 
     @Test
     void shouldStartInactive() {
-        JSONObject details = turn.getDetailedTurnInformation();
-        assertThat(details.optBoolean("isTurnActive", false)).isFalse();
+        TurnDetails details = turn.getDetailedTurnInformation();
+        assertThat(details.isTurnActive()).isFalse();
     }
 
     @Test
     void shouldSetNewTurn() {
         turn.setNewTurn(2, startTime);
 
-        JSONObject details = turn.getDetailedTurnInformation();
-        assertThat(details.getLong("turnNumber")).isEqualTo(2);
-        assertThat(details.getBoolean("isTurnActive")).isTrue();
-        assertThat(details.has("turnStart")).isTrue();
+        TurnDetails details = turn.getDetailedTurnInformation();
+        assertThat(details.getTurnNumber()).isEqualTo(2);
+        assertThat(details.isTurnActive()).isTrue();
+        assertThat(details.getTurnStart()).isNotNull();
     }
 
     // ========== Room Booking Logging ==========
@@ -59,14 +63,13 @@ class TurnTest {
         Room room = createRoom("1-101", 0, 1, 1);
         room.setRoomStatus(RoomStatus.OCCUPIED, startTime, 12);
 
-        JSONObject change = turn.registerRoomChange(room, startTime, 50000, 0, 0);
+        RoomBookingActivity change = turn.registerRoomChange(room, startTime, 50000, 0, 0);
 
-        assertThat(change.getString("changeType")).isEqualTo("room");
-        assertThat(change.getString("roomString")).isEqualTo("1-101");
-        assertThat(change.getInt("roomStatus")).isEqualTo(RoomStatus.OCCUPIED.getCode());
-        assertThat(change.getLong("price")).isEqualTo(50000);
-        assertThat(change.getInt("service")).isEqualTo(12);
-        assertThat(change.getInt("servicedExtension")).isZero();
+        assertThat(change.roomString()).isEqualTo("1-101");
+        assertThat(change.roomStatus()).isEqualTo(RoomStatus.OCCUPIED);
+        assertThat(change.price()).isEqualTo(50000);
+        assertThat(change.service()).isEqualTo(12);
+        assertThat(change.servicedExtension()).isZero();
     }
 
     @Test
@@ -76,10 +79,10 @@ class TurnTest {
         room.setRoomStatus(RoomStatus.OCCUPIED, startTime, 3);
         room.extendRoomTime(3);
 
-        JSONObject change = turn.registerRoomChange(room, startTime, 30000, 3, 0);
+        RoomBookingActivity change = turn.registerRoomChange(room, startTime, 30000, 3, 0);
 
-        assertThat(change.getInt("servicedExtension")).isEqualTo(3);
-        assertThat(change.getInt("extension")).isEqualTo(3);
+        assertThat(change.servicedExtension()).isEqualTo(3);
+        assertThat(change.extension()).isEqualTo(3);
     }
 
     // ========== Sale Logging ==========
@@ -97,12 +100,11 @@ class TurnTest {
         item.put("price", 7500);
         register.put(item);
 
-        JSONObject change = turn.saveTransactionInformation(register, room, startTime, 42);
+        SaleActivity change = turn.saveTransactionInformation(register, room, startTime, 42);
 
-        assertThat(change.getString("changeType")).isEqualTo("sale");
-        assertThat(change.getString("roomSoldTo")).isEqualTo("1-101");
-        assertThat(change.getInt("consecutiveTrans")).isEqualTo(42);
-        assertThat(change.getJSONArray("register")).hasSize(1);
+        assertThat(change.roomSoldTo()).isEqualTo("1-101");
+        assertThat(change.consecutiveTrans()).isEqualTo(42);
+        assertThat(change.items()).hasSize(1);
     }
 
     // ========== Summary Generation ==========
@@ -114,17 +116,16 @@ class TurnTest {
         room1.setRoomStatus(RoomStatus.OCCUPIED, startTime, 3);
         turn.registerRoomChange(room1, startTime, 30000, 0, 0);
 
-        JSONObject summary = turn.getBasicTurnInformation();
+        TurnDetails summary = turn.getBasicTurnInformation();
 
-        assertThat(summary.getLong("totalRooms")).isEqualTo(30000);
-        assertThat(summary.getLong("totalSales")).isEqualTo(30000);
+        assertThat(summary.getTotalRooms()).isEqualTo(30000);
+        assertThat(summary.getTotalSales()).isEqualTo(30000);
 
-        JSONArray summaryArray = summary.getJSONArray("turnSummary");
-        assertThat(summaryArray).hasSize(1);
-        JSONObject entry = summaryArray.getJSONObject(0);
-        assertThat(entry.getString("summaryType")).isEqualTo("room");
-        assertThat(entry.getInt("service")).isEqualTo(3);
-        assertThat(entry.getInt("quantity")).isEqualTo(1);
+        List<TurnSummaryItemData> summaryItems = summary.getSummaryItems();
+        assertThat(summaryItems).hasSize(1);
+        assertThat(summaryItems.get(0).summaryType()).isEqualTo("room");
+        assertThat(summaryItems.get(0).service()).isEqualTo(3);
+        assertThat(summaryItems.get(0).quantity()).isEqualTo(1);
     }
 
     @Test
@@ -139,13 +140,12 @@ class TurnTest {
         room2.setRoomStatus(RoomStatus.OCCUPIED, startTime, 3);
         turn.registerRoomChange(room2, startTime, 30000, 0, 0);
 
-        JSONObject summary = turn.getBasicTurnInformation();
-        JSONArray summaryArray = summary.getJSONArray("turnSummary");
+        TurnDetails summary = turn.getBasicTurnInformation();
+        List<TurnSummaryItemData> summaryItems = summary.getSummaryItems();
 
-        assertThat(summaryArray).hasSize(1);
-        JSONObject entry = summaryArray.getJSONObject(0);
-        assertThat(entry.getInt("quantity")).isEqualTo(2);
-        assertThat(entry.getLong("price")).isEqualTo(60000);
+        assertThat(summaryItems).hasSize(1);
+        assertThat(summaryItems.get(0).quantity()).isEqualTo(2);
+        assertThat(summaryItems.get(0).price()).isEqualTo(60000);
     }
 
     @Test
@@ -163,15 +163,14 @@ class TurnTest {
 
         turn.saveTransactionInformation(register, room, startTime, 1);
 
-        JSONObject summary = turn.getBasicTurnInformation();
-        assertThat(summary.getLong("totalItems")).isEqualTo(12500);
-        assertThat(summary.getLong("totalSales")).isEqualTo(12500);
+        TurnDetails summary = turn.getBasicTurnInformation();
+        assertThat(summary.getTotalItems()).isEqualTo(12500);
+        assertThat(summary.getTotalSales()).isEqualTo(12500);
 
-        JSONArray summaryArray = summary.getJSONArray("turnSummary");
-        assertThat(summaryArray).hasSize(1);
-        JSONObject entry = summaryArray.getJSONObject(0);
-        assertThat(entry.getString("summaryType")).isEqualTo("item");
-        assertThat(entry.getString("itemName")).isEqualTo("Coca-Cola");
+        List<TurnSummaryItemData> summaryItems = summary.getSummaryItems();
+        assertThat(summaryItems).hasSize(1);
+        assertThat(summaryItems.get(0).summaryType()).isEqualTo("item");
+        assertThat(summaryItems.get(0).name()).isEqualTo("Coca-Cola");
     }
 
     // ========== Detailed Turn Info ==========
@@ -183,9 +182,9 @@ class TurnTest {
         room.setRoomStatus(RoomStatus.OCCUPIED, startTime, 3);
         turn.registerRoomChange(room, startTime, 30000, 0, 0);
 
-        JSONObject detailed = turn.getDetailedTurnInformation();
-        assertThat(detailed.getLong("totalRooms")).isEqualTo(30000);
-        assertThat(detailed.getLong("totalSales")).isEqualTo(30000);
+        TurnDetails detailed = turn.getDetailedTurnInformation();
+        assertThat(detailed.getTotalRooms()).isEqualTo(30000);
+        assertThat(detailed.getTotalSales()).isEqualTo(30000);
     }
 
     // ========== Turn End ==========
@@ -197,9 +196,9 @@ class TurnTest {
 
         turn.turnEnd(endTime);
 
-        JSONObject details = turn.getDetailedTurnInformation();
-        assertThat(details.getBoolean("isTurnActive")).isFalse();
-        assertThat(details.has("turnEnd")).isTrue();
+        TurnDetails details = turn.getDetailedTurnInformation();
+        assertThat(details.isTurnActive()).isFalse();
+        assertThat(details.getTurnEnd()).isNotNull();
     }
 
     @Test
@@ -209,9 +208,8 @@ class TurnTest {
         room.setRoomStatus(RoomStatus.OCCUPIED, startTime, 3);
         turn.registerRoomChange(room, startTime, 30000, 0, 0);
 
-        // Summary before end should handle missing turnEnd gracefully
-        JSONObject summary = turn.getBasicTurnInformation();
-        assertThat(summary.optString("turnEnd", "not finished")).isEqualTo("not finished");
+        TurnDetails summary = turn.getBasicTurnInformation();
+        assertThat(summary.getTurnEnd()).isNull();
     }
 
     // ========== Activity Data DTOs ==========
@@ -284,18 +282,13 @@ class TurnTest {
         item1.put("price", 7500);
         register.put(item1);
 
-        JSONObject transaction = turn.saveTransactionInformation(register, room, startTime, 42);
+        turn.saveTransactionInformation(register, room, startTime, 42);
 
-        // Build reversal JSON
-        JSONObject reversal = new JSONObject();
-        reversal.put("roomSoldTo", transaction.getString("roomSoldTo"));
-        reversal.put("changeDate", transaction.getString("changeDate"));
-        reversal.put("itemID", 1L);
-        reversal.put("quantity", 3L);
+        TurnActivity activity = turn.findActivity(42, "sale");
+        assertThat(activity).isNotNull();
 
-        turn.reverseItemSaleFromTurn(reversal);
+        turn.reverseItemSaleFromTurn(activity, 1L, 3L);
 
-        // After reversal, the sale entry should have no register items
         List<TurnActivityData> activities = turn.getActivityDataList();
         assertThat(activities).isEmpty();
     }
@@ -352,7 +345,6 @@ class TurnTest {
     void shouldRegisterSpendingTransaction() {
         turn.setNewTurn(1, startTime);
 
-        // MotelManagement negates the value before passing to Turn
         turn.registerSpendingTransaction("Compra de insumos", -50000, 1, startTime);
 
         List<TurnActivityData> activities = turn.getActivityDataList();
@@ -367,15 +359,15 @@ class TurnTest {
         turn.setNewTurn(1, startTime);
         turn.registerSpendingTransaction("Gasto varios", -20000, 1, startTime);
 
-        JSONObject basic = turn.getBasicTurnInformation();
-        assertThat(basic.getLong("totalSpending")).isEqualTo(-20000);
-        assertThat(basic.getLong("totalTurn")).isEqualTo(-20000);
-        assertThat(basic.getLong("totalNet")).isEqualTo(-20000);
+        TurnDetails basic = turn.getBasicTurnInformation();
+        assertThat(basic.getTotalSpending()).isEqualTo(-20000);
+        assertThat(basic.getTotalTurn()).isEqualTo(-20000);
+        assertThat(basic.getTotalNet()).isEqualTo(-20000);
 
-        JSONObject detailed = turn.getDetailedTurnInformation();
-        assertThat(detailed.getLong("totalSpending")).isEqualTo(-20000);
-        assertThat(detailed.getLong("totalTurn")).isEqualTo(-20000);
-        assertThat(detailed.getLong("totalNet")).isEqualTo(-20000);
+        TurnDetails detailed = turn.getDetailedTurnInformation();
+        assertThat(detailed.getTotalSpending()).isEqualTo(-20000);
+        assertThat(detailed.getTotalTurn()).isEqualTo(-20000);
+        assertThat(detailed.getTotalNet()).isEqualTo(-20000);
     }
 
     // ========== Extra Change Transactions ==========
@@ -384,7 +376,6 @@ class TurnTest {
     void shouldRegisterExtraChangeBankTransfer() {
         turn.setNewTurn(1, startTime);
 
-        // MotelManagement negates the value before passing to Turn
         turn.registerExtraChangeTransaction("Transferencia recibida", -100000, "bankTransfer", 1, startTime);
 
         List<TurnActivityData> activities = turn.getActivityDataList();
@@ -399,7 +390,6 @@ class TurnTest {
     void shouldRegisterExtraChangeSafeDeposit() {
         turn.setNewTurn(1, startTime);
 
-        // MotelManagement negates the value before passing to Turn
         turn.registerExtraChangeTransaction("Abono efectivo", -50000, "safeDeposit", 1, startTime);
 
         List<TurnActivityData> activities = turn.getActivityDataList();
@@ -412,28 +402,23 @@ class TurnTest {
     @Test
     void shouldIncludeExtraChangesInFinancialTotals() {
         turn.setNewTurn(1, startTime);
-        // MotelManagement negates values before passing to Turn
         turn.registerExtraChangeTransaction("Transf Bancaria", -100000, "bankTransfer", 1, startTime);
         turn.registerExtraChangeTransaction("Abono caja", -50000, "safeDeposit", 2, startTime);
 
-        JSONObject basic = turn.getBasicTurnInformation();
-        // totalBankTransfers = value * -1L: -100000 * -1 = 100000
-        assertThat(basic.getLong("totalBankTransfers")).isEqualTo(100000);
-        // totalDeposits = value * -1L: -50000 * -1 = 50000
-        assertThat(basic.getLong("totalDeposits")).isEqualTo(50000);
-        // totalNet: -100000 + (-50000) = -150000
-        assertThat(basic.getLong("totalNet")).isEqualTo(-150000);
+        TurnDetails basic = turn.getBasicTurnInformation();
+        assertThat(basic.getTotalBankTransfers()).isEqualTo(100000);
+        assertThat(basic.getTotalDeposits()).isEqualTo(50000);
+        assertThat(basic.getTotalNet()).isEqualTo(-150000);
 
-        JSONObject detailed = turn.getDetailedTurnInformation();
-        assertThat(detailed.getLong("totalBankTransfers")).isEqualTo(100000);
-        assertThat(detailed.getLong("totalDeposits")).isEqualTo(50000);
-        assertThat(detailed.getLong("totalNet")).isEqualTo(-150000);
+        TurnDetails detailed = turn.getDetailedTurnInformation();
+        assertThat(detailed.getTotalBankTransfers()).isEqualTo(100000);
+        assertThat(detailed.getTotalDeposits()).isEqualTo(50000);
+        assertThat(detailed.getTotalNet()).isEqualTo(-150000);
     }
 
     @Test
     void shouldGroupExtraChangesInSummary() {
         turn.setNewTurn(1, startTime);
-        // MotelManagement negates values before passing to Turn
         turn.registerExtraChangeTransaction("Transf 1", -50000, "bankTransfer", 1, startTime);
         turn.registerExtraChangeTransaction("Transf 2", -30000, "bankTransfer", 2, startTime);
 
@@ -451,12 +436,14 @@ class TurnTest {
         turn.setNewTurn(1, startTime);
         Room room = createRoom("1-101", 0, 1, 1);
         room.setRoomStatus(RoomStatus.OCCUPIED, startTime, 3);
-        JSONObject change = turn.registerRoomChange(room, startTime, 30000, 0, 42);
+        turn.registerRoomChange(room, startTime, 30000, 0, 42);
 
-        turn.refundTransactionFromTurn(change, 43, startTime);
+        TurnActivity activity = turn.findActivity(42, "room");
+        assertThat(activity).isNotNull();
+
+        turn.refundTransactionFromTurn(activity, 43, startTime, 0, 0);
 
         List<TurnActivityData> activities = turn.getActivityDataList();
-        // Should have: room booking + room refund
         assertThat(activities).hasSize(2);
         TurnActivityData refund = activities.get(1);
         assertThat(refund.getChangeType()).isEqualTo("refund");
@@ -477,22 +464,14 @@ class TurnTest {
         item.put("price", 7500);
         register.put(item);
 
-        JSONObject transaction = turn.saveTransactionInformation(register, room, startTime, 42);
+        turn.saveTransactionInformation(register, room, startTime, 42);
 
-        // Build the filtered-transaction-style JSON for refund
-        JSONObject filteredTransaction = new JSONObject();
-        filteredTransaction.put("changeType", "sale");
-        filteredTransaction.put("consecutiveTrans", 42);
-        filteredTransaction.put("roomSoldTo", transaction.getString("roomSoldTo"));
-        filteredTransaction.put("itemID", 1L);
-        filteredTransaction.put("quantity", 3L);
-        filteredTransaction.put("itemName", "Coca-Cola");
-        filteredTransaction.put("price", 7500);
+        TurnActivity activity = turn.findActivity(42, "sale");
+        assertThat(activity).isNotNull();
 
-        turn.refundTransactionFromTurn(filteredTransaction, 43, startTime);
+        turn.refundTransactionFromTurn(activity, 43, startTime, 1L, 3L);
 
         List<TurnActivityData> activities = turn.getActivityDataList();
-        // Should have: sale + sale refund
         assertThat(activities).hasSize(2);
         TurnActivityData refund = activities.get(1);
         assertThat(refund.getChangeType()).isEqualTo("refund");
@@ -505,14 +484,15 @@ class TurnTest {
         turn.setNewTurn(1, startTime);
         Room room = createRoom("1-101", 0, 1, 1);
         room.setRoomStatus(RoomStatus.OCCUPIED, startTime, 3);
-        JSONObject roomChange = turn.registerRoomChange(room, startTime, 30000, 0, 42);
+        turn.registerRoomChange(room, startTime, 30000, 0, 42);
 
-        turn.refundTransactionFromTurn(roomChange, 43, startTime);
+        TurnActivity activity = turn.findActivity(42, "room");
+        turn.refundTransactionFromTurn(activity, 43, startTime, 0, 0);
 
-        JSONObject basic = turn.getBasicTurnInformation();
-        assertThat(basic.getLong("totalRooms")).isEqualTo(30000);
-        assertThat(basic.getLong("totalRefunds")).isEqualTo(-30000);
-        assertThat(basic.getLong("totalNet")).isEqualTo(0);  // 30000 + (-30000)
+        TurnDetails basic = turn.getBasicTurnInformation();
+        assertThat(basic.getTotalRooms()).isEqualTo(30000);
+        assertThat(basic.getTotalRefunds()).isEqualTo(-30000);
+        assertThat(basic.getTotalNet()).isEqualTo(0);
     }
 
     // ========== Net Total Calculation ==========
@@ -522,15 +502,12 @@ class TurnTest {
         turn.setNewTurn(1, startTime);
         Room room = createRoom("1-101", 0, 1, 1);
         room.setRoomStatus(RoomStatus.OCCUPIED, startTime, 3);
-        // Room booking: +30000
         turn.registerRoomChange(room, startTime, 30000, 0, 1);
-        // Spending: -5000 (MotelManagement negates user-entered value)
         turn.registerSpendingTransaction("Gasto", -5000, 2, startTime);
-        // Bank transfer: -20000 (MotelManagement negates user-entered value)
         turn.registerExtraChangeTransaction("Transf", -20000, "bankTransfer", 3, startTime);
 
-        JSONObject basic = turn.getBasicTurnInformation();
-        assertThat(basic.getLong("totalNet")).isEqualTo(5000); // 30000 + (-5000) + (-20000)
+        TurnDetails basic = turn.getBasicTurnInformation();
+        assertThat(basic.getTotalNet()).isEqualTo(5000);
     }
 
     // ========== Activity DTO: New Types ==========
@@ -550,7 +527,6 @@ class TurnTest {
     @Test
     void shouldConvertExtraChangeActivityToDto() {
         turn.setNewTurn(1, startTime);
-        // MotelManagement negates the value before passing to Turn
         turn.registerExtraChangeTransaction("Abono", -50000, "safeDeposit", 1, startTime);
 
         List<TurnActivityData> activities = turn.getActivityDataList();

@@ -19,8 +19,6 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.Paragraph;
@@ -31,6 +29,18 @@ import java.awt.print.PageFormat;
 import java.awt.print.Paper;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
+import model.dto.TurnSummaryItemData;
+import model.turn.ExtraChangeActivity;
+import model.turn.ExtraChangeType;
+import model.turn.RefundActivity;
+import model.turn.RefundType;
+import model.turn.RoomBookingActivity;
+import model.turn.RoomSwapActivity;
+import model.turn.SaleActivity;
+import model.turn.SaleItem;
+import model.turn.SpendingActivity;
+import model.turn.TurnActivity;
+import model.turn.TurnDetails;
 
 public class Printer {
 
@@ -224,14 +234,14 @@ public class Printer {
 
     // ========== Print Methods ==========
 
-    public void printRoomTimeSell(JSONObject roomTimeSell, int consecutiveTransaction, boolean justPDF) {
+    public void printRoomTimeSell(RoomBookingActivity activity, int consecutiveTransaction, boolean justPDF) {
         resetDocument();
 
-        String roomString = roomTimeSell.getString("roomString");
-        long price = roomTimeSell.getLong("price");
-        int service = roomTimeSell.getInt("service");
+        String roomString = activity.roomString();
+        long price = activity.price();
+        int service = activity.getEffectiveService();
 
-        ZonedDateTime fullDateHourService = ZonedDateTime.parse(roomTimeSell.getString("startStatus"));
+        ZonedDateTime fullDateHourService = activity.startStatus();
         String hourService = fullDateHourService.format(hourFormatter);
         String dateService = fullDateHourService.format(dateFormatter);
 
@@ -267,14 +277,14 @@ public class Printer {
         }
     }
 
-    public void printItemSold(JSONObject transaction, int consecutiveTransaction, boolean justPDF) {
+    public void printItemSold(SaleActivity activity, int consecutiveTransaction, boolean justPDF) {
         resetDocument();
 
-        String roomString = transaction.getString("roomSoldTo");
-        ZonedDateTime fullDateHourService = ZonedDateTime.parse(transaction.getString("changeDate"));
+        String roomString = activity.roomSoldTo();
+        ZonedDateTime fullDateHourService = activity.changeDate();
         String hourService = fullDateHourService.format(hourFormatter);
         String dateService = fullDateHourService.format(dateFormatter);
-        JSONArray registerArray = transaction.getJSONArray("register");
+        List<SaleItem> items = activity.items();
         long totalPrice = 0;
 
         try {
@@ -292,11 +302,10 @@ public class Printer {
             document.insertString(document.getLength(), spaces(3) + "HORA VENTA: " + hourService + "\n", document.getStyle("DefaultStyle"));
             document.insertString(document.getLength(), " \n\n\n", document.getStyle("FillerStyle"));
 
-            for (int i = 0; i < registerArray.length(); i++) {
-                JSONObject item = registerArray.getJSONObject(i);
-                int quantity = item.getInt("quantity");
-                String name = item.getString("itemName");
-                long price = item.getLong("price");
+            for (SaleItem item : items) {
+                long quantity = item.quantity();
+                String name = item.itemName();
+                long price = item.price();
                 totalPrice += price;
                 document.insertString(document.getLength(), spaces(2) + quantity + spaces(3) + name + "\t" + numberFormat.format(price) + " \n", document.getStyle("TransactionStyle"));
                 printFillerLines(1);
@@ -316,25 +325,25 @@ public class Printer {
         }
     }
 
-    void printSummarizedTurn(JSONObject summarizedTurn, boolean justPDF) {
-        printSummarizedTurnInternal(summarizedTurn, false, justPDF);
+    void printSummarizedTurn(TurnDetails turnDetails, boolean justPDF) {
+        printSummarizedTurnInternal(turnDetails, false, justPDF);
     }
 
-    void printDetailedTurn(JSONObject detailedTurn, boolean justPDF) {
-        printDetailedTurnInternal(detailedTurn, false, justPDF);
+    void printDetailedTurn(TurnDetails turnDetails, boolean justPDF) {
+        printDetailedTurnInternal(turnDetails, false, justPDF);
     }
 
     // ========== Current-Turn Printing (mid-turn, "No finalizado") ==========
 
-    public void printSummarizedCurrentTurn(JSONObject summarizedTurn) {
-        printSummarizedTurnInternal(summarizedTurn, true, false);
+    public void printSummarizedCurrentTurn(TurnDetails turnDetails) {
+        printSummarizedTurnInternal(turnDetails, true, false);
     }
 
-    private void printSummarizedTurnInternal(JSONObject summarizedTurn, boolean isCurrent, boolean justPDF) {
+    private void printSummarizedTurnInternal(TurnDetails turnDetails, boolean isCurrent, boolean justPDF) {
         resetDocument();
 
-        ZonedDateTime fullDateTurnStart = ZonedDateTime.parse(summarizedTurn.getString("turnStart"));
-        int turnNumber = summarizedTurn.getInt("turnNumber");
+        ZonedDateTime fullDateTurnStart = turnDetails.getTurnStart();
+        int turnNumber = (int) turnDetails.getTurnNumber();
 
         try {
             printHeader();
@@ -351,7 +360,7 @@ public class Printer {
             if (isCurrent) {
                 document.insertString(document.getLength(), "No finalizado\n", document.getStyle("DefaultStyleBold"));
             } else {
-                ZonedDateTime fullDateTurnEnd = ZonedDateTime.parse(summarizedTurn.getString("turnEnd"));
+                ZonedDateTime fullDateTurnEnd = turnDetails.getTurnEnd();
                 String endDate = fullDateTurnEnd.format(TURN_DATE_SECTION_FORMATTER);
                 document.insertString(document.getLength(), endDate + "\n", document.getStyle("DefaultStyleBold"));
             }
@@ -362,36 +371,29 @@ public class Printer {
             printSeparator();
             printFillerLines(1);
 
-            JSONArray summaryArray = summarizedTurn.getJSONArray("turnSummary");
+            List<TurnSummaryItemData> summaryItems = turnDetails.getSummaryItems();
             long totalSales = 0;
             long totalItems = 0;
             long totalRooms = 0;
-            for (int i = 0; i < summaryArray.length(); i++) {
-                JSONObject summaryObject = summaryArray.getJSONObject(i);
-                String change = summaryObject.getString("summaryType");
+            for (TurnSummaryItemData si : summaryItems) {
+                String change = si.summaryType();
                 if ("room".equals(change)) {
-                    int quantity = summaryObject.getInt("quantity");
-                    long price = summaryObject.getLong("price");
-                    int service = summaryObject.getInt("service");
-                    totalSales += price;
-                    totalRooms += price;
-                    document.insertString(document.getLength(), spaces(3) + quantity + " Alquiler " + service
-                            + "\t" + numberFormat.format(price) + "\n", document.getStyle("TransactionStyle"));
+                    totalSales += si.price();
+                    totalRooms += si.price();
+                    document.insertString(document.getLength(), spaces(3) + si.quantity() + " Alquiler " + si.service()
+                            + "\t" + numberFormat.format(si.price()) + "\n", document.getStyle("TransactionStyle"));
                 } else if ("item".equals(change)) {
-                    int quantity = summaryObject.getInt("quantity");
-                    long price = summaryObject.getLong("price");
-                    String itemName = summaryObject.getString("itemName");
-                    document.insertString(document.getLength(), spaces(3) + quantity + spaces(2) + itemName
-                            + "\t" + numberFormat.format(price) + "\n", document.getStyle("TransactionStyle"));
-                    totalSales += price;
-                    totalItems += price;
+                    document.insertString(document.getLength(), spaces(3) + si.quantity() + spaces(2) + si.name()
+                            + "\t" + numberFormat.format(si.price()) + "\n", document.getStyle("TransactionStyle"));
+                    totalSales += si.price();
+                    totalItems += si.price();
                 }
             }
 
             printTurnTotals(totalRooms, totalItems, totalSales);
 
             if (isCurrent) {
-                printSummarizedTurnExtras(summarizedTurn, summaryArray);
+                printSummarizedTurnExtras(turnDetails);
                 printFillerLines(3);
                 saveAsPDF("summarizedTurn", fullDateTurnStart, turnNumber);
                 printWithService();
@@ -405,7 +407,7 @@ public class Printer {
     }
 
     /** Prints the refunds / spending / transfers / deposits section for summarized current turn. */
-    private void printSummarizedTurnExtras(JSONObject summarizedTurn, JSONArray summaryArray) throws BadLocationException {
+    private void printSummarizedTurnExtras(TurnDetails turnDetails) throws BadLocationException {
         printFillerLines(1);
         document.insertString(document.getLength(), "REEMBOLSOS\n", document.getStyle("FooterStyleBold"));
         printSeparator();
@@ -416,25 +418,18 @@ public class Printer {
         long totalRefunds = 0;
         long totalItemRefunds = 0;
         long totalRoomRefunds = 0;
-        for (int i = 0; i < summaryArray.length(); i++) {
-            JSONObject summaryObject = summaryArray.getJSONObject(i);
-            String change = summaryObject.getString("summaryType");
+        for (TurnSummaryItemData si : turnDetails.getSummaryItems()) {
+            String change = si.summaryType();
             if ("roomRefund".equals(change)) {
-                int quantity = summaryObject.getInt("quantity");
-                long price = summaryObject.getLong("price");
-                int service = summaryObject.getInt("service");
-                totalRefunds += price;
-                totalRoomRefunds += price;
-                document.insertString(document.getLength(), spaces(1) + quantity + " Alquiler " + service
-                        + "\t" + numberFormat.format(price) + "\n", document.getStyle("TransactionStyle"));
+                totalRefunds += si.price();
+                totalRoomRefunds += si.price();
+                document.insertString(document.getLength(), spaces(1) + si.quantity() + " Alquiler " + si.service()
+                        + "\t" + numberFormat.format(si.price()) + "\n", document.getStyle("TransactionStyle"));
             } else if ("itemRefund".equals(change)) {
-                int quantity = summaryObject.getInt("quantity");
-                long price = summaryObject.getLong("price");
-                String itemName = summaryObject.getString("itemName");
-                totalRefunds += price;
-                totalItemRefunds += price;
-                document.insertString(document.getLength(), spaces(1) + quantity + spaces(2) + itemName
-                        + "\t" + numberFormat.format(price) + "\n", document.getStyle("TransactionStyle"));
+                totalRefunds += si.price();
+                totalItemRefunds += si.price();
+                document.insertString(document.getLength(), spaces(1) + si.quantity() + spaces(2) + si.name()
+                        + "\t" + numberFormat.format(si.price()) + "\n", document.getStyle("TransactionStyle"));
             }
         }
         printFillerLines(1);
@@ -452,31 +447,31 @@ public class Printer {
         printFillerLines(1);
 
         document.insertString(document.getLength(), spaces(2) + "Gastos: ", document.getStyle("DefaultStyle"));
-        document.insertString(document.getLength(), numberFormat.format(summarizedTurn.optLong("totalSpending")) + "\n", document.getStyle("DefaultStyleBold"));
+        document.insertString(document.getLength(), numberFormat.format(turnDetails.getTotalSpending()) + "\n", document.getStyle("DefaultStyleBold"));
         printFillerLines(1);
         document.insertString(document.getLength(), "Total Turno: ", document.getStyle("DefaultStyle"));
-        document.insertString(document.getLength(), numberFormat.format(summarizedTurn.optLong("totalTurn")) + "\n", document.getStyle("DefaultStyleBold"));
+        document.insertString(document.getLength(), numberFormat.format(turnDetails.getTotalTurn()) + "\n", document.getStyle("DefaultStyleBold"));
         printSeparator();
         printFillerLines(1);
         document.insertString(document.getLength(), spaces(2) + "Transferencias: ", document.getStyle("DefaultStyle"));
-        document.insertString(document.getLength(), numberFormat.format(summarizedTurn.optLong("totalBankTransfers")) + "\n", document.getStyle("DefaultStyleBold"));
+        document.insertString(document.getLength(), numberFormat.format(turnDetails.getTotalBankTransfers()) + "\n", document.getStyle("DefaultStyleBold"));
         printFillerLines(2);
         document.insertString(document.getLength(), spaces(2) + "Depositos: ", document.getStyle("DefaultStyle"));
-        document.insertString(document.getLength(), numberFormat.format(summarizedTurn.optLong("totalDeposits")) + "\n", document.getStyle("DefaultStyleBold"));
+        document.insertString(document.getLength(), numberFormat.format(turnDetails.getTotalDeposits()) + "\n", document.getStyle("DefaultStyleBold"));
         printFillerLines(1);
         document.insertString(document.getLength(), "Total Neto: ", document.getStyle("DefaultStyle"));
-        document.insertString(document.getLength(), numberFormat.format(summarizedTurn.optLong("totalNet")) + "\n", document.getStyle("DefaultStyleBold"));
+        document.insertString(document.getLength(), numberFormat.format(turnDetails.getTotalNet()) + "\n", document.getStyle("DefaultStyleBold"));
     }
 
-    public void printDetailedCurrentTurn(JSONObject detailedTurn) {
-        printDetailedTurnInternal(detailedTurn, true, false);
+    public void printDetailedCurrentTurn(TurnDetails turnDetails) {
+        printDetailedTurnInternal(turnDetails, true, false);
     }
 
-    private void printDetailedTurnInternal(JSONObject detailedTurn, boolean isCurrent, boolean justPDF) {
+    private void printDetailedTurnInternal(TurnDetails turnDetails, boolean isCurrent, boolean justPDF) {
         resetDocument();
 
-        ZonedDateTime fullDateTurnStart = ZonedDateTime.parse(detailedTurn.getString("turnStart"));
-        int turnNumber = detailedTurn.getInt("turnNumber");
+        ZonedDateTime fullDateTurnStart = turnDetails.getTurnStart();
+        int turnNumber = (int) turnDetails.getTurnNumber();
 
         try {
             printHeader();
@@ -493,7 +488,7 @@ public class Printer {
             if (isCurrent) {
                 document.insertString(document.getLength(), "No finalizado\n", document.getStyle("DefaultStyleBold"));
             } else {
-                ZonedDateTime fullDateTurnEnd = ZonedDateTime.parse(detailedTurn.getString("turnEnd"));
+                ZonedDateTime fullDateTurnEnd = turnDetails.getTurnEnd();
                 String endDate = fullDateTurnEnd.format(TURN_DATE_SECTION_FORMATTER);
                 document.insertString(document.getLength(), endDate + "\n", document.getStyle("DefaultStyleBold"));
             }
@@ -502,71 +497,81 @@ public class Printer {
             document.insertString(document.getLength(), "Tiempo Hab Concepto Precio\n", document.getStyle("TransactionStyleBold"));
             printSeparator();
 
-            JSONArray turnActivity = detailedTurn.getJSONArray("turnActivity");
+            List<TurnActivity> activities = turnDetails.getActivities();
             long totalSales = 0;
             long totalItems = 0;
             long totalRooms = 0;
-            for (int i = 0; i < turnActivity.length(); i++) {
-                JSONObject change = turnActivity.getJSONObject(i);
-                String changeType = change.getString("changeType");
-                ZonedDateTime changeDate = ZonedDateTime.parse(change.getString("changeDate"));
+            for (TurnActivity activity : activities) {
+                ZonedDateTime changeDate = activity.changeDate();
                 String formattedDate = changeDate.format(DETAILED_TURN_DATE_FORMATTER);
 
-                if (changeType.equals("sale")) {
-                    JSONArray register = change.getJSONArray("register");
-                    for (int j = 0; j < register.length(); j++) {
-                        JSONObject currentItem = register.getJSONObject(j);
-                        document.insertString(document.getLength(),
-                                spaces(1) + formattedDate + "|" + change.getString("roomSoldTo")
-                                        + "|" + currentItem.getString("itemName") + "|" + currentItem.getLong("price") + "\n",
-                                document.getStyle("TransactionStyle"));
-                        totalSales += currentItem.getLong("price");
-                        totalItems += currentItem.getLong("price");
+                switch (activity) {
+                    case SaleActivity s -> {
+                        for (SaleItem item : s.items()) {
+                            document.insertString(document.getLength(),
+                                    spaces(1) + formattedDate + "|" + s.roomSoldTo()
+                                            + "|" + item.itemName() + "|" + item.price() + "\n",
+                                    document.getStyle("TransactionStyle"));
+                            totalSales += item.price();
+                            totalItems += item.price();
+                        }
                     }
-                } else if (changeType.equals("room") && change.getInt("roomStatus") == 3) {
-                    totalSales += change.getLong("price");
-                    totalRooms += change.getLong("price");
-                    int displayedService = change.getInt("servicedExtension") == 0
-                            ? change.getInt("service") : change.getInt("servicedExtension");
-                    document.insertString(document.getLength(),
-                            spaces(1) + formattedDate + "|" + change.getString("roomString")
-                                    + "|" + "Alquiler " + displayedService + "|" + change.getLong("price") + "\n",
-                            document.getStyle("TransactionStyle"));
-                } else if (changeType.equals("roomSwap")) {
-                    document.insertString(document.getLength(),
-                            spaces(1) + formattedDate + "|" + change.getString("originalRoom")
-                                    + "|" + "Cambio a: " + change.getString("swapedRoom") + "\n",
-                            document.getStyle("TransactionStyle"));
-                } else if (isCurrent && changeType.equals("refund")) {
-                    if ("saleRefund".equals(change.getString("refundType"))) {
+                    case RoomBookingActivity r -> {
+                        if (r.isOccupied()) {
+                            totalSales += r.price();
+                            totalRooms += r.price();
+                            int displayedService = r.getEffectiveService();
+                            document.insertString(document.getLength(),
+                                    spaces(1) + formattedDate + "|" + r.roomString()
+                                            + "|" + "Alquiler " + displayedService + "|" + r.price() + "\n",
+                                    document.getStyle("TransactionStyle"));
+                        }
+                    }
+                    case RoomSwapActivity r -> {
                         document.insertString(document.getLength(),
-                                spaces(1) + formattedDate + "|Reembolso de " + change.getLong("quantity")
-                                        + " de " + change.getString("itemName") + "|" + change.getLong("price") + "\n",
-                                document.getStyle("TransactionStyle"));
-                    } else if ("roomRefund".equals(change.getString("refundType"))) {
-                        document.insertString(document.getLength(),
-                                spaces(1) + formattedDate + "|Reembolso de habitacion " + change.getString("refundRoom")
-                                        + "|" + change.getLong("price") + "\n",
+                                spaces(1) + formattedDate + "|" + r.originalRoom()
+                                        + "|" + "Cambio a: " + r.swappedRoom() + "\n",
                                 document.getStyle("TransactionStyle"));
                     }
-                } else if (isCurrent && changeType.equals("spending")) {
-                    document.insertString(document.getLength(),
-                            spaces(1) + formattedDate + "|Gasto de: " + change.getString("spendingDescription")
-                                    + "|" + change.getLong("value") + "\n",
-                            document.getStyle("TransactionStyle"));
-                } else if (isCurrent && changeType.equals("extraChange")) {
-                    String label = "safeDeposit".equals(change.getString("extraType")) ? "Deposito de: " : "Transferencia de: ";
-                    document.insertString(document.getLength(),
-                            spaces(1) + formattedDate + "|" + label + change.getString("extraChangeDescription")
-                                    + "|" + change.getLong("value") + "\n",
-                            document.getStyle("TransactionStyle"));
+                    case RefundActivity r -> {
+                        if (isCurrent) {
+                            if (r.refundType() == RefundType.SALE_REFUND) {
+                                document.insertString(document.getLength(),
+                                        spaces(1) + formattedDate + "|Reembolso de " + r.quantity()
+                                                + " de " + r.itemName() + "|" + r.price() + "\n",
+                                        document.getStyle("TransactionStyle"));
+                            } else {
+                                document.insertString(document.getLength(),
+                                        spaces(1) + formattedDate + "|Reembolso de habitacion " + r.refundRoom()
+                                                + "|" + r.price() + "\n",
+                                        document.getStyle("TransactionStyle"));
+                            }
+                        }
+                    }
+                    case SpendingActivity s -> {
+                        if (isCurrent) {
+                            document.insertString(document.getLength(),
+                                    spaces(1) + formattedDate + "|Gasto de: " + s.description()
+                                            + "|" + s.value() + "\n",
+                                    document.getStyle("TransactionStyle"));
+                        }
+                    }
+                    case ExtraChangeActivity e -> {
+                        if (isCurrent) {
+                            String label = e.extraType() == ExtraChangeType.SAFE_DEPOSIT ? "Deposito de: " : "Transferencia de: ";
+                            document.insertString(document.getLength(),
+                                    spaces(1) + formattedDate + "|" + label + e.description()
+                                            + "|" + e.value() + "\n",
+                                    document.getStyle("TransactionStyle"));
+                        }
+                    }
                 }
             }
 
             printTurnTotals(totalRooms, totalItems, totalSales);
 
             if (isCurrent) {
-                printDetailedTurnExtras(detailedTurn);
+                printDetailedTurnExtras(turnDetails);
                 printFillerLines(3);
                 saveAsPDF("detailedTurnTurn", fullDateTurnStart, turnNumber);
                 printWithService();
@@ -580,27 +585,27 @@ public class Printer {
     }
 
     /** Prints the refunds / spending / transfers / deposits section for detailed current turn. */
-    private void printDetailedTurnExtras(JSONObject detailedTurn) throws BadLocationException {
+    private void printDetailedTurnExtras(TurnDetails turnDetails) throws BadLocationException {
         printSeparator();
         printFillerLines(1);
         document.insertString(document.getLength(), spaces(2) + "Reembolsos: ", document.getStyle("DefaultStyle"));
-        document.insertString(document.getLength(), numberFormat.format(detailedTurn.optLong("totalRefunds")) + "\n", document.getStyle("DefaultStyleBold"));
+        document.insertString(document.getLength(), numberFormat.format(turnDetails.getTotalRefunds()) + "\n", document.getStyle("DefaultStyleBold"));
         printFillerLines(2);
         document.insertString(document.getLength(), spaces(4) + "Gastos: ", document.getStyle("DefaultStyle"));
-        document.insertString(document.getLength(), numberFormat.format(detailedTurn.optLong("totalSpending")) + "\n", document.getStyle("DefaultStyleBold"));
+        document.insertString(document.getLength(), numberFormat.format(turnDetails.getTotalSpending()) + "\n", document.getStyle("DefaultStyleBold"));
         printFillerLines(1);
         document.insertString(document.getLength(), "Total Turno: ", document.getStyle("DefaultStyle"));
-        document.insertString(document.getLength(), numberFormat.format(detailedTurn.optLong("totalTurn")) + "\n", document.getStyle("DefaultStyleBold"));
+        document.insertString(document.getLength(), numberFormat.format(turnDetails.getTotalTurn()) + "\n", document.getStyle("DefaultStyleBold"));
         printSeparator();
         printFillerLines(1);
         document.insertString(document.getLength(), spaces(2) + "Transferencias: ", document.getStyle("DefaultStyle"));
-        document.insertString(document.getLength(), numberFormat.format(detailedTurn.optLong("totalBankTransfers")) + "\n", document.getStyle("DefaultStyleBold"));
+        document.insertString(document.getLength(), numberFormat.format(turnDetails.getTotalBankTransfers()) + "\n", document.getStyle("DefaultStyleBold"));
         printFillerLines(2);
         document.insertString(document.getLength(), spaces(2) + "Depositos: ", document.getStyle("DefaultStyle"));
-        document.insertString(document.getLength(), numberFormat.format(detailedTurn.optLong("totalDeposits")) + "\n", document.getStyle("DefaultStyleBold"));
+        document.insertString(document.getLength(), numberFormat.format(turnDetails.getTotalDeposits()) + "\n", document.getStyle("DefaultStyleBold"));
         printFillerLines(1);
         document.insertString(document.getLength(), "Total Neto: ", document.getStyle("DefaultStyle"));
-        document.insertString(document.getLength(), numberFormat.format(detailedTurn.optLong("totalNet")) + "\n", document.getStyle("DefaultStyleBold"));
+        document.insertString(document.getLength(), numberFormat.format(turnDetails.getTotalNet()) + "\n", document.getStyle("DefaultStyleBold"));
     }
 
     // ========== PDF & Print ==========

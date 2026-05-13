@@ -10,8 +10,10 @@ import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import model.Item;
 import model.ProgramConfig;
 import model.Register;
@@ -24,6 +26,10 @@ import model.dto.SellingItemData;
 import model.dto.TurnActivityData;
 import model.dto.TurnHistoryData;
 import model.dto.TurnSummaryItemData;
+import model.turn.RoomBookingActivity;
+import model.turn.SaleActivity;
+import model.turn.TurnActivity;
+import model.turn.TurnDetails;
 
 /**
  * Central model facade that coordinates sub-models, persistence, and printing.
@@ -98,7 +104,7 @@ public class MotelManagement {
                 System.out.println("Found previous turn, but it's no longer active, backing up");
                 this.timeInformationUpdate();
                 turn.turnEnd(currentTime);
-                files.saveHistoryData(turn.getDetailedTurnInformation(), "turnClosedImproperly", localizedTime);
+                files.saveHistoryData(turn.getDetailedTurnInformationAsJson(), "turnClosedImproperly", localizedTime);
             }
         }
         if (!(inventoryData == null || inventoryData.isEmpty())) {
@@ -150,7 +156,7 @@ public class MotelManagement {
     public void registerRoomTimeAdded(int tower, int floor, int room, int service, long price, boolean print) {
         addConsecutiveTransaction();
         int currentExtension = roomManager.registerRoomTimeAdded(tower, floor, room, service, currentTime);
-        JSONObject roomChange = turn.registerRoomChange(
+        RoomBookingActivity roomChange = turn.registerRoomChange(
                 roomManager.getRoom(tower, floor, room), currentTime, price, currentExtension,
                 programConfig.getConsecutiveTransaction());
         printer.printRoomTimeSell(roomChange, programConfig.getConsecutiveTransaction(), !print);
@@ -219,35 +225,32 @@ public class MotelManagement {
      * @param option 2 = summarized, 3 = detailed
      */
     public void turnPrintNoEnd(int option) {
-        JSONObject summarizedTurn = turn.getBasicTurnInformation();
-        JSONObject detailedTurn = turn.getDetailedTurnInformation();
+        TurnDetails details = turn.getBasicTurnInformation();
         switch (option) {
-            case 2 -> printer.printSummarizedCurrentTurn(summarizedTurn);
-            case 3 -> printer.printDetailedCurrentTurn(detailedTurn);
+            case 2 -> printer.printSummarizedCurrentTurn(details);
+            case 3 -> printer.printDetailedCurrentTurn(details);
             default -> { /* no printing */ }
         }
     }
 
     public void turnEndPrint(int option) {
-        JSONObject summarizedTurn = turn.getBasicTurnInformation();
-        JSONObject detailedTurn = turn.getDetailedTurnInformation();
-        files.saveHistoryData(detailedTurn, "turn", localizedTime);
+        TurnDetails details = turn.getBasicTurnInformation();
+        files.saveHistoryData(details.toJson(), "turn", localizedTime);
         switch (option) {
-            case 1 -> { printer.printSummarizedTurn(summarizedTurn, true);  printer.printDetailedTurn(detailedTurn, true); }
-            case 2 -> { printer.printSummarizedTurn(summarizedTurn, false); printer.printDetailedTurn(detailedTurn, true); }
-            case 3 -> { printer.printSummarizedTurn(summarizedTurn, true);  printer.printDetailedTurn(detailedTurn, false); }
+            case 1 -> { printer.printSummarizedTurn(details, true);  printer.printDetailedTurn(details, true); }
+            case 2 -> { printer.printSummarizedTurn(details, false); printer.printDetailedTurn(details, true); }
+            case 3 -> { printer.printSummarizedTurn(details, true);  printer.printDetailedTurn(details, false); }
             default -> { /* no printing */ }
         }
         files.clearBackupFiles();
     }
 
     public void turnHistoryPrint(int option, int selectedRow) {
-        JSONObject summarizedTurn = turnHistory.get(selectedRow).getBasicTurnInformation();
-        JSONObject detailedTurn = turnHistory.get(selectedRow).getDetailedTurnInformation();
+        TurnDetails details = turnHistory.get(selectedRow).getBasicTurnInformation();
         switch (option) {
-            case 1 -> { printer.printSummarizedTurn(summarizedTurn, true);  printer.printDetailedTurn(detailedTurn, true); }
-            case 2 -> { printer.printSummarizedTurn(summarizedTurn, false); printer.printDetailedTurn(detailedTurn, true); }
-            case 3 -> { printer.printSummarizedTurn(summarizedTurn, true);  printer.printDetailedTurn(detailedTurn, false); }
+            case 1 -> { printer.printSummarizedTurn(details, true);  printer.printDetailedTurn(details, true); }
+            case 2 -> { printer.printSummarizedTurn(details, false); printer.printDetailedTurn(details, true); }
+            case 3 -> { printer.printSummarizedTurn(details, true);  printer.printDetailedTurn(details, false); }
             default -> { /* no printing */ }
         }
     }
@@ -300,7 +303,7 @@ public class MotelManagement {
     public void roomSaleFinished(boolean print) {
         addConsecutiveTransaction();
         Room roomSoldTo = roomManager.getRoomForSale();
-        JSONObject transaction = turn.saveTransactionInformation(
+        SaleActivity transaction = turn.saveTransactionInformation(
                 new JSONArray(register.consumeRegisterListForSale()),
                 roomSoldTo, currentTime, programConfig.getConsecutiveTransaction());
         printer.printItemSold(transaction, programConfig.getConsecutiveTransaction(), !print);
@@ -316,12 +319,10 @@ public class MotelManagement {
         if (currentItem != null) {
             currentItem.itemAdded(quantity);
         }
-        JSONObject json = new JSONObject();
-        json.put("roomSoldTo", activity.getRoomSoldTo());
-        json.put("changeDate", activity.getChangeDate().toString());
-        json.put("itemID", activity.getItemID());
-        json.put("quantity", activity.getQuantity());
-        turn.reverseItemSaleFromTurn(json);
+        TurnActivity turnActivity = turn.findActivity(activity.getConsecutiveTrans(), "sale");
+        if (turnActivity != null) {
+            turn.reverseItemSaleFromTurn(turnActivity, itemID, quantity);
+        }
     }
 
     // ========== Spending / Extra Changes / Refunds ==========
@@ -348,20 +349,24 @@ public class MotelManagement {
     /**
      * Refunds a transaction from the current turn.
      * Handles both room and sale refunds, restores inventory stock for item sales.
+     *
+     * @param consecutiveTrans the transaction number to refund
+     * @param changeType       "room" or "sale"
+     * @param itemID           0 for room refunds; the item ID for sale refunds
+     * @param itemQty          0 for room refunds; the item quantity for sale refunds
      */
-    public void refundItemSale(JSONObject selectedFilteredItem) {
+    public void refundItemSale(int consecutiveTrans, String changeType, long itemID, long itemQty) {
         addConsecutiveTransaction();
-        String type = selectedFilteredItem.getString("changeType");
-        if (type.equals("sale")) {
-            long itemID = selectedFilteredItem.getLong("itemID");
-            long quantity = selectedFilteredItem.getLong("quantity");
+        TurnActivity activity = turn.findActivity(consecutiveTrans, changeType);
+        if (activity == null) return;
+        if ("sale".equals(changeType) && itemID > 0) {
             Item currentItem = register.getItemFromItemID(itemID);
             if (currentItem != null) {
-                currentItem.itemAdded(quantity);
+                currentItem.itemAdded(itemQty);
             }
         }
-        turn.refundTransactionFromTurn(selectedFilteredItem,
-                programConfig.getConsecutiveTransaction(), currentTime);
+        turn.refundTransactionFromTurn(activity,
+                programConfig.getConsecutiveTransaction(), currentTime, itemID, itemQty);
     }
 
     // ========== Overtime Tracking ==========
@@ -424,20 +429,22 @@ public class MotelManagement {
     // ========== File Persistence ==========
 
     public void saveFilesForMainService() {
-        files.saveJsonMainDataPath(turn.getDetailedTurnInformation(), "turn");
-        files.saveJsonMainDataPath(register.getInventoryData(), "inventory");
-
         JSONObject roomData = new JSONObject();
         roomData.put("rooms", roomManager.getRoomDataForSaving());
-        files.saveJsonMainDataPath(roomData, "roomsInformation");
 
-        files.saveJsonMainDataPath(programConfig.getProgramData(), "applicationProperties");
+        Map<String, JSONObject> dataMap = new LinkedHashMap<>();
+        dataMap.put("turn", turn.getDetailedTurnInformationAsJson());
+        dataMap.put("inventory", register.getInventoryData());
+        dataMap.put("roomsInformation", roomData);
+        dataMap.put("applicationProperties", programConfig.getProgramData());
+
+        files.saveAllMainDataAtomic(dataMap);
     }
 
     public void saveFilesForBackup(String saveType) {
         timeInformationUpdate();
 
-        files.saveJsonBackupDataPath(turn.getDetailedTurnInformation(), "turn", localizedTime, saveType);
+        files.saveJsonBackupDataPath(turn.getDetailedTurnInformationAsJson(), "turn", localizedTime, saveType);
         files.saveJsonBackupDataPath(register.getInventoryData(), "inventory", localizedTime, saveType);
 
         JSONObject roomData = new JSONObject();
@@ -481,7 +488,7 @@ public class MotelManagement {
      * Returns the current turn's detailed information including all computed totals.
      * Used by TurnController to populate the turn manager view.
      */
-    public JSONObject getCurrentTurnDetailedInfo() {
+    public TurnDetails getCurrentTurnDetailedInfo() {
         return turn.getDetailedTurnInformation();
     }
 

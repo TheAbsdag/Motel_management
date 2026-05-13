@@ -17,6 +17,11 @@ public class App {
     private static final String LOCK_DIR = System.getProperty("user.home")
             + "/.motel_management";
     private static final String LOCK_FILE = LOCK_DIR + "/lock";
+    private static final Path LOCK_PATH = Path.of(LOCK_FILE);
+
+    private static RandomAccessFile lockRaf;
+    private static FileChannel lockChannel;
+    private static FileLock lock;
 
     public static void main(String[] args) {
         if (!checkSingleInstance()) {
@@ -38,18 +43,17 @@ public class App {
         try {
             Files.createDirectories(Path.of(LOCK_DIR));
 
-            RandomAccessFile raf = new RandomAccessFile(LOCK_FILE, "rw");
-            FileChannel channel = raf.getChannel();
-            FileLock lock = channel.tryLock();
+            lockRaf = new RandomAccessFile(LOCK_FILE, "rw");
+            lockChannel = lockRaf.getChannel();
+            lock = lockChannel.tryLock();
 
             if (lock != null) {
-                // Keep the lock for the lifetime of this instance.
-                // The RAF and channel must stay open to hold the lock; they are released on JVM exit.
+                Runtime.getRuntime().addShutdownHook(new Thread(App::releaseLock, "LockCleanup"));
                 return true;
             }
 
             // Lock failed — another instance is running
-            raf.close();
+            lockRaf.close();
             JOptionPane.showMessageDialog(null,
                     "El programa ya se encuentra en ejecucion.\n"
                     + "Cierre la otra instancia antes de abrir una nueva.",
@@ -60,6 +64,23 @@ public class App {
         } catch (Exception e) {
             System.err.println("No se pudo verificar instancia unica: " + e.getMessage());
             return true;
+        }
+    }
+
+    private static void releaseLock() {
+        try {
+            if (lock != null && lock.isValid()) {
+                lock.release();
+            }
+            if (lockChannel != null) {
+                lockChannel.close();
+            }
+            if (lockRaf != null) {
+                lockRaf.close();
+            }
+            Files.deleteIfExists(LOCK_PATH);
+        } catch (IOException e) {
+            // Best-effort cleanup on shutdown
         }
     }
 }

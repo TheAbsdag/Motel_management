@@ -4,7 +4,7 @@ import java.util.List;
 import model.modelManagers.MotelManagement;
 import model.dto.TurnActivityData;
 import model.dto.TurnSummaryItemData;
-import org.json.JSONObject;
+import model.turn.TurnDetails;
 import view.TurnManagerView;
 import view.UserGUI;
 
@@ -26,6 +26,8 @@ public class TurnController {
     private final TurnManagerView turnManagerView;
     private final UserGUI userInterface;
     private final Runnable onBack;
+    private final Runnable saveMainFiles;
+    private final Runnable saveBackupFilesTransaction;
     private boolean isListAdjusting = false;
 
     /**
@@ -33,13 +35,18 @@ public class TurnController {
      * @param turnManagerView the turn management view
      * @param userInterface   the main window for view switching
      * @param onBack          callback to return to management options view
+     * @param saveMainFiles   callback to save main data files
+     * @param saveBackupFilesTransaction callback to save backup for transaction
      */
     public TurnController(MotelManagement motelManager, TurnManagerView turnManagerView,
-                          UserGUI userInterface, Runnable onBack) {
+                          UserGUI userInterface, Runnable onBack,
+                          Runnable saveMainFiles, Runnable saveBackupFilesTransaction) {
         this.motelManager = motelManager;
         this.turnManagerView = turnManagerView;
         this.userInterface = userInterface;
         this.onBack = onBack;
+        this.saveMainFiles = saveMainFiles;
+        this.saveBackupFilesTransaction = saveBackupFilesTransaction;
     }
 
     /** Registers action listeners for the turn manager view and turn select view. */
@@ -113,12 +120,12 @@ public class TurnController {
         turnManagerView.getPrintButton().setEnabled(false);
 
         List<TurnActivityData> activities = motelManager.getTurnActivityDataList();
-        JSONObject totals = motelManager.getCurrentTurnDetailedInfo();
+        TurnDetails totals = motelManager.getCurrentTurnDetailedInfo();
 
         turnManagerView.setTurnDetailsData(activities,
-                totals.optLong("totalRooms"), totals.optLong("totalItems"), totals.optLong("totalSales"),
-                totals.optLong("totalRefunds"), totals.optLong("totalSpending"), totals.optLong("totalTurn"),
-                totals.optLong("totalBankTransfers"), totals.optLong("totalDeposits"), totals.optLong("totalNet"));
+                totals.getTotalRooms(), totals.getTotalItems(), totals.getTotalSales(),
+                totals.getTotalRefunds(), totals.getTotalSpending(), totals.getTotalTurn(),
+                totals.getTotalBankTransfers(), totals.getTotalDeposits(), totals.getTotalNet());
         turnManagerView.getNoPrintCheckBox().setSelected(false);
         turnManagerView.getSummarizedPrintCheckBox().setSelected(false);
         turnManagerView.getDetailedPrintCheckBox().setSelected(false);
@@ -178,32 +185,21 @@ public class TurnController {
         if (!"sale".equals(changeType) && !"room".equals(changeType)) return;
         if (selectedItem.isRefunded()) return;
 
-        // Build a JSONObject from the DTO for the refund engine
-        JSONObject json = new JSONObject();
-        json.put("changeType", changeType);
-        json.put("consecutiveTrans", selectedItem.getConsecutiveTrans());
-        if ("room".equals(changeType)) {
-            json.put("roomString", selectedItem.getRoomString());
-            json.put("price", selectedItem.getPrice());
-            json.put("service", selectedItem.getService());
-        } else {
-            json.put("roomSoldTo", selectedItem.getRoomSoldTo());
-            json.put("itemID", selectedItem.getItemID());
-            json.put("quantity", selectedItem.getQuantity());
-            json.put("itemName", selectedItem.getItemName());
-            json.put("price", selectedItem.getPrice());
-        }
+        long itemID = "sale".equals(changeType) ? selectedItem.getItemID() : 0;
+        long itemQty = "sale".equals(changeType) ? selectedItem.getQuantity() : 0;
 
-        motelManager.refundItemSale(json);
+        motelManager.refundItemSale(selectedItem.getConsecutiveTrans(), changeType, itemID, itemQty);
 
         // Refresh the table
         List<TurnActivityData> activities = motelManager.getTurnActivityDataList();
-        JSONObject totals = motelManager.getCurrentTurnDetailedInfo();
+        TurnDetails totals = motelManager.getCurrentTurnDetailedInfo();
         turnManagerView.setTurnDetailsData(activities,
-                totals.optLong("totalRooms"), totals.optLong("totalItems"), totals.optLong("totalSales"),
-                totals.optLong("totalRefunds"), totals.optLong("totalSpending"), totals.optLong("totalTurn"),
-                totals.optLong("totalBankTransfers"), totals.optLong("totalDeposits"), totals.optLong("totalNet"));
+                totals.getTotalRooms(), totals.getTotalItems(), totals.getTotalSales(),
+                totals.getTotalRefunds(), totals.getTotalSpending(), totals.getTotalTurn(),
+                totals.getTotalBankTransfers(), totals.getTotalDeposits(), totals.getTotalNet());
         turnManagerView.getDeleteActionButton().setEnabled(false);
+        saveMainFiles.run();
+        saveBackupFilesTransaction.run();
     }
 
     /** Shows the summarized turn popup. */

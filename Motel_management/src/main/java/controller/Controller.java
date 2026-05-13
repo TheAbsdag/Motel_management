@@ -41,7 +41,6 @@ public class Controller {
 
     private static final int CLOCK_UPDATE_INTERVAL_MS = 80;
     private static final int BACKUP_SAVE_INTERVAL_MS = 300_000;      // 5 minutes
-    private static final int MAIN_FILE_SAVE_INTERVAL_MS = 20_000;     // 20 seconds
     private static final int FLOOR_ROTATION_INTERVAL_MS = 1_200_000;  // 20 minutes
     private static final int OVERTIME_WARNING_INTERVAL_MS = 1_000;    // 1 second
 
@@ -68,7 +67,6 @@ public class Controller {
     // Timers
     private Timer timerForTimeUpdates;
     private Timer timerForBackupFiles;
-    private Timer timerForCurrentFile;
     private Timer timerForAutomaticFloorChange;
     private Timer timerForOvertimeWarning;
 
@@ -83,18 +81,18 @@ public class Controller {
         // Create sub-controllers (order matters for callback references)
         floorController = new FloorController(motelManager, userInterface.getFloorView());
         sellingController = new SellingController(motelManager, userInterface.getSellingView(), userInterface,
-                this::saveBackupFilesOperation);
+                this::saveMainFiles, this::saveBackupFilesTransaction);
         inventoryController = new InventoryController(motelManager, userInterface.getInventoryView(),
-                this::showManagementSelection, this::saveBackupFilesOperation);
+                this::showManagementSelection, this::saveMainFiles, this::saveBackupFilesRoomSwap);
         appOptionsController = new AppOptionsController(motelManager, userInterface.getAppOptions(),
                 this::showManagementSelection);
         historyController = new HistoryController(motelManager, userInterface.getHistoryView(),
                 this::showManagementSelection);
         turnController = new TurnController(motelManager, userInterface.getTurnManagerView(), userInterface,
-                this::showManagementSelection);
+                this::showManagementSelection, this::saveMainFiles, this::saveBackupFilesTransaction);
         roomController = new RoomController(motelManager, userInterface.getFloorView(),
                 userInterface.getRoomView(), userInterface.getRoomChangeView(), userInterface,
-                () -> sellingController.roomSale(false), this::saveBackupFilesOperation);
+                () -> sellingController.roomSale(false), this::saveMainFiles, this::saveBackupFilesRoomSwap);
         managementController = new ManagementController(userInterface,
                 this::openTurnManagement,
                 this::openInventoryView,
@@ -220,7 +218,7 @@ public class Controller {
         if (value != 0L && !conceptSpending.isEmpty()) {
             motelManager.addSpendingTransaction(conceptSpending, value);
             saveMainFiles();
-            saveBackupFilesOperation();
+            saveBackupFilesTransaction();
             showFloorPerspective();
         }
     }
@@ -238,7 +236,7 @@ public class Controller {
                 ? "bankTransfer" : "safeDeposit";
         motelManager.addExtraChangeTransaction(conceptSpending, value, type);
         saveMainFiles();
-        saveBackupFilesOperation();
+        saveBackupFilesTransaction();
         showFloorPerspective();
     }
 
@@ -247,12 +245,10 @@ public class Controller {
     private void startTimers() {
         timerForTimeUpdates = new Timer(CLOCK_UPDATE_INTERVAL_MS, e -> updateTime());
         timerForBackupFiles = new Timer(BACKUP_SAVE_INTERVAL_MS, e -> saveBackupFiles("backup"));
-        timerForCurrentFile = new Timer(MAIN_FILE_SAVE_INTERVAL_MS, e -> saveMainFiles());
         timerForAutomaticFloorChange = new Timer(FLOOR_ROTATION_INTERVAL_MS, e -> automaticRotation());
         timerForOvertimeWarning = new Timer(OVERTIME_WARNING_INTERVAL_MS, e -> updateOvertimeWarning());
         timerForTimeUpdates.start();
         timerForBackupFiles.start();
-        timerForCurrentFile.start();
         timerForAutomaticFloorChange.start();
         timerForOvertimeWarning.start();
     }
@@ -369,17 +365,27 @@ public class Controller {
         });
     }
 
-    /**
-     * Triggers a backup save with the "operation" label.
-     * Called after significant user operations (room booking, sales, etc.).
-     * Runs on a background thread.
-     */
-    public void saveBackupFilesOperation() {
+    public void saveBackupFilesTransaction() {
         saveExecutor.submit(() -> {
             try {
-                motelManager.saveFilesForBackup("operation");
+                motelManager.saveFilesForBackup("transaction");
             } catch (Exception e) {
-                System.err.println("Error saving backup files (operation): " + e.getMessage());
+                System.err.println("Error saving backup files (transaction): " + e.getMessage());
+            }
+        });
+    }
+
+    /**
+     * Triggers a backup save with the "roomSwap" label.
+     * Called after room operations (booking, extensions, room swaps).
+     * Runs on a background thread.
+     */
+    public void saveBackupFilesRoomSwap() {
+        saveExecutor.submit(() -> {
+            try {
+                motelManager.saveFilesForBackup("roomSwap");
+            } catch (Exception e) {
+                System.err.println("Error saving backup files (roomSwap): " + e.getMessage());
             }
         });
     }
