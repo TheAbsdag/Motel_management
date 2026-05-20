@@ -43,7 +43,7 @@ public class TurnReportGenerator {
     };
 
     public static void generateReport(TurnDetails turnDetails) {
-        new File(REPORT_PATH).mkdirs();
+        /*new File(REPORT_PATH).mkdirs();
 
         String fileName = buildFileName(turnDetails);
         String filePath = REPORT_PATH + File.separator + fileName;
@@ -64,6 +64,7 @@ public class TurnReportGenerator {
         } catch (IOException e) {
             System.err.println("Failed to generate turn report: " + e.getMessage());
         }
+*/
     }
 
     private static String buildFileName(TurnDetails turnDetails) {

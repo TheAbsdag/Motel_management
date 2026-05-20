@@ -82,29 +82,27 @@ public class CustomCellRenderer extends JTextArea implements TableCellRenderer {
         setSize(new Dimension(cWidth, Short.MAX_VALUE));
         int prefH = getPreferredSize().height;
 
-        // Bump the table's default row height so newly-exposed rows
-        // enter at a reasonable height even during scroll, when
-        // per-row setRowHeight is suppressed.
-        if (table.getRowHeight() < prefH) {
-            table.setRowHeight(prefH);
-        }
-
-        // Skip per-row row-height changes during touch-drag scrolling.
-        // setRowHeight(row) triggers resizeAndRepaint() which revalidates
-        // the scroll-pane layout and shifts the viewport position,
-        // fighting the user's finger and causing choppiness.
-        if (scrolling) {
+        if (currentRowHeight >= prefH) {
             return;
         }
-        if (currentRowHeight < prefH) {
-            final int r = row;
-            final int h = prefH;
-            final JTable t = table;
-            SwingUtilities.invokeLater(() -> {
-                if (t.getRowHeight(r) < h) {
-                    t.setRowHeight(r, h);
-                }
-            });
+
+        if (scrolling) {
+            // During touch-drag scrolling avoid deferred setRowHeight which
+            // triggers resizeAndRepaint and fights the user's finger.
+            // Instead set the per-row height inline for rows that are still
+            // at the default (uncustomized) height.  This fires at most once
+            // per row so the repaint cost is bounded.
+            table.setRowHeight(row, prefH);
+            return;
         }
+
+        final int r = row;
+        final int h = prefH;
+        final JTable t = table;
+        SwingUtilities.invokeLater(() -> {
+            if (t.getRowHeight(r) < h) {
+                t.setRowHeight(r, h);
+            }
+        });
     }
 }

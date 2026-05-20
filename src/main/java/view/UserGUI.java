@@ -29,6 +29,11 @@ public class UserGUI extends JFrame {
     private TurnManagerView turnManagerView;
     private RoomChangeView roomChangeView;
     private AppOptionsView appOptions;
+    private PrinterConfigurationView printerConfigView;
+    private MotelDataConfigurationView motelDataConfigView;
+    private DataSavingConfigurationView dataSavingConfigView;
+    private FloorConfigurationView floorConfigView;
+    private TimeConfigurationView timeConfigView;
     private SpendingRegisterView spendingRegisterView;
     private ExtraTurnChangesView extraTurnChangesView;
     private RoomSummaryView roomSummaryView;
@@ -77,6 +82,21 @@ public class UserGUI extends JFrame {
 
         appOptions = new AppOptionsView();
         addView(getAppOptions(), "appOptionsView");
+
+        printerConfigView = new PrinterConfigurationView();
+        addView(printerConfigView, "printerConfigView");
+
+        motelDataConfigView = new MotelDataConfigurationView();
+        addView(motelDataConfigView, "motelDataConfigView");
+
+        dataSavingConfigView = new DataSavingConfigurationView();
+        addView(dataSavingConfigView, "dataSavingConfigView");
+
+        floorConfigView = new FloorConfigurationView();
+        addView(floorConfigView, "floorConfigView");
+
+        timeConfigView = new TimeConfigurationView();
+        addView(timeConfigView, "timeConfigView");
 
         spendingRegisterView = new SpendingRegisterView();
         addView(spendingRegisterView, "spendingRegisterView");
@@ -189,6 +209,31 @@ public class UserGUI extends JFrame {
     public void setAppOptionsView() {
         currentCard = "appOptionsView";
         cardLayout.show(mainPanel, "appOptionsView");
+    }
+
+    public void setPrinterConfigView() {
+        currentCard = "printerConfigView";
+        cardLayout.show(mainPanel, "printerConfigView");
+    }
+
+    public void setMotelDataConfigView() {
+        currentCard = "motelDataConfigView";
+        cardLayout.show(mainPanel, "motelDataConfigView");
+    }
+
+    public void setDataSavingConfigView() {
+        currentCard = "dataSavingConfigView";
+        cardLayout.show(mainPanel, "dataSavingConfigView");
+    }
+
+    public void setFloorConfigView() {
+        currentCard = "floorConfigView";
+        cardLayout.show(mainPanel, "floorConfigView");
+    }
+
+    public void setTimeConfigView() {
+        currentCard = "timeConfigView";
+        cardLayout.show(mainPanel, "timeConfigView");
     }
 
     public void setSpendingRegisterView() {
@@ -305,6 +350,41 @@ public class UserGUI extends JFrame {
      */
     public AppOptionsView getAppOptions() {
         return appOptions;
+    }
+
+    /**
+     * @return the printerConfigView
+     */
+    public PrinterConfigurationView getPrinterConfigView() {
+        return printerConfigView;
+    }
+
+    /**
+     * @return the motelDataConfigView
+     */
+    public MotelDataConfigurationView getMotelDataConfigView() {
+        return motelDataConfigView;
+    }
+
+    /**
+     * @return the dataSavingConfigView
+     */
+    public DataSavingConfigurationView getDataSavingConfigView() {
+        return dataSavingConfigView;
+    }
+
+    /**
+     * @return the floorConfigView
+     */
+    public FloorConfigurationView getFloorConfigView() {
+        return floorConfigView;
+    }
+
+    /**
+     * @return the timeConfigView
+     */
+    public TimeConfigurationView getTimeConfigView() {
+        return timeConfigView;
     }
 
     /**

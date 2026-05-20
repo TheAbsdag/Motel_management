@@ -84,8 +84,16 @@ public class Controller {
                 this::saveMainFiles, this::saveBackupFilesTransaction);
         inventoryController = new InventoryController(motelManager, userInterface.getInventoryView(),
                 this::showManagementSelection, this::saveMainFiles, this::saveBackupFilesRoomSwap);
-        appOptionsController = new AppOptionsController(motelManager, userInterface.getAppOptions(),
-                this::showManagementSelection);
+        appOptionsController = new AppOptionsController(motelManager,
+                userInterface.getAppOptions(),
+                userInterface.getPrinterConfigView(),
+                this::showManagementSelection,
+                this::openPrinterConfig,
+                this::openMotelDataConfig,
+                this::openTimeConfig,
+                this::openFloorConfig,
+                this::openDataSavingConfig,
+                this::openAppOptionsHub);
         historyController = new HistoryController(motelManager, userInterface.getHistoryView(),
                 this::showManagementSelection);
         turnController = new TurnController(motelManager, userInterface.getTurnManagerView(), userInterface,
@@ -99,6 +107,16 @@ public class Controller {
                 this::openHistoryView,
                 this::openAppOptionsView
         );
+
+        // Wire sub-config view back buttons → return to options hub
+        userInterface.getMotelDataConfigView().getBackButton()
+                .addActionListener(e -> openAppOptionsHub());
+        userInterface.getDataSavingConfigView().getBackButton()
+                .addActionListener(e -> openAppOptionsHub());
+        userInterface.getFloorConfigView().getBackButton()
+                .addActionListener(e -> openAppOptionsHub());
+        userInterface.getTimeConfigView().getBackButton()
+                .addActionListener(e -> openAppOptionsHub());
 
         // Wire spending and extra changes confirmation actions
         userInterface.getSpendingRegisterView().getConfirmationButton()
@@ -201,7 +219,30 @@ public class Controller {
 
     private void openAppOptionsView() {
         appOptionsController.showOptions();
+    }
+
+    private void openAppOptionsHub() {
         userInterface.setAppOptionsView();
+    }
+
+    private void openPrinterConfig() {
+        userInterface.setPrinterConfigView();
+    }
+
+    private void openMotelDataConfig() {
+        userInterface.setMotelDataConfigView();
+    }
+
+    private void openTimeConfig() {
+        userInterface.setTimeConfigView();
+    }
+
+    private void openFloorConfig() {
+        userInterface.setFloorConfigView();
+    }
+
+    private void openDataSavingConfig() {
+        userInterface.setDataSavingConfigView();
     }
 
     // ========== Spending / Extra Changes ==========

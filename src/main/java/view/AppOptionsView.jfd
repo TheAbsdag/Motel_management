@@ -1,76 +1,101 @@
-JFDML JFormDesigner: "9.0.0.0.352" Java: "21.0.5" encoding: "UTF-8"
+JFDML JFormDesigner: "8.2.2.0.382" Java: "25.0.2" encoding: "UTF-8"
 
 new FormModel {
 	contentType: "form/swing"
 	root: new FormRoot {
 		add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
 			"$layoutConstraints": "fill,hidemode 3"
-			"$columnConstraints": "[fill][fill][fill][fill][fill][fill][fill]"
-			"$rowConstraints": "[][][][][]"
+			"$columnConstraints": "[shrink 0,fill][grow,fill][grow,fill]"
+			"$rowConstraints": "[][][][][][][]"
 		} ) {
 			name: "this"
 			add( new FormComponent( "javax.swing.JLabel" ) {
-				name: "configurationInfoLabel"
-				"text": "CONFIGURACIÓN"
-				"font": new java.awt.Font( "Segoe UI Black", 0, 22 )
+				name: "optionsInformativeLabel"
+				"text": "OPCIONES PROGRAMA"
+				"font": &Font0 new java.awt.Font( "Segoe UI Black", 0, 22 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 0 0,align center center,grow 0 0"
+				"value": "cell 0 0"
 			} )
 			add( new FormComponent( "javax.swing.JLabel" ) {
-				name: "printerUsedInformationLabel"
-				"text": "IMPRESORA ACTUAL"
-				"font": new java.awt.Font( "Segoe UI Black", 0, 22 )
+				name: "dateInformationLabel"
+				"text": "FECHA"
+				"font": #Font0
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 0 1"
 			} )
 			add( new FormComponent( "javax.swing.JLabel" ) {
-				name: "printerUsedLabel"
-				"text": "PRINTER"
-				"font": new java.awt.Font( "Segoe UI Black", 0, 26 )
+				name: "dateLabel"
+				"text": "XXXX"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 20 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 1 1 2 1"
-			} )
-			add( new FormComponent( "javax.swing.JLabel" ) {
-				name: "printerInfoLabel"
-				"text": "IMPRESORA:"
-				"font": new java.awt.Font( "Segoe UI Black", 0, 22 )
-			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 0 2,align center center,grow 0 0"
-			} )
-			add( new FormContainer( "javax.swing.JScrollPane", new FormLayoutManager( class javax.swing.JScrollPane ) ) {
-				name: "scrollPane1"
-				add( new FormComponent( "javax.swing.JList" ) {
-					name: "printerList"
-					"selectionMode": 0
-					"font": new java.awt.Font( "Segoe UI Black", 0, 18 )
-				} )
-			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 1 2,growy"
-			} )
-			add( new FormComponent( "javax.swing.JLabel" ) {
-				name: "selectedPrinterLabel"
-				"text": "PRINTER"
-				"font": new java.awt.Font( "Segoe UI Black", 0, 22 )
-			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 2 2"
+				"value": "cell 1 1"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
-				name: "confirmPrinterButton"
-				"text": "CONFIRMAR"
+				name: "printerOptionsButton"
+				"text": "CONFIGURAR IMPRESORA"
+				"font": &Font1 new java.awt.Font( "Segoe UI Black", 0, 20 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 2 1,growy"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "timeInformationLabel"
+				"text": "HORA"
 				"font": new java.awt.Font( "Segoe UI Black", 0, 22 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 3 2,growy"
+				"value": "cell 0 2"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "timeLabel"
+				"text": "XXXX"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 20 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 1 2"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "dataConfigurationButton"
+				"text": "CONFIGURAR DATOS"
+				"font": #Font1
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 2 2,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "dateAndTimeConfigurationButton"
+				"text": "CONFIGURAR FECHA Y HORA"
+				"font": #Font1
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 3,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "floorConfigurationButton"
+				"text": "CONFIGURAR PISOS"
+				"font": #Font1
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 2 3,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "saveConfigurationButton"
+				"text": "CONFIGURAR GUARDADO"
+				"font": #Font1
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 2 4,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "saveConfigurationButton2"
+				"text": "CONFIGURAR EXPORTACION"
+				"font": #Font1
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 2 5,growy"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "backButton"
 				"text": "VOLVER"
-				"font": new java.awt.Font( "Segoe UI Black", 0, 22 )
+				"font": new java.awt.Font( "Segoe UI Black", 0, 24 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 0 4,growy"
+				"value": "cell 0 6,growy"
 			} )
 		}, new FormLayoutConstraints( null ) {
-			"location": new java.awt.Point( 0, 0 )
-			"size": new java.awt.Dimension( 980, 555 )
+			"location": new java.awt.Point( 20, 40 )
+			"size": new java.awt.Dimension( 995, 475 )
 		} )
 	}
 }
