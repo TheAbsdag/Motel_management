@@ -16,18 +16,16 @@ import view.interfaces.TimeLabelInterface;
 public class RoomChangeView extends JPanel implements TimeLabelInterface {
 
     private ArrayList<ArrayList<ArrayList<JButton>>> roomButtonGridByTower;
-    private int currentFloorIndex;
-    private int currentTowerIndex;
+    private final NavigationState nav;
     private CardLayout cardLayout;
 
-    public RoomChangeView() {
+    public RoomChangeView(NavigationState nav) {
+        this.nav = nav;
         initCustomComponents();
         initComponents();
     }
 
     private void initCustomComponents() {
-        currentFloorIndex = 0;
-        currentTowerIndex = 0;
         roomButtonGridByTower = new ArrayList<>();
         cardLayout = new CardLayout();
     }
@@ -74,10 +72,10 @@ public class RoomChangeView extends JPanel implements TimeLabelInterface {
     }
 
     public void switchFloor(int floorIndex) {
-        if (getCurrentTowerIndex() >= 0 && getCurrentTowerIndex() < getRoomButtonGridByTower().size()) {
-            ArrayList<ArrayList<JButton>> currentTower = getRoomButtonGridByTower().get(getCurrentTowerIndex());
+        if (nav.getCurrentTowerIndex() >= 0 && nav.getCurrentTowerIndex() < getRoomButtonGridByTower().size()) {
+            ArrayList<ArrayList<JButton>> currentTower = getRoomButtonGridByTower().get(nav.getCurrentTowerIndex());
             if (floorIndex >= 0 && floorIndex < currentTower.size()) {
-                currentFloorIndex = floorIndex;
+                nav.setCurrentFloorIndex(floorIndex);
                 switchToCurrentTowerAndFloor();
             }
         }
@@ -85,20 +83,19 @@ public class RoomChangeView extends JPanel implements TimeLabelInterface {
 
     public void switchTower(int towerIndex) {
         if (towerIndex >= 0 && towerIndex < getRoomButtonGridByTower().size()) {
-            currentTowerIndex = towerIndex;
-            // Reset to floor 0 when switching towers
-            currentFloorIndex = 0;
+            nav.setCurrentTowerIndex(towerIndex);
+            nav.setCurrentFloorIndex(0);
             switchToCurrentTowerAndFloor();
             updateTowerLabel();
         }
     }
 
     private void switchToCurrentTowerAndFloor() {
-        cardLayout.show(roomButtonPanel, "Tower" + getCurrentTowerIndex() + "Floor" + currentFloorIndex);
+        cardLayout.show(roomButtonPanel, "Tower" + nav.getCurrentTowerIndex() + "Floor" + nav.getCurrentFloorIndex());
     }
 
     private void updateTowerLabel() {
-        getTowerLabelInforfmation().setText("TORRE: " + (getCurrentTowerIndex() + 1));
+        getTowerLabelInforfmation().setText("TORRE: " + (nav.getCurrentTowerIndex() + 1));
     }
 
     /**
@@ -244,19 +241,9 @@ public class RoomChangeView extends JPanel implements TimeLabelInterface {
      * @return the currentFloorIndex
      */
     public int getCurrentFloorIndex() {
-        return currentFloorIndex;
+        return nav.getCurrentFloorIndex();
     }
 
-    /**
-     * @return the roomButtonPanel
-     */
-    public JPanel getRoomButtonPanel() {
-        return roomButtonPanel;
-    }
-
-    /**
-     * @return the timeLabel
-     */
     public JLabel getTimeLabel() {
         return timeLabel;
     }
@@ -321,7 +308,7 @@ public class RoomChangeView extends JPanel implements TimeLabelInterface {
      * @return the currentTowerIndex
      */
     public int getCurrentTowerIndex() {
-        return currentTowerIndex;
+        return nav.getCurrentTowerIndex();
     }
 
     /**

@@ -84,15 +84,15 @@ public class TurnManagerView extends JPanel implements TimeLabelInterface {
         //intialize for the summarized table
         summarizedTurnTableModel = new SummarizedTurnTableModel();
         summarizedTurnTable = new JTable(summarizedTurnTableModel);
-        TableColumnModel summarizedColumnModel = getSummarizedTurnTable().getColumnModel();
+        TableColumnModel summarizedColumnModel = summarizedTurnTable.getColumnModel();
         for (int i = 0; i < summarizedColumnModel.getColumnCount(); i++) {
             summarizedColumnModel.getColumn(i).setCellRenderer(new CustomCellRenderer(cellFont));
             summarizedColumnModel.getColumn(i).setHeaderRenderer(new CustomHeaderRenderer(cellFont));
         }
 
-        getSummarizedTurnTable().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        JScrollPane summarizedScrollPane = new JScrollPane(getSummarizedTurnTable());
-        getSummarizedTurnTable().getTableHeader().setReorderingAllowed(false);
+        summarizedTurnTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        JScrollPane summarizedScrollPane = new JScrollPane(summarizedTurnTable);
+        summarizedTurnTable.getTableHeader().setReorderingAllowed(false);
         summarizedTurnInfoPanel.add(summarizedScrollPane, "cell 0 0, grow");
         TouchScrollHandler.attach(summarizedScrollPane);
     }
@@ -539,214 +539,63 @@ public class TurnManagerView extends JPanel implements TimeLabelInterface {
     private JButton backFromSummarizedTurn;
     // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
 
-    /**
-     * @return the turnDetailsPanel
-     */
-    public JPanel getTurnDetailsPanel() {
-        return turnDetailsPanel;
-    }
-
-    /**
-     * @return the timeLabel
-     */
     public JLabel getTimeLabel() {
         return timeLabel;
     }
 
-    /**
-     * @return the dateLabel
-     */
     public JLabel getDateLabel() {
         return dateLabel;
     }
 
-    /**
-     * @return the noPrintCheckBox
-     */
     public JCheckBox getNoPrintCheckBox() {
         return noPrintCheckBox;
     }
 
-    /**
-     * @return the summarizedPrintCheckBox
-     */
     public JCheckBox getSummarizedPrintCheckBox() {
         return summarizedPrintCheckBox;
     }
 
-    /**
-     * @return the detailedPrintCheckBox
-     */
     public JCheckBox getDetailedPrintCheckBox() {
         return detailedPrintCheckBox;
     }
 
-    /**
-     * @return the printButton
-     */
     public JButton getPrintButton() {
         return printButton;
     }
 
-    /**
-     * @return the endTurnButton
-     */
     public JButton getEndTurnButton() {
         return endTurnButton;
     }
 
-    /**
-     * @return the backButton
-     */
     public JButton getBackButton() {
         return backButton;
     }
 
-    /**
-     * @return the turnDetailsTable
-     */
     public JTable getTurnDetailsTable() {
         return turnDetailsTable;
     }
 
-    /**
-     * @return the deleteActionButton
-     */
     public JButton getRefundButton() {
         return refundButton;
     }
 
-    /**
-     * @return the upButton
-     */
     public JButton getUpButton() {
         return upButton;
     }
 
-    /**
-     * @return the downButton
-     */
     public JButton getDownButton() {
         return downButton;
     }
 
-    /**
-     * @return the summarizedTurnButton
-     */
     public JButton getSummarizedTurnButton() {
         return summarizedTurnButton;
     }
 
-    /**
-     * @return the summarizedTurnTable
-     */
-    public JTable getSummarizedTurnTable() {
-        return summarizedTurnTable;
-    }
-
-    /**
-     * @return the totalRefundInformativeLabel
-     */
-    public JLabel getTotalRefundInformativeLabel() {
-        return totalRefundInformativeLabel;
-    }
-
-    /**
-     * @return the totalRefundLabel
-     */
-    public JLabel getTotalRefundLabel() {
-        return totalRefundLabel;
-    }
-
-    /**
-     * @return the totalSpendingInformativeLabel
-     */
-    public JLabel getTotalSpendingInformativeLabel() {
-        return totalSpendingInformativeLabel;
-    }
-
-    /**
-     * @return the totalSpendingLabel
-     */
-    public JLabel getTotalSpendingLabel() {
-        return totalSpendingLabel;
-    }
-
-    /**
-     * @return the totalTurnInformativeLabel
-     */
-    public JLabel getTotalTurnInformativeLabel() {
-        return totalTurnInformativeLabel;
-    }
-
-    /**
-     * @return the totalTurnLabel
-     */
-    public JLabel getTotalTurnLabel() {
-        return totalTurnLabel;
-    }
-
-    /**
-     * @return the totalTransferInformativeLabel
-     */
-    public JLabel getTotalTransferInformativeLabel() {
-        return totalTransferInformativeLabel;
-    }
-
-    /**
-     * @return the totalTransferLabel
-     */
-    public JLabel getTotalTransferLabel() {
-        return totalTransferLabel;
-    }
-
-    /**
-     * @return the totalDepositInformativeLabel
-     */
-    public JLabel getTotalDepositInformativeLabel() {
-        return totalDepositInformativeLabel;
-    }
-
-    /**
-     * @return the totalDepositLabel
-     */
-    public JLabel getTotalDepositLabel() {
-        return totalDepositLabel;
-    }
-
-    /**
-     * @return the totalNetInformativeLabel
-     */
-    public JLabel getTotalNetInformativeLabel() {
-        return totalNetInformativeLabel;
-    }
-
-    /**
-     * @return the totalNetLabel
-     */
-    public JLabel getTotalNetLabel() {
-        return totalNetLabel;
-    }
-
-    /**
-     * @return the summarizedPopup
-     */
     public JFrame getSummarizedPopup() {
         return summarizedPopup;
     }
 
-    /**
-     * @return the summarizedTurnLabel
-     */
-    public JLabel getSummarizedTurnLabel() {
-        return summarizedTurnLabel;
-    }
-
-    /**
-     * @return the backFromSummarizedTurn
-     */
     public JButton getBackFromSummarizedTurn() {
         return backFromSummarizedTurn;
     }
-
 }

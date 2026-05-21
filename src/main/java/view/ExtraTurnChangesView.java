@@ -2,6 +2,7 @@ package view;
 
 import view.helpers.NumericDocumentFilter;
 import view.helpers.FocusHighlighter;
+import view.helpers.PriceAdjustmentHelper;
 import java.awt.Font;
 import javax.swing.*;
 import javax.swing.JButton;
@@ -32,10 +33,15 @@ public class ExtraTurnChangesView extends JPanel {
     }
 
     private void updateValue(long value) {
-        long newPrice = Long.parseLong(valueTextField.getText()) + value;
-        if (newPrice >= 0L) {
-            valueTextField.setText(String.valueOf(newPrice));
-        }
+        PriceAdjustmentHelper.adjust(valueTextField, value);
+    }
+
+    public void clearFields() {
+        descriptionText.setText("");
+        valueTextField.setText("0");
+        confirmationButton.setEnabled(false);
+        bankTransferBox.setSelected(false);
+        saveDespositBox.setSelected(false);
     }
 
     // --- Getters ---

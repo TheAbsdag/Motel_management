@@ -70,8 +70,7 @@ public class ManagementController {
 
     /** Opens the spending register view. */
     public void showSpendingRegister() {
-        userInterface.getSpendingRegisterView().getValueTextField().setText("0");
-        userInterface.getSpendingRegisterView().getDescriptionChangeText().setText("");
+        userInterface.getSpendingRegisterView().clearFields();
         userInterface.setSpendingRegisterView();
     }
 
@@ -79,11 +78,7 @@ public class ManagementController {
 
     /** Opens the extra turn changes view. */
     public void showExtraChanges() {
-        userInterface.getExtraTurnChangesView().getDescriptionText().setText("");
-        userInterface.getExtraTurnChangesView().getValueTextField().setText("0");
-        userInterface.getExtraTurnChangesView().getConfirmationButton().setEnabled(false);
-        userInterface.getExtraTurnChangesView().getBankTransferBox().setSelected(false);
-        userInterface.getExtraTurnChangesView().getSaveDespositBox().setSelected(false);
+        userInterface.getExtraTurnChangesView().clearFields();
         userInterface.setExtraTurnChangesView();
     }
 

@@ -2,6 +2,7 @@ package view;
 
 import view.helpers.NumericDocumentFilter;
 import view.helpers.FocusHighlighter;
+import view.helpers.PriceAdjustmentHelper;
 import java.awt.Font;
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -30,10 +31,12 @@ public class SpendingRegisterView extends JPanel {
     }
 
     private void updateValue(long value) {
-        long newPrice = Long.parseLong(valueTextField.getText()) + value;
-        if (newPrice >= 0L) {
-            valueTextField.setText(String.valueOf(newPrice));
-        }
+        PriceAdjustmentHelper.adjust(valueTextField, value);
+    }
+
+    public void clearFields() {
+        descriptionChangeText.setText("");
+        valueTextField.setText("0");
     }
 
     // --- Getters ---

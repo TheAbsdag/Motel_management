@@ -6,6 +6,8 @@ import javax.swing.event.DocumentListener;
 import model.modelManagers.MotelManagement;
 import model.dto.InventoryItemData;
 import view.InventoryManagementView;
+import view.helpers.InputParser;
+import view.helpers.PriceAdjustmentHelper;
 
 /**
  * Controls inventory management operations (CRUD, quantity/price adjustments).
@@ -106,30 +108,11 @@ public class InventoryController {
      * @param delta typically +1 or -1
      */
     public void changeQuantity(int delta) {
-        int currentValue;
-        try {
-            currentValue = Integer.parseInt(inventoryView.getQuantityTextField().getText()) + delta;
-        } catch (NumberFormatException ex) {
-            currentValue = 0;
-        }
-        if (currentValue < 0) currentValue = 0;
-        inventoryView.getQuantityTextField().setText(String.valueOf(currentValue));
+        PriceAdjustmentHelper.adjust(inventoryView.getQuantityTextField(), delta);
     }
 
-    /**
-     * Adjusts the price field by the given delta.
-     *
-     * @param delta typically +/- 100 or +/- 1000
-     */
     public void modifyPrice(int delta) {
-        int currentValue = 0;
-        try {
-            currentValue = Integer.parseInt(inventoryView.getPriceTextField().getText()) + delta;
-        } catch (NumberFormatException ex) {
-            currentValue = 0;
-        }
-        if (currentValue < 0) currentValue = 0;
-        inventoryView.getPriceTextField().setText(String.valueOf(currentValue));
+        PriceAdjustmentHelper.adjust(inventoryView.getPriceTextField(), delta);
     }
 
     /**
@@ -138,18 +121,8 @@ public class InventoryController {
     public void saveItem() {
         int rowSelected = inventoryView.getInventoryTable().getSelectedRow();
         String newName = inventoryView.getNameTextField().getText();
-        int newQuantity;
-        long newPrice;
-        try {
-            newQuantity = Integer.parseInt(inventoryView.getQuantityTextField().getText());
-        } catch (NumberFormatException ex) {
-            newQuantity = 0;
-        }
-        try {
-            newPrice = Long.parseLong(inventoryView.getPriceTextField().getText());
-        } catch (NumberFormatException ex) {
-            newPrice = 0;
-        }
+        long newQuantity = InputParser.parseLongSafe(inventoryView.getQuantityTextField());
+        long newPrice = InputParser.parseLongSafe(inventoryView.getPriceTextField());
 
         if (rowSelected != -1) {
             InventoryItemData selectedItem = inventoryView.getCurrentSelectedItem(rowSelected);

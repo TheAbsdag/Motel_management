@@ -1,12 +1,10 @@
 package view;
 
 import java.awt.CardLayout;
-import java.awt.Component;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Map;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import view.interfaces.TimeLabelInterface;
 
@@ -38,13 +36,17 @@ public class UserGUI extends JFrame {
     private ExtraTurnChangesView extraTurnChangesView;
     private RoomSummaryView roomSummaryView;
 
-    private String currentCard;
-    private Map<String, JLabel> timeLabels;
-    private Map<String, JLabel> dateLabels;
+    private ViewCard currentCard;
+    private Map<ViewCard, JLabel> timeLabels;
+    private Map<ViewCard, JLabel> dateLabels;
+    private NavigationState navigationState;
+    private String lastTimeShown;
+    private String lastDateShown;
 
     public UserGUI() {
-        timeLabels = new HashMap<>();
-        dateLabels = new HashMap<>();
+        timeLabels = new EnumMap<>(ViewCard.class);
+        dateLabels = new EnumMap<>(ViewCard.class);
+        navigationState = new NavigationState();
         initComponents();
     }
 
@@ -54,58 +56,58 @@ public class UserGUI extends JFrame {
 
         // Creation of the different views, and assignation to the cardLayout
         turnSelect = new TurnSelectView();
-        addView(turnSelect, "turnSelectView");
+        addView(turnSelect, ViewCard.TURN_SELECT_VIEW);
 
-        floorView = new FloorView();
-        addView(floorView, "floorView");
+        floorView = new FloorView(navigationState);
+        addView(floorView, ViewCard.FLOOR_VIEW);
 
         roomView = new RoomView();
-        addView(roomView, "roomView");
+        addView(roomView, ViewCard.ROOM_VIEW);
 
         sellingView = new SellingView();
-        addView(sellingView, "sellingView");
+        addView(sellingView, ViewCard.SELLING_VIEW);
 
         managementSelection = new ManagementSelectView();
-        addView(managementSelection, "managementSelectView");
+        addView(managementSelection, ViewCard.MANAGEMENT_SELECT_VIEW);
 
         inventoryView = new InventoryManagementView();
-        addView(inventoryView, "inventoryView");
+        addView(inventoryView, ViewCard.INVENTORY_VIEW);
 
         historyView = new HistoryView();
-        addView(historyView, "historyView");
+        addView(historyView, ViewCard.HISTORY_VIEW);
 
         turnManagerView = new TurnManagerView();
-        addView(turnManagerView, "turnManagerView");
+        addView(turnManagerView, ViewCard.TURN_MANAGER_VIEW);
 
-        roomChangeView = new RoomChangeView();
-        addView(roomChangeView, "roomChangeView");
+        roomChangeView = new RoomChangeView(navigationState);
+        addView(roomChangeView, ViewCard.ROOM_CHANGE_VIEW);
 
         appOptions = new AppOptionsView();
-        addView(getAppOptions(), "appOptionsView");
+        addView(getAppOptions(), ViewCard.APP_OPTIONS_VIEW);
 
         printerConfigView = new PrinterConfigurationView();
-        addView(printerConfigView, "printerConfigView");
+        addView(printerConfigView, ViewCard.PRINTER_CONFIG_VIEW);
 
         motelDataConfigView = new MotelDataConfigurationView();
-        addView(motelDataConfigView, "motelDataConfigView");
+        addView(motelDataConfigView, ViewCard.MOTEL_DATA_CONFIG_VIEW);
 
         dataSavingConfigView = new DataSavingConfigurationView();
-        addView(dataSavingConfigView, "dataSavingConfigView");
+        addView(dataSavingConfigView, ViewCard.DATA_SAVING_CONFIG_VIEW);
 
         floorConfigView = new FloorConfigurationView();
-        addView(floorConfigView, "floorConfigView");
+        addView(floorConfigView, ViewCard.FLOOR_CONFIG_VIEW);
 
         timeConfigView = new TimeConfigurationView();
-        addView(timeConfigView, "timeConfigView");
+        addView(timeConfigView, ViewCard.TIME_CONFIG_VIEW);
 
         spendingRegisterView = new SpendingRegisterView();
-        addView(spendingRegisterView, "spendingRegisterView");
+        addView(spendingRegisterView, ViewCard.SPENDING_REGISTER_VIEW);
 
         extraTurnChangesView = new ExtraTurnChangesView();
-        addView(extraTurnChangesView, "extraTurnChangesView");
+        addView(extraTurnChangesView, ViewCard.EXTRA_TURN_CHANGES_VIEW);
 
         roomSummaryView = new RoomSummaryView();
-        addView(roomSummaryView, "roomSummaryView");
+        addView(roomSummaryView, ViewCard.ROOM_SUMMARY_VIEW);
 
         //Default window configuration
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -115,12 +117,13 @@ public class UserGUI extends JFrame {
         setVisible(true);
     }
 
-    private void addView(JPanel panel, String name) {
+    private void addView(JPanel panel, ViewCard card) {
+        String name = card.getCardName();
         panel.setName(name);
         mainPanel.add(panel, name);
         if (panel instanceof TimeLabelInterface htl) {
-            timeLabels.put(name, htl.getTimeLabel());
-            dateLabels.put(name, htl.getDateLabel());
+            timeLabels.put(card, htl.getTimeLabel());
+            dateLabels.put(card, htl.getDateLabel());
         }
     }
 
@@ -129,28 +132,25 @@ public class UserGUI extends JFrame {
         roomChangeView.createButtonsForTowers(arr);
     }
 
-    private String getCurrentCard() {
-        return currentCard;
-    }
-
     public boolean isFloorShown() {
-        return "floorView".equals(currentCard);
+        return ViewCard.FLOOR_VIEW.equals(currentCard);
     }
 
     public boolean isRoomShown() {
-        return "roomView".equals(currentCard);
+        return ViewCard.ROOM_VIEW.equals(currentCard);
     }
 
     public boolean isRoomChangeShown() {
-        return "roomChangeView".equals(currentCard);
+        return ViewCard.ROOM_CHANGE_VIEW.equals(currentCard);
     }
 
     public boolean isRoomSummaryShown() {
-        return "roomSummaryView".equals(currentCard);
+        return ViewCard.ROOM_SUMMARY_VIEW.equals(currentCard);
     }
 
     public void updateDateTime(String timeShown, String dateShown) {
-        String currentCard = getCurrentCard();
+        lastTimeShown = timeShown;
+        lastDateShown = dateShown;
         if (currentCard != null) {
             JLabel timeLabel = timeLabels.get(currentCard);
             JLabel dateLabel = dateLabels.get(currentCard);
@@ -162,93 +162,83 @@ public class UserGUI extends JFrame {
     }
 
     public void setFloorView() {
-        currentCard = "floorView";
-        cardLayout.show(mainPanel, "floorView");
+        setCard(ViewCard.FLOOR_VIEW);
     }
 
     public void setTurnSelect() {
-        currentCard = "turnSelectView";
-        cardLayout.show(mainPanel, "turnSelectView");
+        setCard(ViewCard.TURN_SELECT_VIEW);
     }
 
     public void setTurnManagerView() {
-        currentCard = "turnManagerView";
-        cardLayout.show(mainPanel, "turnManagerView");
+        setCard(ViewCard.TURN_MANAGER_VIEW);
     }
 
     public void setRoomView() {
-        currentCard = "roomView";
-        cardLayout.show(mainPanel, "roomView");
+        setCard(ViewCard.ROOM_VIEW);
     }
 
     public void setManagementSelection() {
-        currentCard = "managementSelectView";
-        cardLayout.show(mainPanel, "managementSelectView");
+        setCard(ViewCard.MANAGEMENT_SELECT_VIEW);
     }
 
     public void setInventoryView() {
-        currentCard = "inventoryView";
-        cardLayout.show(mainPanel, "inventoryView");
+        setCard(ViewCard.INVENTORY_VIEW);
     }
 
     public void setSellingView() {
-        currentCard = "sellingView";
-        cardLayout.show(mainPanel, "sellingView");
+        setCard(ViewCard.SELLING_VIEW);
     }
 
     public void setHistoryView() {
-        currentCard = "historyView";
-        cardLayout.show(mainPanel, "historyView");
+        setCard(ViewCard.HISTORY_VIEW);
     }
 
     public void setRoomChangeView() {
-        currentCard = "roomChangeView";
-        cardLayout.show(mainPanel, "roomChangeView");
+        setCard(ViewCard.ROOM_CHANGE_VIEW);
     }
 
     public void setAppOptionsView() {
-        currentCard = "appOptionsView";
-        cardLayout.show(mainPanel, "appOptionsView");
+        setCard(ViewCard.APP_OPTIONS_VIEW);
     }
 
     public void setPrinterConfigView() {
-        currentCard = "printerConfigView";
-        cardLayout.show(mainPanel, "printerConfigView");
+        setCard(ViewCard.PRINTER_CONFIG_VIEW);
     }
 
     public void setMotelDataConfigView() {
-        currentCard = "motelDataConfigView";
-        cardLayout.show(mainPanel, "motelDataConfigView");
+        setCard(ViewCard.MOTEL_DATA_CONFIG_VIEW);
     }
 
     public void setDataSavingConfigView() {
-        currentCard = "dataSavingConfigView";
-        cardLayout.show(mainPanel, "dataSavingConfigView");
+        setCard(ViewCard.DATA_SAVING_CONFIG_VIEW);
     }
 
     public void setFloorConfigView() {
-        currentCard = "floorConfigView";
-        cardLayout.show(mainPanel, "floorConfigView");
+        setCard(ViewCard.FLOOR_CONFIG_VIEW);
     }
 
     public void setTimeConfigView() {
-        currentCard = "timeConfigView";
-        cardLayout.show(mainPanel, "timeConfigView");
+        setCard(ViewCard.TIME_CONFIG_VIEW);
     }
 
     public void setSpendingRegisterView() {
-        currentCard = "spendingRegisterView";
-        cardLayout.show(mainPanel, "spendingRegisterView");
+        setCard(ViewCard.SPENDING_REGISTER_VIEW);
     }
 
     public void setExtraTurnChangesView() {
-        currentCard = "extraTurnChangesView";
-        cardLayout.show(mainPanel, "extraTurnChangesView");
+        setCard(ViewCard.EXTRA_TURN_CHANGES_VIEW);
     }
 
     public void setRoomSummaryView() {
-        currentCard = "roomSummaryView";
-        cardLayout.show(mainPanel, "roomSummaryView");
+        setCard(ViewCard.ROOM_SUMMARY_VIEW);
+    }
+
+    private void setCard(ViewCard card) {
+        currentCard = card;
+        cardLayout.show(mainPanel, card.getCardName());
+        if (lastTimeShown != null) {
+            updateDateTime(lastTimeShown, lastDateShown);
+        }
     }
 
     /**
@@ -307,42 +297,11 @@ public class UserGUI extends JFrame {
         return turnManagerView;
     }
 
-    public boolean confirmPrinting() {
-        int response = JOptionPane.showConfirmDialog(
-                null,
-                "¿ESTA SEGURO DE NO IMPRIMIR RECIBO?",
-                "CONFIRMACION",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.QUESTION_MESSAGE
-        );
-        return response == JOptionPane.YES_OPTION;
-    }
-
-    public boolean confirmTurnEnd() {
-        int response = JOptionPane.showConfirmDialog(
-                null,
-                "¿ESTA SEGURO DE TERMINAR EL TURNO?",
-                "CONFIRMACION",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.QUESTION_MESSAGE
-        );
-        return response == JOptionPane.YES_OPTION;
-    }
-
     /**
      * @return the roomChangeView
      */
     public RoomChangeView getRoomChangeView() {
         return roomChangeView;
-    }
-
-    public void showInfoMessage(String message, String title) {
-        JOptionPane.showMessageDialog(
-                null,
-                message,
-                title,
-                JOptionPane.INFORMATION_MESSAGE
-        );
     }
 
     /**
@@ -352,37 +311,22 @@ public class UserGUI extends JFrame {
         return appOptions;
     }
 
-    /**
-     * @return the printerConfigView
-     */
     public PrinterConfigurationView getPrinterConfigView() {
         return printerConfigView;
     }
 
-    /**
-     * @return the motelDataConfigView
-     */
     public MotelDataConfigurationView getMotelDataConfigView() {
         return motelDataConfigView;
     }
 
-    /**
-     * @return the dataSavingConfigView
-     */
     public DataSavingConfigurationView getDataSavingConfigView() {
         return dataSavingConfigView;
     }
 
-    /**
-     * @return the floorConfigView
-     */
     public FloorConfigurationView getFloorConfigView() {
         return floorConfigView;
     }
 
-    /**
-     * @return the timeConfigView
-     */
     public TimeConfigurationView getTimeConfigView() {
         return timeConfigView;
     }

@@ -31,8 +31,7 @@ import view.interfaces.TimeLabelInterface;
 public class FloorView extends JPanel implements TimeLabelInterface {
 
     private ArrayList<ArrayList<ArrayList<JButton>>> roomButtonGridByTower;
-    private int currentFloorIndex;
-    private int currentTowerIndex;
+    private final NavigationState nav;
     private CardLayout cardLayout;
 
     // Overtime warning components
@@ -40,18 +39,18 @@ public class FloorView extends JPanel implements TimeLabelInterface {
     private JList<String> warningList;
     private DefaultListModel<String> warningListModel;
     private Timer scrollTimer;
+    private Timer resetTimer;
     private boolean scrollingDown = true;
     private int currentScrollIndex = 0;
 
-    public FloorView() {
+    public FloorView(NavigationState nav) {
+        this.nav = nav;
         initCustomComponents();
         initComponents();
         initWarningList();
     }
 
     private void initCustomComponents() {
-        currentFloorIndex = 0;
-        currentTowerIndex = 0;
         roomButtonGridByTower = new ArrayList<>();
         cardLayout = new CardLayout();
     }
@@ -105,10 +104,10 @@ public class FloorView extends JPanel implements TimeLabelInterface {
     }
 
     public void switchFloor(int floorIndex) {
-        if (currentTowerIndex >= 0 && currentTowerIndex < roomButtonGridByTower.size()) {
-            ArrayList<ArrayList<JButton>> currentTower = roomButtonGridByTower.get(currentTowerIndex);
+        if (nav.getCurrentTowerIndex() >= 0 && nav.getCurrentTowerIndex() < roomButtonGridByTower.size()) {
+            ArrayList<ArrayList<JButton>> currentTower = roomButtonGridByTower.get(nav.getCurrentTowerIndex());
             if (floorIndex >= 0 && floorIndex < currentTower.size()) {
-                currentFloorIndex = floorIndex;
+                nav.setCurrentFloorIndex(floorIndex);
                 switchToCurrentTowerAndFloor();
                 updateFloorLabel();
             }
@@ -117,8 +116,8 @@ public class FloorView extends JPanel implements TimeLabelInterface {
 
     public void switchTower(int towerIndex) {
         if (towerIndex >= 0 && towerIndex < roomButtonGridByTower.size()) {
-            currentTowerIndex = towerIndex;
-            currentFloorIndex = 0;
+            nav.setCurrentTowerIndex(towerIndex);
+            nav.setCurrentFloorIndex(0);
             switchToCurrentTowerAndFloor();
             updateTowerLabel();
             updateFloorLabel();
@@ -126,15 +125,15 @@ public class FloorView extends JPanel implements TimeLabelInterface {
     }
 
     private void switchToCurrentTowerAndFloor() {
-        cardLayout.show(containerPanel, "Tower" + currentTowerIndex + "Floor" + currentFloorIndex);
+        cardLayout.show(containerPanel, "Tower" + nav.getCurrentTowerIndex() + "Floor" + nav.getCurrentFloorIndex());
     }
 
     private void updateTowerLabel() {
-        towerLabelInforfmation.setText("TORRE: " + (currentTowerIndex + 1));
+        towerLabelInforfmation.setText("TORRE: " + (nav.getCurrentTowerIndex() + 1));
     }
 
     private void updateFloorLabel() {
-        floorLabelInformation.setText("PISO: " + (currentFloorIndex + 1));
+        floorLabelInformation.setText("PISO: " + (nav.getCurrentFloorIndex() + 1));
     }
 
     // ========== Overtime Warning ==========
@@ -144,8 +143,20 @@ public class FloorView extends JPanel implements TimeLabelInterface {
         warningList = new JList<>(warningListModel);
         warningList.setFont(new Font("Segoe UI Black", Font.PLAIN, 20));
         warningList.setSelectionMode(0);
+        warningList.setFixedCellHeight(warningList.getFontMetrics(warningList.getFont()).getHeight());
         warningScrollPane.setViewportView(warningList);
         scrollTimer = new Timer(2000, e -> autoScrollWarnings());
+        resetTimer = new Timer(2000, e -> resetScrollPosition());
+        resetTimer.setRepeats(false);
+    }
+
+    private void resetScrollPosition() {
+        int visibleRows = getVisibleRowCount();
+        int totalRows = warningListModel.getSize();
+        warningList.ensureIndexIsVisible(0);
+        if (visibleRows - 1 < totalRows) {
+            warningList.ensureIndexIsVisible(visibleRows - 1);
+        }
     }
 
     public void updateWarnings(List<String> newWarnings) {
@@ -194,13 +205,6 @@ public class FloorView extends JPanel implements TimeLabelInterface {
                 currentScrollIndex++;
                 if (currentScrollIndex + visibleRows > totalRows) {
                     currentScrollIndex = 0;
-                    Timer resetTimer = new Timer(2000, e -> {
-                        warningList.ensureIndexIsVisible(0);
-                        if (visibleRows - 1 < totalRows) {
-                            warningList.ensureIndexIsVisible(visibleRows - 1);
-                        }
-                    });
-                    resetTimer.setRepeats(false);
                     resetTimer.start();
                 }
             }
@@ -271,6 +275,7 @@ public class FloorView extends JPanel implements TimeLabelInterface {
 	add(turnNumberLabel, "cell 2 1");
 
 	//---- warningIconLabel ----
+	warningIconLabel.setIcon(new ImageIcon(new ImageIcon(getClass().getResource("/warning.png")).getImage().getScaledInstance(120, 120, Image.SCALE_SMOOTH)));
 	warningIconLabel.setMinimumSize(new Dimension(120, 120));
 	warningIconLabel.setMaximumSize(new Dimension(120, 120));
 	warningIconLabel.setIconTextGap(0);
@@ -351,9 +356,10 @@ public class FloorView extends JPanel implements TimeLabelInterface {
 
     // ========== Getters ==========
 
-    public int getCurrentFloorIndex() { return currentFloorIndex; }
-    public CardLayout getCardLayout() { return cardLayout; }
-    public JLabel getTurnNumberLabel() { return turnNumberLabel; }
+    public int getCurrentFloorIndex() { return nav.getCurrentFloorIndex(); }
+    public void setTurnNumber(long number) { turnNumberLabel.setText("TURNO: " + number); }
+    public void setWarningVisible(boolean visible) { warningIconLabel.setVisible(visible); }
+    public boolean isWarningVisible() { return warningIconLabel.isVisible(); }
     public JLabel getTimeLabel() { return timeLabel; }
     public JLabel getDateLabel() { return dateLabel; }
     public JButton getFloorUpButton() { return floorUpButton; }
@@ -361,11 +367,7 @@ public class FloorView extends JPanel implements TimeLabelInterface {
     public JButton getReceptionSellButton() { return receptionSellButton; }
     public JButton getManagementOptionsButton() { return managementOptionsButton; }
     public ArrayList<ArrayList<ArrayList<JButton>>> getRoomButtonGridByTower() { return roomButtonGridByTower; }
-    public JLabel getTowerLabelInforfmation() { return towerLabelInforfmation; }
     public JButton getPreviousTowerButton() { return previousTowerButton; }
     public JButton getNextTowerButton() { return nextTowerButton; }
-    public int getCurrentTowerIndex() { return currentTowerIndex; }
-    public JLabel getWarningIconLabel() { return warningIconLabel; }
-    public JScrollPane getWarningScrollPane() { return warningScrollPane; }
-    public JLabel getFloorLabelInformation() { return floorLabelInformation; }
+    public int getCurrentTowerIndex() { return nav.getCurrentTowerIndex(); }
 }

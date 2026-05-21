@@ -7,6 +7,7 @@ import model.dto.TurnSummaryItemData;
 import model.turn.TurnDetails;
 import view.TurnManagerView;
 import view.UserGUI;
+import view.helpers.DialogHelper;
 
 /**
  * Controls turn management operations: start, view details, print, end, and reversals.
@@ -155,7 +156,7 @@ public class TurnController {
      * clears backups, and transitions to turn select view.
      */
     public void endTurn() {
-        boolean turnEndConfirmation = userInterface.confirmTurnEnd();
+        boolean turnEndConfirmation = DialogHelper.confirmTurnEnd();
         if (!turnEndConfirmation) {
             return;
         }

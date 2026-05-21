@@ -107,7 +107,7 @@ public class FloorController {
      * </ul>
      */
     public void updateRoomButtons() {
-        floorView.getTurnNumberLabel().setText("TURNO: " + motelManager.getTurnNumber());
+        floorView.setTurnNumber(motelManager.getTurnNumber());
         int roomArray[][] = motelManager.getRoomsArray();
         for (int tower = 0; tower < roomArray.length; tower++) {
             for (int floor = 0; floor < roomArray[tower].length; floor++) {
@@ -120,6 +120,7 @@ public class FloorController {
                         case FREE:
                             roomButton.setText("<html><center>" + roomString + "</center></html>");
                             roomButton.setBackground(new Color(39, 174, 96));
+                            motelManager.removeFromOvertimeList(roomString);
                             break;
                         case CLEANING:
                             roomButton.setText("<html><center>" + roomString + "</center></html>");
@@ -135,6 +136,7 @@ public class FloorController {
                             } else {
                                 roomButton.setText("<html><center>" + roomString + "<br>QUEDAN " + remainingTime + "</center></html>");
                                 roomButton.setBackground(new Color(231, 76, 60));
+                                motelManager.removeFromOvertimeList(roomString);
                             }
                             break;
                     }

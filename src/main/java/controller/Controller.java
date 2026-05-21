@@ -15,6 +15,8 @@ import javax.swing.Timer;
 import model.modelManagers.MotelManagement;
 import model.RoomStatus;
 import view.UserGUI;
+import view.helpers.DialogHelper;
+import view.helpers.InputParser;
 
 /**
  * Main application controller — thin orchestrator that creates sub-controllers,
@@ -39,7 +41,7 @@ import view.UserGUI;
  */
 public class Controller {
 
-    private static final int CLOCK_UPDATE_INTERVAL_MS = 80;
+    private static final int CLOCK_UPDATE_INTERVAL_MS = 250;
     private static final int BACKUP_SAVE_INTERVAL_MS = 300_000;      // 5 minutes
     private static final int FLOOR_ROTATION_INTERVAL_MS = 1_200_000;  // 20 minutes
     private static final int OVERTIME_WARNING_INTERVAL_MS = 1_000;    // 1 second
@@ -148,7 +150,7 @@ public class Controller {
                 String message = "Impresora " + (originalName != null ? originalName : "N/A")
                         + " no encontrada, revise la configuracion, se ha cambiado a impresora "
                         + fallbackName;
-                userInterface.showInfoMessage(message, "CONFIGURACION IMPRESORA");
+                DialogHelper.showInfoMessage(message, "CONFIGURACION IMPRESORA");
             }
         }
 
@@ -249,11 +251,9 @@ public class Controller {
 
     private void registerSpending() {
         String conceptSpending = userInterface.getSpendingRegisterView().getDescriptionChangeText().getText();
-        long value;
-        try {
-            value = Long.parseLong(userInterface.getSpendingRegisterView().getValueTextField().getText());
-        } catch (NumberFormatException ex) {
-            userInterface.showInfoMessage("El valor ingresado no es un numero valido", "ERROR");
+        long value = InputParser.parseLongSafe(userInterface.getSpendingRegisterView().getValueTextField());
+        if (value == 0L && !conceptSpending.isEmpty()) {
+            DialogHelper.showInfoMessage("El valor ingresado debe ser distinto de cero", "ERROR");
             return;
         }
         if (value != 0L && !conceptSpending.isEmpty()) {
@@ -266,13 +266,7 @@ public class Controller {
 
     private void registerExtraChanges() {
         String conceptSpending = userInterface.getExtraTurnChangesView().getDescriptionText().getText();
-        long value;
-        try {
-            value = Long.parseLong(userInterface.getExtraTurnChangesView().getValueTextField().getText());
-        } catch (NumberFormatException ex) {
-            userInterface.showInfoMessage("El valor ingresado no es un numero valido", "ERROR");
-            return;
-        }
+        long value = InputParser.parseLongSafe(userInterface.getExtraTurnChangesView().getValueTextField());
         String type = userInterface.getExtraTurnChangesView().getBankTransferBox().isSelected()
                 ? "bankTransfer" : "safeDeposit";
         motelManager.addExtraChangeTransaction(conceptSpending, value, type);
@@ -353,11 +347,11 @@ public class Controller {
      * Flashes the warning icon when rooms are in overtime.
      */
     private void updateOvertimeWarning() {
-        var warningLabel = userInterface.getFloorView().getWarningIconLabel();
+        var floorView = userInterface.getFloorView();
         if (motelManager.getOvertimeList().isEmpty()) {
-            warningLabel.setVisible(false);
+            floorView.setWarningVisible(false);
         } else {
-            warningLabel.setVisible(!warningLabel.isVisible());
+            floorView.setWarningVisible(!floorView.isWarningVisible());
         }
         userInterface.getFloorView().updateWarnings(motelManager.getOvertimeList());
     }

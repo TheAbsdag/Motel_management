@@ -9,6 +9,8 @@ import view.FloorView;
 import view.RoomChangeView;
 import view.RoomView;
 import view.UserGUI;
+import view.helpers.DialogHelper;
+import view.helpers.InputParser;
 
 /**
  * Controls room-level operations: selection, booking, time extension, room changes.
@@ -251,12 +253,7 @@ public class RoomController {
      * Adjusts the displayed room price by the given delta.
      */
     public void updateRoomPrice(long delta) {
-        long currentPrice;
-        try {
-            currentPrice = Long.parseLong(roomView.getPriceTextField().getText());
-        } catch (NumberFormatException ex) {
-            currentPrice = 0;
-        }
+        long currentPrice = InputParser.parseLongSafe(roomView.getPriceTextField());
         long newPrice = currentPrice + delta;
         if (newPrice > 0) {
             roomView.getPriceTextField().setText(String.valueOf(newPrice));
@@ -275,16 +272,11 @@ public class RoomController {
         int roomNumber = motelManager.getCurrentRoomViewed();
         int floorNumber = motelManager.getCurrentFloorViewed();
         int service = motelManager.getCurrentServiceDesired();
-        int price;
-        try {
-            price = Integer.parseInt(roomView.getPriceTextField().getText());
-        } catch (NumberFormatException ex) {
-            price = 0;
-        }
+        long price = InputParser.parseLongSafe(roomView.getPriceTextField());
         boolean print = roomView.getPrintingCheckBox().isSelected();
 
         if (!print) {
-            boolean noPrintingConfirmation = userInterface.confirmPrinting();
+            boolean noPrintingConfirmation = DialogHelper.confirmPrinting();
             if (noPrintingConfirmation) {
                 motelManager.registerRoomTimeAdded(towerNumber, floorNumber, roomNumber, service, price, false);
                 userInterface.setFloorView();

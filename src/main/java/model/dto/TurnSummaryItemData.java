@@ -1,5 +1,7 @@
 package model.dto;
 
+import view.helpers.FormatHelper;
+
 /**
  * Typed data object for a single entry in a turn's summary report.
  * Summaries aggregate room bookings, item sales, refunds, and extra changes
@@ -13,11 +15,8 @@ package model.dto;
  */
 public record TurnSummaryItemData(String summaryType, int quantity, long price, String name, int service) {
 
-    /**
-     * Returns a formatted price string for display.
-     */
     public String formattedPrice() {
-        return String.format("%,d", price);
+        return FormatHelper.formatPrice(price);
     }
 
     /**

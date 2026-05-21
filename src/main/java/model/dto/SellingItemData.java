@@ -1,5 +1,7 @@
 package model.dto;
 
+import view.helpers.FormatHelper;
+
 /**
  * Typed data object for items in the active selling/cart list.
  * Replaces raw JSONObject usage for selling list data at the model→view boundary.
@@ -12,16 +14,10 @@ package model.dto;
  */
 public record SellingItemData(long itemID, String itemName, long quantity, long price, boolean isCourtesy) {
 
-    /**
-     * Returns a formatted price string for display.
-     */
     public String formattedPrice() {
-        return String.format("%,d", price);
+        return FormatHelper.formatPrice(price);
     }
 
-    /**
-     * Returns the effective price for column display (0 for courtesy items).
-     */
     public long displayPrice() {
         return isCourtesy ? 0 : price;
     }

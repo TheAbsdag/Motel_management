@@ -378,23 +378,6 @@ public class SellingView extends JPanel implements TimeLabelInterface {
         return timeLabel;
     }
 
-    /**
-     * @return the itemListPanel
-     */
-    public JPanel getItemListPanel() {
-        return itemListPanel;
-    }
-
-    /**
-     * @return the registerListPanel
-     */
-    public JPanel getRegisterListPanel() {
-        return registerListPanel;
-    }
-
-    /**
-     * @return the quantityTextField
-     */
     public JTextField getQuantityTextField() {
         return quantityTextField;
     }
@@ -483,9 +466,6 @@ public class SellingView extends JPanel implements TimeLabelInterface {
         return totalPriceLabel;
     }
 
-    /**
-     * @return the upSellingListButton
-     */
     public JButton getUpSellingListButton() {
         return upSellingListButton;
     }

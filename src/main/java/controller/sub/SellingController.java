@@ -6,6 +6,8 @@ import model.dto.InventoryItemData;
 import model.dto.SellingItemData;
 import view.SellingView;
 import view.UserGUI;
+import view.helpers.DialogHelper;
+import view.helpers.InputParser;
 
 /**
  * Controls the item selling flow (room charges and reception sales).
@@ -104,11 +106,9 @@ public class SellingController {
     public void addItemToRegisterList() {
         InventoryItemData itemSelected = sellingView.getCurrentSelectedItemListed(
                 sellingView.getItemTable().getSelectedRow());
-        int quantity;
-        try {
-            quantity = Integer.parseInt(sellingView.getQuantityTextField().getText());
-        } catch (NumberFormatException ex) {
-            quantity = 1;
+        long quantity = InputParser.parseLongSafe(sellingView.getQuantityTextField(), 1L);
+        if (quantity == 0L) {
+            quantity = 1L;
             sellingView.getQuantityTextField().setText("1");
         }
         long itemID = itemSelected.itemID();
@@ -139,13 +139,8 @@ public class SellingController {
      * @param delta amount to add or subtract (typically +1 or -1)
      */
     public void updateItemSaleAmount(int delta) {
-        int newValue = 0;
-        try {
-            newValue = Integer.parseInt(sellingView.getQuantityTextField().getText()) + delta;
-            if (newValue < 0) newValue = 0;
-        } catch (NumberFormatException ex) {
-            newValue = 0;
-        }
+        int newValue = (int) InputParser.parseLongSafe(sellingView.getQuantityTextField()) + delta;
+        if (newValue < 0) newValue = 0;
         sellingView.getQuantityTextField().setText(String.valueOf(newValue));
     }
 
@@ -153,11 +148,9 @@ public class SellingController {
     public void addCourtesyItemToRegister() {
         InventoryItemData itemSelected = sellingView.getCurrentSelectedItemListed(
                 sellingView.getItemTable().getSelectedRow());
-        int quantity;
-        try {
-            quantity = Integer.parseInt(sellingView.getQuantityTextField().getText());
-        } catch (NumberFormatException ex) {
-            quantity = 1;
+        long quantity = InputParser.parseLongSafe(sellingView.getQuantityTextField(), 1L);
+        if (quantity == 0L) {
+            quantity = 1L;
             sellingView.getQuantityTextField().setText("1");
         }
         long itemID = itemSelected.itemID();
@@ -177,7 +170,7 @@ public class SellingController {
     public void finishSale() {
         boolean print = sellingView.getPrintingCheckBox().isSelected();
         if (!print) {
-            boolean noPrintingConfirmation = userInterface.confirmPrinting();
+            boolean noPrintingConfirmation = DialogHelper.confirmPrinting();
             if (noPrintingConfirmation) {
                 motelManager.roomSaleFinished(false);
                 userInterface.setFloorView();
