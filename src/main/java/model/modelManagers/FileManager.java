@@ -23,6 +23,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
+ * Handles all file I/O for the application — JSON read/write, backups, and
+ * history persistence.
+ *
+ * <p>Uses atomic-write patterns (write to {@code .tmp}, then rename) to prevent
+ * data corruption. Backup and history directories are created automatically.
  *
  * @author Santiago
  */
@@ -44,11 +49,18 @@ public class FileManager {
                    .replace("\0", "_");
     }
 
+    /**
+     * Creates a FileManager and prepares all required directories.
+     */
     public FileManager() {
         System.out.println("FileManager initialized");
         prepareFolders();
     }
 
+    /**
+     * Ensures the data, backup, history, and staging directories exist.
+     * Clears any leftover staging directory from a previous run.
+     */
     public void prepareFolders() {
         //All folders are created regardless of the path used
         File prepareData = new File(DATA_PATH);
@@ -68,6 +80,12 @@ public class FileManager {
         * rooms
         * inventoryData
         * applicationProperties
+     */
+    /**
+     * Reads a JSON object from the data directory.
+     *
+     * @param dataNeeded the file name (without path) to read
+     * @return the parsed JSON object, or {@code null} if the file does not exist or is invalid
      */
     public JSONObject getJsonData(String dataNeeded) {
         String safeName = sanitizeFileName(dataNeeded);
@@ -94,6 +112,13 @@ public class FileManager {
         return output;
     }
 
+    /**
+     * Saves a JSON object to the data directory using an atomic write
+     * (writes to {@code .tmp}, then renames).
+     *
+     * @param data       the JSON data to save
+     * @param dataToSave the file name (without path)
+     */
     public synchronized void saveJsonMainDataPath(JSONObject data, String dataToSave) {
         String safeName = sanitizeFileName(dataToSave);
         String saveString = data.toString();
@@ -117,6 +142,14 @@ public class FileManager {
         }
     }
 
+    /**
+     * Atomically saves multiple JSON data files using a staging directory.
+     * All files are written to staging first, then moved to the data directory
+     * in a second pass. If any staging write fails, the staging directory is
+     * deleted and no files are moved.
+     *
+     * @param dataMap map of file names to JSON data objects
+     */
     public synchronized void saveAllMainDataAtomic(Map<String, JSONObject> dataMap) {
         File stagingDir = new File(STAGING_DIR);
         deleteDirectory(stagingDir);
@@ -156,6 +189,14 @@ public class FileManager {
         deleteDirectory(stagingDir);
     }
 
+    /**
+     * Saves a JSON backup file into a timestamped subdirectory under {@code backup/}.
+     *
+     * @param data       the JSON data to back up
+     * @param dataToSave the file name (without path)
+     * @param time       the timestamp used for the backup folder
+     * @param saveType   a label included in the folder name
+     */
     public synchronized void saveJsonBackupDataPath(JSONObject data, String dataToSave, ZonedDateTime time, String saveType) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss");
         String safeFolder = sanitizeFileName(time.format(formatter) + "-" + saveType);
@@ -185,6 +226,9 @@ public class FileManager {
     }
     
     
+    /**
+     * Deletes the entire backup directory and all its contents.
+     */
     public synchronized void clearBackupFiles() {
         File backupPathFile = new File(BACKUP_PATH);
         deleteDirectory(backupPathFile);
@@ -204,6 +248,13 @@ public class FileManager {
         file.delete();
     }
 
+    /**
+     * Saves a JSON object to the history directory with a timestamped file name.
+     *
+     * @param data       the JSON data to save
+     * @param dataToSave the base file name (without path)
+     * @param time       the timestamp appended to the file name
+     */
     public synchronized void saveHistoryData(JSONObject data, String dataToSave, ZonedDateTime time) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss");
         String timeString = time.format(formatter);
@@ -216,6 +267,12 @@ public class FileManager {
         }
     }
 
+    /**
+     * Reads all JSON files from the history directory and returns them as a JSON array.
+     * Files that do not contain valid JSON objects are silently skipped.
+     *
+     * @return a JSON array of all parseable history entries
+     */
     public JSONArray getHistoryFiles() {
         JSONArray list = new JSONArray();
 

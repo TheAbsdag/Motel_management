@@ -31,6 +31,22 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+/**
+ * Generates Excel (XLSX) turn reports using Apache POI.
+ *
+ * <p>Each report contains three sheets:
+ * <ol>
+ *   <li><b>Resumen Turno</b> — detailed activity list with financial summary</li>
+ *   <li><b>Detalle Completo</b> — activities grouped by type (rooms, sales, etc.)</li>
+ *   <li><b>Detalle Turno</b> — printable format with activity listing and totals</li>
+ * </ol>
+ *
+ * <p>Reports are saved to the {@code reports/} directory with filenames following
+ * the pattern {@code Turno_<number>_<timestamp>.xlsx}.
+ *
+ * <p><b>Note:</b> Report generation is currently disabled (the body of
+ * {@link #generateReport(TurnDetails)} is commented out).
+ */
 public class TurnReportGenerator {
 
     private static final String REPORT_PATH = FileManager.PATH + File.separator + "reports";
@@ -42,6 +58,13 @@ public class TurnReportGenerator {
         "#", "Habitacion", "Tiempo", "Accion", "Valor", "Trans. Consecutiva", "Dev."
     };
 
+    /**
+     * Generates and saves an Excel report for the given turn.
+     *
+     * <p><b>Currently disabled</b> — the implementation body is commented out.
+     *
+     * @param turnDetails the turn data to include in the report
+     */
     public static void generateReport(TurnDetails turnDetails) {
         /*new File(REPORT_PATH).mkdirs();
 
@@ -67,6 +90,12 @@ public class TurnReportGenerator {
 */
     }
 
+    /**
+     * Builds the file name for the report.
+     *
+     * @param turnDetails the turn data (used for turn number and end time)
+     * @return a file name of the form {@code Turno_<number>_<endTime>.xlsx}
+     */
     private static String buildFileName(TurnDetails turnDetails) {
         long turnNumber = turnDetails.getTurnNumber();
         ZonedDateTime endTime = turnDetails.getTurnEnd() != null
@@ -77,6 +106,10 @@ public class TurnReportGenerator {
 
     // ========== Sheet 1: Resumen Turno ==========
 
+    /**
+     * Creates the "Resumen Turno" sheet with a detailed chronological activity
+     * listing and a financial summary panel.
+     */
     private static void createSheet1(Workbook workbook, TurnDetails turnDetails,
                                       CellStyle headerStyle, CellStyle numberStyle, CellStyle boldStyle) {
         Sheet sheet = workbook.createSheet("Resumen Turno");
@@ -118,6 +151,11 @@ public class TurnReportGenerator {
         sheet.createFreezePane(0, dataStartRow);
     }
 
+    /**
+     * Writes the turn number, start time, and end time header rows.
+     *
+     * @return the next available row index
+     */
     private static int writeTurnInfoHeader(Sheet sheet, int rowIdx, TurnDetails turnDetails, CellStyle boldStyle) {
         Row infoRow = sheet.createRow(rowIdx++);
         Cell infoCell = infoRow.createCell(0);
@@ -137,6 +175,11 @@ public class TurnReportGenerator {
         return rowIdx;
     }
 
+    /**
+     * Adds a single activity as one or more rows in Sheet 1.
+     *
+     * @return the number of rows added (multiple for multi-item sales)
+     */
     private static int addActivityToSheet1(Sheet sheet, int rowIdx, TurnActivity activity, int rowNum,
                                             CellStyle numberStyle) {
         return switch (activity) {
@@ -213,6 +256,12 @@ public class TurnReportGenerator {
         };
     }
 
+    /**
+     * Writes the financial summary (rooms, products, sales, refunds, etc.) at
+     * the given column position.
+     *
+     * @return the next available row index after the summary
+     */
     private static int writeSummaryPanel(Sheet sheet, int startRow, int col, TurnDetails turnDetails,
                                            CellStyle boldStyle, CellStyle numberStyle) {
         Object[][] entries = {
@@ -238,6 +287,12 @@ public class TurnReportGenerator {
         return startRow + entries.length;
     }
 
+    /**
+     * Writes a per-concept summary (rooms, items, refunds, extra changes) below
+     * the financial summary.
+     *
+     * @return the next available row index
+     */
     private static int writeSummarizedItems(Sheet sheet, int startRow, int col, TurnDetails turnDetails,
                                              CellStyle headerStyle, CellStyle numberStyle, CellStyle boldStyle) {
         List<TurnSummaryItemData> items = turnDetails.getSummaryItems();
@@ -274,6 +329,10 @@ public class TurnReportGenerator {
 
     // ========== Sheet 2: Detalle Completo ==========
 
+    /**
+     * Creates the "Detalle Completo" sheet with activities grouped by type
+     * (rooms, sales, swaps, refunds, spending, extra changes).
+     */
     private static void createSheet2(Workbook workbook, TurnDetails turnDetails,
                                       CellStyle headerStyle, CellStyle numberStyle, CellStyle boldStyle) {
         Sheet sheet = workbook.createSheet("Detalle Completo");
@@ -316,6 +375,10 @@ public class TurnReportGenerator {
 
     // ========== Sheet 3: Detalle Turno (detailed print format) ==========
 
+    /**
+     * Creates the "Detalle Turno" sheet — a printable listing of all sales
+     * (rooms and items) with turn totals.
+     */
     private static void createSheet3(Workbook workbook, TurnDetails turnDetails,
                                       CellStyle headerStyle, CellStyle numberStyle, CellStyle boldStyle) {
         Sheet sheet = workbook.createSheet("Detalle Turno");
@@ -408,6 +471,10 @@ public class TurnReportGenerator {
         sheet.createFreezePane(0, dataStartRow);
     }
 
+    /**
+     * Writes the detailed turn totals section (rooms, products, refunds, etc.)
+     * on the "Detalle Turno" sheet.
+     */
     private static void writeDetailedTurnTotals(Sheet sheet, int rowIdx,
                                                  TurnDetails turnDetails,
                                                  CellStyle boldStyle, CellStyle numberStyle) {
@@ -440,6 +507,11 @@ public class TurnReportGenerator {
         }
     }
 
+    /**
+     * Writes the rooms detail section (all statuses) on the "Detalle Completo" sheet.
+     *
+     * @return the next available row index
+     */
     private static int writeRoomDetailSection(Sheet sheet, int rowIdx, List<TurnActivity> activities,
                                                CellStyle headerStyle, CellStyle numberStyle, CellStyle boldStyle) {
         Row sectionRow = sheet.createRow(rowIdx++);
@@ -479,6 +551,11 @@ public class TurnReportGenerator {
         return rowIdx;
     }
 
+    /**
+     * Writes the product sales detail section on the "Detalle Completo" sheet.
+     *
+     * @return the next available row index
+     */
     private static int writeSaleDetailSection(Sheet sheet, int rowIdx, List<TurnActivity> activities,
                                                CellStyle headerStyle, CellStyle numberStyle, CellStyle boldStyle) {
         Row sectionRow = sheet.createRow(rowIdx++);
@@ -513,6 +590,11 @@ public class TurnReportGenerator {
         return rowIdx;
     }
 
+    /**
+     * Writes the room swap detail section on the "Detalle Completo" sheet.
+     *
+     * @return the next available row index
+     */
     private static int writeSwapDetailSection(Sheet sheet, int rowIdx, List<TurnActivity> activities,
                                                CellStyle headerStyle, CellStyle numberStyle, CellStyle boldStyle) {
         Row sectionRow = sheet.createRow(rowIdx++);
@@ -546,6 +628,11 @@ public class TurnReportGenerator {
         return rowIdx;
     }
 
+    /**
+     * Writes the refunds detail section on the "Detalle Completo" sheet.
+     *
+     * @return the next available row index
+     */
     private static int writeRefundDetailSection(Sheet sheet, int rowIdx, List<TurnActivity> activities,
                                                  CellStyle headerStyle, CellStyle numberStyle, CellStyle boldStyle) {
         Row sectionRow = sheet.createRow(rowIdx++);
@@ -607,6 +694,11 @@ public class TurnReportGenerator {
         return rowIdx;
     }
 
+    /**
+     * Writes the transfers and deposits detail section on the "Detalle Completo" sheet.
+     *
+     * @return the next available row index
+     */
     private static int writeExtraChangeDetailSection(Sheet sheet, int rowIdx, List<TurnActivity> activities,
                                                       CellStyle headerStyle, CellStyle numberStyle, CellStyle boldStyle) {
         Row sectionRow = sheet.createRow(rowIdx++);
@@ -638,16 +730,31 @@ public class TurnReportGenerator {
 
     // ========== Helpers ==========
 
+    /**
+     * Sets a numeric cell with right-aligned number formatting.
+     */
     private static void setNumberCell(Row row, int col, long value, CellStyle numberStyle) {
         Cell cell = row.createCell(col);
         cell.setCellValue(value);
         cell.setCellStyle(numberStyle);
     }
 
+    /**
+     * Formats a long value as a locale-formatted number string.
+     *
+     * @param value the raw numeric value
+     * @return a formatted string (e.g. "1,234,567")
+     */
     private static String formatCurrency(long value) {
         return String.format("%,d", value);
     }
 
+    /**
+     * Converts a {@link RoomStatus} to its Spanish display label.
+     *
+     * @param status the room status enum
+     * @return {@code "Libre"}, {@code "Aseo"}, or {@code "Ocupado"}
+     */
     private static String statusLabel(RoomStatus status) {
         return switch (status) {
             case FREE -> "Libre";
@@ -656,6 +763,9 @@ public class TurnReportGenerator {
         };
     }
 
+    /**
+     * Creates a bold, grey-background cell style for table headers.
+     */
     private static CellStyle createHeaderStyle(Workbook workbook) {
         CellStyle style = workbook.createCellStyle();
         Font font = workbook.createFont();
@@ -670,6 +780,9 @@ public class TurnReportGenerator {
         return style;
     }
 
+    /**
+     * Creates a right-aligned, comma-formatted number cell style.
+     */
     private static CellStyle createNumberStyle(Workbook workbook) {
         CellStyle style = workbook.createCellStyle();
         style.setDataFormat(workbook.createDataFormat().getFormat("#,##0"));
@@ -677,6 +790,9 @@ public class TurnReportGenerator {
         return style;
     }
 
+    /**
+     * Creates a bold-font-only cell style for labels and section titles.
+     */
     private static CellStyle createBoldStyle(Workbook workbook) {
         CellStyle style = workbook.createCellStyle();
         Font font = workbook.createFont();

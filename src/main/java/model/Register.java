@@ -9,6 +9,11 @@ import model.dto.InventoryItemData;
 import model.dto.SellingItemData;
 
 /**
+ * Manages the motel inventory and the active selling cart list.
+ *
+ * <p>Inventory is stored as a list of {@link Item} objects. The selling list
+ * is stored as a raw {@link JSONArray} for direct serialization; items can
+ * be added, removed, and consumed for transaction recording.
  *
  * @author Santiago
  */
@@ -20,17 +25,34 @@ public class Register {
 
     private long historyID;
 
+    /**
+     * Creates an empty register with no inventory history ID.
+     */
     public Register() {
         sellingList = new JSONArray();
         inventory = new ArrayList<Item>();
     }
 
+    /**
+     * Creates a register associated with a history record.
+     *
+     * @param historyID the turn history ID this register belongs to
+     */
     public Register(long historyID) {
         this.historyID = historyID;
         sellingList = new JSONArray();
         inventory = new ArrayList<>();
     }
 
+    /**
+     * Creates a new inventory item with a suggested ID, auto-incrementing if the ID
+     * is already in use.
+     *
+     * @param name        item display name
+     * @param value       unit price
+     * @param quantity    initial stock
+     * @param itemIDInput suggested item ID
+     */
     public void createItem(String name, long value, long quantity, long itemIDInput) {
         long itemID = itemIDInput;
         HashSet<Long> usedIds = new HashSet<>();
@@ -44,6 +66,13 @@ public class Register {
         inventory.add(newItem);
     }
 
+    /**
+     * Creates a new inventory item with an auto-generated ID.
+     *
+     * @param name     item display name
+     * @param value    unit price
+     * @param quantity initial stock
+     */
     public void createNewItem(String name, long value, long quantity) {
         long itemID = 0;
         HashSet<Long> usedIds = new HashSet<>();
@@ -57,6 +86,11 @@ public class Register {
         inventory.add(newItem);
     }
 
+    /**
+     * Removes an item from the inventory by matching its ID.
+     *
+     * @param item the item to remove
+     */
     public void deleteItemInformation(Item item) {
         for (int i = 0; i < inventory.size(); i++) {
             if (inventory.get(i).getItemID() == item.getItemID()) {
@@ -65,6 +99,11 @@ public class Register {
         }
     }
 
+    /**
+     * Removes an item from the inventory by its numeric ID.
+     *
+     * @param itemID the unique item identifier
+     */
     public void deleteItemById(long itemID) {
         for (int i = 0; i < inventory.size(); i++) {
             if (inventory.get(i).getItemID() == itemID) {
@@ -74,6 +113,13 @@ public class Register {
         }
     }
 
+    /**
+     * Updates an existing inventory item in-place. Returns {@code false} if no
+     * item with the matching ID is found.
+     *
+     * @param item the item with updated values
+     * @return {@code true} if the item was found and updated
+     */
     public boolean saveItemInformation(Item item) {
         for (int i = 0; i < inventory.size(); i++) {
             if (inventory.get(i).getItemID() == item.getItemID()) {
@@ -84,11 +130,19 @@ public class Register {
         return false;
     }
 
+    /**
+     * Clears the selling list and resets the consumed flag.
+     */
     public void newSellingList() {
         sellingList.clear();
         sellingListConsumed = false;
     }
 
+    /**
+     * Removes an item from the selling list by its ID.
+     *
+     * @param item the item to remove from the cart
+     */
     public void removeFromList(Item item) {
         for (int i = 0; i < sellingList.length(); i++) {
             JSONObject itemRegister = sellingList.getJSONObject(i);
@@ -100,6 +154,12 @@ public class Register {
         }
     }
 
+    /**
+     * Adds an item (or increases its quantity if already present) to the selling list.
+     *
+     * @param item     the item to add
+     * @param quantity quantity to add
+     */
     public void addItemToList(Item item, long quantity) {
         boolean alreadyExists = false;
         for (int i = 0; i < sellingList.length(); i++) {
@@ -125,6 +185,12 @@ public class Register {
         }
     }
 
+    /**
+     * Adds a courtesy (zero-price) item to the selling list.
+     *
+     * @param item     the item to give as courtesy
+     * @param quantity quantity to give
+     */
     public void addCourtesyItemToList(Item item, long quantity) {
         JSONObject newItem = new JSONObject();
         newItem.put("quantity", quantity);
@@ -159,6 +225,11 @@ public class Register {
         return sellingList;
     }
 
+    /**
+     * Serialises the full inventory into a JSON object.
+     *
+     * @return a JSON object with an {@code "inventoryItems"} array
+     */
     public JSONObject getInventoryData() {
         JSONObject output = new JSONObject();
         JSONArray inventoryArray = new JSONArray();
@@ -175,6 +246,12 @@ public class Register {
         return output;
     }
 
+    /**
+     * Looks up an item by its unique identifier.
+     *
+     * @param itemID the item ID to search for
+     * @return the matching item, or {@code null} if not found
+     */
     public Item getItemFromItemID(long itemID) {
         Item output = null;
         for (int i = 0; i < inventory.size(); i++) {
@@ -219,6 +296,11 @@ public class Register {
         return result;
     }
 
+    /**
+     * Calculates the total price of all items currently in the selling list.
+     *
+     * @return total price in the selling list
+     */
     public long getTotalPriceRegisterList() {
         long totalPrice = 0;
         for (int i = 0; i < sellingList.length(); i++) {

@@ -23,6 +23,13 @@ import model.turn.TurnActivity;
 import model.turn.TurnDetails;
 
 /**
+ * Represents a work shift (turn) in the motel, tracking all transactions and
+ * activities that occur during that shift.
+ *
+ * <p>Activities include room bookings, sales, room swaps, refunds, spending,
+ * and extra changes (bank transfers / deposits). Each activity is recorded as
+ * a {@link model.turn.TurnActivity} subtype in the underlying {@link model.turn.TurnDetails}
+ * aggregate.
  *
  * @author Santiago
  */
@@ -42,6 +49,13 @@ public class Turn {
     private ZoneId zoneID;
     private boolean isTurnActive;
 
+    /**
+     * Creates a new turn starting at the given instant.
+     * Turn number defaults to 1; the turn is initially inactive.
+     *
+     * @param start  start instant of the turn
+     * @param zoneID timezone for date/time operations
+     */
     public Turn(Instant start, ZoneId zoneID) {
         this.start = start;
         this.turnNumber = 1;
@@ -50,6 +64,15 @@ public class Turn {
         isTurnActive = false;
     }
 
+    /**
+     * Creates a turn from historical data (previously saved turn).
+     *
+     * @param start    start instant of the historical turn
+     * @param end      end instant of the historical turn
+     * @param turnID   turn number
+     * @param zoneID   timezone for date/time operations
+     * @param turnData JSON array of turn activities
+     */
     public Turn(Instant start, Instant end, int turnID, ZoneId zoneID, JSONArray turnData) {
         this.start = start;
         this.end = end;
@@ -69,6 +92,16 @@ public class Turn {
         return json;
     }
 
+    /**
+     * Records a room status change (booking, check-out, cleaning) as a turn activity.
+     *
+     * @param room                   the room whose status changed
+     * @param time                   when the change occurred
+     * @param price                  amount charged (0 for non-OCCUPIED transitions)
+     * @param extended               effective service duration in minutes
+     * @param consecutiveTransaction consecutive transaction number
+     * @return the newly created activity
+     */
     public RoomBookingActivity registerRoomChange(Room room, Instant time, long price, int extended, int consecutiveTransaction) {
         ZonedDateTime changeDate = time.atZone(zoneID);
         RoomStatus roomStatus = room.getStatus();
@@ -93,6 +126,13 @@ public class Turn {
         return activity;
     }
 
+    /**
+     * Records a room-to-room swap as a turn activity.
+     *
+     * @param originalRoom the source (original) room
+     * @param swapedRoom   the destination room
+     * @param time         when the swap occurred
+     */
     public void registerRoomSwap(Room originalRoom, Room swapedRoom, Instant time) {
         ZonedDateTime changeDate = time.atZone(zoneID);
         RoomSwapActivity activity = new RoomSwapActivity(
@@ -109,6 +149,15 @@ public class Turn {
         turnDetails.addActivity(activity);
     }
 
+    /**
+     * Records a sale transaction as a turn activity.
+     *
+     * @param registerJson    JSON array of sold items (from the selling list)
+     * @param roomSoldTo      the room where items were delivered
+     * @param time            when the sale occurred
+     * @param transactionNumber consecutive transaction number
+     * @return the newly created sale activity
+     */
     public SaleActivity saveTransactionInformation(JSONArray registerJson, Room roomSoldTo, Instant time, int transactionNumber) {
         ZonedDateTime changeDate = time.atZone(zoneID);
         List<SaleItem> items = new ArrayList<>();
@@ -125,6 +174,13 @@ public class Turn {
         return activity;
     }
 
+    /**
+     * Initialises a new turn with the given ID and start time.
+     * Clears any prior turn data and marks the turn as active.
+     *
+     * @param turnID the turn number
+     * @param start  when the turn starts
+     */
     public void setNewTurn(long turnID, Instant start) {
         this.turnNumber = turnID;
         this.start = start;
@@ -136,6 +192,11 @@ public class Turn {
         turnDetails.setTurnActive(true);
     }
 
+    /**
+     * Marks the turn as ended and stores the end time.
+     *
+     * @param end when the turn ended
+     */
     public void turnEnd(Instant end) {
         this.end = end;
         turnDetails.setTurnEnd(end.atZone(zoneID));
@@ -143,20 +204,42 @@ public class Turn {
         turnDetails.setTurnActive(false);
     }
 
+    /**
+     * Returns the aggregated turn data with computed totals and summary.
+     *
+     * @return the full turn details
+     */
     public TurnDetails getBasicTurnInformation() {
         turnDetails.computeTotalsAndSummary();
         return turnDetails;
     }
 
+    /**
+     * Returns the aggregated turn data with computed totals and summary.
+     *
+     * @return the full turn details
+     */
     public TurnDetails getDetailedTurnInformation() {
         turnDetails.computeTotalsAndSummary();
         return turnDetails;
     }
 
+    /**
+     * Returns the full turn data serialised as a JSON object.
+     *
+     * @return JSON representation of the turn
+     */
     public JSONObject getDetailedTurnInformationAsJson() {
         return turnDetails.toJson();
     }
 
+    /**
+     * Restores a previous turn from its JSON representation. Populates the
+     * activity list from the stored JSON array.
+     *
+     * @param previousTurn JSON object of a previously saved turn
+     * @return {@code true} if the previous turn was active
+     */
     public boolean setPreviousTurnJSON(JSONObject previousTurn) {
         turnDetails.clear();
         ZonedDateTime turnStartZ = ZonedDateTime.parse(previousTurn.getString("turnStart"));
@@ -198,6 +281,12 @@ public class Turn {
         };
     }
 
+    /**
+     * Returns the turn activities converted to a flat list of DTOs suitable
+     * for display in the UI.
+     *
+     * @return list of activity data DTOs
+     */
     public List<TurnActivityData> getActivityDataList() {
         List<TurnActivityData> result = new ArrayList<>();
         for (TurnActivity activity : turnDetails.getActivities()) {
@@ -273,16 +362,38 @@ public class Turn {
         return result;
     }
 
+    /**
+     * Returns the per-concept summary items (rooms, products, refunds, extra changes).
+     *
+     * @return list of summary item DTOs
+     */
     public List<TurnSummaryItemData> getSummaryDataList() {
         return new ArrayList<>(turnDetails.getSummaryItems());
     }
 
+    /**
+     * Records an operational expense (spending) as a turn activity.
+     *
+     * @param description          free-text description of the expense
+     * @param value                monetary amount
+     * @param consecutiveTransaction consecutive transaction number
+     * @param time                 when the expense was recorded
+     */
     public void registerSpendingTransaction(String description, long value, int consecutiveTransaction, Instant time) {
         ZonedDateTime changeDate = time.atZone(zoneID);
         SpendingActivity activity = new SpendingActivity(changeDate, description, value, consecutiveTransaction);
         turnDetails.addActivity(activity);
     }
 
+    /**
+     * Records a bank transfer or safe deposit as a turn activity.
+     *
+     * @param description          free-text description
+     * @param value                monetary amount (positive = deduction)
+     * @param type                 {@code "bankTransfer"} or {@code "safeDeposit"}
+     * @param consecutiveTransaction consecutive transaction number
+     * @param time                 when the extra change was recorded
+     */
     public void registerExtraChangeTransaction(String description, long value, String type, int consecutiveTransaction, Instant time) {
         ZonedDateTime changeDate = time.atZone(zoneID);
         ExtraChangeActivity activity = new ExtraChangeActivity(
@@ -295,6 +406,16 @@ public class Turn {
         turnDetails.addActivity(activity);
     }
 
+    /**
+     * Processes a refund for a room booking or sale activity and records it
+     * as a new turn activity. Marks the original activity as refunded.
+     *
+     * @param selectedActivity the activity to refund
+     * @param transactionNumber new consecutive transaction number for the refund
+     * @param time              when the refund was processed
+     * @param specificItemID    for multi-item sales, refund only this item ID (0 = all)
+     * @param specificQuantity  quantity being refunded for the specific item
+     */
     public void refundTransactionFromTurn(TurnActivity selectedActivity, int transactionNumber, Instant time, long specificItemID, long specificQuantity) {
         ZonedDateTime changeDate = time.atZone(zoneID);
 
@@ -384,6 +505,14 @@ public class Turn {
         }
     }
 
+    /**
+     * Removes a specific item from a sale activity without creating a refund
+     * record (used for correcting the sale before it is finalised).
+     *
+     * @param activity the sale activity to modify
+     * @param itemID   the item ID to remove
+     * @param quantity the quantity of that item to remove
+     */
     public void reverseItemSaleFromTurn(TurnActivity activity, long itemID, long quantity) {
         if (!(activity instanceof SaleActivity s)) return;
 
@@ -405,6 +534,14 @@ public class Turn {
         }
     }
 
+    /**
+     * Finds a room booking or sale activity by its consecutive transaction number
+     * and change type.
+     *
+     * @param consecutiveTrans the consecutive transaction number to match
+     * @param changeType       {@code "room"} or {@code "sale"}
+     * @return the matching activity, or {@code null}
+     */
     public TurnActivity findActivity(int consecutiveTrans, String changeType) {
         for (TurnActivity a : turnDetails.getActivities()) {
             if (a.consecutiveTrans() == consecutiveTrans && consecutiveTrans > 0) {
@@ -415,10 +552,21 @@ public class Turn {
         return null;
     }
 
+    /**
+     * Returns the full list of turn activities.
+     *
+     * @return list of all recorded activities
+     */
     public List<TurnActivity> getActivities() {
         return turnDetails.getActivities();
     }
 
+    /**
+     * Returns the activity at the given index.
+     *
+     * @param index the index in the activities list
+     * @return the turn activity
+     */
     public TurnActivity getActivity(int index) {
         return turnDetails.getActivities().get(index);
     }

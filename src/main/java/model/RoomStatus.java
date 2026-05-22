@@ -16,6 +16,11 @@ public enum RoomStatus {
 
     private final int code;
 
+    /**
+     * Creates a status with its legacy integer code.
+     *
+     * @param code the integer code (1 = FREE, 2 = CLEANING, 3 = OCCUPIED)
+     */
     RoomStatus(int code) {
         this.code = code;
     }

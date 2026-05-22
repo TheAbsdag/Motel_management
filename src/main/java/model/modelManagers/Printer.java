@@ -42,6 +42,14 @@ import model.turn.SpendingActivity;
 import model.turn.TurnActivity;
 import model.turn.TurnDetails;
 
+/**
+ * Handles receipt and turn-report printing, as well as PDF generation.
+ *
+ * <p>Uses a {@link JTextPane} for document assembly and supports printing to
+ * configured {@link PrintService} instances or saving as PDF via iText.
+ *
+ * <p>Print outputs are also saved to the {@code receiptPrints/} directory as PDF files.
+ */
 public class Printer {
 
     private static final Logger LOGGER = Logger.getLogger(Printer.class.getName());
@@ -62,6 +70,10 @@ public class Printer {
     private final String PDF_SAVE_PATH = FileManager.PATH + File.separator + "receiptPrints";
     private PrintService printerService;
 
+    /**
+     * Initialises the printer, sets up text styles, creates the PDF output
+     * directory, and discovers the default print service.
+     */
     public Printer() {
         System.out.println("Printer initialized");
         printLayout = new JTextPane();
@@ -77,12 +89,24 @@ public class Printer {
         printerService = PrinterJob.getPrinterJob().getPrintService();
     }
 
+    /**
+     * Sets the motel information printed on each receipt header.
+     *
+     * @param name    motel name
+     * @param address motel address
+     * @param iD      motel tax / NIT identifier
+     */
     public void setPrinterVariables(String name, String address, String iD) {
         this.motelName = name;
         this.motelAddress = address;
         this.motelID = iD;
     }
 
+    /**
+     * Returns the names of all available print services.
+     *
+     * @return list of printer names
+     */
     public List<String> getPrinterServiceNameList() {
         PrintService[] services = PrinterJob.lookupPrintServices();
         List<String> list = new ArrayList<>();
@@ -92,6 +116,11 @@ public class Printer {
         return list;
     }
 
+    /**
+     * Selects a print service whose name contains the given string (case-insensitive).
+     *
+     * @param printerName substring to match against available printer names
+     */
     public void setPrinterService(String printerName) {
         String lowerName = printerName.toLowerCase();
         PrintService service = null;
@@ -104,6 +133,11 @@ public class Printer {
         printerService = service;
     }
 
+    /**
+     * Returns the name of the currently selected printer.
+     *
+     * @return printer name, or {@code "N/A"} if none is selected
+     */
     public String getCurrentPrinterName() {
         if (printerService == null) {
             return "N/A";
@@ -111,6 +145,11 @@ public class Printer {
         return printerService.getName();
     }
 
+    /**
+     * Returns the name of the first available print service.
+     *
+     * @return first printer name, or {@code null} if none are available
+     */
     public String getFirstAvailablePrinterName() {
         PrintService[] services = PrinterJob.lookupPrintServices();
         if (services.length > 0) {
@@ -234,6 +273,13 @@ public class Printer {
 
     // ========== Print Methods ==========
 
+    /**
+     * Prints a room booking receipt.
+     *
+     * @param activity               the room booking activity data
+     * @param consecutiveTransaction the invoice / transaction number
+     * @param justPDF                if {@code true} only saves the PDF without physical printing
+     */
     public void printRoomTimeSell(RoomBookingActivity activity, int consecutiveTransaction, boolean justPDF) {
         resetDocument();
 
@@ -277,6 +323,13 @@ public class Printer {
         }
     }
 
+    /**
+     * Prints an item sale receipt.
+     *
+     * @param activity               the sale activity data
+     * @param consecutiveTransaction the invoice / transaction number
+     * @param justPDF                if {@code true} only saves the PDF without physical printing
+     */
     public void printItemSold(SaleActivity activity, int consecutiveTransaction, boolean justPDF) {
         resetDocument();
 
@@ -335,6 +388,12 @@ public class Printer {
 
     // ========== Current-Turn Printing (mid-turn, "No finalizado") ==========
 
+    /**
+     * Prints a summarised turn report for the currently active (unfinished) turn.
+     * Always both saves the PDF and prints physically.
+     *
+     * @param turnDetails the turn data to print
+     */
     public void printSummarizedCurrentTurn(TurnDetails turnDetails) {
         printSummarizedTurnInternal(turnDetails, true, false);
     }
