@@ -1,12 +1,15 @@
 import controller.Controller;
 import view.UserGUI;
-import model.modelManagers.MotelManagement;
+import model.modelManagers.MotelManagement;	
 import java.io.*;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.awt.Font;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.UIManager;
 
 /**
  *
@@ -54,9 +57,10 @@ public class App {
 
             // Lock failed — another instance is running
             lockRaf.close();
-            JOptionPane.showMessageDialog(null,
-                    "El programa ya se encuentra en ejecucion.\n"
-                    + "Cierre la otra instancia antes de abrir una nueva.",
+            JLabel msg = new JLabel("El programa ya se encuentra en ejecucion.\n"
+                    + "Cierre la otra instancia antes de abrir una nueva.");
+            msg.setFont(new Font("Segoe UI Black", Font.PLAIN, 22));
+            JOptionPane.showMessageDialog(null, msg,
                     "PROGRAMA YA ABIERTO",
                     JOptionPane.WARNING_MESSAGE);
             return false;
