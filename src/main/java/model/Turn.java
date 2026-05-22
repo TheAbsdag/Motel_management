@@ -5,11 +5,14 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import model.dto.TurnActivityData;
 import model.dto.TurnSummaryItemData;
+import model.turn.ActivityType;
 import model.turn.ExtraChangeActivity;
 import model.turn.ExtraChangeType;
 import model.turn.RefundActivity;
@@ -48,6 +51,8 @@ public class Turn {
     private TurnDetails turnDetails;
     private ZoneId zoneID;
     private boolean isTurnActive;
+
+    private static final Logger logger = Logger.getLogger(Turn.class.getName());
 
     /**
      * Creates a new turn starting at the given instant.
@@ -130,10 +135,10 @@ public class Turn {
      * Records a room-to-room swap as a turn activity.
      *
      * @param originalRoom the source (original) room
-     * @param swapedRoom   the destination room
-     * @param time         when the swap occurred
+     * @param swappedRoom   the destination room
+     * @param time          when the swap occurred
      */
-    public void registerRoomSwap(Room originalRoom, Room swapedRoom, Instant time) {
+    public void registerRoomSwap(Room originalRoom, Room swappedRoom, Instant time) {
         ZonedDateTime changeDate = time.atZone(zoneID);
         RoomSwapActivity activity = new RoomSwapActivity(
                 changeDate,
@@ -141,10 +146,10 @@ public class Turn {
                 originalRoom.getRoomNumber(),
                 originalRoom.getFloorNumber(),
                 originalRoom.getTowerNumber(),
-                swapedRoom.getRoomString(),
-                swapedRoom.getRoomNumber(),
-                swapedRoom.getFloorNumber(),
-                swapedRoom.getTowerNumber()
+                swappedRoom.getRoomString(),
+                swappedRoom.getRoomNumber(),
+                swappedRoom.getFloorNumber(),
+                swappedRoom.getTowerNumber()
         );
         turnDetails.addActivity(activity);
     }
@@ -152,22 +157,22 @@ public class Turn {
     /**
      * Records a sale transaction as a turn activity.
      *
-     * @param registerJson    JSON array of sold items (from the selling list)
-     * @param roomSoldTo      the room where items were delivered
-     * @param time            when the sale occurred
+     * @param items             list of cart items sold
+     * @param roomSoldTo        the room where items were delivered
+     * @param time              when the sale occurred
      * @param transactionNumber consecutive transaction number
      * @return the newly created sale activity
      */
-    public SaleActivity saveTransactionInformation(JSONArray registerJson, Room roomSoldTo, Instant time, int transactionNumber) {
+    public SaleActivity saveTransactionInformation(List<CartItem> items, Room roomSoldTo, Instant time, int transactionNumber) {
         ZonedDateTime changeDate = time.atZone(zoneID);
-        List<SaleItem> items = new ArrayList<>();
-        for (int i = 0; i < registerJson.length(); i++) {
-            items.add(SaleItem.fromJson(registerJson.getJSONObject(i)));
+        List<SaleItem> saleItems = new ArrayList<>();
+        for (CartItem ci : items) {
+            saleItems.add(new SaleItem(ci.itemName(), ci.itemID(), ci.quantity(), ci.price(), false));
         }
         SaleActivity activity = new SaleActivity(
                 changeDate,
                 roomSoldTo.getRoomString(),
-                items,
+                saleItems,
                 transactionNumber
         );
         turnDetails.addActivity(activity);
@@ -202,16 +207,6 @@ public class Turn {
         turnDetails.setTurnEnd(end.atZone(zoneID));
         isTurnActive = false;
         turnDetails.setTurnActive(false);
-    }
-
-    /**
-     * Returns the aggregated turn data with computed totals and summary.
-     *
-     * @return the full turn details
-     */
-    public TurnDetails getBasicTurnInformation() {
-        turnDetails.computeTotalsAndSummary();
-        return turnDetails;
     }
 
     /**
@@ -261,23 +256,19 @@ public class Turn {
                 }
             }
         } catch (JSONException ex) {
-            System.out.println("Previous turn found, no previous activity found");
+            logger.log(Level.WARNING, "Previous turn found, no previous activity found");
         }
         return isTurnActive;
     }
 
     private static TurnActivity parseActivityFromJson(JSONObject obj, String type) {
-        return switch (type) {
-            case "room" -> RoomBookingActivity.fromJson(obj);
-            case "sale" -> SaleActivity.fromJson(obj);
-            case "roomSwap" -> RoomSwapActivity.fromJson(obj);
-            case "refund" -> RefundActivity.fromJson(obj);
-            case "spending" -> SpendingActivity.fromJson(obj);
-            case "extraChange" -> ExtraChangeActivity.fromJson(obj);
-            default -> {
-                System.out.println("Unknown changeType in activity: " + type);
-                yield null;
-            }
+        return switch (ActivityType.fromString(type)) {
+            case ROOM -> RoomBookingActivity.fromJson(obj);
+            case SALE -> SaleActivity.fromJson(obj);
+            case ROOM_SWAP -> RoomSwapActivity.fromJson(obj);
+            case REFUND -> RefundActivity.fromJson(obj);
+            case SPENDING -> SpendingActivity.fromJson(obj);
+            case EXTRA_CHANGE -> ExtraChangeActivity.fromJson(obj);
         };
     }
 
@@ -356,7 +347,7 @@ public class Turn {
                     }
                 }
             } catch (Exception e) {
-                System.out.println("Skipping malformed turn activity entry");
+                logger.log(Level.WARNING, "Skipping malformed turn activity entry", e);
             }
         }
         return result;
@@ -394,11 +385,11 @@ public class Turn {
      * @param consecutiveTransaction consecutive transaction number
      * @param time                 when the extra change was recorded
      */
-    public void registerExtraChangeTransaction(String description, long value, String type, int consecutiveTransaction, Instant time) {
+    public void registerExtraChangeTransaction(String description, long value, ExtraChangeType changeType, int consecutiveTransaction, Instant time) {
         ZonedDateTime changeDate = time.atZone(zoneID);
         ExtraChangeActivity activity = new ExtraChangeActivity(
                 changeDate,
-                ExtraChangeType.fromString(type),
+                changeType,
                 description,
                 value,
                 consecutiveTransaction
@@ -536,17 +527,17 @@ public class Turn {
 
     /**
      * Finds a room booking or sale activity by its consecutive transaction number
-     * and change type.
+     * and activity type.
      *
      * @param consecutiveTrans the consecutive transaction number to match
-     * @param changeType       {@code "room"} or {@code "sale"}
+     * @param activityType     the activity type to search for
      * @return the matching activity, or {@code null}
      */
-    public TurnActivity findActivity(int consecutiveTrans, String changeType) {
+    public TurnActivity findActivity(int consecutiveTrans, ActivityType activityType) {
         for (TurnActivity a : turnDetails.getActivities()) {
             if (a.consecutiveTrans() == consecutiveTrans && consecutiveTrans > 0) {
-                if (a instanceof RoomBookingActivity && "room".equals(changeType)) return a;
-                if (a instanceof SaleActivity && "sale".equals(changeType)) return a;
+                if (a instanceof RoomBookingActivity && activityType == ActivityType.ROOM) return a;
+                if (a instanceof SaleActivity && activityType == ActivityType.SALE) return a;
             }
         }
         return null;

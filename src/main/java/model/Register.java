@@ -12,15 +12,14 @@ import model.dto.SellingItemData;
  * Manages the motel inventory and the active selling cart list.
  *
  * <p>Inventory is stored as a list of {@link Item} objects. The selling list
- * is stored as a raw {@link JSONArray} for direct serialization; items can
- * be added, removed, and consumed for transaction recording.
+ * is stored as a typed {@link List}&lt;{@link CartItem}&gt; for compile-time safety.
  *
  * @author Santiago
  */
 public class Register {
 
     private ArrayList<Item> inventory;
-    private JSONArray sellingList;
+    private List<CartItem> sellingList;
     private boolean sellingListConsumed = false;
 
     private long historyID;
@@ -29,7 +28,7 @@ public class Register {
      * Creates an empty register with no inventory history ID.
      */
     public Register() {
-        sellingList = new JSONArray();
+        sellingList = new ArrayList<>();
         inventory = new ArrayList<Item>();
     }
 
@@ -40,7 +39,7 @@ public class Register {
      */
     public Register(long historyID) {
         this.historyID = historyID;
-        sellingList = new JSONArray();
+        sellingList = new ArrayList<>();
         inventory = new ArrayList<>();
     }
 
@@ -144,14 +143,7 @@ public class Register {
      * @param item the item to remove from the cart
      */
     public void removeFromList(Item item) {
-        for (int i = 0; i < sellingList.length(); i++) {
-            JSONObject itemRegister = sellingList.getJSONObject(i);
-            if (itemRegister.getLong("itemID") == item.getItemID()) {
-                sellingList.remove(i);
-                break;
-            }
-
-        }
+        sellingList.removeIf(ci -> ci.itemID() == item.getItemID());
     }
 
     /**
@@ -161,28 +153,17 @@ public class Register {
      * @param quantity quantity to add
      */
     public void addItemToList(Item item, long quantity) {
-        boolean alreadyExists = false;
-        for (int i = 0; i < sellingList.length(); i++) {
-            JSONObject sellingItem = sellingList.getJSONObject(i);
-            if (item.getItemID() == sellingItem.getLong("itemID")) {
-                long newQuantity = quantity + sellingItem.getLong("quantity");
-                long newPrice = item.getPrice() * newQuantity;
-                sellingItem.put("quantity", newQuantity);
-                sellingItem.put("price", newPrice);
-                alreadyExists = true;
-                sellingList.put(i, sellingItem);
-                break;
+        for (int i = 0; i < sellingList.size(); i++) {
+            CartItem ci = sellingList.get(i);
+            if (item.getItemID() == ci.itemID()) {
+                long newQuantity = quantity + ci.quantity();
+                sellingList.set(i, new CartItem(ci.itemID(), ci.itemName(), newQuantity,
+                        item.getPrice() * newQuantity));
+                return;
             }
         }
-        if (!alreadyExists) {
-            JSONObject itemRegister = new JSONObject();
-            itemRegister.put("itemName", item.getName());
-            itemRegister.put("itemID", item.getItemID());
-            long finalPrice = quantity * item.getPrice();
-            itemRegister.put("quantity", quantity);
-            itemRegister.put("price", finalPrice);
-            sellingList.put(itemRegister);
-        }
+        sellingList.add(new CartItem(item.getItemID(), item.getName(), quantity,
+                quantity * item.getPrice()));
     }
 
     /**
@@ -192,36 +173,32 @@ public class Register {
      * @param quantity quantity to give
      */
     public void addCourtesyItemToList(Item item, long quantity) {
-        JSONObject newItem = new JSONObject();
-        newItem.put("quantity", quantity);
-        newItem.put("itemName", item.getName());
-        newItem.put("itemID", item.getItemID());
-        newItem.put("price", 0);
-        sellingList.put(newItem);
+        sellingList.add(new CartItem(item.getItemID(), item.getName(), quantity, 0L));
     }
 
     /**
      * Consumes the current selling list by decrementing inventory quantities
      * and returns the list for transaction recording.
-     * Safe against double-call: subsequent calls return an empty list.
+     *
+     * @return the consumed selling list as a typed list
+     * @throws IllegalStateException if the list was already consumed
      */
-    public JSONArray consumeRegisterListForSale() {
+    public List<CartItem> consumeRegisterListForSale() {
         if (sellingListConsumed) {
-            return new JSONArray();
+            throw new IllegalStateException("Selling list has already been consumed for this transaction");
         }
         sellingListConsumed = true;
-        for (int i = 0; i < sellingList.length(); i++) {
-            JSONObject itemSold = sellingList.getJSONObject(i);
+        for (CartItem itemSold : sellingList) {
             for (int j = 0; j < inventory.size(); j++) {
-                if (itemSold.getInt("itemID") == (inventory.get(j).getItemID())) {
-                    inventory.get(j).itemSold(itemSold.getInt("quantity"));
+                if (itemSold.itemID() == inventory.get(j).getItemID()) {
+                    inventory.get(j).itemSold(itemSold.quantity());
                 }
             }
         }
         return sellingList;
     }
 
-    JSONArray getCurrentRegisterList() {
+    List<CartItem> getCurrentRegisterList() {
         return sellingList;
     }
 
@@ -283,14 +260,13 @@ public class Register {
      */
     public List<SellingItemData> getSellingItemDataList() {
         List<SellingItemData> result = new ArrayList<>();
-        for (int i = 0; i < sellingList.length(); i++) {
-            JSONObject obj = sellingList.getJSONObject(i);
+        for (CartItem ci : sellingList) {
             result.add(new SellingItemData(
-                    obj.getLong("itemID"),
-                    obj.getString("itemName"),
-                    obj.getLong("quantity"),
-                    obj.getLong("price"),
-                    obj.getLong("price") == 0
+                    ci.itemID(),
+                    ci.itemName(),
+                    ci.quantity(),
+                    ci.price(),
+                    ci.price() == 0
             ));
         }
         return result;
@@ -303,9 +279,8 @@ public class Register {
      */
     public long getTotalPriceRegisterList() {
         long totalPrice = 0;
-        for (int i = 0; i < sellingList.length(); i++) {
-            JSONObject itemRegister = sellingList.getJSONObject(i);
-            totalPrice += itemRegister.getLong("price");
+        for (CartItem ci : sellingList) {
+            totalPrice += ci.price();
         }
         return totalPrice;
     }

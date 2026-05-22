@@ -5,15 +5,16 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
-import java.time.temporal.ChronoField;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Locale;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import model.Room;
 import model.RoomStatus;
+import model.RoomTime;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import view.helpers.TimeFormatter;
 
 /**
  * Manages the motel's room grid (3D: tower → floor → room) and room-level operations.
@@ -36,6 +37,8 @@ public class RoomManager {
     private int selectedRoomChangeRoom;
     private int selectedRoomChangeFloor;
     private int selectedRoomChangeTower;
+
+    private static final Logger logger = Logger.getLogger(RoomManager.class.getName());
 
     public RoomManager(ZoneId zoneID) {
         this.zoneID = zoneID;
@@ -76,6 +79,17 @@ public class RoomManager {
                     int roomNumber = roomJson.getInt("roomNumber");
 
                     Room currentRoom = new Room(roomString, roomFloor, roomNumber, towerNumber);
+
+                    JSONArray customTimeArr = roomJson.optJSONArray("customTimeData");
+                    if (customTimeArr != null && customTimeArr.length() > 0) {
+                        RoomTime[] timeData = new RoomTime[customTimeArr.length()];
+                        for (int t = 0; t < customTimeArr.length(); t++) {
+                            JSONObject td = customTimeArr.getJSONObject(t);
+                            timeData[t] = new RoomTime(td.getLong("price"), td.getLong("timeSeconds"));
+                        }
+                        currentRoom.setCustomRoomTimeData(timeData);
+                    }
+
                     rooms.get(towerIndex).get(floorNumber).add(currentRoom);
                 }
             }
@@ -126,7 +140,7 @@ public class RoomManager {
                     targetRoom.extendRoomTime(extension);
                 }
             } else {
-                System.out.println("Room not found: " + roomString + " (Tower: " + towerNum
+                logger.log(Level.WARNING, "Room not found during restore: " + roomString + " (Tower: " + towerNum
                         + ", Floor: " + floor + ", Room: " + roomNum + ")");
             }
         }
@@ -164,6 +178,8 @@ public class RoomManager {
 
     /**
      * Moves a guest from the current room to the desired change room.
+     *
+     * @param currentTime the current time used to set the source room to CLEANING
      * @return true if the change was valid, false if the target room is occupied
      */
     public boolean changeRoomTimeToAnother(Instant currentTime) {
@@ -222,14 +238,8 @@ public class RoomManager {
         if (startStatus == null) {
             return "N/A";
         }
-        DateTimeFormatter formatter = new DateTimeFormatterBuilder()
-                .appendPattern("hh:mm:ss").appendLiteral(' ')
-                .appendText(ChronoField.AMPM_OF_DAY, new HashMap<Long, String>() {{
-                    put(0L, "\tAM"); put(1L, "\tPM");
-                }})
-                .toFormatter();
         ZonedDateTime start = startStatus.atZone(zoneID);
-        return start.format(formatter);
+        return TimeFormatter.formatTime(start);
     }
 
     public String getStartDateRoom(int tower, int floor, int room) {
@@ -293,11 +303,125 @@ public class RoomManager {
                     currentRoom.put("endStatus", endStatus == null ? "" : endStatus.atZone(zoneID).toString());
 
                     currentRoom.put("extension", room.getExtension());
+
                     roomDataArray.put(currentRoom);
                 }
             }
         }
         return roomDataArray;
+    }
+
+    // ========== Room Configuration CRUD ==========
+
+    /**
+     * Sets custom time pricing for a specific room.
+     * @param tower    tower index
+     * @param floor    floor index
+     * @param room     room index
+     * @param timeData array of 3 RoomTime instances
+     */
+    public void setRoomCustomTimeData(int tower, int floor, int room, RoomTime[] timeData) {
+        if (tower >= 0 && tower < rooms.size()
+                && floor >= 0 && floor < rooms.get(tower).size()
+                && room >= 0 && room < rooms.get(tower).get(floor).size()) {
+            rooms.get(tower).get(floor).get(room).setCustomRoomTimeData(timeData);
+        }
+    }
+
+    /**
+     * Renames a room.
+     * @param tower      tower index
+     * @param floor      floor index
+     * @param room       room index
+     * @param roomString new display identifier
+     */
+    public void setRoomString(int tower, int floor, int room, String roomString) {
+        if (tower >= 0 && tower < rooms.size()
+                && floor >= 0 && floor < rooms.get(tower).size()
+                && room >= 0 && room < rooms.get(tower).get(floor).size()) {
+            Room target = rooms.get(tower).get(floor).get(room);
+            target.setRoomString(roomString);
+        }
+    }
+
+    /**
+     * @return total number of towers in the room grid
+     */
+    public int getTotalTowers() {
+        return rooms.size();
+    }
+
+    /**
+     * @param tower tower index
+     * @return number of floors in the given tower, or 0 if out of bounds
+     */
+    public int getTotalFloors(int tower) {
+        if (tower >= 0 && tower < rooms.size()) {
+            return rooms.get(tower).size();
+        }
+        return 0;
+    }
+
+    // ========== Room Grid Rebuilding ==========
+
+    /**
+     * Clears and rebuilds the entire room grid from a program configuration JSON,
+     * preserving existing room states (status, times, custom data). Rooms are
+     * matched by their {@code (towerNumber, floorNumber, roomNumber)} triplet
+     * from the configuration data. Rooms that no longer exist in the new config
+     * are dropped; new rooms start as FREE.
+     *
+     * @param programData the application properties JSON containing roomsPerTower
+     */
+    public void rebuildRoomGrid(JSONObject programData) {
+        JSONArray savedStates = getRoomDataForSaving();
+        rooms.clear();
+        buildRoomGrid(programData);
+        JSONObject wrapper = new JSONObject();
+        wrapper.put("rooms", savedStates);
+        restoreRoomStates(wrapper);
+    }
+
+    // ========== Incremental Grid Operations ==========
+
+    public void addTowerToGrid(int towerNum, int floors) {
+        rooms.add(new ArrayList<>());
+        int idx = rooms.size() - 1;
+        for (int f = 0; f < floors; f++) {
+            rooms.get(idx).add(new ArrayList<>());
+        }
+    }
+
+    public void removeTowerFromGrid(int towerIndex) {
+        if (towerIndex >= 0 && towerIndex < rooms.size()) {
+            rooms.remove(towerIndex);
+        }
+    }
+
+    public void addRoomToGrid(int towerIndex, int floorIndex, int floorNumber,
+                              int roomNumber, String roomString, int towerNumber) {
+        if (towerIndex < 0 || towerIndex >= rooms.size()) return;
+        if (floorIndex < 0 || floorIndex >= rooms.get(towerIndex).size()) return;
+        Room room = new Room(roomString, floorNumber, roomNumber, towerNumber);
+        rooms.get(towerIndex).get(floorIndex).add(room);
+    }
+
+    public void removeRoomFromGrid(int towerIndex, int floorIndex, int roomIndex) {
+        if (towerIndex < 0 || towerIndex >= rooms.size()) return;
+        if (floorIndex < 0 || floorIndex >= rooms.get(towerIndex).size()) return;
+        if (roomIndex < 0 || roomIndex >= rooms.get(towerIndex).get(floorIndex).size()) return;
+        rooms.get(towerIndex).get(floorIndex).remove(roomIndex);
+    }
+
+    public void addFloorToGrid(int towerIndex, int floorIndex) {
+        if (towerIndex < 0 || towerIndex >= rooms.size()) return;
+        rooms.get(towerIndex).add(floorIndex, new ArrayList<>());
+    }
+
+    public void removeFloorFromGrid(int towerIndex, int floorIndex) {
+        if (towerIndex < 0 || towerIndex >= rooms.size()) return;
+        if (floorIndex < 0 || floorIndex >= rooms.get(towerIndex).size()) return;
+        rooms.get(towerIndex).remove(floorIndex);
     }
 
     // ========== Getters / Setters ==========
