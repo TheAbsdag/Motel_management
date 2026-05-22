@@ -20,13 +20,12 @@ import java.time.Instant;
  * @author Santiago
  */
 public class Room {
-    private final String roomString;
+    private String roomString;
     private final int roomNumber;
     private final int floorNumber;
     private RoomStatus status;
     private final int towerNumber;
     
-    //TODO: Finish implementation for dynamic pricing
     private RoomTime[] customRoomTimeData;
 
     private int service;
@@ -72,7 +71,8 @@ public class Room {
     }
 
     /**
-     * Sets the room status without modifying time tracking (for initialization/freeing).
+     * Sets the room status and resets the start time to now, service to 0,
+     * and extension to 0.
      */
     public void setRoomStatus(RoomStatus status) {
         this.status = status;
@@ -92,14 +92,37 @@ public class Room {
 
     // --- Getters / Setters ---
 
+    /**
+     * Returns the display string for this room (e.g. "1-105").
+     *
+     * @return room display string
+     */
     public String getRoomString() {
         return roomString;
     }
 
+    /**
+     * Updates the display name of this room.
+     * @param roomString the new room identifier string
+     */
+    public void setRoomString(String roomString) {
+        this.roomString = roomString;
+    }
+
+    /**
+     * Returns the room number within its floor.
+     *
+     * @return room number index
+     */
     public int getRoomNumber() {
         return roomNumber;
     }
 
+    /**
+     * Returns the floor index this room belongs to.
+     *
+     * @return floor index
+     */
     public int getFloorNumber() {
         return floorNumber;
     }
@@ -111,10 +134,20 @@ public class Room {
         return status;
     }
 
+    /**
+     * Returns the base service duration in hours.
+     *
+     * @return service hours
+     */
     public int getService() {
         return service;
     }
 
+    /**
+     * Returns the start time of the current status.
+     *
+     * @return start instant
+     */
     public Instant getStartStatus() {
         return startStatus;
     }
@@ -130,18 +163,57 @@ public class Room {
         return endStatus;
     }
 
+    /**
+     * Returns the total extension hours added to the booking.
+     *
+     * @return extension hours
+     */
     public int getExtension() {
         return extension;
     }
 
+    /**
+     * Sets the extension hours for this room.
+     *
+     * @param extension extension hours to set
+     */
     public void setExtension(int extension) {
-        if (endStatus != null) {
-            endStatus = endStatus.plus(Duration.ofHours(extension - this.extension));
-        }
         this.extension = extension;
     }
 
+    /**
+     * Returns the tower index this room belongs to.
+     *
+     * @return tower index
+     */
     public int getTowerNumber() {
         return towerNumber;
+    }
+
+    /**
+     * Returns the custom time pricing slots for this room.
+     * Falls back to {@link RoomTime#getDefaultTimeSlots()} if no custom data has been set.
+     * @return array of 3 RoomTime instances
+     */
+    public RoomTime[] getCustomRoomTimeData() {
+        if (customRoomTimeData == null) {
+            return RoomTime.getDefaultTimeSlots();
+        }
+        return customRoomTimeData;
+    }
+
+    /**
+     * Sets custom time pricing for this room.
+     * @param customRoomTimeData array of 3 RoomTime instances
+     */
+    public void setCustomRoomTimeData(RoomTime[] customRoomTimeData) {
+        this.customRoomTimeData = customRoomTimeData;
+    }
+
+    /**
+     * @return true if custom time data has been explicitly set (non-null)
+     */
+    public boolean hasCustomTimeData() {
+        return customRoomTimeData != null;
     }
 }

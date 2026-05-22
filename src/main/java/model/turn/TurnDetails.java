@@ -8,6 +8,17 @@ import org.json.JSONObject;
 import model.RoomStatus;
 import model.dto.TurnSummaryItemData;
 
+/**
+ * Aggregates turn-level data: basic information, activity list, and computed
+ * financial totals.
+ *
+ * <p>Financial totals and summary items are lazily computed via
+ * {@link #computeTotalsAndSummary()} and cached until a new activity is added
+ * or the activities list is replaced.
+ *
+ * <p>Serialization to/from JSON is supported via {@link #toJson()} and
+ * {@link #fromJson(JSONObject)}.
+ */
 public class TurnDetails {
 
     private long turnNumber;
@@ -31,12 +42,22 @@ public class TurnDetails {
     private List<TurnSummaryItemData> summaryItems;
     private boolean totalsComputed;
 
+    /**
+     * Creates an empty {@code TurnDetails} with no activities and no totals computed.
+     */
     public TurnDetails() {
         this.activities = new ArrayList<>();
         this.summaryItems = new ArrayList<>();
         this.totalsComputed = false;
     }
 
+    /**
+     * Creates a {@code TurnDetails} with the given turn identity.
+     *
+     * @param turnNumber   the turn number
+     * @param turnStart    when the turn started
+     * @param isTurnActive whether the turn is currently active
+     */
     public TurnDetails(long turnNumber, ZonedDateTime turnStart, boolean isTurnActive) {
         this();
         this.turnNumber = turnNumber;
@@ -44,11 +65,20 @@ public class TurnDetails {
         this.isTurnActive = isTurnActive;
     }
 
+    /**
+     * Adds a new activity and invalidates the cached totals.
+     *
+     * @param activity the activity to add
+     */
     public void addActivity(TurnActivity activity) {
         activities.add(activity);
         totalsComputed = false;
     }
 
+    /**
+     * Resets all fields — activities, totals, and turn identity — to their default
+     * (empty) state. Useful when reusing the same instance.
+     */
     public void clear() {
         activities.clear();
         summaryItems.clear();
@@ -75,6 +105,13 @@ public class TurnDetails {
         summaryItems.clear();
     }
 
+    /**
+     * Iterates through all activities, computes financial totals (sales, refunds,
+     * spending, extra changes) and builds a summary grouped by concept.
+     *
+     * <p>Results are cached. If totals have already been computed and no new
+     * activity has been added, this method returns immediately.
+     */
     public void computeTotalsAndSummary() {
         if (totalsComputed) return;
         resetTotals();
@@ -196,6 +233,12 @@ public class TurnDetails {
         totalsComputed = true;
     }
 
+    /**
+     * Serializes this turn details (including all activities and computed totals)
+     * to a JSON object.
+     *
+     * @return JSON representation suitable for persistence
+     */
     public JSONObject toJson() {
         computeTotalsAndSummary();
         JSONObject json = new JSONObject();
@@ -224,6 +267,12 @@ public class TurnDetails {
         return json;
     }
 
+    /**
+     * Deserializes a {@code TurnDetails} from its JSON representation.
+     *
+     * @param json JSON object previously produced by {@link #toJson()}
+     * @return the reconstructed turn details
+     */
     public static TurnDetails fromJson(JSONObject json) {
         TurnDetails details = new TurnDetails();
         details.turnNumber = json.getLong("turnNumber");
@@ -268,6 +317,12 @@ public class TurnDetails {
     public void setTurnActive(boolean turnActive) { isTurnActive = turnActive; }
 
     public List<TurnActivity> getActivities() { return activities; }
+
+    /**
+     * Replaces the activity list and invalidates the cached totals.
+     *
+     * @param activities the new activity list
+     */
     public void setActivities(List<TurnActivity> activities) {
         this.activities = activities;
         totalsComputed = false;

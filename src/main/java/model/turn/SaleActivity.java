@@ -6,6 +6,14 @@ import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+/**
+ * Records a sale of one or more items to a guest in a specific room.
+ *
+ * @param changeDate       when the sale was processed
+ * @param roomSoldTo       room identifier where the items were delivered
+ * @param items            list of individual items sold
+ * @param consecutiveTrans consecutive transaction counter
+ */
 public record SaleActivity(
         ZonedDateTime changeDate,
         String roomSoldTo,
@@ -28,6 +36,12 @@ public record SaleActivity(
         return json;
     }
 
+    /**
+     * Deserializes a {@code SaleActivity} from its JSON representation.
+     *
+     * @param json JSON object previously produced by {@link #toJson()}
+     * @return the reconstructed activity
+     */
     public static SaleActivity fromJson(JSONObject json) {
         JSONArray arr = json.getJSONArray("register");
         List<SaleItem> items = new ArrayList<>();
