@@ -1,24 +1,24 @@
 package model.modelManagers;
 
-import model.modelManagers.FileManager;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
-import java.time.temporal.ChronoField;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import model.CartItem;
 import model.Item;
 import model.ProgramConfig;
 import model.Register;
 import model.Room;
+import model.RoomTime;
 import model.Turn;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -27,27 +27,30 @@ import model.dto.SellingItemData;
 import model.dto.TurnActivityData;
 import model.dto.TurnHistoryData;
 import model.dto.TurnSummaryItemData;
+import model.turn.ActivityType;
+import model.turn.ExtraChangeType;
 import model.turn.RoomBookingActivity;
 import model.turn.SaleActivity;
 import model.turn.TurnActivity;
 import model.turn.TurnDetails;
+import view.helpers.TimeFormatter;
 
 /**
- * Central model facade that coordinates sub-models, persistence, and printing.
+ * Central model facade that coordinates sub-models, services, persistence, and printing.
  *
- * <p>Delegates to:
+ * <p>Domain logic extracted into services:
  * <ul>
- *   <li>{@link RoomManager} — room grid and room-level operations</li>
- *   <li>{@link ProgramConfig} — application configuration data</li>
- *   <li>{@link Register} — inventory and selling cart</li>
- *   <li>{@link Turn} — shift/turn management</li>
- *   <li>{@link Printer} — receipt printing</li>
- *   <li>{@link FileManager} — JSON file persistence</li>
+ *   <li>{@link SellingService} — inventory and selling-cart operations</li>
+ *   <li>{@link TurnService} — turn lifecycle, reporting, and reversals</li>
+ *   <li>{@link HistoryService} — historical turn browsing and DTOs</li>
  * </ul>
+ *
+ * <p>The facade retains cross-cutting coordination (room booking, sale completion,
+ * refunds), time management, overtime tracking, printer selection, and persistence.
  *
  * @author Santiago
  */
-public class MotelManagement {
+public class MotelManagement implements ISellingService, IHistoryService {
 
     private final FileManager files;
     private final RoomManager roomManager;
@@ -55,11 +58,15 @@ public class MotelManagement {
     private final Printer printer;
     private final Register register;
     private final Turn turn;
+    private final SellingService sellingService;
+    private final TurnService turnService;
+    private final HistoryService historyService;
     private Instant currentTime;
     private ZonedDateTime localizedTime;
     private final ZoneId zoneID;
-    private List<Turn> turnHistory; //TODO: change, history management to be built on outside platform as well, turns can expand more than a thousand in a year, this would eat the memory like crazy 
     private List<String> overtimeList;
+
+    private static final Logger logger = Logger.getLogger(MotelManagement.class.getName());
 
     public MotelManagement() {
         files = new FileManager();
@@ -70,10 +77,21 @@ public class MotelManagement {
         register = new Register();
         roomManager = new RoomManager(zoneID);
         programConfig = new ProgramConfig();
-        turnHistory = new ArrayList<>();
         printer = new Printer();
         overtimeList = new CopyOnWriteArrayList<>();
+
+        sellingService = new SellingService(register);
+        turnService = new TurnService(turn, programConfig, printer, files);
+        historyService = new HistoryService(files, zoneID);
     }
+
+    // ========== Service Accessors ==========
+
+    public SellingService getSellingService() { return sellingService; }
+    public TurnService getTurnService() { return turnService; }
+    public HistoryService getHistoryService() { return historyService; }
+    public ProgramConfig getProgramConfig() { return programConfig; }
+    public RoomManager getRoomManager() { return roomManager; }
 
     // ========== Initialization ==========
 
@@ -102,7 +120,7 @@ public class MotelManagement {
         if (!(turnData == null || turnData.isEmpty())) {
             validPreviousTurn = turn.setPreviousTurnJSON(turnData);
             if (!validPreviousTurn) {
-                System.out.println("Found previous turn, but it's no longer active, backing up");
+                logger.log(Level.INFO, "Found previous turn, but it's no longer active, backing up");
                 this.timeInformationUpdate();
                 turn.turnEnd(currentTime);
                 files.saveHistoryData(turn.getDetailedTurnInformationAsJson(), "turnClosedImproperly", localizedTime);
@@ -131,18 +149,11 @@ public class MotelManagement {
     }
 
     public String getCurrentLocalizedTime() {
-        DateTimeFormatter formatter = new DateTimeFormatterBuilder()
-                .appendPattern("hh:mm:ss").appendLiteral(' ')
-                .appendText(ChronoField.AMPM_OF_DAY, new HashMap<Long, String>() {{
-                    put(0L, "\tAM"); put(1L, "\tPM");
-                }})
-                .toFormatter();
-        return localizedTime.format(formatter);
+        return TimeFormatter.formatTime(localizedTime);
     }
 
     public String getCurrentLocalizedDate() {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", new Locale("es", "ES"));
-        return localizedTime.format(formatter);
+        return TimeFormatter.formatDate(localizedTime);
     }
 
     // ========== Room Operations (delegated to RoomManager) ==========
@@ -156,7 +167,8 @@ public class MotelManagement {
     }
 
     public void registerRoomTimeAdded(int tower, int floor, int room, int service, long price, boolean print) {
-        addConsecutiveTransaction();
+        timeInformationUpdate();
+        turnService.addConsecutiveTransaction();
         int currentExtension = roomManager.registerRoomTimeAdded(tower, floor, room, service, currentTime);
         RoomBookingActivity roomChange = turn.registerRoomChange(
                 roomManager.getRoom(tower, floor, room), currentTime, price, currentExtension,
@@ -165,11 +177,13 @@ public class MotelManagement {
     }
 
     public void registerRoomTimeEnd(int tower, int floor, int room) {
+        timeInformationUpdate();
         roomManager.registerRoomTimeEnd(tower, floor, room, currentTime);
         turn.registerRoomChange(roomManager.getRoom(tower, floor, room), currentTime, 0, 0, 0);
     }
 
     public boolean changeRoomTimeToAnother() {
+        timeInformationUpdate();
         boolean valid = roomManager.changeRoomTimeToAnother(currentTime);
         if (valid) {
             turn.registerRoomSwap(roomManager.getCurrentRoom(), roomManager.getDesiredChangeRoom(), currentTime);
@@ -210,165 +224,119 @@ public class MotelManagement {
     public int getSelectedRoomChangeFloor() { return roomManager.getSelectedRoomChangeFloor(); }
     public int getSelectedRoomChangeTower() { return roomManager.getSelectedRoomChangeTower(); }
 
-    // ========== Turn Operations ==========
+    // ========== Turn Operations (delegated to TurnService) ==========
 
     public void setNewTurn(int turnNumber) {
-        this.turn.setNewTurn(turnNumber, currentTime);
+        turnService.setNewTurn(turnNumber, currentTime);
     }
 
     public void turnEnded() {
-        turn.turnEnd(currentTime);
+        turnService.turnEnded(currentTime);
     }
 
-    /**
-     * Prints the current turn report without ending the turn.
-     * Used for mid-turn printing (summarized or detailed).
-     *
-     * @param option 2 = summarized, 3 = detailed
-     */
     public void turnPrintNoEnd(int option) {
-        TurnDetails details = turn.getBasicTurnInformation();
-        switch (option) {
-            case 2 -> printer.printSummarizedCurrentTurn(details);
-            case 3 -> printer.printDetailedCurrentTurn(details);
-            default -> { /* no printing */ }
-        }
+        turnService.turnPrintNoEnd(option);
     }
 
     public void turnEndPrint(int option) {
-        TurnDetails details = turn.getDetailedTurnInformation();
-        files.saveHistoryData(details.toJson(), "turn", localizedTime);
-        TurnReportGenerator.generateReport(details);
-        switch (option) {
-            case 1 -> { printer.printSummarizedTurn(details, true);  printer.printDetailedTurn(details, true); }
-            case 2 -> { printer.printSummarizedTurn(details, false); printer.printDetailedTurn(details, true); }
-            case 3 -> { printer.printSummarizedTurn(details, true);  printer.printDetailedTurn(details, false); }
-            default -> { /* no printing */ }
-        }
-        files.clearBackupFiles();
-    }
-
-    public void turnHistoryPrint(int option, int selectedRow) {
-        TurnDetails details = turnHistory.get(selectedRow).getBasicTurnInformation();
-        switch (option) {
-            case 1 -> { printer.printSummarizedTurn(details, true);  printer.printDetailedTurn(details, true); }
-            case 2 -> { printer.printSummarizedTurn(details, false); printer.printDetailedTurn(details, true); }
-            case 3 -> { printer.printSummarizedTurn(details, true);  printer.printDetailedTurn(details, false); }
-            default -> { /* no printing */ }
-        }
+        turnService.turnEndPrint(option, localizedTime);
     }
 
     public long getTurnNumber() {
-        return turn.getTurnNumber();
+        return turnService.getTurnNumber();
     }
 
-    // ========== Inventory / Selling Operations (delegated to Register) ==========
+    // ========== Inventory / Selling Operations (delegated to SellingService) ==========
 
     public void restartSaleManager() {
-        register.newSellingList();
+        sellingService.restartSaleManager();
     }
 
     public JSONObject getInventoryData() {
-        return register.getInventoryData();
+        return sellingService.getInventoryData();
     }
 
-    /** DTO-based method for saving item information. */
     public boolean saveItemInformation(InventoryItemData item) {
-        return register.saveItemInformation(new Item(item.name(), item.price(), item.quantity(), item.itemID()));
+        return sellingService.saveItemInformation(item);
     }
 
-    /** DTO-based method for creating a new item. */
     public void newItemCreated(String name, long price, long quantity) {
-        register.createNewItem(name, price, quantity);
+        sellingService.newItemCreated(name, price, quantity);
     }
 
-    /** DTO-based method for deleting an inventory item. */
     public void deleteItemFromInventory(long itemID) {
-        register.deleteItemById(itemID);
+        sellingService.deleteItemFromInventory(itemID);
     }
 
     public void addItemToSelling(long itemID, long quantity, boolean courtesySale) {
-        if (!courtesySale) {
-            register.addItemToList(register.getItemFromItemID(itemID), quantity);
-        } else {
-            register.addCourtesyItemToList(register.getItemFromItemID(itemID), quantity);
-        }
+        sellingService.addItemToSelling(itemID, quantity, courtesySale);
     }
 
     public void removeItemToSelling(long itemID) {
-        register.removeFromList(register.getItemFromItemID(itemID));
+        sellingService.removeItemToSelling(itemID);
     }
 
     public long getCurrentTotalPriceSellingList() {
-        return register.getTotalPriceRegisterList();
+        return sellingService.getCurrentTotalPriceSellingList();
     }
 
     public void roomSaleFinished(boolean print) {
-        addConsecutiveTransaction();
+        timeInformationUpdate();
+        turnService.addConsecutiveTransaction();
         Room roomSoldTo = roomManager.getRoomForSale();
-        SaleActivity transaction = turn.saveTransactionInformation(
-                new JSONArray(register.consumeRegisterListForSale()),
-                roomSoldTo, currentTime, programConfig.getConsecutiveTransaction());
+        List<CartItem> sellingItems;
+        try {
+            sellingItems = sellingService.consumeRegisterListForSale();
+        } catch (IllegalStateException e) {
+            logger.log(Level.WARNING, "Selling list already consumed", e);
+            return;
+        }
+        SaleActivity transaction = turnService.saveTransactionInformation(
+                sellingItems, roomSoldTo, currentTime, programConfig.getConsecutiveTransaction());
         printer.printItemSold(transaction, programConfig.getConsecutiveTransaction(), !print);
     }
 
-    /**
-     * DTO-based method for reverting an item sale from the current turn.
-     */
     public void revertItemSale(TurnActivityData activity) {
         long itemID = activity.getItemID();
         long quantity = activity.getQuantity();
-        Item currentItem = register.getItemFromItemID(itemID);
+        Item currentItem = sellingService.getItemFromItemID(itemID);
         if (currentItem != null) {
             currentItem.itemAdded(quantity);
         }
-        TurnActivity turnActivity = turn.findActivity(activity.getConsecutiveTrans(), "sale");
+        TurnActivity turnActivity = turnService.findActivity(activity.getConsecutiveTrans(), ActivityType.SALE);
         if (turnActivity != null) {
-            turn.reverseItemSaleFromTurn(turnActivity, itemID, quantity);
+            turnService.reverseItemSaleFromTurn(turnActivity, itemID, quantity);
         }
     }
 
     // ========== Spending / Extra Changes / Refunds ==========
 
-    /**
-     * Registers a spending (expense) transaction in the current turn.
-     */
     public void addSpendingTransaction(String conceptSpending, long value) {
-        addConsecutiveTransaction();
-        turn.registerSpendingTransaction(conceptSpending, value * -1L,
+        timeInformationUpdate();
+        turnService.addConsecutiveTransaction();
+        turnService.addSpendingTransaction(conceptSpending, value,
                 programConfig.getConsecutiveTransaction(), currentTime);
     }
 
-    /**
-     * Registers a bank transfer or safe deposit in the current turn.
-     * @param type "bankTransfer" or "safeDeposit"
-     */
-    public void addExtraChangeTransaction(String description, long value, String type) {
-        addConsecutiveTransaction();
-        turn.registerExtraChangeTransaction(description, value * -1L, type,
+    public void addExtraChangeTransaction(String description, long value, ExtraChangeType changeType) {
+        timeInformationUpdate();
+        turnService.addConsecutiveTransaction();
+        turnService.addExtraChangeTransaction(description, value, changeType,
                 programConfig.getConsecutiveTransaction(), currentTime);
     }
 
-    /**
-     * Refunds a transaction from the current turn.
-     * Handles both room and sale refunds, restores inventory stock for item sales.
-     *
-     * @param consecutiveTrans the transaction number to refund
-     * @param changeType       "room" or "sale"
-     * @param itemID           0 for room refunds; the item ID for sale refunds
-     * @param itemQty          0 for room refunds; the item quantity for sale refunds
-     */
-    public void refundItemSale(int consecutiveTrans, String changeType, long itemID, long itemQty) {
-        addConsecutiveTransaction();
-        TurnActivity activity = turn.findActivity(consecutiveTrans, changeType);
+    public void refundItemSale(int consecutiveTrans, ActivityType changeType, long itemID, long itemQty) {
+        timeInformationUpdate();
+        turnService.addConsecutiveTransaction();
+        TurnActivity activity = turnService.findActivity(consecutiveTrans, changeType);
         if (activity == null) return;
-        if ("sale".equals(changeType) && itemID > 0) {
-            Item currentItem = register.getItemFromItemID(itemID);
+        if (changeType == ActivityType.SALE && itemID > 0) {
+            Item currentItem = sellingService.getItemFromItemID(itemID);
             if (currentItem != null) {
                 currentItem.itemAdded(itemQty);
             }
         }
-        turn.refundTransactionFromTurn(activity,
+        turnService.refundTransactionFromTurn(activity,
                 programConfig.getConsecutiveTransaction(), currentTime, itemID, itemQty);
     }
 
@@ -386,12 +354,6 @@ public class MotelManagement {
 
     public List<String> getOvertimeList() {
         return overtimeList;
-    }
-
-    // ========== Transaction Counter (delegated to ProgramConfig) ==========
-
-    private void addConsecutiveTransaction() {
-        programConfig.addConsecutiveTransaction();
     }
 
     // ========== Printer Operations ==========
@@ -432,12 +394,16 @@ public class MotelManagement {
     // ========== File Persistence ==========
 
     public void saveFilesForMainService() {
+        programConfig.ensureSchemaVersion();
+        populateConfigTimeData();
+
         JSONObject roomData = new JSONObject();
         roomData.put("rooms", roomManager.getRoomDataForSaving());
+        roomData.put("version", 1);
 
         Map<String, JSONObject> dataMap = new LinkedHashMap<>();
-        dataMap.put("turn", turn.getDetailedTurnInformationAsJson());
-        dataMap.put("inventory", register.getInventoryData());
+        dataMap.put("turn", turnService.getDetailedTurnInformationAsJson());
+        dataMap.put("inventory", sellingService.getInventoryData());
         dataMap.put("roomsInformation", roomData);
         dataMap.put("applicationProperties", programConfig.getProgramData());
 
@@ -447,108 +413,106 @@ public class MotelManagement {
     public void saveFilesForBackup(String saveType) {
         timeInformationUpdate();
 
-        files.saveJsonBackupDataPath(turn.getDetailedTurnInformationAsJson(), "turn", localizedTime, saveType);
-        files.saveJsonBackupDataPath(register.getInventoryData(), "inventory", localizedTime, saveType);
+        files.saveJsonBackupDataPath(turnService.getDetailedTurnInformationAsJson(), "turn", localizedTime, saveType);
+        files.saveJsonBackupDataPath(sellingService.getInventoryData(), "inventory", localizedTime, saveType);
 
         JSONObject roomData = new JSONObject();
         roomData.put("rooms", roomManager.getRoomDataForSaving());
+        roomData.put("version", 1);
         files.saveJsonBackupDataPath(roomData, "roomsInformation", localizedTime, saveType);
         files.saveJsonBackupDataPath(programConfig.getProgramData(), "applicationProperties", localizedTime, saveType);
     }
 
-    // ========== History Operations ==========
+    // ========== History Operations (delegated to HistoryService) ==========
 
     public JSONArray getHistoryData() {
-        JSONArray currentHistory = files.getHistoryFiles();
-        turnHistory.clear();
-        for (int i = 0; i < currentHistory.length(); i++) {
-            JSONObject currentTurn = currentHistory.getJSONObject(i);
-            JSONArray activityArray = currentTurn.getJSONArray("turnActivity");
-            Instant start = ZonedDateTime.parse(currentTurn.getString("turnStart")).toInstant();
-            Instant end = ZonedDateTime.parse(currentTurn.getString("turnEnd")).toInstant();
-            int turnNum = currentTurn.getInt("turnNumber");
-            Turn newTurn = new Turn(start, end, turnNum, zoneID, activityArray);
-            turnHistory.add(newTurn);
-        }
-        return currentHistory;
+        return historyService.getHistoryData();
     }
 
     public void generateHistoryTurnReport(int selectedRow) {
-        TurnDetails details = turnHistory.get(selectedRow).getDetailedTurnInformation();
-        TurnReportGenerator.generateReport(details);
+        historyService.generateHistoryTurnReport(selectedRow);
+    }
+
+    public List<TurnActivityData> getTurnActivityDataList() {
+        return turnService.getTurnActivityDataList();
+    }
+
+    public TurnDetails getCurrentTurnDetailedInfo() {
+        return turnService.getCurrentTurnDetailedInfo();
+    }
+
+    public List<TurnSummaryItemData> getTurnSummaryDataList() {
+        return turnService.getTurnSummaryDataList();
+    }
+
+    public List<TurnHistoryData> getTurnHistoryDataList() {
+        return historyService.getTurnHistoryDataList();
+    }
+
+    public void turnHistoryPrint(int option, int selectedRow) {
+        TurnDetails details = historyService.getHistoryTurn(selectedRow).getDetailedTurnInformation();
+        turnService.turnHistoryPrint(option, details);
     }
 
     // ========== DTO Access Methods ==========
 
     public List<InventoryItemData> getInventoryItemDataList() {
-        return register.getInventoryItemDataList();
+        return sellingService.getInventoryItemDataList();
     }
 
     public List<SellingItemData> getSellingItemDataList() {
-        return register.getSellingItemDataList();
+        return sellingService.getSellingItemDataList();
     }
 
-    public List<TurnActivityData> getTurnActivityDataList() {
-        return turn.getActivityDataList();
+    // ========== Configuration Delegation ==========
+
+    public void rebuildRoomGridFromConfig() {
+        roomManager.rebuildRoomGrid(programConfig.getProgramData());
     }
 
     /**
-     * Returns the current turn's detailed information including all computed totals.
-     * Used by TurnController to populate the turn manager view.
+     * Ensures all rooms in ProgramConfig have customTimeData populated
+     * from the runtime Room objects. Used before saving to migrate old
+     * schemas and keep config in sync with runtime changes.
      */
-    public TurnDetails getCurrentTurnDetailedInfo() {
-        return turn.getDetailedTurnInformation();
-    }
+    private void populateConfigTimeData() {
+        JSONArray roomsPerTower = programConfig.getRoomsPerTower();
+        if (roomsPerTower == null) return;
 
-    public List<TurnSummaryItemData> getTurnSummaryDataList() {
-        return turn.getSummaryDataList();
-    }
-
-    public List<TurnHistoryData> getTurnHistoryDataList() {
-        JSONArray rawHistory = files.getHistoryFiles();
-        List<TurnHistoryData> result = new ArrayList<>();
-        for (int i = 0; i < rawHistory.length(); i++) {
-            JSONObject currentTurn = rawHistory.getJSONObject(i);
-            try {
-                JSONArray activityArray = currentTurn.getJSONArray("turnActivity");
-                Instant start = ZonedDateTime.parse(currentTurn.getString("turnStart")).toInstant();
-                Instant end = ZonedDateTime.parse(currentTurn.getString("turnEnd")).toInstant();
-                int turnNum = currentTurn.getInt("turnNumber");
-                Turn historyTurn = new Turn(start, end, turnNum, zoneID, activityArray);
-                turnHistory.add(historyTurn);
-
-                ZonedDateTime turnStartZ = ZonedDateTime.parse(currentTurn.getString("turnStart"));
-                ZonedDateTime turnEndZ = ZonedDateTime.parse(currentTurn.getString("turnEnd"));
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd - hh:mm a");
-                DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", new Locale("es", "ES"));
-                Duration durationRaw = Duration.between(turnStartZ, turnEndZ);
-                long hours = durationRaw.toHours();
-                long minutes = durationRaw.minusHours(hours).toMinutes();
-                String duration = hours + ":" + minutes;
-
-                long totalSales = currentTurn.optLong("totalSales");
-                long totalItems = currentTurn.optLong("totalItems");
-                long totalRooms = currentTurn.optLong("totalRooms");
-                long totalRefunds = currentTurn.optLong("totalRefunds");
-                long totalSpending = currentTurn.optLong("totalSpending");
-                long totalTurnVal = currentTurn.optLong("totalTurn");
-                long totalBankTransfers = currentTurn.optLong("totalBankTransfers");
-                long totalDeposits = currentTurn.optLong("totalDeposits");
-                long totalNet = currentTurn.optLong("totalNet");
-
-                result.add(new TurnHistoryData(
-                        turnNum, turnStartZ, turnEndZ,
-                        totalSales, totalItems, totalRooms,
-                        totalRefunds, totalSpending, totalTurnVal,
-                        totalBankTransfers, totalDeposits, totalNet,
-                        turnStartZ.format(dateFormatter), duration,
-                        turnStartZ.format(formatter), turnEndZ.format(formatter),
-                        historyTurn.getActivityDataList()
-                ));
-            } catch (Exception e) {
-                System.out.println("Skipping malformed history entry at index " + i);
+        ArrayList<ArrayList<ArrayList<Room>>> rooms = roomManager.getRooms();
+        for (int t = 0; t < roomsPerTower.length() && t < rooms.size(); t++) {
+            JSONObject tower = roomsPerTower.getJSONObject(t);
+            JSONArray towerRooms = tower.getJSONArray("towerRooms");
+            for (int fd = 0; fd < towerRooms.length(); fd++) {
+                JSONObject floorData = towerRooms.getJSONObject(fd);
+                int floorNum = floorData.getInt("floor");
+                if (floorNum >= rooms.get(t).size()) continue;
+                JSONArray configRooms = floorData.getJSONArray("rooms");
+                ArrayList<Room> runtimeRooms = rooms.get(t).get(floorNum);
+                for (int r = 0; r < configRooms.length() && r < runtimeRooms.size(); r++) {
+                    JSONObject roomJson = configRooms.getJSONObject(r);
+                    if (roomJson.has("customTimeData")) continue;
+                    RoomTime[] timeData = runtimeRooms.get(r).getCustomRoomTimeData();
+                    JSONArray arr = new JSONArray();
+                    for (RoomTime rt : timeData) {
+                        JSONObject td = new JSONObject();
+                        td.put("price", rt.getPrice());
+                        td.put("timeSeconds", rt.getTimeSeconds());
+                        arr.put(td);
+                    }
+                    roomJson.put("customTimeData", arr);
+                }
             }
         }
-        return result;
+    }
+
+    /**
+     * Reloads ProgramConfig from disk and rebuilds the room grid, effectively
+     * reverting any unsaved in-memory config changes.
+     */
+    public void revertToSavedConfig() {
+        JSONObject rawConfig = files.getJsonData("applicationProperties");
+        programConfig.loadFromJson(rawConfig);
+        roomManager.rebuildRoomGrid(programConfig.getProgramData());
     }
 }

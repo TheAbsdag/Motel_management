@@ -29,15 +29,19 @@ import org.json.JSONObject;
  * <p>Uses atomic-write patterns (write to {@code .tmp}, then rename) to prevent
  * data corruption. Backup and history directories are created automatically.
  *
+ * <p>All I/O is dispatched through Controller's single-threaded {@code ExecutorService},
+ * so no instance-level synchronization is needed on the write methods.
+ *
  * @author Santiago
  */
 public class FileManager {
 
     public static final String PATH = System.getProperty("user.dir");
-    private static final String DATA_PATH = PATH + File.separator + "data";
-    private static final String STAGING_DIR = DATA_PATH + File.separator + ".staging";
-    private static final String BACKUP_PATH = PATH + File.separator + "backup";
-    private static final String HISTORY_PATH = PATH + File.separator + "history";
+
+    private final String dataPath;
+    private final String stagingDir;
+    private final String backupPath;
+    private final String historyPath;
 
     private static String sanitizeFileName(String name) {
         if (name == null || name.isEmpty()) {
@@ -50,9 +54,23 @@ public class FileManager {
     }
 
     /**
-     * Creates a FileManager and prepares all required directories.
+     * Creates a FileManager and prepares all required directories
+     * using the default working directory path.
      */
     public FileManager() {
+        this(PATH);
+    }
+
+    /**
+     * Creates a FileManager using a custom base path for all data directories.
+     *
+     * @param basePath the root directory for data, backup, and history folders
+     */
+    public FileManager(String basePath) {
+        this.dataPath = basePath + File.separator + "data";
+        this.stagingDir = dataPath + File.separator + ".staging";
+        this.backupPath = basePath + File.separator + "backup";
+        this.historyPath = basePath + File.separator + "history";
         System.out.println("FileManager initialized");
         prepareFolders();
     }
@@ -63,13 +81,13 @@ public class FileManager {
      */
     public void prepareFolders() {
         //All folders are created regardless of the path used
-        File prepareData = new File(DATA_PATH);
+        File prepareData = new File(dataPath);
         prepareData.mkdirs();
-        File prepareBackup = new File(BACKUP_PATH);
+        File prepareBackup = new File(backupPath);
         prepareBackup.mkdirs();
-        File prepareHistory = new File(HISTORY_PATH);
+        File prepareHistory = new File(historyPath);
         prepareHistory.mkdirs();
-        deleteDirectory(new File(STAGING_DIR));
+        deleteDirectory(new File(stagingDir));
         System.out.println("Folders created");
     }
 
@@ -89,7 +107,7 @@ public class FileManager {
      */
     public JSONObject getJsonData(String dataNeeded) {
         String safeName = sanitizeFileName(dataNeeded);
-        File file = new File(DATA_PATH + File.separator + safeName);
+        File file = new File(dataPath + File.separator + safeName);
         if (!file.exists()) {
             System.out.println("No se ha encontrado archivo de " + dataNeeded);
             return null;
@@ -119,11 +137,11 @@ public class FileManager {
      * @param data       the JSON data to save
      * @param dataToSave the file name (without path)
      */
-    public synchronized void saveJsonMainDataPath(JSONObject data, String dataToSave) {
+    public void saveJsonMainDataPath(JSONObject data, String dataToSave) {
         String safeName = sanitizeFileName(dataToSave);
         String saveString = data.toString();
-        File targetFile = new File(DATA_PATH + File.separator + safeName);
-        File tmpFile = new File(DATA_PATH + File.separator + safeName + ".tmp");
+        File targetFile = new File(dataPath + File.separator + safeName);
+        File tmpFile = new File(dataPath + File.separator + safeName + ".tmp");
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(tmpFile))) {
             writer.write(saveString);
         } catch (IOException ex) {
@@ -150,27 +168,27 @@ public class FileManager {
      *
      * @param dataMap map of file names to JSON data objects
      */
-    public synchronized void saveAllMainDataAtomic(Map<String, JSONObject> dataMap) {
-        File stagingDir = new File(STAGING_DIR);
-        deleteDirectory(stagingDir);
-        stagingDir.mkdirs();
+    public void saveAllMainDataAtomic(Map<String, JSONObject> dataMap) {
+        File stagingDirFile = new File(stagingDir);
+        deleteDirectory(stagingDirFile);
+        stagingDirFile.mkdirs();
 
         for (Map.Entry<String, JSONObject> entry : dataMap.entrySet()) {
             String safeName = sanitizeFileName(entry.getKey());
-            File stagingFile = new File(stagingDir, safeName);
+            File stagingFile = new File(stagingDirFile, safeName);
             try (BufferedWriter writer = new BufferedWriter(new FileWriter(stagingFile))) {
                 writer.write(entry.getValue().toString());
             } catch (IOException ex) {
                 Logger.getLogger(FileManager.class.getName()).log(Level.SEVERE, "Failed to write staging: " + safeName, ex);
-                deleteDirectory(stagingDir);
+                deleteDirectory(stagingDirFile);
                 return;
             }
         }
 
         for (Map.Entry<String, JSONObject> entry : dataMap.entrySet()) {
             String safeName = sanitizeFileName(entry.getKey());
-            File stagingFile = new File(stagingDir, safeName);
-            File targetFile = new File(DATA_PATH + File.separator + safeName);
+            File stagingFile = new File(stagingDirFile, safeName);
+            File targetFile = new File(dataPath + File.separator + safeName);
             try {
                 Files.move(stagingFile.toPath(), targetFile.toPath(),
                         StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
@@ -186,7 +204,7 @@ public class FileManager {
             }
         }
 
-        deleteDirectory(stagingDir);
+        deleteDirectory(stagingDirFile);
     }
 
     /**
@@ -197,10 +215,10 @@ public class FileManager {
      * @param time       the timestamp used for the backup folder
      * @param saveType   a label included in the folder name
      */
-    public synchronized void saveJsonBackupDataPath(JSONObject data, String dataToSave, ZonedDateTime time, String saveType) {
+    public void saveJsonBackupDataPath(JSONObject data, String dataToSave, ZonedDateTime time, String saveType) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss");
         String safeFolder = sanitizeFileName(time.format(formatter) + "-" + saveType);
-        String folderPath = BACKUP_PATH + File.separator + safeFolder;
+        String folderPath = backupPath + File.separator + safeFolder;
         File newFolderBackup = new File(folderPath);
         newFolderBackup.mkdirs();
         String safeName = sanitizeFileName(dataToSave);
@@ -229,8 +247,8 @@ public class FileManager {
     /**
      * Deletes the entire backup directory and all its contents.
      */
-    public synchronized void clearBackupFiles() {
-        File backupPathFile = new File(BACKUP_PATH);
+    public void clearBackupFiles() {
+        File backupPathFile = new File(backupPath);
         deleteDirectory(backupPathFile);
     }
 
@@ -255,12 +273,12 @@ public class FileManager {
      * @param dataToSave the base file name (without path)
      * @param time       the timestamp appended to the file name
      */
-    public synchronized void saveHistoryData(JSONObject data, String dataToSave, ZonedDateTime time) {
+    public void saveHistoryData(JSONObject data, String dataToSave, ZonedDateTime time) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss");
         String timeString = time.format(formatter);
         String safeName = sanitizeFileName(dataToSave);
         String saveString = data.toString();
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(HISTORY_PATH + File.separator + safeName + "-" + timeString))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(historyPath + File.separator + safeName + "-" + timeString))) {
             writer.write(saveString);
         } catch (IOException ex) {
             Logger.getLogger(FileManager.class.getName()).log(Level.SEVERE, null, ex);
@@ -278,7 +296,7 @@ public class FileManager {
 
         try {
             // Get the path object representing the directory
-            Path path = Paths.get(HISTORY_PATH);
+            Path path = Paths.get(historyPath);
 
             // List the files in the directory
             try (Stream<Path> files = Files.list(path)) {
@@ -293,17 +311,18 @@ public class FileManager {
                             // If parsing is successful, add it to the list
                             list.put(jsonObject);
                         } catch (JSONException e) {
-                            // If content is not a valid JSONObject, skip this file
-                            System.out.println("Invalid JSON in file: " + file.getFileName());
+                            Logger.getLogger(FileManager.class.getName()).log(Level.WARNING,
+                                    "Invalid JSON in history file: " + file.getFileName(), e);
                         }
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        Logger.getLogger(FileManager.class.getName()).log(Level.WARNING,
+                                "Error reading history file: " + file.getFileName(), e);
                     }
                 });
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.getLogger(FileManager.class.getName()).log(Level.SEVERE, "Error listing history files", e);
         }
         return list;
         
