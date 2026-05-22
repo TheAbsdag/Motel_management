@@ -1,6 +1,7 @@
 package controller;
 
 import controller.sub.AppOptionsController;
+import controller.sub.FloorConfigurationController;
 import controller.sub.FloorController;
 import controller.sub.HistoryController;
 import controller.sub.InventoryController;
@@ -14,6 +15,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import model.modelManagers.MotelManagement;
 import model.RoomStatus;
+import model.turn.ExtraChangeType;
 import view.UserGUI;
 import view.helpers.DialogHelper;
 import view.helpers.InputParser;
@@ -65,6 +67,7 @@ public class Controller {
     private final InventoryController inventoryController;
     private final ManagementController managementController;
     private final AppOptionsController appOptionsController;
+    private final FloorConfigurationController floorConfigurationController;
 
     // Timers
     private Timer timerForTimeUpdates;
@@ -75,7 +78,9 @@ public class Controller {
     /**
      * Creates the Controller and all sub-controllers.
      * Sub-controllers are wired with callbacks to avoid circular dependencies.
+     * Callbacks stored but never invoked during construction -- safe to pass {@code this}.
      */
+    @SuppressWarnings("this-escape")
     public Controller(MotelManagement motelManager, UserGUI userInterface) {
         this.motelManager = motelManager;
         this.userInterface = userInterface;
@@ -83,9 +88,9 @@ public class Controller {
         // Create sub-controllers (order matters for callback references)
         floorController = new FloorController(motelManager, userInterface.getFloorView());
         sellingController = new SellingController(motelManager, userInterface.getSellingView(), userInterface,
-                this::saveMainFiles, this::saveBackupFilesTransaction);
+                this::saveMainFiles, () -> saveBackupFiles("transaction"));
         inventoryController = new InventoryController(motelManager, userInterface.getInventoryView(),
-                this::showManagementSelection, this::saveMainFiles, this::saveBackupFilesRoomSwap);
+                this::showManagementSelection, this::saveMainFiles, () -> saveBackupFiles("roomSwap"));
         appOptionsController = new AppOptionsController(motelManager,
                 userInterface.getAppOptions(),
                 userInterface.getPrinterConfigView(),
@@ -99,23 +104,29 @@ public class Controller {
         historyController = new HistoryController(motelManager, userInterface.getHistoryView(),
                 this::showManagementSelection);
         turnController = new TurnController(motelManager, userInterface.getTurnManagerView(), userInterface,
-                this::showManagementSelection, this::saveMainFiles, this::saveBackupFilesTransaction);
+                this::showManagementSelection, this::saveMainFiles, () -> saveBackupFiles("transaction"));
         roomController = new RoomController(motelManager, userInterface.getFloorView(),
                 userInterface.getRoomView(), userInterface.getRoomChangeView(), userInterface,
-                () -> sellingController.roomSale(false), this::saveMainFiles, this::saveBackupFilesRoomSwap);
+                () -> sellingController.roomSale(false), this::saveMainFiles, () -> saveBackupFiles("roomSwap"));
         managementController = new ManagementController(userInterface,
                 this::openTurnManagement,
                 this::openInventoryView,
                 this::openHistoryView,
                 this::openAppOptionsView
         );
+        floorConfigurationController = new FloorConfigurationController(motelManager,
+                userInterface.getFloorConfigView(),
+                userInterface.getRoomConfigView(),
+                this::saveMainFiles,
+                this::rebuildFloorView,
+                this::openAppOptionsHub,
+                this::showRoomConfigCard,
+                this::showFloorConfigCard);
 
         // Wire sub-config view back buttons → return to options hub
         userInterface.getMotelDataConfigView().getBackButton()
                 .addActionListener(e -> openAppOptionsHub());
         userInterface.getDataSavingConfigView().getBackButton()
-                .addActionListener(e -> openAppOptionsHub());
-        userInterface.getFloorConfigView().getBackButton()
                 .addActionListener(e -> openAppOptionsHub());
         userInterface.getTimeConfigView().getBackButton()
                 .addActionListener(e -> openAppOptionsHub());
@@ -183,6 +194,7 @@ public class Controller {
         inventoryController.initListeners();
         managementController.initListeners();
         appOptionsController.initListeners();
+        floorConfigurationController.initListeners();
 
         // Floor view management button → management menu
         userInterface.getFloorView().getManagementOptionsButton()
@@ -198,6 +210,17 @@ public class Controller {
     /** Shows the floor perspective. */
     public void showFloorPerspective() {
         userInterface.setFloorView();
+    }
+
+    /**
+     * Rebuilds the main floor view's room buttons to match the current room grid.
+     * Must be called after structural config changes (add/remove towers, floors, rooms)
+     * to keep the floor view in sync.
+     */
+    public void rebuildFloorView() {
+        int[][] roomsArray = motelManager.getRoomsArray();
+        userInterface.setupFloors(roomsArray);
+        roomController.wireRoomGridListeners();
     }
 
     /** Shows the management options menu. */
@@ -240,6 +263,15 @@ public class Controller {
     }
 
     private void openFloorConfig() {
+        floorConfigurationController.populateView();
+        userInterface.setFloorConfigView();
+    }
+
+    private void showRoomConfigCard() {
+        userInterface.setRoomConfigView();
+    }
+
+    private void showFloorConfigCard() {
         userInterface.setFloorConfigView();
     }
 
@@ -259,7 +291,7 @@ public class Controller {
         if (value != 0L && !conceptSpending.isEmpty()) {
             motelManager.addSpendingTransaction(conceptSpending, value);
             saveMainFiles();
-            saveBackupFilesTransaction();
+            saveBackupFiles("transaction");
             showFloorPerspective();
         }
     }
@@ -267,11 +299,11 @@ public class Controller {
     private void registerExtraChanges() {
         String conceptSpending = userInterface.getExtraTurnChangesView().getDescriptionText().getText();
         long value = InputParser.parseLongSafe(userInterface.getExtraTurnChangesView().getValueTextField());
-        String type = userInterface.getExtraTurnChangesView().getBankTransferBox().isSelected()
-                ? "bankTransfer" : "safeDeposit";
+        ExtraChangeType type = userInterface.getExtraTurnChangesView().getBankTransferBox().isSelected()
+                ? ExtraChangeType.BANK_TRANSFER : ExtraChangeType.SAFE_DEPOSIT;
         motelManager.addExtraChangeTransaction(conceptSpending, value, type);
         saveMainFiles();
-        saveBackupFilesTransaction();
+        saveBackupFiles("transaction");
         showFloorPerspective();
     }
 
@@ -396,31 +428,6 @@ public class Controller {
                 motelManager.saveFilesForBackup(saveType);
             } catch (Exception e) {
                 System.err.println("Error saving backup files: " + e.getMessage());
-            }
-        });
-    }
-
-    public void saveBackupFilesTransaction() {
-        saveExecutor.submit(() -> {
-            try {
-                motelManager.saveFilesForBackup("transaction");
-            } catch (Exception e) {
-                System.err.println("Error saving backup files (transaction): " + e.getMessage());
-            }
-        });
-    }
-
-    /**
-     * Triggers a backup save with the "roomSwap" label.
-     * Called after room operations (booking, extensions, room swaps).
-     * Runs on a background thread.
-     */
-    public void saveBackupFilesRoomSwap() {
-        saveExecutor.submit(() -> {
-            try {
-                motelManager.saveFilesForBackup("roomSwap");
-            } catch (Exception e) {
-                System.err.println("Error saving backup files (roomSwap): " + e.getMessage());
             }
         });
     }

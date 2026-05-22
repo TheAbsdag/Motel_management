@@ -4,6 +4,7 @@ import java.util.List;
 import model.modelManagers.MotelManagement;
 import model.dto.TurnActivityData;
 import model.dto.TurnSummaryItemData;
+import model.turn.ActivityType;
 import model.turn.TurnDetails;
 import view.TurnManagerView;
 import view.UserGUI;
@@ -186,10 +187,11 @@ public class TurnController {
         if (!"sale".equals(changeType) && !"room".equals(changeType)) return;
         if (selectedItem.isRefunded()) return;
 
-        long itemID = "sale".equals(changeType) ? selectedItem.getItemID() : 0;
-        long itemQty = "sale".equals(changeType) ? selectedItem.getQuantity() : 0;
+        ActivityType actType = ActivityType.fromString(changeType);
+        long itemID = actType == ActivityType.SALE ? selectedItem.getItemID() : 0;
+        long itemQty = actType == ActivityType.SALE ? selectedItem.getQuantity() : 0;
 
-        motelManager.refundItemSale(selectedItem.getConsecutiveTrans(), changeType, itemID, itemQty);
+        motelManager.refundItemSale(selectedItem.getConsecutiveTrans(), actType, itemID, itemQty);
 
         // Refresh the table
         List<TurnActivityData> activities = motelManager.getTurnActivityDataList();

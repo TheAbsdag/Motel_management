@@ -5,6 +5,7 @@ import javax.swing.JButton;
 import model.modelManagers.MotelManagement;
 import model.Room;
 import model.RoomStatus;
+import model.RoomTime;
 import view.FloorView;
 import view.RoomChangeView;
 import view.RoomView;
@@ -62,23 +63,23 @@ public class RoomController {
 
     /** Registers action listeners for room view and room change view buttons. */
     public void initListeners() {
-        // Room view buttons
-        roomView.getBackRoomButton().addActionListener(e -> showFloorPerspective());
-        roomView.getRoomSellingButton().addActionListener(e -> onRoomSale.run());
-        roomView.getEndTimeButton().addActionListener(e -> roomTimeEnd());
-        roomView.getAddTimeButton().addActionListener(e -> roomTimeSale());
-        roomView.getRoomChangeButton().addActionListener(e -> roomReassignment());
+        // Room view buttons — using encapsulated listener registration
+        roomView.onBackButton(this::showFloorPerspective);
+        roomView.onRoomSellingButton(onRoomSale);
+        roomView.onEndTimeButton(this::roomTimeEnd);
+        roomView.onAddTimeButton(this::roomTimeSale);
+        roomView.onRoomChangeButton(this::roomReassignment);
 
-        // Room booking hour buttons
-        roomView.getBooking24HoursButton().addActionListener(e -> roomTimeModification(24));
-        roomView.getBooking3HoursButton().addActionListener(e -> roomTimeModification(3));
-        roomView.getBooking12HoursButton().addActionListener(e -> roomTimeModification(12));
+        // Room booking hour buttons (slot indices 0=3h, 1=12h, 2=24h)
+        roomView.onBookingHourButton(0, () -> roomTimeModification(0));
+        roomView.onBookingHourButton(1, () -> roomTimeModification(1));
+        roomView.onBookingHourButton(2, () -> roomTimeModification(2));
 
         // Room price adjustment buttons
-        roomView.getAddBigQuantityButton().addActionListener(e -> updateRoomPrice(1000));
-        roomView.getRemoveBigQuantity().addActionListener(e -> updateRoomPrice(-1000));
-        roomView.getAddSmallQuantityButton().addActionListener(e -> updateRoomPrice(100));
-        roomView.getRemoveSmallQuantityButton().addActionListener(e -> updateRoomPrice(-100));
+        roomView.onPriceAdjust(1000, () -> updateRoomPrice(1000));
+        roomView.onPriceAdjust(-1000, () -> updateRoomPrice(-1000));
+        roomView.onPriceAdjust(100, () -> updateRoomPrice(100));
+        roomView.onPriceAdjust(-100, () -> updateRoomPrice(-100));
 
         // Room change view buttons
         roomChangeView.getUpButton().addActionListener(e -> roomChangeViewFloorChange(1));
@@ -87,6 +88,14 @@ public class RoomController {
         roomChangeView.getConfirmButton().addActionListener(e -> changeRoomTime());
 
         // Cross-domain: room buttons on FloorView → this controller
+        wireRoomGridListeners();
+    }
+
+    /**
+     * Wires action listeners to all room buttons on FloorView and RoomChangeView.
+     * Must be called after the button grids are rebuilt (e.g., after config changes).
+     */
+    public void wireRoomGridListeners() {
         int towers[][] = motelManager.getRoomsArray();
         for (int tower = 0; tower < towers.length; tower++) {
             for (int floor = 0; floor < towers[tower].length; floor++) {
@@ -121,94 +130,45 @@ public class RoomController {
         String roomText = targetRoom.getRoomString();
         RoomStatus roomStatus = targetRoom.getStatus();
 
-        roomView.getRoomNumber().setText(roomText);
-        roomView.getBooking12HoursButton().setBackground(Color.WHITE);
-        roomView.getBooking24HoursButton().setBackground(Color.WHITE);
-        roomView.getBooking3HoursButton().setBackground(Color.WHITE);
+        roomView.setRoomNumber(roomText);
+        roomView.resetBookingHighlights();
+
+        RoomTime[] timeData = targetRoom.getCustomRoomTimeData();
+        roomView.setBookingButtonText(0, formatTimeText(timeData[0]));
+        roomView.setBookingButtonText(1, formatTimeText(timeData[1]));
+        roomView.setBookingButtonText(2, formatTimeText(timeData[2]));
+        roomView.setDetailedSelectedTime("TIEMPO SELECCIONADO: --");
 
         switch (roomStatus) {
             case FREE:
-                // Room is free — show booking controls
-                roomView.getRoomStatusBackground().setBackground(new Color(39, 174, 96));
-                roomView.getStatusLabel().setText("LIBRE");
-                roomView.getStartInformativeLabel().setVisible(false);
-                roomView.getRemainingInformativeLabel().setVisible(false);
-                roomView.getRemainingTimeLabel().setVisible(false);
-                roomView.getStartTimeLabel().setVisible(false);
-                roomView.getRoomStatusInformative().setText(" ");
-                roomView.getStartDateLabel().setVisible(false);
-
-                roomView.getAddBigQuantityButton().setVisible(true);
-                roomView.getRemoveBigQuantity().setVisible(true);
-                roomView.getAddSmallQuantityButton().setVisible(true);
-                roomView.getRemoveSmallQuantityButton().setVisible(true);
-                roomView.getPriceTextField().setVisible(true);
-                roomView.getPrintingCheckBox().setVisible(true);
-                roomView.getAddTimeButton().setVisible(true);
-                roomView.getPriceTextField().setText("0");
-
-                roomView.getRoomSellingButton().setVisible(false);
-                roomView.getEndTimeButton().setVisible(false);
-                roomView.getAddTimeButton().setEnabled(false);
-                roomView.getBooking12HoursButton().setVisible(true);
-                roomView.getBooking24HoursButton().setVisible(true);
-                roomView.getBooking3HoursButton().setVisible(true);
-                roomView.getRoomChangeButton().setVisible(false);
+                roomView.setStatusBackground(new Color(39, 174, 96));
+                roomView.setStatusLabels("LIBRE", " ");
+                roomView.showTimeInfo(false, false, false);
+                roomView.showPriceControls(true);
+                roomView.setDisplayPrice("0");
+                roomView.showActionButtons(false, false, true, false);
+                roomView.setAddTimeEnabled(false);
+                roomView.showBookingButtons(true);
                 break;
 
             case CLEANING:
-                // Room is being cleaned — show cleaning info
-                roomView.getRoomStatusBackground().setBackground(new Color(93, 173, 226));
-                roomView.getStatusLabel().setText("LIMPIEZA");
-                roomView.getStartInformativeLabel().setVisible(true);
-                roomView.getRemainingInformativeLabel().setVisible(false);
-                roomView.getRemainingTimeLabel().setVisible(false);
-                roomView.getStartTimeLabel().setVisible(true);
-                roomView.getRoomStatusInformative().setText("LIMPIEZA");
-                roomView.getStartDateLabel().setVisible(true);
-
-                roomView.getAddBigQuantityButton().setVisible(false);
-                roomView.getRemoveBigQuantity().setVisible(false);
-                roomView.getAddSmallQuantityButton().setVisible(false);
-                roomView.getRemoveSmallQuantityButton().setVisible(false);
-                roomView.getPriceTextField().setVisible(false);
-                roomView.getPrintingCheckBox().setVisible(false);
-
-                roomView.getRoomSellingButton().setVisible(false);
-                roomView.getEndTimeButton().setVisible(true);
-                roomView.getAddTimeButton().setVisible(false);
-                roomView.getBooking12HoursButton().setVisible(false);
-                roomView.getBooking24HoursButton().setVisible(false);
-                roomView.getBooking3HoursButton().setVisible(false);
-                roomView.getRoomChangeButton().setVisible(false);
+                roomView.setStatusBackground(new Color(93, 173, 226));
+                roomView.setStatusLabels("LIMPIEZA", "LIMPIEZA");
+                roomView.showTimeInfo(true, false, true);
+                roomView.showPriceControls(false);
+                roomView.showActionButtons(false, true, false, false);
+                roomView.showBookingButtons(false);
                 break;
 
             case OCCUPIED:
-                // Room is occupied — show booking info and sale/end controls
-                roomView.getRoomStatusBackground().setBackground(new Color(205, 97, 85));
-                roomView.getStatusLabel().setText("SERVICIO");
-                roomView.getRoomStatusInformative().setText("OCUPADA");
-                roomView.getStartInformativeLabel().setVisible(true);
-                roomView.getRemainingInformativeLabel().setVisible(true);
-                roomView.getRemainingTimeLabel().setVisible(true);
-                roomView.getStartTimeLabel().setVisible(true);
-                roomView.getAddBigQuantityButton().setVisible(true);
-                roomView.getRemoveBigQuantity().setVisible(true);
-                roomView.getAddSmallQuantityButton().setVisible(true);
-                roomView.getRemoveSmallQuantityButton().setVisible(true);
-                roomView.getPriceTextField().setVisible(true);
-                roomView.getPrintingCheckBox().setVisible(true);
-                roomView.getStartDateLabel().setVisible(true);
-                roomView.getAddTimeButton().setVisible(true);
-                roomView.getPriceTextField().setText("0");
-
-                roomView.getRoomSellingButton().setVisible(true);
-                roomView.getEndTimeButton().setVisible(true);
-                roomView.getAddTimeButton().setEnabled(false);
-                roomView.getBooking12HoursButton().setVisible(true);
-                roomView.getBooking24HoursButton().setVisible(true);
-                roomView.getBooking3HoursButton().setVisible(true);
-                roomView.getRoomChangeButton().setVisible(true);
+                roomView.setStatusBackground(new Color(205, 97, 85));
+                roomView.setStatusLabels("SERVICIO", "OCUPADA");
+                roomView.showTimeInfo(true, true, true);
+                roomView.showPriceControls(true);
+                roomView.setDisplayPrice("0");
+                roomView.showActionButtons(true, true, true, true);
+                roomView.setAddTimeEnabled(false);
+                roomView.showBookingButtons(true);
                 break;
         }
         userInterface.setRoomView();
@@ -217,46 +177,62 @@ public class RoomController {
     // ========== Service / Price Management ==========
 
     /**
-     * Sets the desired service duration and its default price.
-     * Highlights the selected booking button.
+     * Sets the desired service duration and price from the room's custom time data.
+     * Highlights the selected booking button and updates the time label.
      *
-     * @param amount service hours (3, 12, or 24)
+     * @param slotIndex 0, 1, or 2 (the pricing tier)
      */
-    public void roomTimeModification(int amount) {
-        roomView.getAddTimeButton().setEnabled(true);
-        switch (amount) {
-            case 3 -> {
-                roomView.getPriceTextField().setText("40000");
-                roomView.getBooking3HoursButton().setBackground(new Color(103, 159, 51));
-                roomView.getBooking12HoursButton().setBackground(Color.WHITE);
-                roomView.getBooking24HoursButton().setBackground(Color.WHITE);
-                motelManager.setCurrentServiceDesired(amount);
-            }
-            case 12 -> {
-                roomView.getPriceTextField().setText("45000");
-                roomView.getBooking3HoursButton().setBackground(Color.WHITE);
-                roomView.getBooking12HoursButton().setBackground(new Color(103, 159, 51));
-                roomView.getBooking24HoursButton().setBackground(Color.WHITE);
-                motelManager.setCurrentServiceDesired(amount);
-            }
-            case 24 -> {
-                roomView.getPriceTextField().setText("88000");
-                roomView.getBooking3HoursButton().setBackground(Color.WHITE);
-                roomView.getBooking12HoursButton().setBackground(Color.WHITE);
-                roomView.getBooking24HoursButton().setBackground(new Color(103, 159, 51));
-                motelManager.setCurrentServiceDesired(amount);
-            }
+    public void roomTimeModification(int slotIndex) {
+        int tower = motelManager.getCurrentTowerViewed();
+        int floor = motelManager.getCurrentFloorViewed();
+        int room = motelManager.getCurrentRoomViewed();
+        Room targetRoom = motelManager.getRoom(tower, floor, room);
+        RoomTime[] timeData = targetRoom.getCustomRoomTimeData();
+        if (slotIndex < 0 || slotIndex >= timeData.length) return;
+
+        RoomTime slot = timeData[slotIndex];
+        long price = slot.getPrice();
+        long seconds = slot.getTimeSeconds();
+        int serviceHours = (int) (seconds / 3600);
+        if (serviceHours == 0 && seconds > 0) serviceHours = 1;
+
+        roomView.setDisplayPrice(String.valueOf(price));
+        roomView.setAddTimeEnabled(true);
+        motelManager.setCurrentServiceDesired(serviceHours);
+
+        roomView.setBookingButtonHighlight(slotIndex);
+
+        roomView.setDetailedSelectedTime("TIEMPO SELECCIONADO: " + formatTimeText(slot));
+    }
+
+    /**
+     * Formats a RoomTime as a human-readable duration string.
+     * @return e.g. "12H" for whole hours, "45min" for less than an hour
+     */
+    private static String formatTimeText(RoomTime rt) {
+        long seconds = rt.getTimeSeconds();
+        if (seconds >= 3600 && seconds % 3600 == 0) {
+            return (seconds / 3600) + "H";
         }
+        if (seconds >= 3600) {
+            long hours = seconds / 3600;
+            long mins = (seconds % 3600) / 60;
+            return mins > 0 ? hours + "H " + mins + "min" : hours + "H";
+        }
+        if (seconds >= 60) {
+            return (seconds / 60) + "min";
+        }
+        return seconds + "s";
     }
 
     /**
      * Adjusts the displayed room price by the given delta.
      */
     public void updateRoomPrice(long delta) {
-        long currentPrice = InputParser.parseLongSafe(roomView.getPriceTextField());
+        long currentPrice = InputParser.parseLongSafe(roomView.getDisplayPrice());
         long newPrice = currentPrice + delta;
         if (newPrice > 0) {
-            roomView.getPriceTextField().setText(String.valueOf(newPrice));
+            roomView.setDisplayPrice(String.valueOf(newPrice));
         }
     }
 
@@ -272,8 +248,8 @@ public class RoomController {
         int roomNumber = motelManager.getCurrentRoomViewed();
         int floorNumber = motelManager.getCurrentFloorViewed();
         int service = motelManager.getCurrentServiceDesired();
-        long price = InputParser.parseLongSafe(roomView.getPriceTextField());
-        boolean print = roomView.getPrintingCheckBox().isSelected();
+        long price = InputParser.parseLongSafe(roomView.getDisplayPrice());
+        boolean print = roomView.isPrintSelected();
 
         if (!print) {
             boolean noPrintingConfirmation = DialogHelper.confirmPrinting();
@@ -363,21 +339,19 @@ public class RoomController {
             case CLEANING -> {
                 String startTime = motelManager.getStartTimeRoom(tower, floor, room);
                 String startDateClean = motelManager.getStartDateRoom(tower, floor, room);
-                roomView.getStartTimeLabel().setText(startTime);
-                roomView.getStartDateLabel().setText(startDateClean);
+                roomView.setStartTimeLabel(startTime);
+                roomView.setStartDateLabel(startDateClean);
             }
             case OCCUPIED -> {
                 String startTimeRoom = motelManager.getStartTimeRoom(tower, floor, room);
                 String startDate = motelManager.getStartDateRoom(tower, floor, room);
                 String remainingTime = motelManager.getRemainingTimeRoom(tower, floor, room);
                 if (remainingTime.contains("-")) {
-                    roomView.getRoomStatusBackground().setBackground(new Color(241, 196, 15));
-                    roomView.getStatusLabel().setText("SOBRETIEMPO");
-                    roomView.getRoomStatusInformative().setText("SOBRETIEMPO");
+                    roomView.setOvertimeWarning(true);
                 }
-                roomView.getStartTimeLabel().setText(startTimeRoom);
-                roomView.getRemainingTimeLabel().setText(remainingTime);
-                roomView.getStartDateLabel().setText(startDate);
+                roomView.setStartTimeLabel(startTimeRoom);
+                roomView.setRemainingTimeLabel(remainingTime);
+                roomView.setStartDateLabel(startDate);
             }
         }
     }

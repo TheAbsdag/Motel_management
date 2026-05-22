@@ -1,7 +1,7 @@
 package controller.sub;
 
 import java.util.List;
-import model.modelManagers.MotelManagement;
+import model.modelManagers.IHistoryService;
 import model.dto.TurnHistoryData;
 import view.HistoryView;
 
@@ -17,19 +17,19 @@ import view.HistoryView;
  */
 public class HistoryController {
 
-    private final MotelManagement motelManager;
+    private final IHistoryService historyService;
     private final HistoryView historyView;
     private final Runnable onBack;
     private boolean isListAdjusting = false;
     private List<TurnHistoryData> cachedHistory;
 
     /**
-     * @param motelManager the model
+     * @param historyService the history service
      * @param historyView  the history view panel
      * @param onBack       callback to return to management options view
      */
-    public HistoryController(MotelManagement motelManager, HistoryView historyView, Runnable onBack) {
-        this.motelManager = motelManager;
+    public HistoryController(IHistoryService historyService, HistoryView historyView, Runnable onBack) {
+        this.historyService = historyService;
         this.historyView = historyView;
         this.onBack = onBack;
     }
@@ -79,7 +79,7 @@ public class HistoryController {
 
     /** Opens the history view with turn history data. */
     public void openView() {
-        cachedHistory = motelManager.getTurnHistoryDataList();
+        cachedHistory = historyService.getTurnHistoryDataList();
         historyView.setTurnHistoryDetails(cachedHistory);
         historyView.getTurnDetailsButton().setEnabled(false);
     }
@@ -102,10 +102,10 @@ public class HistoryController {
     public void printHistoryTurn() {
         int selectedRow = historyView.getTurnHistoryTable().getSelectedRow();
         if (historyView.getTurnDetailsView().getNoPrintCheckBox().isSelected()) {
-            motelManager.turnHistoryPrint(1, selectedRow);
+            historyService.turnHistoryPrint(1, selectedRow);
         } else if (historyView.getTurnDetailsView().getSummarizedPrintCheckBox().isSelected()) {
-            motelManager.turnHistoryPrint(2, selectedRow);
+            historyService.turnHistoryPrint(2, selectedRow);
         } else if (historyView.getTurnDetailsView().getDetailedPrintCheckBox().isSelected()) {
-            motelManager.turnHistoryPrint(3, selectedRow);
+            historyService.turnHistoryPrint(3, selectedRow);
         }
     }}
