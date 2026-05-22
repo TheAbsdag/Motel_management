@@ -82,7 +82,7 @@ new FormModel {
 				"value": "cell 0 3"
 			} )
 			add( new FormComponent( "javax.swing.JLabel" ) {
-				name: "label8"
+				name: "floorLabel"
 				"text": "X"
 				"font": #Font0
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
@@ -204,7 +204,7 @@ new FormModel {
 				"value": "cell 6 5,growy"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
-				name: "button1"
+				name: "backButton"
 				"text": "VOLVER"
 				"font": #Font1
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {

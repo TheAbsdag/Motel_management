@@ -37,6 +37,7 @@ public class RoomView extends JPanel implements TimeLabelInterface {
 	dateLabel = new JLabel();
 	timeLabel = new JLabel();
 	roomStatusInformative = new JLabel();
+	detailedSelectedTimeLabel = new JLabel();
 	booking3HoursButton = new JButton();
 	booking12HoursButton = new JButton();
 	booking24HoursButton = new JButton();
@@ -69,6 +70,7 @@ public class RoomView extends JPanel implements TimeLabelInterface {
 	    "[42]" +
 	    "[49,grow]" +
 	    "[66]" +
+	    "[grow]" +
 	    "[49]" +
 	    "[53,grow]" +
 	    "[55,grow]" +
@@ -146,7 +148,7 @@ public class RoomView extends JPanel implements TimeLabelInterface {
 	    startDateLabel.setHorizontalAlignment(SwingConstants.CENTER);
 	    roomStatusBackground.add(startDateLabel, "cell 0 4,growy");
 	}
-	add(roomStatusBackground, "cell 0 1 4 7,growy");
+	add(roomStatusBackground, "cell 0 1 4 8,growy");
 
 	//---- dateLabel ----
 	dateLabel.setText("22 DICIEMBRE 2022");
@@ -166,70 +168,75 @@ public class RoomView extends JPanel implements TimeLabelInterface {
 	roomStatusInformative.setFont(new Font("Segoe UI Black", Font.PLAIN, 30));
 	add(roomStatusInformative, "cell 4 2 5 1,growy");
 
+	//---- detailedSelectedTimeLabel ----
+	detailedSelectedTimeLabel.setText("TIEMPO SELECCIONADO: XXH:XXM:XXS");
+	detailedSelectedTimeLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 20));
+	add(detailedSelectedTimeLabel, "cell 4 3 5 1");
+
 	//---- booking3HoursButton ----
 	booking3HoursButton.setText("3");
 	booking3HoursButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 48));
-	add(booking3HoursButton, "cell 4 3,growy");
+	add(booking3HoursButton, "cell 4 4,growy");
 
 	//---- booking12HoursButton ----
 	booking12HoursButton.setText("12");
 	booking12HoursButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 48));
-	add(booking12HoursButton, "cell 6 3,growy");
+	add(booking12HoursButton, "cell 6 4,growy");
 
 	//---- booking24HoursButton ----
 	booking24HoursButton.setText("24");
 	booking24HoursButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 48));
-	add(booking24HoursButton, "cell 8 3,growy");
+	add(booking24HoursButton, "cell 8 4,growy");
 
 	//---- priceTextField ----
 	priceTextField.setFont(new Font("Segoe UI Black", Font.PLAIN, 48));
-	add(priceTextField, "cell 4 4 5 1,growy");
+	add(priceTextField, "cell 4 5 5 1,growy");
 
 	//---- removeSmallQuantityButton ----
 	removeSmallQuantityButton.setText("-100");
 	removeSmallQuantityButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 42));
-	add(removeSmallQuantityButton, "cell 4 5 2 1,growy");
+	add(removeSmallQuantityButton, "cell 4 6 2 1,growy");
 
 	//---- addSmallQuantityButton ----
 	addSmallQuantityButton.setText("+100");
 	addSmallQuantityButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 42));
-	add(addSmallQuantityButton, "cell 7 5 2 1,growy");
+	add(addSmallQuantityButton, "cell 7 6 2 1,growy");
 
 	//---- removeBigQuantity ----
 	removeBigQuantity.setText("-1000");
 	removeBigQuantity.setFont(new Font("Segoe UI Black", Font.PLAIN, 42));
-	add(removeBigQuantity, "cell 4 6 2 1,growy");
+	add(removeBigQuantity, "cell 4 7 2 1,growy");
 
 	//---- addBigQuantityButton ----
 	addBigQuantityButton.setText("+1000");
 	addBigQuantityButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 42));
-	add(addBigQuantityButton, "cell 7 6 2 1,growy");
+	add(addBigQuantityButton, "cell 7 7 2 1,growy");
 
 	//---- printingCheckBox ----
 	printingCheckBox.setText("IMPRESION");
 	printingCheckBox.setHorizontalAlignment(SwingConstants.CENTER);
 	printingCheckBox.setFont(new Font("Segoe UI Black", Font.PLAIN, 48));
-	add(printingCheckBox, "cell 4 7 5 1,growy");
+	add(printingCheckBox, "cell 4 8 5 1,growy");
 
 	//---- backRoomButton ----
 	backRoomButton.setText("VOLVER");
 	backRoomButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 36));
-	add(backRoomButton, "cell 0 8,growy");
+	add(backRoomButton, "cell 0 9,growy");
 
 	//---- roomSellingButton ----
 	roomSellingButton.setText("VENTA HAB");
 	roomSellingButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 20));
-	add(roomSellingButton, "cell 1 8 2 1,growy");
+	add(roomSellingButton, "cell 1 9 2 1,growy");
 
 	//---- endTimeButton ----
 	endTimeButton.setText("TERMINAR");
 	endTimeButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 36));
-	add(endTimeButton, "cell 3 8,growy");
+	add(endTimeButton, "cell 3 9,growy");
 
 	//---- addTimeButton ----
 	addTimeButton.setText("VENDER");
 	addTimeButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 36));
-	add(addTimeButton, "cell 4 8 5 1,growy");
+	add(addTimeButton, "cell 4 9 5 1,growy");
 	// JFormDesigner - End of component initialization  //GEN-END:initComponents  @formatter:on
     }
 
@@ -247,6 +254,7 @@ public class RoomView extends JPanel implements TimeLabelInterface {
     private JLabel dateLabel;
     private JLabel timeLabel;
     private JLabel roomStatusInformative;
+    private JLabel detailedSelectedTimeLabel;
     private JButton booking3HoursButton;
     private JButton booking12HoursButton;
     private JButton booking24HoursButton;
@@ -330,6 +338,13 @@ public class RoomView extends JPanel implements TimeLabelInterface {
      */
     public JLabel getRoomStatusInformative() {
         return roomStatusInformative;
+    }
+
+    /**
+     * @return the detailedSelectedTimeLabel
+     */
+    public JLabel getDetailedSelectedTimeLabel() {
+        return detailedSelectedTimeLabel;
     }
 
     /**
@@ -435,5 +450,194 @@ public class RoomView extends JPanel implements TimeLabelInterface {
      */
     public JButton getRoomChangeButton() {
         return roomChangeButton;
+    }
+
+    // ========== Encapsulated listener registration (replaces raw getter access) ==========
+
+    /** Registers a listener for the back/return button. */
+    public void onBackButton(Runnable action) {
+        backRoomButton.addActionListener(e -> action.run());
+    }
+
+    /** Registers a listener for the room selling button. */
+    public void onRoomSellingButton(Runnable action) {
+        roomSellingButton.addActionListener(e -> action.run());
+    }
+
+    /** Registers a listener for the end time (check-out) button. */
+    public void onEndTimeButton(Runnable action) {
+        endTimeButton.addActionListener(e -> action.run());
+    }
+
+    /** Registers a listener for the add time button. */
+    public void onAddTimeButton(Runnable action) {
+        addTimeButton.addActionListener(e -> action.run());
+    }
+
+    /** Registers a listener for the room change button. */
+    public void onRoomChangeButton(Runnable action) {
+        roomChangeButton.addActionListener(e -> action.run());
+    }
+
+    /** Registers a listener for a booking duration button (0=3h, 1=12h, 2=24h). */
+    public void onBookingHourButton(int slot, Runnable action) {
+        switch (slot) {
+            case 0 -> booking3HoursButton.addActionListener(e -> action.run());
+            case 1 -> booking12HoursButton.addActionListener(e -> action.run());
+            case 2 -> booking24HoursButton.addActionListener(e -> action.run());
+            default -> { /* no-op */ }
+        }
+    }
+
+    /** Registers listeners for price adjustment buttons. */
+    public void onPriceAdjust(int delta, Runnable action) {
+        if (delta == 1000) {
+            addBigQuantityButton.addActionListener(e -> action.run());
+        } else if (delta == -1000) {
+            removeBigQuantity.addActionListener(e -> action.run());
+        } else if (delta == 100) {
+            addSmallQuantityButton.addActionListener(e -> action.run());
+        } else if (delta == -100) {
+            removeSmallQuantityButton.addActionListener(e -> action.run());
+        }
+    }
+
+    /** Sets the room display information. */
+    public void setRoomInfo(String roomNumberText, String statusText, String roomStatusInfo) {
+        roomNumber.setText(roomNumberText);
+        statusLabel.setText(statusText);
+        roomStatusInformative.setText(roomStatusInfo);
+    }
+
+    /** Sets the current booking price in the price field. */
+    public void setDisplayPrice(String priceText) {
+        priceTextField.setText(priceText);
+    }
+
+    /** Returns whether the printing checkbox is selected. */
+    public boolean isPrintSelected() {
+        return printingCheckBox.isSelected();
+    }
+
+    /** Returns the current text in the price field. */
+    public String getDisplayPrice() {
+        return priceTextField.getText();
+    }
+
+    // ========== View state configuration ==========
+
+    /** Sets the room number label. */
+    public void setRoomNumber(String text) {
+        roomNumber.setText(text);
+    }
+
+    /** Sets the status background color. */
+    public void setStatusBackground(Color color) {
+        roomStatusBackground.setBackground(color);
+    }
+
+    /** Sets both status label and informative text. */
+    public void setStatusLabels(String status, String informative) {
+        statusLabel.setText(status);
+        roomStatusInformative.setText(informative);
+    }
+
+    /** Shows or hides the start/remaining/date time info section. */
+    public void showTimeInfo(boolean start, boolean remaining, boolean date) {
+        startInformativeLabel.setVisible(start);
+        remainingInformativeLabel.setVisible(remaining);
+        remainingTimeLabel.setVisible(remaining);
+        startTimeLabel.setVisible(start);
+        startDateLabel.setVisible(date);
+    }
+
+    /** Shows or hides the price adjustment controls. */
+    public void showPriceControls(boolean visible) {
+        addBigQuantityButton.setVisible(visible);
+        removeBigQuantity.setVisible(visible);
+        addSmallQuantityButton.setVisible(visible);
+        removeSmallQuantityButton.setVisible(visible);
+        priceTextField.setVisible(visible);
+        printingCheckBox.setVisible(visible);
+    }
+
+    /** Shows or hides the booking duration buttons. */
+    public void showBookingButtons(boolean visible) {
+        booking3HoursButton.setVisible(visible);
+        booking12HoursButton.setVisible(visible);
+        booking24HoursButton.setVisible(visible);
+    }
+
+    /** Shows or hides the room-specific action buttons. */
+    public void showActionButtons(boolean selling, boolean endTime, boolean addTime, boolean change) {
+        roomSellingButton.setVisible(selling);
+        endTimeButton.setVisible(endTime);
+        addTimeButton.setVisible(addTime);
+        roomChangeButton.setVisible(change);
+    }
+
+    // ========== Booking button configuration ==========
+
+    /** Sets the text on a booking duration button (0=3h, 1=12h, 2=24h). */
+    public void setBookingButtonText(int slot, String text) {
+        switch (slot) {
+            case 0 -> booking3HoursButton.setText(text);
+            case 1 -> booking12HoursButton.setText(text);
+            case 2 -> booking24HoursButton.setText(text);
+            default -> { /* no-op */ }
+        }
+    }
+
+    /** Resets all booking button backgrounds to white. */
+    public void resetBookingHighlights() {
+        booking3HoursButton.setBackground(Color.WHITE);
+        booking12HoursButton.setBackground(Color.WHITE);
+        booking24HoursButton.setBackground(Color.WHITE);
+    }
+
+    /** Highlights one booking button by slot (0, 1, 2). */
+    public void setBookingButtonHighlight(int slot) {
+        Color highlight = new Color(103, 159, 51);
+        booking3HoursButton.setBackground(slot == 0 ? highlight : Color.WHITE);
+        booking12HoursButton.setBackground(slot == 1 ? highlight : Color.WHITE);
+        booking24HoursButton.setBackground(slot == 2 ? highlight : Color.WHITE);
+    }
+
+    // ========== Time label updates ==========
+
+    /** Sets the start time label text. */
+    public void setStartTimeLabel(String text) {
+        startTimeLabel.setText(text);
+    }
+
+    /** Sets the remaining time label text. */
+    public void setRemainingTimeLabel(String text) {
+        remainingTimeLabel.setText(text);
+    }
+
+    /** Sets the start date label text. */
+    public void setStartDateLabel(String text) {
+        startDateLabel.setText(text);
+    }
+
+    /** Sets the detailed selected time label. */
+    public void setDetailedSelectedTime(String text) {
+        detailedSelectedTimeLabel.setText(text);
+    }
+
+    /** Applies overtime warning appearance (yellow background + warning text). */
+    public void setOvertimeWarning(boolean isOvertime) {
+        if (isOvertime) {
+            roomStatusBackground.setBackground(new Color(241, 196, 15));
+            statusLabel.setText("SOBRETIEMPO");
+            roomStatusInformative.setText("SOBRETIEMPO");
+        }
+    }
+
+    // ========== Add time button ==========
+
+    /** Enables or disables the add time button. */
+    public void setAddTimeEnabled(boolean enabled) {
+        addTimeButton.setEnabled(enabled);
     }
 }

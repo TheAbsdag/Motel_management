@@ -31,6 +31,7 @@ public class UserGUI extends JFrame {
     private MotelDataConfigurationView motelDataConfigView;
     private DataSavingConfigurationView dataSavingConfigView;
     private FloorConfigurationView floorConfigView;
+    private RoomConfigurationView roomConfigView;
     private TimeConfigurationView timeConfigView;
     private SpendingRegisterView spendingRegisterView;
     private ExtraTurnChangesView extraTurnChangesView;
@@ -96,6 +97,9 @@ public class UserGUI extends JFrame {
 
         floorConfigView = new FloorConfigurationView();
         addView(floorConfigView, ViewCard.FLOOR_CONFIG_VIEW);
+
+        roomConfigView = new RoomConfigurationView();
+        addView(roomConfigView, ViewCard.ROOM_CONFIG_VIEW);
 
         timeConfigView = new TimeConfigurationView();
         addView(timeConfigView, ViewCard.TIME_CONFIG_VIEW);
@@ -325,6 +329,14 @@ public class UserGUI extends JFrame {
 
     public FloorConfigurationView getFloorConfigView() {
         return floorConfigView;
+    }
+
+    public RoomConfigurationView getRoomConfigView() {
+        return roomConfigView;
+    }
+
+    public void setRoomConfigView() {
+        setCard(ViewCard.ROOM_CONFIG_VIEW);
     }
 
     public TimeConfigurationView getTimeConfigView() {

@@ -59,6 +59,7 @@ new FormModel {
 					name: "towerList"
 					"layoutOrientation": 2
 					"visibleRowCount": 1
+					"selectionMode": 0
 				} )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 4 2 4 1,growy"
@@ -105,7 +106,7 @@ new FormModel {
 				"foreground": new java.awt.Color( 153, 153, 153, 255 )
 				"background": new java.awt.Color( 153, 153, 153, 255 )
 				auxiliary() {
-					"JavaCodeGenerator.postInitCode": "containerPanel.setLayout(cardLayout);"
+					"JavaCodeGenerator.postInitCode": "containerPanel.setLayout(containerCardLayout);"
 				}
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 2 3 8 7,grow"
@@ -120,9 +121,17 @@ new FormModel {
 				add( new FormComponent( "javax.swing.JList" ) {
 					name: "floorList"
 					"visibleRowCount": 6
+					"selectionMode": 0
 				} )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 0 6 1 3,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "newFloorButton"
+				"text": "AÑADIR PISO"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 16 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 1 7,growy"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "floorListDownButton"

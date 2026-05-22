@@ -96,6 +96,10 @@ public class FloorView extends JPanel implements TimeLabelInterface {
             towerLabelInforfmation.setVisible(false);
             previousTowerButton.setVisible(false);
             nextTowerButton.setVisible(false);
+        } else {
+            towerLabelInforfmation.setVisible(true);
+            previousTowerButton.setVisible(true);
+            nextTowerButton.setVisible(true);
         }
 
         cardLayout.show(containerPanel, "Tower0Floor0");

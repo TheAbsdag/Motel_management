@@ -10,10 +10,29 @@ import javax.swing.SwingUtilities;
 import javax.swing.table.TableCellRenderer;
 import view.helpers.TouchScrollHandler;
 
+/**
+ * Custom {@link TableCellRenderer} that wraps text in a {@link JTextArea} and
+ * applies colour-coded row backgrounds based on the activity type.
+ *
+ * <p>Colour rules:
+ * <ul>
+ *   <li>Rows containing {@code "Alquiler"} (room bookings) — alternating blue/cyan</li>
+ *   <li>Rows with negative values (refunds, spending, extra changes) — alternating red</li>
+ *   <li>All other rows — default table background</li>
+ * </ul>
+ *
+ * <p>Row heights are dynamically adjusted to accommodate wrapped text. During
+ * touch-scroll the height is set synchronously to avoid fighting the scroll gesture.
+ */
 public class CustomCellRenderer extends JTextArea implements TableCellRenderer {
 
     private final Font cellFont;
 
+    /**
+     * Creates a renderer that wraps text and applies the given font.
+     *
+     * @param font the font to use for cell rendering
+     */
     public CustomCellRenderer(Font font) {
         cellFont = font;
         setLineWrap(true);
@@ -75,6 +94,13 @@ public class CustomCellRenderer extends JTextArea implements TableCellRenderer {
         return this;
     }
 
+    /**
+     * Adjusts the row height to fit the wrapped text content of this cell.
+     *
+     * <p>During touch-scrolling the height is set synchronously (at most once
+     * per row). Otherwise, it is deferred via {@link SwingUtilities#invokeLater}
+     * to avoid excessive repaints.
+     */
     private void adjustRowHeight(JTable table, int row, int column) {
         boolean scrolling = TouchScrollHandler.isScrolling();
         int currentRowHeight = table.getRowHeight(row);

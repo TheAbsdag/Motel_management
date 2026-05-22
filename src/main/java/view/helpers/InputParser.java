@@ -30,4 +30,24 @@ public final class InputParser {
     public static long parseLongSafe(JTextField field) {
         return parseLongSafe(field, 0L);
     }
+
+    /**
+     * Parses a raw string as a long, returning {@code defaultValue}
+     * for null, empty, or non-numeric input instead of throwing.
+     */
+    public static long parseLongSafe(String text, long defaultValue) {
+        if (text == null || text.trim().isEmpty()) return defaultValue;
+        try {
+            return Long.parseLong(text.trim());
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
+    }
+
+    /**
+     * Parses a raw string as a long, returning 0 as default.
+     */
+    public static long parseLongSafe(String text) {
+        return parseLongSafe(text, 0L);
+    }
 }

@@ -6,14 +6,33 @@ package view;
 
 import java.awt.*;
 import javax.swing.*;
+import model.Room;
+import model.RoomTime;
 import net.miginfocom.swing.*;
 
 /**
  * @author SECC
  */
 public class RoomConfigurationView extends JPanel {
+
+    private int currentTower;
+    private int currentFloor;
+    private int currentRoom;
+    private int selectedTimeSlot;
+    private RoomTime[] timeSlots;
+    private boolean hasUnsavedChanges;
+    private ButtonGroup unitButtonGroup;
+
     public RoomConfigurationView() {
-	initComponents();
+        initCustomComponents();
+        initComponents();
+    }
+
+    private void initCustomComponents() {
+        selectedTimeSlot = 0;
+        timeSlots = RoomTime.getDefaultTimeSlots();
+        hasUnsavedChanges = false;
+        unitButtonGroup = new ButtonGroup();
     }
 
     private void initComponents() {
@@ -29,7 +48,7 @@ public class RoomConfigurationView extends JPanel {
 	secondTimeConfiguration = new JButton();
 	thirdTimeConfiguration = new JButton();
 	floorInformativeLabel = new JLabel();
-	label8 = new JLabel();
+	floorLabel = new JLabel();
 	timeDurationInformativeLAbel = new JLabel();
 	timeDurationTextField = new JTextField();
 	secondsRadioButton = new JRadioButton();
@@ -47,7 +66,7 @@ public class RoomConfigurationView extends JPanel {
 	hourRadioButton = new JRadioButton();
 	subtractBigPriceButton = new JButton();
 	addBigPriceButton = new JButton();
-	button1 = new JButton();
+	backButton = new JButton();
 	saveButton = new JButton();
 
 	//======== this ========
@@ -123,10 +142,10 @@ public class RoomConfigurationView extends JPanel {
 	floorInformativeLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 16));
 	add(floorInformativeLabel, "cell 0 3");
 
-	//---- label8 ----
-	label8.setText("X");
-	label8.setFont(new Font("Segoe UI Black", Font.PLAIN, 16));
-	add(label8, "cell 0 3");
+	//---- floorLabel ----
+	floorLabel.setText("X");
+	floorLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 16));
+	add(floorLabel, "cell 0 3");
 
 	//---- timeDurationInformativeLAbel ----
 	timeDurationInformativeLAbel.setText("DURACION");
@@ -205,17 +224,245 @@ public class RoomConfigurationView extends JPanel {
 	addBigPriceButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
 	add(addBigPriceButton, "cell 6 5,growy");
 
-	//---- button1 ----
-	button1.setText("VOLVER");
-	button1.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
-	add(button1, "cell 0 7,grow");
+	//---- backButton ----
+	backButton.setText("VOLVER");
+	backButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
+	add(backButton, "cell 0 7,grow");
 
 	//---- saveButton ----
 	saveButton.setText("GUARDAR");
 	saveButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
 	add(saveButton, "cell 5 7 2 1,growy");
 	// JFormDesigner - End of component initialization  //GEN-END:initComponents  @formatter:on
+
+        unitButtonGroup.add(secondsRadioButton);
+        unitButtonGroup.add(minuteRadioButton);
+        unitButtonGroup.add(hourRadioButton);
+
+        setupInternalListeners();
     }
+
+    private void setupInternalListeners() {
+        firstTimeConfiguration.addActionListener(e -> selectTimeSlot(0));
+        secondTimeConfiguration.addActionListener(e -> selectTimeSlot(1));
+        thirdTimeConfiguration.addActionListener(e -> selectTimeSlot(2));
+
+        subtractSmallPriceButton.addActionListener(e -> adjustPrice(-100));
+        addSmallPriceButton.addActionListener(e -> adjustPrice(100));
+        subtractBigPriceButton.addActionListener(e -> adjustPrice(-1000));
+        addBigPriceButton.addActionListener(e -> adjustPrice(1000));
+
+        timeDurationTextField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            @Override public void insertUpdate(javax.swing.event.DocumentEvent e) { onDurationChanged(); }
+            @Override public void removeUpdate(javax.swing.event.DocumentEvent e) { onDurationChanged(); }
+            @Override public void changedUpdate(javax.swing.event.DocumentEvent e) { onDurationChanged(); }
+        });
+
+        priceTextField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            @Override public void insertUpdate(javax.swing.event.DocumentEvent e) { markDirty(); }
+            @Override public void removeUpdate(javax.swing.event.DocumentEvent e) { markDirty(); }
+            @Override public void changedUpdate(javax.swing.event.DocumentEvent e) { markDirty(); }
+        });
+
+        roomStringLabel.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            @Override public void insertUpdate(javax.swing.event.DocumentEvent e) { markDirty(); }
+            @Override public void removeUpdate(javax.swing.event.DocumentEvent e) { markDirty(); }
+            @Override public void changedUpdate(javax.swing.event.DocumentEvent e) { markDirty(); }
+        });
+
+        secondsRadioButton.addActionListener(e -> onUnitChanged());
+        minuteRadioButton.addActionListener(e -> onUnitChanged());
+        hourRadioButton.addActionListener(e -> onUnitChanged());
+    }
+
+    // ========== Data Loading ==========
+
+    public void loadRoom(int tower, int floor, int room, Room roomData) {
+        currentTower = tower;
+        currentFloor = floor;
+        currentRoom = room;
+
+        towerLabel.setText(String.valueOf(tower + 1));
+        floorLabel.setText(String.valueOf(floor + 1));
+        numberLabel.setText(String.valueOf(room + 1));
+        roomStringLabel.setText(roomData.getRoomString());
+
+        RoomTime[] data = roomData.getCustomRoomTimeData();
+        timeSlots = new RoomTime[3];
+        for (int i = 0; i < 3; i++) {
+            timeSlots[i] = data[i];
+        }
+
+        updateTimeSlotButtonLabels();
+        selectTimeSlot(0);
+        clearDirty();
+    }
+
+    public void resetView() {
+        currentTower = 0;
+        currentFloor = 0;
+        currentRoom = 0;
+        timeSlots = RoomTime.getDefaultTimeSlots();
+        towerLabel.setText("X");
+        floorLabel.setText("X");
+        numberLabel.setText("X");
+        roomStringLabel.setText("X-XXX");
+        timeDurationTextField.setText("");
+        priceTextField.setText("");
+        timeReadableLabel.setText("X  SEGUNDOS, X MINUTOS, X HORAS");
+        updateTimeSlotButtonLabels();
+        clearDirty();
+    }
+
+    // ========== Time Slot Selection ==========
+
+    private void selectTimeSlot(int index) {
+        if (index < 0 || index >= timeSlots.length) {
+            return;
+        }
+        selectedTimeSlot = index;
+        updateSlotButtonHighlights();
+        loadTimeSlotIntoFields(timeSlots[index]);
+    }
+
+    private void loadTimeSlotIntoFields(RoomTime slot) {
+        long seconds = slot.getTimeSeconds();
+        if (seconds >= 3600 && seconds % 3600 == 0) {
+            timeDurationTextField.setText(String.valueOf(seconds / 3600));
+            hourRadioButton.setSelected(true);
+        } else if (seconds >= 60 && seconds % 60 == 0) {
+            timeDurationTextField.setText(String.valueOf(seconds / 60));
+            minuteRadioButton.setSelected(true);
+        } else {
+            timeDurationTextField.setText(String.valueOf(seconds));
+            secondsRadioButton.setSelected(true);
+        }
+        priceTextField.setText(String.valueOf(slot.getPrice()));
+        updateReadableDuration();
+    }
+
+    private void updateSlotButtonHighlights() {
+        Color selected = new Color(103, 159, 51);
+        Color deselected = UIManager.getColor("Button.background");
+        firstTimeConfiguration.setBackground(selectedTimeSlot == 0 ? selected : deselected);
+        secondTimeConfiguration.setBackground(selectedTimeSlot == 1 ? selected : deselected);
+        thirdTimeConfiguration.setBackground(selectedTimeSlot == 2 ? selected : deselected);
+    }
+
+    private void updateTimeSlotButtonLabels() {
+        if (timeSlots != null && timeSlots.length >= 3) {
+            firstTimeConfiguration.setText(formatDuration(timeSlots[0].getTimeSeconds())
+                    + " / $" + timeSlots[0].getPrice());
+            secondTimeConfiguration.setText(formatDuration(timeSlots[1].getTimeSeconds())
+                    + " / $" + timeSlots[1].getPrice());
+            thirdTimeConfiguration.setText(formatDuration(timeSlots[2].getTimeSeconds())
+                    + " / $" + timeSlots[2].getPrice());
+        }
+    }
+
+    // ========== Duration Parsing ==========
+
+    private long getCurrentDurationSeconds() {
+        try {
+            long value = Long.parseLong(timeDurationTextField.getText().trim());
+            if (secondsRadioButton.isSelected()) {
+                return value;
+            } else if (minuteRadioButton.isSelected()) {
+                return value * 60;
+            } else {
+                return value * 3600;
+            }
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
+    private void onDurationChanged() {
+        updateReadableDuration();
+        markDirty();
+    }
+
+    private void onUnitChanged() {
+        updateReadableDuration();
+        markDirty();
+    }
+
+    private void updateReadableDuration() {
+        long seconds = getCurrentDurationSeconds();
+        long hours = seconds / 3600;
+        long minutes = (seconds % 3600) / 60;
+        long secs = seconds % 60;
+        timeReadableLabel.setText(hours + " HORAS, " + minutes + " MINUTOS, " + secs + " SEGUNDOS");
+    }
+
+    private String formatDuration(long seconds) {
+        if (seconds >= 3600 && seconds % 3600 == 0) {
+            return (seconds / 3600) + "h";
+        } else if (seconds >= 60 && seconds % 60 == 0) {
+            return (seconds / 60) + "m";
+        }
+        return seconds + "s";
+    }
+
+    // ========== Price Adjustment ==========
+
+    private void adjustPrice(long delta) {
+        try {
+            long current = Long.parseLong(priceTextField.getText().trim());
+            long newPrice = current + delta;
+            if (newPrice >= 0) {
+                priceTextField.setText(String.valueOf(newPrice));
+            }
+        } catch (NumberFormatException e) {
+            priceTextField.setText(String.valueOf(Math.max(0, delta)));
+        }
+    }
+
+    // ========== Dirty Tracking ==========
+
+    private void markDirty() {
+        hasUnsavedChanges = true;
+    }
+
+    public void clearDirty() {
+        hasUnsavedChanges = false;
+    }
+
+    public boolean isDirty() {
+        return hasUnsavedChanges;
+    }
+
+    public void applyCurrentFieldsToSlot() {
+        long seconds = getCurrentDurationSeconds();
+        long price;
+        try {
+            price = Long.parseLong(priceTextField.getText().trim());
+        } catch (NumberFormatException e) {
+            price = 0;
+        }
+        if (seconds > 0 && price > 0) {
+            timeSlots[selectedTimeSlot] = new RoomTime(price, seconds);
+        }
+    }
+
+    // ========== Getters for Modified Data ==========
+
+    public RoomTime[] getModifiedTimeSlots() {
+        applyCurrentFieldsToSlot();
+        RoomTime[] copy = new RoomTime[3];
+        for (int i = 0; i < 3; i++) {
+            copy[i] = timeSlots[i];
+        }
+        return copy;
+    }
+
+    public String getModifiedRoomString() {
+        return roomStringLabel.getText().trim();
+    }
+
+    public int getCurrentTower() { return currentTower; }
+    public int getCurrentFloor() { return currentFloor; }
+    public int getCurrentRoom() { return currentRoom; }
 
     // JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables  @formatter:off
     // Generated using JFormDesigner Educational license - Santiago Esteban Castelblanco Castiblanco (saecastelblancoc)
@@ -229,7 +476,7 @@ public class RoomConfigurationView extends JPanel {
     private JButton secondTimeConfiguration;
     private JButton thirdTimeConfiguration;
     private JLabel floorInformativeLabel;
-    private JLabel label8;
+    private JLabel floorLabel;
     private JLabel timeDurationInformativeLAbel;
     private JTextField timeDurationTextField;
     private JRadioButton secondsRadioButton;
@@ -247,7 +494,27 @@ public class RoomConfigurationView extends JPanel {
     private JRadioButton hourRadioButton;
     private JButton subtractBigPriceButton;
     private JButton addBigPriceButton;
-    private JButton button1;
+    private JButton backButton;
     private JButton saveButton;
     // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
+
+    public JButton getDeleteRoomButton() { return deleteRoomButton; }
+    public JButton getBackButton() { return backButton; }
+    public JButton getSaveButton() { return saveButton; }
+    public JLabel getTowerLabel() { return towerLabel; }
+    public JLabel getFloorLabel() { return floorLabel; }
+    public JLabel getNumberLabel() { return numberLabel; }
+    public JTextField getRoomStringLabel() { return roomStringLabel; }
+    public JButton getFirstTimeConfiguration() { return firstTimeConfiguration; }
+    public JButton getSecondTimeConfiguration() { return secondTimeConfiguration; }
+    public JButton getThirdTimeConfiguration() { return thirdTimeConfiguration; }
+    public JTextField getTimeDurationTextField() { return timeDurationTextField; }
+    public JRadioButton getSecondsRadioButton() { return secondsRadioButton; }
+    public JRadioButton getMinuteRadioButton() { return minuteRadioButton; }
+    public JRadioButton getHourRadioButton() { return hourRadioButton; }
+    public JTextField getPriceTextField() { return priceTextField; }
+    public JButton getSubtractSmallPriceButton() { return subtractSmallPriceButton; }
+    public JButton getAddSmallPriceButton() { return addSmallPriceButton; }
+    public JButton getSubtractBigPriceButton() { return subtractBigPriceButton; }
+    public JButton getAddBigPriceButton() { return addBigPriceButton; }
 }

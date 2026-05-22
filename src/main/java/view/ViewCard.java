@@ -15,6 +15,7 @@ public enum ViewCard {
     INVENTORY_VIEW("inventoryView"),
     HISTORY_VIEW("historyView"),
     ROOM_CHANGE_VIEW("roomChangeView"),
+    ROOM_CONFIG_VIEW("roomConfigView"),
     APP_OPTIONS_VIEW("appOptionsView"),
     SPENDING_REGISTER_VIEW("spendingRegisterView"),
     EXTRA_TURN_CHANGES_VIEW("extraTurnChangesView"),
