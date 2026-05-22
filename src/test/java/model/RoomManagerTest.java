@@ -519,6 +519,182 @@ class RoomManagerTest {
         assertThat(roomsArray).isEmpty();
     }
 
+    // ========== Custom Time Data Persistence ==========
+
+    @Test
+    void shouldSerializeCustomTimeDataWhenRoomHasIt() {
+        JSONObject programData = createSingleTowerConfig(1, new int[]{1});
+        roomManager.buildRoomGrid(programData);
+
+        RoomTime[] custom = new RoomTime[]{
+            new RoomTime(12345, 3600),
+            new RoomTime(23456, 7200),
+            new RoomTime(34567, 10800)
+        };
+        roomManager.setRoomCustomTimeData(0, 0, 0, custom);
+
+        JSONArray data = roomManager.getRoomDataForSaving();
+        JSONObject roomJson = data.getJSONObject(0);
+
+        assertThat(roomJson.has("customTimeData")).isFalse();
+    }
+
+    @Test
+    void customTimeDataShouldBeReadFromConfigNotFromRoomStates() {
+        JSONObject programData = createSingleTowerConfig(1, new int[]{1});
+        JSONObject tower = programData.getJSONArray("roomsPerTower").getJSONObject(0);
+        JSONObject roomJson = tower.getJSONArray("towerRooms").getJSONObject(0)
+                .getJSONArray("rooms").getJSONObject(0);
+
+        JSONArray timeArr = new JSONArray();
+        JSONObject td1 = new JSONObject();
+        td1.put("price", 11111L);
+        td1.put("timeSeconds", 1111L);
+        timeArr.put(td1);
+        JSONObject td2 = new JSONObject();
+        td2.put("price", 22222L);
+        td2.put("timeSeconds", 2222L);
+        timeArr.put(td2);
+        JSONObject td3 = new JSONObject();
+        td3.put("price", 33333L);
+        td3.put("timeSeconds", 3333L);
+        timeArr.put(td3);
+        roomJson.put("customTimeData", timeArr);
+
+        roomManager.buildRoomGrid(programData);
+
+        Room restored = roomManager.getRoom(0, 0, 0);
+        assertThat(restored.hasCustomTimeData()).isTrue();
+        RoomTime[] data = restored.getCustomRoomTimeData();
+        assertThat(data[0].getPrice()).isEqualTo(11111L);
+        assertThat(data[0].getTimeSeconds()).isEqualTo(1111L);
+        assertThat(data[1].getPrice()).isEqualTo(22222L);
+        assertThat(data[2].getPrice()).isEqualTo(33333L);
+    }
+
+    @Test
+    void shouldNotSerializeCustomTimeDataWhenRoomHasNone() {
+        JSONObject programData = createSingleTowerConfig(1, new int[]{1});
+        roomManager.buildRoomGrid(programData);
+
+        JSONArray data = roomManager.getRoomDataForSaving();
+        JSONObject roomJson = data.getJSONObject(0);
+
+        assertThat(roomJson.has("customTimeData")).isFalse();
+    }
+
+    @Test
+    void restoreRoomStatesShouldNotReadCustomTimeData() {
+        JSONObject programData = createSingleTowerConfig(1, new int[]{1});
+        roomManager.buildRoomGrid(programData);
+
+        JSONObject roomData = new JSONObject();
+        JSONArray roomsArray = new JSONArray();
+        JSONObject roomJson = new JSONObject();
+        roomJson.put("roomString", "1-101");
+        roomJson.put("towerNumber", 0);
+        roomJson.put("floorNumber", 0);
+        roomJson.put("roomNumber", 0);
+        roomJson.put("status", RoomStatus.FREE.getCode());
+        roomJson.put("service", 0);
+        roomJson.put("extension", 0);
+        roomJson.put("startStatus", "");
+
+        JSONArray timeArr = new JSONArray();
+        JSONObject td1 = new JSONObject();
+        td1.put("price", 11111L);
+        td1.put("timeSeconds", 1111L);
+        timeArr.put(td1);
+        roomJson.put("customTimeData", timeArr);
+
+        roomsArray.put(roomJson);
+        roomData.put("rooms", roomsArray);
+
+        roomManager.restoreRoomStates(roomData);
+
+        Room restored = roomManager.getRoom(0, 0, 0);
+        assertThat(restored.hasCustomTimeData()).isFalse();
+    }
+
+    @Test
+    void shouldLeaveCustomTimeDataNullWhenNotInJson() {
+        JSONObject programData = createSingleTowerConfig(1, new int[]{1});
+        roomManager.buildRoomGrid(programData);
+
+        JSONObject roomData = new JSONObject();
+        JSONArray roomsArray = new JSONArray();
+        JSONObject roomJson = new JSONObject();
+        roomJson.put("roomString", "1-101");
+        roomJson.put("towerNumber", 0);
+        roomJson.put("floorNumber", 0);
+        roomJson.put("roomNumber", 0);
+        roomJson.put("status", RoomStatus.FREE.getCode());
+        roomJson.put("service", 0);
+        roomJson.put("extension", 0);
+        roomJson.put("startStatus", "");
+        roomsArray.put(roomJson);
+        roomData.put("rooms", roomsArray);
+
+        roomManager.restoreRoomStates(roomData);
+
+        Room restored = roomManager.getRoom(0, 0, 0);
+        assertThat(restored.hasCustomTimeData()).isFalse();
+        assertThat(restored.getCustomRoomTimeData()[0].getPrice()).isEqualTo(40000L);
+    }
+
+    // ========== rebuildRoomGrid ==========
+
+    @Test
+    void rebuildRoomGridShouldPreserveRoomState() {
+        JSONObject programData = createSingleTowerConfig(1, new int[]{2});
+        roomManager.buildRoomGrid(programData);
+        roomManager.registerRoomTimeAdded(0, 0, 0, 3, now);
+
+        JSONObject newConfig = createSingleTowerConfig(2, new int[]{1, 1});
+        roomManager.rebuildRoomGrid(newConfig);
+
+        int[][] roomsArray = roomManager.getRoomsArray();
+        assertThat(roomsArray).hasDimensions(1, 2);
+        assertThat(roomsArray[0][0]).isEqualTo(1);
+        assertThat(roomsArray[0][1]).isEqualTo(1);
+        assertThat(roomManager.getRoom(0, 0, 0).getStatus()).isEqualTo(RoomStatus.OCCUPIED);
+    }
+
+    @Test
+    void shouldRenameRoom() {
+        JSONObject programData = createSingleTowerConfig(1, new int[]{1});
+        roomManager.buildRoomGrid(programData);
+
+        roomManager.setRoomString(0, 0, 0, "T-999");
+
+        assertThat(roomManager.getRoom(0, 0, 0).getRoomString()).isEqualTo("T-999");
+    }
+
+    @Test
+    void getTotalTowersShouldReturnCorrectCount() {
+        JSONObject programData = createTwoTowerConfig();
+        roomManager.buildRoomGrid(programData);
+
+        assertThat(roomManager.getTotalTowers()).isEqualTo(2);
+    }
+
+    @Test
+    void getTotalFloorsShouldReturnCorrectCount() {
+        JSONObject programData = createTwoTowerConfig();
+        roomManager.buildRoomGrid(programData);
+
+        assertThat(roomManager.getTotalFloors(0)).isEqualTo(2);
+        assertThat(roomManager.getTotalFloors(1)).isEqualTo(2);
+    }
+
+    @Test
+    void getTotalFloorsShouldReturnZeroForOutOfBoundsTower() {
+        JSONObject programData = createSingleTowerConfig(1, new int[]{1});
+        roomManager.buildRoomGrid(programData);
+
+        assertThat(roomManager.getTotalFloors(5)).isZero();
+    }
+
     // ========== Helpers ==========
 
     /**

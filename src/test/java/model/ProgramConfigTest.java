@@ -1,5 +1,6 @@
 package model;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
@@ -163,6 +164,152 @@ class ProgramConfigTest {
         data.put("customField", "test");
 
         assertThat(config.getProgramData().getString("customField")).isEqualTo("test");
+    }
+
+    // ========== Schema Version ==========
+
+    @Test
+    void shouldDetectLegacyFormatWhenVersionIsMissing() {
+        JSONObject rawData = createBaseConfig();
+        config.loadFromJson(rawData);
+
+        assertThat(config.getSchemaVersion()).isZero();
+        assertThat(config.isLegacyFormat()).isTrue();
+    }
+
+    @Test
+    void shouldRecognizeVersionOne() {
+        JSONObject rawData = createBaseConfig();
+        rawData.put("version", 1);
+        config.loadFromJson(rawData);
+
+        assertThat(config.getSchemaVersion()).isEqualTo(1);
+        assertThat(config.isLegacyFormat()).isFalse();
+    }
+
+    @Test
+    void ensureSchemaVersionShouldWriteVersionField() {
+        JSONObject rawData = createBaseConfig();
+        config.loadFromJson(rawData);
+
+        config.ensureSchemaVersion();
+
+        assertThat(config.getProgramData().getInt("version")).isEqualTo(2);
+        assertThat(config.getSchemaVersion()).isEqualTo(2);
+    }
+
+    // ========== buildRoomString ==========
+
+    @Test
+    void buildRoomStringShouldFormatCorrectly() {
+        String result = ProgramConfig.buildRoomString(1, 0, 4);
+
+        assertThat(result).isEqualTo("1-105");
+    }
+
+    @Test
+    void buildRoomStringShouldHandleDifferentNumbers() {
+        String result = ProgramConfig.buildRoomString(2, 1, 7);
+
+        assertThat(result).isEqualTo("2-208");
+    }
+
+    // ========== Room Grid CRUD ==========
+
+    @Test
+    void addTowerShouldAppendToRoomsPerTower() {
+        JSONObject rawData = createBaseConfig();
+        config.loadFromJson(rawData);
+
+        config.addTower(1, 2, new JSONArray());
+
+        assertThat(config.getTowerCount()).isEqualTo(1);
+        assertThat(config.getTower(0).getInt("towerNumber")).isEqualTo(1);
+        assertThat(config.getTower(0).getInt("towerFloors")).isEqualTo(2);
+    }
+
+    @Test
+    void removeTowerShouldReduceCount() {
+        JSONObject rawData = createBaseConfig();
+        config.loadFromJson(rawData);
+        config.addTower(1, 1, new JSONArray());
+        config.addTower(2, 1, new JSONArray());
+
+        config.removeTower(0);
+
+        assertThat(config.getTowerCount()).isEqualTo(1);
+        assertThat(config.getTower(0).getInt("towerNumber")).isEqualTo(2);
+    }
+
+    @Test
+    void addRoomToFloorShouldAppendRoom() {
+        JSONObject rawData = createBaseConfig();
+        config.loadFromJson(rawData);
+
+        JSONArray towerRooms = new JSONArray();
+        JSONObject floorData = new JSONObject();
+        floorData.put("floor", 0);
+        floorData.put("rooms", new JSONArray());
+        towerRooms.put(floorData);
+        config.addTower(1, 1, towerRooms);
+
+        config.addRoomToFloor(0, 0, "1-102", 0, 1);
+
+        JSONArray rooms = config.getTower(0).getJSONArray("towerRooms")
+                .getJSONObject(0).getJSONArray("rooms");
+        assertThat(rooms).hasSize(1);
+        assertThat(rooms.getJSONObject(0).getString("roomString")).isEqualTo("1-102");
+    }
+
+    @Test
+    void removeRoomFromFloorShouldReduceCount() {
+        JSONObject rawData = createBaseConfig();
+        config.loadFromJson(rawData);
+
+        JSONArray towerRooms = new JSONArray();
+        JSONObject floorData = new JSONObject();
+        floorData.put("floor", 0);
+        JSONArray rooms = new JSONArray();
+        JSONObject roomJson = new JSONObject();
+        roomJson.put("roomString", "1-101");
+        roomJson.put("roomFloor", 0);
+        roomJson.put("roomNumber", 0);
+        rooms.put(roomJson);
+        floorData.put("rooms", rooms);
+        towerRooms.put(floorData);
+        config.addTower(1, 1, towerRooms);
+
+        config.removeRoomFromFloor(0, 0, 0);
+
+        JSONArray updated = config.getTower(0).getJSONArray("towerRooms")
+                .getJSONObject(0).getJSONArray("rooms");
+        assertThat(updated).isEmpty();
+    }
+
+    @Test
+    void setRoomStringShouldRenameRoom() {
+        JSONObject rawData = createBaseConfig();
+        config.loadFromJson(rawData);
+
+        JSONArray towerRooms = new JSONArray();
+        JSONObject floorData = new JSONObject();
+        floorData.put("floor", 0);
+        JSONArray rooms = new JSONArray();
+        JSONObject roomJson = new JSONObject();
+        roomJson.put("roomString", "1-101");
+        roomJson.put("roomFloor", 0);
+        roomJson.put("roomNumber", 0);
+        rooms.put(roomJson);
+        floorData.put("rooms", rooms);
+        towerRooms.put(floorData);
+        config.addTower(1, 1, towerRooms);
+
+        config.setRoomString(0, 0, 0, "VIP-1");
+
+        String name = config.getTower(0).getJSONArray("towerRooms")
+                .getJSONObject(0).getJSONArray("rooms")
+                .getJSONObject(0).getString("roomString");
+        assertThat(name).isEqualTo("VIP-1");
     }
 
     // ========== Helper ==========

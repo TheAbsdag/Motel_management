@@ -135,4 +135,48 @@ class RoomTest {
         room.setExtension(6);
         assertThat(room.getExtension()).isEqualTo(6);
     }
+
+    // ========== Custom Time Data ==========
+
+    @Test
+    void shouldReturnDefaultsWhenCustomTimeDataIsNull() {
+        RoomTime[] data = room.getCustomRoomTimeData();
+
+        assertThat(data).hasSize(3);
+        assertThat(data[0].getPrice()).isEqualTo(40000L);
+        assertThat(room.hasCustomTimeData()).isFalse();
+    }
+
+    @Test
+    void shouldReturnStoredCustomTimeDataWhenSet() {
+        RoomTime[] custom = new RoomTime[] {
+            new RoomTime(30000, 5400),
+            new RoomTime(50000, 14400),
+            new RoomTime(100000, 36000)
+        };
+        room.setCustomRoomTimeData(custom);
+
+        RoomTime[] result = room.getCustomRoomTimeData();
+
+        assertThat(result[0].getPrice()).isEqualTo(30000);
+        assertThat(result[0].getTimeSeconds()).isEqualTo(5400);
+        assertThat(result[1].getPrice()).isEqualTo(50000);
+        assertThat(result[2].getPrice()).isEqualTo(100000);
+        assertThat(room.hasCustomTimeData()).isTrue();
+    }
+
+    @Test
+    void hasCustomTimeDataShouldReflectNullState() {
+        assertThat(room.hasCustomTimeData()).isFalse();
+        room.setCustomRoomTimeData(RoomTime.getDefaultTimeSlots());
+        assertThat(room.hasCustomTimeData()).isTrue();
+    }
+
+    // ========== Room String Setter ==========
+
+    @Test
+    void shouldChangeRoomString() {
+        room.setRoomString("2-310");
+        assertThat(room.getRoomString()).isEqualTo("2-310");
+    }
 }

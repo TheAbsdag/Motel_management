@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.json.JSONArray;
@@ -13,6 +14,8 @@ import org.junit.jupiter.api.BeforeEach;
 
 import model.dto.TurnActivityData;
 import model.dto.TurnSummaryItemData;
+import model.turn.ActivityType;
+import model.turn.ExtraChangeType;
 import model.turn.RoomBookingActivity;
 import model.turn.SaleActivity;
 import model.turn.TurnActivity;
@@ -92,13 +95,8 @@ class TurnTest {
         turn.setNewTurn(1, startTime);
         Room room = createRoom("1-101", 0, 1, 1);
 
-        JSONArray register = new JSONArray();
-        JSONObject item = new JSONObject();
-        item.put("itemName", "Coca-Cola");
-        item.put("itemID", 1);
-        item.put("quantity", 3);
-        item.put("price", 7500);
-        register.put(item);
+        List<CartItem> register = new ArrayList<>();
+        register.add(new CartItem(1L, "Coca-Cola", 3L, 7500L));
 
         SaleActivity change = turn.saveTransactionInformation(register, room, startTime, 42);
 
@@ -116,7 +114,7 @@ class TurnTest {
         room1.setRoomStatus(RoomStatus.OCCUPIED, startTime, 3);
         turn.registerRoomChange(room1, startTime, 30000, 0, 0);
 
-        TurnDetails summary = turn.getBasicTurnInformation();
+        TurnDetails summary = turn.getDetailedTurnInformation();
 
         assertThat(summary.getTotalRooms()).isEqualTo(30000);
         assertThat(summary.getTotalSales()).isEqualTo(30000);
@@ -140,7 +138,7 @@ class TurnTest {
         room2.setRoomStatus(RoomStatus.OCCUPIED, startTime, 3);
         turn.registerRoomChange(room2, startTime, 30000, 0, 0);
 
-        TurnDetails summary = turn.getBasicTurnInformation();
+        TurnDetails summary = turn.getDetailedTurnInformation();
         List<TurnSummaryItemData> summaryItems = summary.getSummaryItems();
 
         assertThat(summaryItems).hasSize(1);
@@ -153,17 +151,11 @@ class TurnTest {
         turn.setNewTurn(1, startTime);
         Room room = createRoom("1-101", 0, 1, 1);
 
-        JSONArray register = new JSONArray();
-        JSONObject item = new JSONObject();
-        item.put("itemName", "Coca-Cola");
-        item.put("itemID", 1);
-        item.put("quantity", 5);
-        item.put("price", 12500);
-        register.put(item);
+        List<CartItem> register2 = new ArrayList<>();
+        register2.add(new CartItem(1L, "Coca-Cola", 5L, 12500L));
+        turn.saveTransactionInformation(register2, room, startTime, 1);
 
-        turn.saveTransactionInformation(register, room, startTime, 1);
-
-        TurnDetails summary = turn.getBasicTurnInformation();
+        TurnDetails summary = turn.getDetailedTurnInformation();
         assertThat(summary.getTotalItems()).isEqualTo(12500);
         assertThat(summary.getTotalSales()).isEqualTo(12500);
 
@@ -208,7 +200,7 @@ class TurnTest {
         room.setRoomStatus(RoomStatus.OCCUPIED, startTime, 3);
         turn.registerRoomChange(room, startTime, 30000, 0, 0);
 
-        TurnDetails summary = turn.getBasicTurnInformation();
+        TurnDetails summary = turn.getDetailedTurnInformation();
         assertThat(summary.getTurnEnd()).isNull();
     }
 
@@ -235,13 +227,8 @@ class TurnTest {
         turn.setNewTurn(1, startTime);
         Room room = createRoom("1-101", 0, 1, 1);
 
-        JSONArray register = new JSONArray();
-        JSONObject item = new JSONObject();
-        item.put("itemName", "Coca-Cola");
-        item.put("itemID", 1);
-        item.put("quantity", 3);
-        item.put("price", 7500);
-        register.put(item);
+        List<CartItem> register = new ArrayList<>();
+        register.add(new CartItem(1L, "Coca-Cola", 3L, 7500L));
 
         turn.saveTransactionInformation(register, room, startTime, 42);
 
@@ -274,17 +261,12 @@ class TurnTest {
         turn.setNewTurn(1, startTime);
         Room room = createRoom("1-101", 0, 1, 1);
 
-        JSONArray register = new JSONArray();
-        JSONObject item1 = new JSONObject();
-        item1.put("itemName", "Coca-Cola");
-        item1.put("itemID", 1);
-        item1.put("quantity", 3);
-        item1.put("price", 7500);
-        register.put(item1);
+        List<CartItem> register = new ArrayList<>();
+        register.add(new CartItem(1L, "Coca-Cola", 3L, 7500L));
 
         turn.saveTransactionInformation(register, room, startTime, 42);
 
-        TurnActivity activity = turn.findActivity(42, "sale");
+        TurnActivity activity = turn.findActivity(42, ActivityType.SALE);
         assertThat(activity).isNotNull();
 
         turn.reverseItemSaleFromTurn(activity, 1L, 3L);
@@ -359,7 +341,7 @@ class TurnTest {
         turn.setNewTurn(1, startTime);
         turn.registerSpendingTransaction("Gasto varios", -20000, 1, startTime);
 
-        TurnDetails basic = turn.getBasicTurnInformation();
+        TurnDetails basic = turn.getDetailedTurnInformation();
         assertThat(basic.getTotalSpending()).isEqualTo(-20000);
         assertThat(basic.getTotalTurn()).isEqualTo(-20000);
         assertThat(basic.getTotalNet()).isEqualTo(-20000);
@@ -376,7 +358,7 @@ class TurnTest {
     void shouldRegisterExtraChangeBankTransfer() {
         turn.setNewTurn(1, startTime);
 
-        turn.registerExtraChangeTransaction("Transferencia recibida", -100000, "bankTransfer", 1, startTime);
+        turn.registerExtraChangeTransaction("Transferencia recibida", -100000, ExtraChangeType.BANK_TRANSFER, 1, startTime);
 
         List<TurnActivityData> activities = turn.getActivityDataList();
         assertThat(activities).hasSize(1);
@@ -390,7 +372,7 @@ class TurnTest {
     void shouldRegisterExtraChangeSafeDeposit() {
         turn.setNewTurn(1, startTime);
 
-        turn.registerExtraChangeTransaction("Abono efectivo", -50000, "safeDeposit", 1, startTime);
+        turn.registerExtraChangeTransaction("Abono efectivo", -50000, ExtraChangeType.SAFE_DEPOSIT, 1, startTime);
 
         List<TurnActivityData> activities = turn.getActivityDataList();
         assertThat(activities).hasSize(1);
@@ -402,10 +384,10 @@ class TurnTest {
     @Test
     void shouldIncludeExtraChangesInFinancialTotals() {
         turn.setNewTurn(1, startTime);
-        turn.registerExtraChangeTransaction("Transf Bancaria", -100000, "bankTransfer", 1, startTime);
-        turn.registerExtraChangeTransaction("Abono caja", -50000, "safeDeposit", 2, startTime);
+        turn.registerExtraChangeTransaction("Transf Bancaria", -100000, ExtraChangeType.BANK_TRANSFER, 1, startTime);
+        turn.registerExtraChangeTransaction("Abono caja", -50000, ExtraChangeType.SAFE_DEPOSIT, 2, startTime);
 
-        TurnDetails basic = turn.getBasicTurnInformation();
+        TurnDetails basic = turn.getDetailedTurnInformation();
         assertThat(basic.getTotalBankTransfers()).isEqualTo(100000);
         assertThat(basic.getTotalDeposits()).isEqualTo(50000);
         assertThat(basic.getTotalNet()).isEqualTo(-150000);
@@ -419,8 +401,8 @@ class TurnTest {
     @Test
     void shouldGroupExtraChangesInSummary() {
         turn.setNewTurn(1, startTime);
-        turn.registerExtraChangeTransaction("Transf 1", -50000, "bankTransfer", 1, startTime);
-        turn.registerExtraChangeTransaction("Transf 2", -30000, "bankTransfer", 2, startTime);
+        turn.registerExtraChangeTransaction("Transf 1", -50000, ExtraChangeType.BANK_TRANSFER, 1, startTime);
+        turn.registerExtraChangeTransaction("Transf 2", -30000, ExtraChangeType.BANK_TRANSFER, 2, startTime);
 
         List<TurnSummaryItemData> summaries = turn.getSummaryDataList();
         assertThat(summaries).hasSize(1);
@@ -438,7 +420,7 @@ class TurnTest {
         room.setRoomStatus(RoomStatus.OCCUPIED, startTime, 3);
         turn.registerRoomChange(room, startTime, 30000, 0, 42);
 
-        TurnActivity activity = turn.findActivity(42, "room");
+        TurnActivity activity = turn.findActivity(42, ActivityType.ROOM);
         assertThat(activity).isNotNull();
 
         turn.refundTransactionFromTurn(activity, 43, startTime, 0, 0);
@@ -456,17 +438,12 @@ class TurnTest {
         turn.setNewTurn(1, startTime);
         Room room = createRoom("1-101", 0, 1, 1);
 
-        JSONArray register = new JSONArray();
-        JSONObject item = new JSONObject();
-        item.put("itemName", "Coca-Cola");
-        item.put("itemID", 1);
-        item.put("quantity", 3);
-        item.put("price", 7500);
-        register.put(item);
+        List<CartItem> register = new ArrayList<>();
+        register.add(new CartItem(1L, "Coca-Cola", 3L, 7500L));
 
         turn.saveTransactionInformation(register, room, startTime, 42);
 
-        TurnActivity activity = turn.findActivity(42, "sale");
+        TurnActivity activity = turn.findActivity(42, ActivityType.SALE);
         assertThat(activity).isNotNull();
 
         turn.refundTransactionFromTurn(activity, 43, startTime, 1L, 3L);
@@ -486,10 +463,10 @@ class TurnTest {
         room.setRoomStatus(RoomStatus.OCCUPIED, startTime, 3);
         turn.registerRoomChange(room, startTime, 30000, 0, 42);
 
-        TurnActivity activity = turn.findActivity(42, "room");
+        TurnActivity activity = turn.findActivity(42, ActivityType.ROOM);
         turn.refundTransactionFromTurn(activity, 43, startTime, 0, 0);
 
-        TurnDetails basic = turn.getBasicTurnInformation();
+        TurnDetails basic = turn.getDetailedTurnInformation();
         assertThat(basic.getTotalRooms()).isEqualTo(30000);
         assertThat(basic.getTotalRefunds()).isEqualTo(-30000);
         assertThat(basic.getTotalNet()).isEqualTo(0);
@@ -504,9 +481,9 @@ class TurnTest {
         room.setRoomStatus(RoomStatus.OCCUPIED, startTime, 3);
         turn.registerRoomChange(room, startTime, 30000, 0, 1);
         turn.registerSpendingTransaction("Gasto", -5000, 2, startTime);
-        turn.registerExtraChangeTransaction("Transf", -20000, "bankTransfer", 3, startTime);
+        turn.registerExtraChangeTransaction("Transf", -20000, ExtraChangeType.BANK_TRANSFER, 3, startTime);
 
-        TurnDetails basic = turn.getBasicTurnInformation();
+        TurnDetails basic = turn.getDetailedTurnInformation();
         assertThat(basic.getTotalNet()).isEqualTo(5000);
     }
 
@@ -527,7 +504,7 @@ class TurnTest {
     @Test
     void shouldConvertExtraChangeActivityToDto() {
         turn.setNewTurn(1, startTime);
-        turn.registerExtraChangeTransaction("Abono", -50000, "safeDeposit", 1, startTime);
+        turn.registerExtraChangeTransaction("Abono", -50000, ExtraChangeType.SAFE_DEPOSIT, 1, startTime);
 
         List<TurnActivityData> activities = turn.getActivityDataList();
         assertThat(activities).hasSize(1);
