@@ -6,6 +6,7 @@ import controller.sub.FloorController;
 import controller.sub.HistoryController;
 import controller.sub.InventoryController;
 import controller.sub.ManagementController;
+import controller.sub.MotelDataConfigurationController;
 import controller.sub.RoomController;
 import controller.sub.SellingController;
 import controller.sub.TurnController;
@@ -68,6 +69,7 @@ public class Controller {
     private final ManagementController managementController;
     private final AppOptionsController appOptionsController;
     private final FloorConfigurationController floorConfigurationController;
+    private final MotelDataConfigurationController motelDataConfigController;
 
     // Timers
     private Timer timerForTimeUpdates;
@@ -122,10 +124,13 @@ public class Controller {
                 this::openAppOptionsHub,
                 this::showRoomConfigCard,
                 this::showFloorConfigCard);
+        motelDataConfigController = new MotelDataConfigurationController(motelManager,
+                userInterface.getMotelDataConfigView(),
+                this::openAppOptionsHub,
+                this::saveMainFiles,
+                () -> saveBackupFiles("motelDataConfig"));
 
         // Wire sub-config view back buttons → return to options hub
-        userInterface.getMotelDataConfigView().getBackButton()
-                .addActionListener(e -> openAppOptionsHub());
         userInterface.getDataSavingConfigView().getBackButton()
                 .addActionListener(e -> openAppOptionsHub());
         userInterface.getTimeConfigView().getBackButton()
@@ -195,6 +200,7 @@ public class Controller {
         managementController.initListeners();
         appOptionsController.initListeners();
         floorConfigurationController.initListeners();
+        motelDataConfigController.initListeners();
 
         // Floor view management button → management menu
         userInterface.getFloorView().getManagementOptionsButton()
@@ -255,6 +261,7 @@ public class Controller {
     }
 
     private void openMotelDataConfig() {
+        motelDataConfigController.populateView();
         userInterface.setMotelDataConfigView();
     }
 

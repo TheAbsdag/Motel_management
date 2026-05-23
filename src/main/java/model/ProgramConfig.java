@@ -91,12 +91,27 @@ public class ProgramConfig {
         return configuredPrinterName;
     }
 
-    // ========== Property Getters ==========
+    // ========== Property Getters / Setters ==========
 
     public String getMotelName() { return motelName; }
     public String getMotelAddress() { return motelAddress; }
     public String getMotelID() { return motelID; }
     public JSONObject getProgramData() { return programData; }
+
+    public void setMotelName(String motelName) {
+        this.motelName = motelName;
+        programData.put("motelName", motelName);
+    }
+
+    public void setMotelAddress(String motelAddress) {
+        this.motelAddress = motelAddress;
+        programData.put("motelAddress", motelAddress);
+    }
+
+    public void setMotelID(String motelID) {
+        this.motelID = motelID;
+        programData.put("motelID", motelID);
+    }
 
     // ========== Room Grid Configuration ==========
 

@@ -466,6 +466,18 @@ public class MotelManagement implements ISellingService, IHistoryService {
 
     // ========== Configuration Delegation ==========
 
+    /**
+     * Updates motel identification data (name, NIT, address) in
+     * ProgramConfig, the Printer, and persists to disk immediately.
+     */
+    public void saveMotelDataConfiguration(String name, String address, String id) {
+        programConfig.setMotelName(name);
+        programConfig.setMotelAddress(address);
+        programConfig.setMotelID(id);
+        printer.setPrinterVariables(name, address, id);
+        files.saveJsonMainDataPath(programConfig.getProgramData(), "applicationProperties");
+    }
+
     public void rebuildRoomGridFromConfig() {
         roomManager.rebuildRoomGrid(programConfig.getProgramData());
     }
