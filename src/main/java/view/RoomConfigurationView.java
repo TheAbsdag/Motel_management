@@ -464,6 +464,20 @@ public class RoomConfigurationView extends JPanel {
     public int getCurrentFloor() { return currentFloor; }
     public int getCurrentRoom() { return currentRoom; }
 
+    // ========== Behavior Methods ==========
+
+    public void onBackButton(Runnable action) {
+        backButton.addActionListener(e -> action.run());
+    }
+
+    public void onSaveButton(Runnable action) {
+        saveButton.addActionListener(e -> action.run());
+    }
+
+    public void onDeleteRoom(Runnable action) {
+        deleteRoomButton.addActionListener(e -> action.run());
+    }
+
     // JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables  @formatter:off
     // Generated using JFormDesigner Educational license - Santiago Esteban Castelblanco Castiblanco (saecastelblancoc)
     private JLabel roomConfigurationTitleLabel;
@@ -497,24 +511,4 @@ public class RoomConfigurationView extends JPanel {
     private JButton backButton;
     private JButton saveButton;
     // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
-
-    public JButton getDeleteRoomButton() { return deleteRoomButton; }
-    public JButton getBackButton() { return backButton; }
-    public JButton getSaveButton() { return saveButton; }
-    public JLabel getTowerLabel() { return towerLabel; }
-    public JLabel getFloorLabel() { return floorLabel; }
-    public JLabel getNumberLabel() { return numberLabel; }
-    public JTextField getRoomStringLabel() { return roomStringLabel; }
-    public JButton getFirstTimeConfiguration() { return firstTimeConfiguration; }
-    public JButton getSecondTimeConfiguration() { return secondTimeConfiguration; }
-    public JButton getThirdTimeConfiguration() { return thirdTimeConfiguration; }
-    public JTextField getTimeDurationTextField() { return timeDurationTextField; }
-    public JRadioButton getSecondsRadioButton() { return secondsRadioButton; }
-    public JRadioButton getMinuteRadioButton() { return minuteRadioButton; }
-    public JRadioButton getHourRadioButton() { return hourRadioButton; }
-    public JTextField getPriceTextField() { return priceTextField; }
-    public JButton getSubtractSmallPriceButton() { return subtractSmallPriceButton; }
-    public JButton getAddSmallPriceButton() { return addSmallPriceButton; }
-    public JButton getSubtractBigPriceButton() { return subtractBigPriceButton; }
-    public JButton getAddBigPriceButton() { return addBigPriceButton; }
 }

@@ -52,7 +52,8 @@ public class DataSavingConfigurationView extends JPanel {
     private JButton backButton;
     // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
 
-    public JButton getBackButton() {
-        return backButton;
+    /** Registers a listener for the back/return button. */
+    public void onBackButton(Runnable action) {
+        backButton.addActionListener(e -> action.run());
     }
 }

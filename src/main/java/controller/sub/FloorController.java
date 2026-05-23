@@ -1,7 +1,6 @@
 package controller.sub;
 
 import java.awt.Color;
-import javax.swing.JButton;
 import model.modelManagers.MotelManagement;
 import model.RoomStatus;
 import view.FloorView;
@@ -30,10 +29,10 @@ public class FloorController {
 
     /** Registers action listeners for floor/tower navigation buttons. */
     public void initListeners() {
-        floorView.getFloorUpButton().addActionListener(e -> changeFloor(1));
-        floorView.getFloorDownButton().addActionListener(e -> changeFloor(-1));
-        floorView.getPreviousTowerButton().addActionListener(e -> changeTower(-1));
-        floorView.getNextTowerButton().addActionListener(e -> changeTower(1));
+        floorView.onFloorUp(() -> changeFloor(1));
+        floorView.onFloorDown(() -> changeFloor(-1));
+        floorView.onPreviousTower(() -> changeTower(-1));
+        floorView.onNextTower(() -> changeTower(1));
     }
 
     /**
@@ -114,28 +113,31 @@ public class FloorController {
                 for (int room = 0; room < roomArray[tower][floor]; room++) {
                     RoomStatus status = motelManager.getRoom(tower, floor, room).getStatus();
                     String roomString = motelManager.getRoom(tower, floor, room).getRoomString();
-                    JButton roomButton = floorView.getRoomButtonGridByTower().get(tower).get(floor).get(room);
 
                     switch (status) {
                         case FREE:
-                            roomButton.setText("<html><center>" + roomString + "</center></html>");
-                            roomButton.setBackground(new Color(39, 174, 96));
+                            floorView.setRoomAppearance(tower, floor, room,
+                                    "<html><center>" + roomString + "</center></html>",
+                                    new Color(39, 174, 96));
                             motelManager.removeFromOvertimeList(roomString);
                             break;
                         case CLEANING:
-                            roomButton.setText("<html><center>" + roomString + "</center></html>");
-                            roomButton.setBackground(new Color(84, 153, 199));
+                            floorView.setRoomAppearance(tower, floor, room,
+                                    "<html><center>" + roomString + "</center></html>",
+                                    new Color(84, 153, 199));
                             motelManager.removeFromOvertimeList(roomString);
                             break;
                         case OCCUPIED:
                             String remainingTime = motelManager.getRemainingTimeRoom(tower, floor, room);
                             if (remainingTime.contains("-")) {
-                                roomButton.setText("<html><center>" + roomString + "<br>SOBRETIEMPO</center></html>");
-                                roomButton.setBackground(new Color(241, 196, 15));
+                                floorView.setRoomAppearance(tower, floor, room,
+                                        "<html><center>" + roomString + "<br>SOBRETIEMPO</center></html>",
+                                        new Color(241, 196, 15));
                                 motelManager.addToOvertimeList(roomString);
                             } else {
-                                roomButton.setText("<html><center>" + roomString + "<br>QUEDAN " + remainingTime + "</center></html>");
-                                roomButton.setBackground(new Color(231, 76, 60));
+                                floorView.setRoomAppearance(tower, floor, room,
+                                        "<html><center>" + roomString + "<br>QUEDAN " + remainingTime + "</center></html>",
+                                        new Color(231, 76, 60));
                                 motelManager.removeFromOvertimeList(roomString);
                             }
                             break;

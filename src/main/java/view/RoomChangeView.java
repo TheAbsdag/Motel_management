@@ -31,7 +31,7 @@ public class RoomChangeView extends JPanel implements TimeLabelInterface {
     }
 
     public void createButtonsForTowers(int[][] roomsPerTower) {
-        getRoomButtonGridByTower().clear();
+        roomButtonGridByTower.clear();
         roomButtonPanel.removeAll();
         roomButtonPanel.setLayout(cardLayout);
 
@@ -64,7 +64,7 @@ public class RoomChangeView extends JPanel implements TimeLabelInterface {
                 roomButtonPanel.add(floorButtonPanel, "Tower" + tower + "Floor" + floor);
             }
 
-            getRoomButtonGridByTower().add(towerFloors);
+            roomButtonGridByTower.add(towerFloors);
         }
 
         cardLayout.show(roomButtonPanel, "Tower0Floor0");
@@ -72,8 +72,8 @@ public class RoomChangeView extends JPanel implements TimeLabelInterface {
     }
 
     public void switchFloor(int floorIndex) {
-        if (nav.getCurrentTowerIndex() >= 0 && nav.getCurrentTowerIndex() < getRoomButtonGridByTower().size()) {
-            ArrayList<ArrayList<JButton>> currentTower = getRoomButtonGridByTower().get(nav.getCurrentTowerIndex());
+        if (nav.getCurrentTowerIndex() >= 0 && nav.getCurrentTowerIndex() < roomButtonGridByTower.size()) {
+            ArrayList<ArrayList<JButton>> currentTower = roomButtonGridByTower.get(nav.getCurrentTowerIndex());
             if (floorIndex >= 0 && floorIndex < currentTower.size()) {
                 nav.setCurrentFloorIndex(floorIndex);
                 switchToCurrentTowerAndFloor();
@@ -82,7 +82,7 @@ public class RoomChangeView extends JPanel implements TimeLabelInterface {
     }
 
     public void switchTower(int towerIndex) {
-        if (towerIndex >= 0 && towerIndex < getRoomButtonGridByTower().size()) {
+        if (towerIndex >= 0 && towerIndex < roomButtonGridByTower.size()) {
             nav.setCurrentTowerIndex(towerIndex);
             nav.setCurrentFloorIndex(0);
             switchToCurrentTowerAndFloor();
@@ -95,7 +95,7 @@ public class RoomChangeView extends JPanel implements TimeLabelInterface {
     }
 
     private void updateTowerLabel() {
-        getTowerLabelInforfmation().setText("TORRE: " + (nav.getCurrentTowerIndex() + 1));
+        towerLabelInforfmation.setText("TORRE: " + (nav.getCurrentTowerIndex() + 1));
     }
 
     /**
@@ -103,11 +103,11 @@ public class RoomChangeView extends JPanel implements TimeLabelInterface {
      * Call this when the rooms array contains only one tower.
      */
     public void setSingleTowerMode() {
-        getPreviousTowerButton().setVisible(false);
-        getPreviousTowerButton().setEnabled(false);
-        getNextTowerButton().setVisible(false);
-        getNextTowerButton().setEnabled(false);
-        getTowerLabelInforfmation().setVisible(false);
+        previousTowerButton.setVisible(false);
+        previousTowerButton.setEnabled(false);
+        nextTowerButton.setVisible(false);
+        nextTowerButton.setEnabled(false);
+        towerLabelInforfmation.setVisible(false);
     }
 
     private void initComponents() {
@@ -237,99 +237,69 @@ public class RoomChangeView extends JPanel implements TimeLabelInterface {
     private JButton confirmButton;
     // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
 
-    /**
-     * @return the currentFloorIndex
-     */
-    public int getCurrentFloorIndex() {
-        return nav.getCurrentFloorIndex();
+    // ========== Encapsulated API ==========
+
+    public int getCurrentFloorIndex() { return nav.getCurrentFloorIndex(); }
+    public int getCurrentTowerIndex() { return nav.getCurrentTowerIndex(); }
+
+    @Override
+    public void updateTimeDisplay(String timeText, String dateText) {
+        timeLabel.setText(timeText);
+        dateLabel.setText(dateText);
     }
 
-    public JLabel getTimeLabel() {
-        return timeLabel;
-    }
+    /** Sets the selected room label text. */
+    public void setSelectedLabel(String text) { selectedLabel.setText(text); }
+
+    // -- Room grid access (encapsulated: no raw JButton exposure) --
 
     /**
-     * @return the dateLabel
+     * Sets the visible text and background color of a room button in the change grid.
      */
-    public JLabel getDateLabel() {
-        return dateLabel;
-    }
-
-    /**
-     * @return the upButton
-     */
-    public JButton getUpButton() {
-        return upButton;
-    }
-
-    /**
-     * @return the downButton
-     */
-    public JButton getDownButton() {
-        return downButton;
+    public void setRoomAppearance(int tower, int floor, int room, String text, Color bg) {
+        if (tower < roomButtonGridByTower.size()
+                && floor < roomButtonGridByTower.get(tower).size()
+                && room < roomButtonGridByTower.get(tower).get(floor).size()) {
+            JButton btn = roomButtonGridByTower.get(tower).get(floor).get(room);
+            btn.setText(text);
+            btn.setBackground(bg);
+        }
     }
 
     /**
-     * @return the selectedInformativeLabel
+     * Registers a click listener for a room button in the change grid.
      */
-    public JLabel getSelectedInformativeLabel() {
-        return selectedInformativeLabel;
+    public void onRoomClick(int tower, int floor, int room, Runnable action) {
+        if (tower < roomButtonGridByTower.size()
+                && floor < roomButtonGridByTower.get(tower).size()
+                && room < roomButtonGridByTower.get(tower).get(floor).size()) {
+            roomButtonGridByTower.get(tower).get(floor).get(room)
+                    .addActionListener(e -> action.run());
+        }
     }
 
-    /**
-     * @return the selectedLabel
-     */
-    public JLabel getSelectedLabel() {
-        return selectedLabel;
+    /** Returns the number of rooms on a given floor. */
+    public int getRoomCount(int tower, int floor) {
+        if (tower < roomButtonGridByTower.size()
+                && floor < roomButtonGridByTower.get(tower).size()) {
+            return roomButtonGridByTower.get(tower).get(floor).size();
+        }
+        return 0;
     }
 
-    /**
-     * @return the backButton
-     */
-    public JButton getBackButton() {
-        return backButton;
-    }
+    // -- Navigation button listeners --
 
-    /**
-     * @return the confirmButton
-     */
-    public JButton getConfirmButton() {
-        return confirmButton;
-    }
-
-    /**
-     * @return the roomButtonGridByTower
-     */
-    public ArrayList<ArrayList<ArrayList<JButton>>> getRoomButtonGridByTower() {
-        return roomButtonGridByTower;
-    }
-
-    /**
-     * @return the currentTowerIndex
-     */
-    public int getCurrentTowerIndex() {
-        return nav.getCurrentTowerIndex();
-    }
-
-    /**
-     * @return the towerLabelInforfmation
-     */
-    public JLabel getTowerLabelInforfmation() {
-        return towerLabelInforfmation;
-    }
-
-    /**
-     * @return the previousTowerButton
-     */
-    public JButton getPreviousTowerButton() {
-        return previousTowerButton;
-    }
-
-    /**
-     * @return the nextTowerButton
-     */
-    public JButton getNextTowerButton() {
-        return nextTowerButton;
-    }
-
+    /** Registers a listener for the floor up button. */
+    public void onFloorUp(Runnable action) { upButton.addActionListener(e -> action.run()); }
+    /** Registers a listener for the floor down button. */
+    public void onFloorDown(Runnable action) { downButton.addActionListener(e -> action.run()); }
+    /** Registers a listener for the back button. */
+    public void onBackButton(Runnable action) { backButton.addActionListener(e -> action.run()); }
+    /** Registers a listener for the confirm button. */
+    public void onConfirmButton(Runnable action) { confirmButton.addActionListener(e -> action.run()); }
+    /** Registers a listener for the previous tower button. */
+    public void onPreviousTower(Runnable action) { previousTowerButton.addActionListener(e -> action.run()); }
+    /** Registers a listener for the next tower button. */
+    public void onNextTower(Runnable action) { nextTowerButton.addActionListener(e -> action.run()); }
 }
+

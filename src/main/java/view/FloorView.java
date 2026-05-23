@@ -358,20 +358,86 @@ public class FloorView extends JPanel implements TimeLabelInterface {
     private JButton managementOptionsButton;
     // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
 
-    // ========== Getters ==========
+    // ========== Encapsulated API ==========
+
+    @Override
+    public void updateTimeDisplay(String timeText, String dateText) {
+        timeLabel.setText(timeText);
+        dateLabel.setText(dateText);
+    }
 
     public int getCurrentFloorIndex() { return nav.getCurrentFloorIndex(); }
+    public int getCurrentTowerIndex() { return nav.getCurrentTowerIndex(); }
     public void setTurnNumber(long number) { turnNumberLabel.setText("TURNO: " + number); }
     public void setWarningVisible(boolean visible) { warningIconLabel.setVisible(visible); }
     public boolean isWarningVisible() { return warningIconLabel.isVisible(); }
-    public JLabel getTimeLabel() { return timeLabel; }
-    public JLabel getDateLabel() { return dateLabel; }
-    public JButton getFloorUpButton() { return floorUpButton; }
-    public JButton getFloorDownButton() { return floorDownButton; }
-    public JButton getReceptionSellButton() { return receptionSellButton; }
-    public JButton getManagementOptionsButton() { return managementOptionsButton; }
-    public ArrayList<ArrayList<ArrayList<JButton>>> getRoomButtonGridByTower() { return roomButtonGridByTower; }
-    public JButton getPreviousTowerButton() { return previousTowerButton; }
-    public JButton getNextTowerButton() { return nextTowerButton; }
-    public int getCurrentTowerIndex() { return nav.getCurrentTowerIndex(); }
+
+    // -- Room grid access (encapsulated: no raw JButton exposure) --
+
+    /**
+     * Sets the visible text and background color of a specific room button.
+     * Text may contain HTML formatting (e.g. {@code <html><center>101<br>SOBRETIEMPO</center></html>}).
+     *
+     * @param tower  zero-based tower index
+     * @param floor  zero-based floor index
+     * @param room   zero-based room position
+     * @param text   the text to display on the button (supports HTML)
+     * @param bg     the background color to apply
+     */
+    public void setRoomAppearance(int tower, int floor, int room, String text, Color bg) {
+        if (tower < roomButtonGridByTower.size()
+                && floor < roomButtonGridByTower.get(tower).size()
+                && room < roomButtonGridByTower.get(tower).get(floor).size()) {
+            JButton btn = roomButtonGridByTower.get(tower).get(floor).get(room);
+            btn.setText(text);
+            btn.setBackground(bg);
+        }
+    }
+
+    /**
+     * Registers a click listener for a specific room button.
+     * The callback is fired each time the button is clicked and receives the
+     * tower, floor, and room coordinates as context.
+     *
+     * @param tower   zero-based tower index
+     * @param floor   zero-based floor index
+     * @param room    zero-based room position
+     * @param action  the callback to invoke (ignores the event object)
+     */
+    public void onRoomClick(int tower, int floor, int room, Runnable action) {
+        if (tower < roomButtonGridByTower.size()
+                && floor < roomButtonGridByTower.get(tower).size()
+                && room < roomButtonGridByTower.get(tower).get(floor).size()) {
+            roomButtonGridByTower.get(tower).get(floor).get(room)
+                    .addActionListener(e -> action.run());
+        }
+    }
+
+    /**
+     * Returns the number of rooms on the given floor of a tower.
+     * Useful for iterating over rooms without exposing the grid.
+     */
+    public int getRoomCount(int tower, int floor) {
+        if (tower < roomButtonGridByTower.size()
+                && floor < roomButtonGridByTower.get(tower).size()) {
+            return roomButtonGridByTower.get(tower).get(floor).size();
+        }
+        return 0;
+    }
+
+    // -- Navigation button listeners --
+
+    /** Registers a listener for the floor up button. */
+    public void onFloorUp(Runnable action) { floorUpButton.addActionListener(e -> action.run()); }
+    /** Registers a listener for the floor down button. */
+    public void onFloorDown(Runnable action) { floorDownButton.addActionListener(e -> action.run()); }
+    /** Registers a listener for the previous tower button. */
+    public void onPreviousTower(Runnable action) { previousTowerButton.addActionListener(e -> action.run()); }
+    /** Registers a listener for the next tower button. */
+    public void onNextTower(Runnable action) { nextTowerButton.addActionListener(e -> action.run()); }
+    /** Registers a listener for the management options button. */
+    public void onManagementOptions(Runnable action) { managementOptionsButton.addActionListener(e -> action.run()); }
+    /** Registers a listener for the reception sell button. */
+    public void onReceptionSell(Runnable action) { receptionSellButton.addActionListener(e -> action.run()); }
 }
+

@@ -82,10 +82,10 @@ public class RoomController {
         roomView.onPriceAdjust(-100, () -> updateRoomPrice(-100));
 
         // Room change view buttons
-        roomChangeView.getUpButton().addActionListener(e -> roomChangeViewFloorChange(1));
-        roomChangeView.getDownButton().addActionListener(e -> roomChangeViewFloorChange(-1));
-        roomChangeView.getBackButton().addActionListener(e -> showFloorPerspective());
-        roomChangeView.getConfirmButton().addActionListener(e -> changeRoomTime());
+        roomChangeView.onFloorUp(() -> roomChangeViewFloorChange(1));
+        roomChangeView.onFloorDown(() -> roomChangeViewFloorChange(-1));
+        roomChangeView.onBackButton(this::showFloorPerspective);
+        roomChangeView.onConfirmButton(this::changeRoomTime);
 
         // Cross-domain: room buttons on FloorView → this controller
         wireRoomGridListeners();
@@ -103,10 +103,10 @@ public class RoomController {
                     final int currentTower = tower;
                     final int currentFloor = floor;
                     final int currentRoom = room;
-                    floorView.getRoomButtonGridByTower().get(tower).get(floor).get(room)
-                        .addActionListener(e -> roomSelected(currentTower, currentFloor, currentRoom));
-                    roomChangeView.getRoomButtonGridByTower().get(tower).get(floor).get(room)
-                        .addActionListener(e -> roomChangeSelected(currentTower, currentFloor, currentRoom));
+                    floorView.onRoomClick(tower, floor, room,
+                        () -> roomSelected(currentTower, currentFloor, currentRoom));
+                    roomChangeView.onRoomClick(tower, floor, room,
+                        () -> roomChangeSelected(currentTower, currentFloor, currentRoom));
                 }
             }
         }
@@ -298,9 +298,9 @@ public class RoomController {
         RoomStatus status = motelManager.getRoom(currentTower, currentFloor, currentRoom).getStatus();
         motelManager.setDesiredRoomChange(currentTower, currentFloor, currentRoom);
         if (status == RoomStatus.OCCUPIED) {
-            roomChangeView.getSelectedLabel().setText("NO DISPONIBLE");
+            roomChangeView.setSelectedLabel("NO DISPONIBLE");
         } else {
-            roomChangeView.getSelectedLabel().setText(roomString);
+            roomChangeView.setSelectedLabel(roomString);
         }
     }
 
@@ -367,19 +367,21 @@ public class RoomController {
                 for (int room = 0; room < roomArray[tower][floor]; room++) {
                     RoomStatus status = motelManager.getRoom(tower, floor, room).getStatus();
                     String roomString = motelManager.getRoom(tower, floor, room).getRoomString();
-                    JButton roomButton = roomChangeView.getRoomButtonGridByTower().get(tower).get(floor).get(room);
                     switch (status) {
                         case FREE -> {
-                            roomButton.setText("<html><center>" + roomString + "</center></html>");
-                            roomButton.setBackground(new Color(39, 174, 96));
+                            roomChangeView.setRoomAppearance(tower, floor, room,
+                                    "<html><center>" + roomString + "</center></html>",
+                                    new Color(39, 174, 96));
                         }
                         case CLEANING -> {
-                            roomButton.setText("<html><center>" + roomString + "</center></html>");
-                            roomButton.setBackground(new Color(84, 153, 199));
+                            roomChangeView.setRoomAppearance(tower, floor, room,
+                                    "<html><center>" + roomString + "</center></html>",
+                                    new Color(84, 153, 199));
                         }
                         case OCCUPIED -> {
-                            roomButton.setText("<html><center>NO DISPONIBLE</center></html>");
-                            roomButton.setBackground(new Color(231, 76, 60));
+                            roomChangeView.setRoomAppearance(tower, floor, room,
+                                    "<html><center>NO DISPONIBLE</center></html>",
+                                    new Color(231, 76, 60));
                         }
                     }
                 }

@@ -13,68 +13,26 @@ import net.miginfocom.swing.*;
  */
 public class PrinterConfigurationView extends JPanel {
 
-    /**
-     * @return the configurationInfoLabel
-     */
-    public JLabel getConfigurationInfoLabel() {
-        return configurationInfoLabel;
-    }
+    // ========== Encapsulated API ==========
 
-    /**
-     * @return the printerUsedInformationLabel
-     */
-    public JLabel getPrinterUsedInformationLabel() {
-        return printerUsedInformationLabel;
+    /** Sets the current printer used label. */
+    public void setPrinterUsedText(String text) { printerUsedLabel.setText(text); }
+    /** Sets the selected printer label. */
+    public void setSelectedPrinterText(String text) { selectedPrinterLabel.setText(text); }
+    /** Sets the printer list model. */
+    public void setPrinterListModel(DefaultListModel<String> model) { printerList.setModel(model); }
+    /** Returns the selected index in the printer list. */
+    public int getSelectedPrinterIndex() { return printerList.getSelectedIndex(); }
+    /** Registers a list selection listener on the printer list. */
+    public void onPrinterListSelection(javax.swing.event.ListSelectionListener listener) {
+        printerList.addListSelectionListener(listener);
     }
-
-    /**
-     * @return the prinerUsedLabel
-     */
-    public JLabel getPrinterUsedLabel() {
-        return printerUsedLabel;
-    }
-
-    /**
-     * @return the printerInfoLabel
-     */
-    public JLabel getPrinterInfoLabel() {
-        return printerInfoLabel;
-    }
-
-    /**
-     * @return the scrollPane1
-     */
-    public JScrollPane getScrollPane1() {
-        return scrollPane1;
-    }
-
-    /**
-     * @return the pritnerList
-     */
-    public JList getPrinterList() {
-        return printerList;
-    }
-
-    /**
-     * @return the selectedPrinterLabel
-     */
-    public JLabel getSelectedPrinterLabel() {
-        return selectedPrinterLabel;
-    }
-
-    /**
-     * @return the confirmPrinterButton
-     */
-    public JButton getConfirmPrinterButton() {
-        return confirmPrinterButton;
-    }
-
-    /**
-     * @return the backButton
-     */
-    public JButton getBackButton() {
-        return backButton;
-    }
+    /** Registers a listener for the confirm printer button. */
+    public void onConfirmPrinterButton(Runnable action) { confirmPrinterButton.addActionListener(e -> action.run()); }
+    /** Enables or disables the confirm printer button. */
+    public void setConfirmPrinterEnabled(boolean enabled) { confirmPrinterButton.setEnabled(enabled); }
+    /** Registers a listener for the back button. */
+    public void onBackButton(Runnable action) { backButton.addActionListener(e -> action.run()); }
     public PrinterConfigurationView() {
 	initComponents();
     }
