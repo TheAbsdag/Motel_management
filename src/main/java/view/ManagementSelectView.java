@@ -14,82 +14,33 @@ import view.interfaces.TimeLabelInterface;
  */
 public class ManagementSelectView extends JPanel implements TimeLabelInterface {
 
-    /**
-     * @return the programOptionsButton
-     */
-    public JButton getAppOptionsButton() {
-        return appOptionsButton;
+    @Override
+    public void updateTimeDisplay(String timeText, String dateText) {
+        timeLabel.setText(timeText);
+        dateLabel.setText(dateText);
     }
 
-    /**
-     * @return the backButton
-     */
-    public JButton getBackButton() {
-        return backButton;
-    }
+    // ========== Encapsulated listener registration ==========
 
-    /**
-     * @return the managementInfoLabel
-     */
-    public JLabel getManagementInfoLabel() {
-        return managementInfoLabel;
-    }
+    /** Registers a listener for the turn management button. */
+    public void onTurnButton(Runnable action) { turnButton.addActionListener(e -> action.run()); }
+    /** Registers a listener for the inventory management button. */
+    public void onInventoryButton(Runnable action) { inventoryButton.addActionListener(e -> action.run()); }
+    /** Registers a listener for the history button. */
+    public void onHistoryButton(Runnable action) { historyButton.addActionListener(e -> action.run()); }
+    /** Registers a listener for the app options button. */
+    public void onAppOptionsButton(Runnable action) { appOptionsButton.addActionListener(e -> action.run()); }
+    /** Registers a listener for the room summary button. */
+    public void onRoomSummaryButton(Runnable action) { roomSummaryButton.addActionListener(e -> action.run()); }
+    /** Registers a listener for the extra changes button. */
+    public void onExtraChangesButton(Runnable action) { extraChangesButton.addActionListener(e -> action.run()); }
+    /** Registers a listener for the register spending button. */
+    public void onRegisterSpendingButton(Runnable action) { registerSpendingButton.addActionListener(e -> action.run()); }
+    /** Registers a listener for the back button. */
+    public void onBackButton(Runnable action) { backButton.addActionListener(e -> action.run()); }
 
-    /**
-     * @return the timeLabel
-     */
-    public JLabel getTimeLabel() {
-        return timeLabel;
-    }
-
-    /**
-     * @return the dateLabel
-     */
-    public JLabel getDateLabel() {
-        return dateLabel;
-    }
-
-    /**
-     * @return the turnButton
-     */
-    public JButton getTurnButton() {
-        return turnButton;
-    }
-
-    /**
-     * @return the inventoryButton
-     */
-    public JButton getInventoryButton() {
-        return inventoryButton;
-    }
-
-    /**
-     * @return the historyButton
-     */
-    public JButton getHistoryButton() {
-        return historyButton;
-    }
-
-    /**
-     * @return the roomSummaryButton
-     */
-    public JButton getRoomSummaryButton() {
-        return roomSummaryButton;
-    }
-
-    /**
-     * @return the extraChangesButton
-     */
-    public JButton getExtraChangesButton() {
-        return extraChangesButton;
-    }
-
-    /**
-     * @return the registerSpendingButton
-     */
-    public JButton getRegisterSpendingButton() {
-        return registerSpendingButton;
-    }
+    /** Sets the management info header text. */
+    public void setManagementInfo(String text) { managementInfoLabel.setText(text); }
 
     public ManagementSelectView() {
         initComponents();

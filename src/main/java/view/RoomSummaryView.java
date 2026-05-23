@@ -162,11 +162,13 @@ public class RoomSummaryView extends JPanel implements TimeLabelInterface {
 
     // --- Getters ---
 
-    public JLabel getTimeLabel() { return timeLabel; }
-    public JLabel getDateLabel() { return dateLabel; }
-    public JButton getBackButton() { return backButton; }
-    public JPanel getContainerPanel() { return containerPanel; }
-
+    @Override
+    public void updateTimeDisplay(String timeText, String dateText) {
+        timeLabel.setText(timeText);
+        dateLabel.setText(dateText);
+    }
+    /** Registers a listener for the back button. */
+    public void onBackButton(Runnable action) { backButton.addActionListener(e -> action.run()); }
     private void initComponents() {
         // JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents  @formatter:off
         // Generated using JFormDesigner Educational license - Santiago Esteban Castelblanco Castiblanco (saecastelblancoc)
