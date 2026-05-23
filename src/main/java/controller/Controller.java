@@ -131,16 +131,12 @@ public class Controller {
                 () -> saveBackupFiles("motelDataConfig"));
 
         // Wire sub-config view back buttons → return to options hub
-        userInterface.getDataSavingConfigView().getBackButton()
-                .addActionListener(e -> openAppOptionsHub());
-        userInterface.getTimeConfigView().getBackButton()
-                .addActionListener(e -> openAppOptionsHub());
+        userInterface.getDataSavingConfigView().onBackButton(this::openAppOptionsHub);
+        userInterface.getTimeConfigView().onBackButton(this::openAppOptionsHub);
 
         // Wire spending and extra changes confirmation actions
-        userInterface.getSpendingRegisterView().getConfirmationButton()
-                .addActionListener(e -> registerSpending());
-        userInterface.getExtraTurnChangesView().getConfirmationButton()
-                .addActionListener(e -> registerExtraChanges());
+        userInterface.getSpendingRegisterView().onConfirmationButton(this::registerSpending);
+        userInterface.getExtraTurnChangesView().onConfirmationButton(this::registerExtraChanges);
     }
 
     /**
@@ -203,12 +199,10 @@ public class Controller {
         motelDataConfigController.initListeners();
 
         // Floor view management button → management menu
-        userInterface.getFloorView().getManagementOptionsButton()
-                .addActionListener(e -> showManagementSelection());
+        userInterface.getFloorView().onManagementOptions(this::showManagementSelection);
 
         // Floor view reception sell button → reception sale
-        userInterface.getFloorView().getReceptionSellButton()
-                .addActionListener(e -> sellingController.roomSale(true));
+        userInterface.getFloorView().onReceptionSell(() -> sellingController.roomSale(true));
     }
 
     // ========== View Navigation ==========
@@ -289,8 +283,8 @@ public class Controller {
     // ========== Spending / Extra Changes ==========
 
     private void registerSpending() {
-        String conceptSpending = userInterface.getSpendingRegisterView().getDescriptionChangeText().getText();
-        long value = InputParser.parseLongSafe(userInterface.getSpendingRegisterView().getValueTextField());
+        String conceptSpending = userInterface.getSpendingRegisterView().getDescriptionText();
+        long value = InputParser.parseLongSafe(userInterface.getSpendingRegisterView().getValueText());
         if (value == 0L && !conceptSpending.isEmpty()) {
             DialogHelper.showInfoMessage("El valor ingresado debe ser distinto de cero", "ERROR");
             return;
@@ -304,9 +298,9 @@ public class Controller {
     }
 
     private void registerExtraChanges() {
-        String conceptSpending = userInterface.getExtraTurnChangesView().getDescriptionText().getText();
-        long value = InputParser.parseLongSafe(userInterface.getExtraTurnChangesView().getValueTextField());
-        ExtraChangeType type = userInterface.getExtraTurnChangesView().getBankTransferBox().isSelected()
+        String conceptSpending = userInterface.getExtraTurnChangesView().getDescriptionText();
+        long value = InputParser.parseLongSafe(userInterface.getExtraTurnChangesView().getValueText());
+        ExtraChangeType type = userInterface.getExtraTurnChangesView().isBankTransferSelected()
                 ? ExtraChangeType.BANK_TRANSFER : ExtraChangeType.SAFE_DEPOSIT;
         motelManager.addExtraChangeTransaction(conceptSpending, value, type);
         saveMainFiles();

@@ -39,19 +39,18 @@ public class SpendingRegisterView extends JPanel {
         valueTextField.setText("0");
     }
 
-    // --- Getters ---
+    // --- Encapsulated API ---
 
-    public JLabel getSpendingRegisterAnnouncementLabel() { return spendingRegisterAnnouncementLabel; }
-    public JLabel getDescriptionInformativeLabel() { return descriptionInformativeLabel; }
-    public JTextField getDescriptionChangeText() { return descriptionChangeText; }
-    public JLabel getValueLabel() { return valueLabel; }
-    public JTextField getValueTextField() { return valueTextField; }
-    public JButton getMinusSmallValueButton() { return minusSmallValueButton; }
-    public JButton getAddSmallValueButton() { return addSmallValueButton; }
-    public JButton getMinusBigValueButton() { return minusBigValueButton; }
-    public JButton getAddBigValueButton() { return addBigValueButton; }
-    public JButton getCancellationButton() { return cancellationButton; }
-    public JButton getConfirmationButton() { return confirmationButton; }
+    /** Returns the current description text. */
+    public String getDescriptionText() { return descriptionChangeText.getText(); }
+    /** Returns the current value text. */
+    public String getValueText() { return valueTextField.getText(); }
+    /** Sets the value text field. */
+    public void setValueText(String text) { valueTextField.setText(text); }
+    /** Registers a listener for the cancellation button. */
+    public void onCancellationButton(Runnable action) { cancellationButton.addActionListener(e -> action.run()); }
+    /** Registers a listener for the confirmation button. */
+    public void onConfirmationButton(Runnable action) { confirmationButton.addActionListener(e -> action.run()); }
 
     private void initComponents() {
         // JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents  @formatter:off

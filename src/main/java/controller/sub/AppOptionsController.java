@@ -66,28 +66,28 @@ public class AppOptionsController {
     /** Registers action listeners for the app options views. */
     public void initListeners() {
         // Options hub navigation
-        appOptionsView.getBackButton().addActionListener(e -> onBack.run());
-        appOptionsView.getPrinterOptionsButton().addActionListener(e -> {
+        appOptionsView.onBackButton(() -> onBack.run());
+        appOptionsView.onPrinterOptions(() -> {
             showPrinterOptions();
             onShowPrinter.run();
         });
-        appOptionsView.getDataConfigurationButton().addActionListener(e -> onShowMotelData.run());
-        appOptionsView.getDateAndTimeConfigurationButton().addActionListener(e -> onShowTimeConfig.run());
-        appOptionsView.getFloorConfigurationButton().addActionListener(e -> onShowFloorConfig.run());
-        appOptionsView.getSaveConfigurationButton().addActionListener(e -> onShowDataSaving.run());
+        appOptionsView.onDataConfiguration(() -> onShowMotelData.run());
+        appOptionsView.onDateTimeConfiguration(() -> onShowTimeConfig.run());
+        appOptionsView.onFloorConfiguration(() -> onShowFloorConfig.run());
+        appOptionsView.onSaveConfiguration(() -> onShowDataSaving.run());
 
         // Sub-config view back buttons → return to options hub
-        printerView.getBackButton().addActionListener(e -> onShowOptions.run());
+        printerView.onBackButton(() -> onShowOptions.run());
 
         // Printer selection
-        printerView.getConfirmPrinterButton().addActionListener(e -> confirmPrinter());
-        printerView.getPrinterList().addListSelectionListener(event -> {
+        printerView.onConfirmPrinterButton(() -> confirmPrinter());
+        printerView.onPrinterListSelection(event -> {
             if (!event.getValueIsAdjusting()) {
-                int selectedIndex = printerView.getPrinterList().getSelectedIndex();
+                int selectedIndex = printerView.getSelectedPrinterIndex();
                 if (selectedIndex != -1) {
                     String printerName = motelManager.getPrinterLists().get(selectedIndex);
-                    printerView.getSelectedPrinterLabel().setText(printerName);
-                    printerView.getConfirmPrinterButton().setEnabled(true);
+                    printerView.setSelectedPrinterText(printerName);
+                    printerView.setConfirmPrinterEnabled(true);
                 }
             }
         });
@@ -100,24 +100,24 @@ public class AppOptionsController {
 
     /** Populates the printer configuration view with current printer data. */
     public void showPrinterOptions() {
-        printerView.getConfirmPrinterButton().setEnabled(false);
-        printerView.getPrinterUsedLabel().setText(motelManager.getCurrentPrinterName());
+        printerView.setConfirmPrinterEnabled(false);
+        printerView.setPrinterUsedText(motelManager.getCurrentPrinterName());
         List<String> printerNames = motelManager.getPrinterLists();
         DefaultListModel<String> model = new DefaultListModel<>();
         for (String name : printerNames) {
             model.addElement(name);
         }
-        printerView.getPrinterList().setModel(model);
+        printerView.setPrinterListModel(model);
     }
 
     /** Confirms the selected printer as the active print service. */
     public void confirmPrinter() {
-        int selectedIndex = printerView.getPrinterList().getSelectedIndex();
+        int selectedIndex = printerView.getSelectedPrinterIndex();
         if (selectedIndex != -1) {
             String printerName = motelManager.getPrinterLists().get(selectedIndex);
             motelManager.setPrinter(printerName);
             motelManager.savePrinterConfiguration(printerName);
-            printerView.getPrinterUsedLabel().setText(motelManager.getCurrentPrinterName());
+            printerView.setPrinterUsedText(motelManager.getCurrentPrinterName());
         }
     }
 }

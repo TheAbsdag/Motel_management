@@ -114,29 +114,20 @@ public class TurnSelectView extends JPanel implements TimeLabelInterface {
     private JLabel dateLabel;
     // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
 
-    public JButton getTurn1Button() {
-        return turn1Button;
-    }
+    // ========== Encapsulated listener registration ==========
 
-    public JButton getTurn2Button() {
-        return turn2Button;
-    }
-
-    public JButton getTurn3Button() {
-        return turn3Button;
-    }
-
-    public JLabel getTurnSelectLabel() {
-        return turnSelectLabel;
-    }
+    /** Registers a listener for turn 1 button. */
+    public void onTurn1Button(Runnable action) { turn1Button.addActionListener(e -> action.run()); }
+    /** Registers a listener for turn 2 button. */
+    public void onTurn2Button(Runnable action) { turn2Button.addActionListener(e -> action.run()); }
+    /** Registers a listener for turn 3 button. */
+    public void onTurn3Button(Runnable action) { turn3Button.addActionListener(e -> action.run()); }
+    /** Sets the turn selection label text. */
+    public void setTurnSelectLabel(String text) { turnSelectLabel.setText(text); }
 
     @Override
-    public JLabel getTimeLabel() {
-        return timeLabel;
-    }
-
-    @Override
-    public JLabel getDateLabel() {
-        return dateLabel;
+    public void updateTimeDisplay(String timeText, String dateText) {
+        timeLabel.setText(timeText);
+        dateLabel.setText(dateText);
     }
 }

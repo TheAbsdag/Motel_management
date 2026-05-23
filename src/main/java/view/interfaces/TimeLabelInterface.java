@@ -1,20 +1,22 @@
 package view.interfaces;
 
-import javax.swing.JLabel;
-
 /**
- * Interface for view panels that have time and date labels.
- * Enables polymorphic access from {@link UserGUI} without
- * the previous {@code instanceof} chain.
+ * Interface for view panels that display time and date.
+ * Enables polymorphic time-display updates from {@link view.UserGUI}
+ * without exposing internal Swing components.
  *
  * <p>Compatible with JFormDesigner — implement this interface
- * on any JPanel that exposes time/date display labels.
+ * on any JPanel that hosts time/date display labels.
+ * Implementors own their internal labels and update them
+ * in response to this callback.
  */
 public interface TimeLabelInterface {
 
-    /** Returns the label used to display the current time (e.g. "03:45 PM"). */
-    JLabel getTimeLabel();
-
-    /** Returns the label used to display the current date (e.g. "2 de mayo de 2026"). */
-    JLabel getDateLabel();
+    /**
+     * Updates the time and date text displayed on this panel.
+     *
+     * @param timeText formatted current time (e.g. "03:45 PM")
+     * @param dateText formatted current date (e.g. "2 de mayo de 2026")
+     */
+    void updateTimeDisplay(String timeText, String dateText);
 }

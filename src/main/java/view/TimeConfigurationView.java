@@ -51,7 +51,8 @@ public class TimeConfigurationView extends JPanel {
     private JButton button1;
     // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
 
-    public JButton getBackButton() {
-        return button1;
+    /** Registers a listener for the back/return button. */
+    public void onBackButton(Runnable action) {
+        button1.addActionListener(e -> action.run());
     }
 }

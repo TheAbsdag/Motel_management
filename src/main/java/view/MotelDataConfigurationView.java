@@ -122,29 +122,26 @@ public class MotelDataConfigurationView extends JPanel {
     private JButton saveButton;
     // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
 
-    public JTextField getNameTextField() {
-        return nameTextField;
-    }
+    // ========== Encapsulated text access ==========
 
-    public JTextField getIdTextField() {
-        return idTextField;
-    }
-
-    public JTextField getAddressTextField() {
-        return addressTextField;
-    }
-
-    public JLabel getConescutiveTransactionLabel() {
-        return conescutiveTransactionLabel;
-    }
-
-    public JButton getBackButton() {
-        return backButton;
-    }
-
-    public JButton getSaveButton() {
-        return saveButton;
-    }
+    /** Returns the current name text. */
+    public String getNameText() { return nameTextField.getText().trim(); }
+    /** Returns the current ID (NIT) text. */
+    public String getIdText() { return idTextField.getText().trim(); }
+    /** Returns the current address text. */
+    public String getAddressText() { return addressTextField.getText().trim(); }
+    /** Sets the name text field. */
+    public void setNameText(String text) { nameTextField.setText(text); }
+    /** Sets the ID (NIT) text field. */
+    public void setIdText(String text) { idTextField.setText(text); }
+    /** Sets the address text field. */
+    public void setAddressText(String text) { addressTextField.setText(text); }
+    /** Sets the consecutive transaction label. */
+    public void setConsecutiveTransaction(String text) { conescutiveTransactionLabel.setText(text); }
+    /** Registers a listener for the back button. */
+    public void onBackButton(Runnable action) { backButton.addActionListener(e -> action.run()); }
+    /** Registers a listener for the save button. */
+    public void onSaveButton(Runnable action) { saveButton.addActionListener(e -> action.run()); }
 
     // ========== Dirty Tracking ==========
 

@@ -4,7 +4,6 @@ import java.awt.CardLayout;
 import java.util.EnumMap;
 import java.util.Map;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import view.interfaces.TimeLabelInterface;
 
@@ -38,15 +37,13 @@ public class UserGUI extends JFrame {
     private RoomSummaryView roomSummaryView;
 
     private ViewCard currentCard;
-    private Map<ViewCard, JLabel> timeLabels;
-    private Map<ViewCard, JLabel> dateLabels;
+    private Map<ViewCard, TimeLabelInterface> timeDisplayPanels;
     private NavigationState navigationState;
     private String lastTimeShown;
     private String lastDateShown;
 
     public UserGUI() {
-        timeLabels = new EnumMap<>(ViewCard.class);
-        dateLabels = new EnumMap<>(ViewCard.class);
+        timeDisplayPanels = new EnumMap<>(ViewCard.class);
         navigationState = new NavigationState();
         initComponents();
     }
@@ -126,8 +123,7 @@ public class UserGUI extends JFrame {
         panel.setName(name);
         mainPanel.add(panel, name);
         if (panel instanceof TimeLabelInterface htl) {
-            timeLabels.put(card, htl.getTimeLabel());
-            dateLabels.put(card, htl.getDateLabel());
+            timeDisplayPanels.put(card, htl);
         }
     }
 
@@ -156,11 +152,9 @@ public class UserGUI extends JFrame {
         lastTimeShown = timeShown;
         lastDateShown = dateShown;
         if (currentCard != null) {
-            JLabel timeLabel = timeLabels.get(currentCard);
-            JLabel dateLabel = dateLabels.get(currentCard);
-            if (timeLabel != null && dateLabel != null) {
-                timeLabel.setText(timeShown);
-                dateLabel.setText(dateShown);
+            TimeLabelInterface panel = timeDisplayPanels.get(currentCard);
+            if (panel != null) {
+                panel.updateTimeDisplay(timeShown, dateShown);
             }
         }
     }

@@ -36,23 +36,22 @@ public class MotelDataConfigurationController {
     }
 
     public void initListeners() {
-        view.getBackButton().addActionListener(e -> onBackPressed());
-        view.getSaveButton().addActionListener(e -> onSave());
+        view.onBackButton(() -> onBackPressed());
+        view.onSaveButton(() -> onSave());
     }
 
     public void populateView() {
-        view.getNameTextField().setText(motelManager.getProgramConfig().getMotelName());
-        view.getIdTextField().setText(motelManager.getProgramConfig().getMotelID());
-        view.getAddressTextField().setText(motelManager.getProgramConfig().getMotelAddress());
-        view.getConescutiveTransactionLabel()
-                .setText(String.valueOf(motelManager.getProgramConfig().getConsecutiveTransaction()));
+        view.setNameText(motelManager.getProgramConfig().getMotelName());
+        view.setIdText(motelManager.getProgramConfig().getMotelID());
+        view.setAddressText(motelManager.getProgramConfig().getMotelAddress());
+        view.setConsecutiveTransaction(String.valueOf(motelManager.getProgramConfig().getConsecutiveTransaction()));
         view.clearDirty();
     }
 
     private void onSave() {
-        String name = view.getNameTextField().getText().trim();
-        String id = view.getIdTextField().getText().trim();
-        String address = view.getAddressTextField().getText().trim();
+        String name = view.getNameText();
+        String id = view.getIdText();
+        String address = view.getAddressText();
 
         if (name.isEmpty() || id.isEmpty() || address.isEmpty()) {
             DialogHelper.showInfoMessage("Todos los campos (Nombre, NIT, Direccion) deben estar llenos", "ERROR");

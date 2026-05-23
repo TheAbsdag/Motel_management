@@ -128,36 +128,40 @@ public class AppOptionsView extends JPanel implements TimeLabelInterface{
     // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
 
     @Override
-    public JLabel getTimeLabel() {
-        return this.timeLabel;
+    public void updateTimeDisplay(String timeText, String dateText) {
+        timeLabel.setText(timeText);
+        dateLabel.setText(dateText);
     }
 
-    @Override
-    public JLabel getDateLabel() {
-        return this.dateLabel;
+    // ========== Encapsulated listener registration ==========
+
+    /** Registers a listener for the printer options button. */
+    public void onPrinterOptions(Runnable action) {
+        printerOptionsButton.addActionListener(e -> action.run());
     }
 
-    public JButton getPrinterOptionsButton() {
-        return printerOptionsButton;
+    /** Registers a listener for the motel data configuration button. */
+    public void onDataConfiguration(Runnable action) {
+        dataConfigurationButton.addActionListener(e -> action.run());
     }
 
-    public JButton getDataConfigurationButton() {
-        return dataConfigurationButton;
+    /** Registers a listener for the date/time configuration button. */
+    public void onDateTimeConfiguration(Runnable action) {
+        dateAndTimeConfigurationButton.addActionListener(e -> action.run());
     }
 
-    public JButton getDateAndTimeConfigurationButton() {
-        return dateAndTimeConfigurationButton;
+    /** Registers a listener for the floor configuration button. */
+    public void onFloorConfiguration(Runnable action) {
+        floorConfigurationButton.addActionListener(e -> action.run());
     }
 
-    public JButton getFloorConfigurationButton() {
-        return floorConfigurationButton;
+    /** Registers a listener for the save configuration button. */
+    public void onSaveConfiguration(Runnable action) {
+        saveConfigurationButton.addActionListener(e -> action.run());
     }
 
-    public JButton getSaveConfigurationButton() {
-        return saveConfigurationButton;
-    }
-
-    public JButton getBackButton() {
-        return backButton;
+    /** Registers a listener for the back/return button. */
+    public void onBackButton(Runnable action) {
+        backButton.addActionListener(e -> action.run());
     }
 }
