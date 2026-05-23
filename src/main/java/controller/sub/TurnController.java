@@ -54,37 +54,27 @@ public class TurnController {
     /** Registers action listeners for the turn manager view and turn select view. */
     public void initListeners() {
         // Turn select buttons (registered here since TurnController manages turn start)
-        userInterface.getTurnSelect().getTurn1Button().addActionListener(e -> startTurn(1));
-        userInterface.getTurnSelect().getTurn2Button().addActionListener(e -> startTurn(2));
-        userInterface.getTurnSelect().getTurn3Button().addActionListener(e -> startTurn(3));
+        userInterface.getTurnSelect().onTurn1Button(() -> startTurn(1));
+        userInterface.getTurnSelect().onTurn2Button(() -> startTurn(2));
+        userInterface.getTurnSelect().onTurn3Button(() -> startTurn(3));
 
         // Turn management buttons
-        turnManagerView.getBackButton().addActionListener(e -> onBack.run());
-        turnManagerView.getPrintButton().addActionListener(e -> printCurrentTurn());
-        turnManagerView.getEndTurnButton().addActionListener(e -> endTurn());
+        turnManagerView.onBackButton(() -> onBack.run());
+        turnManagerView.onPrintButton(() -> printCurrentTurn());
+        turnManagerView.onEndTurnButton(() -> endTurn());
 
-        // Print checkbox listeners (shared utility)
-        var printListener = ControllerUtils.createPrintCheckboxListener(
-                turnManagerView.getNoPrintCheckBox(),
-                turnManagerView.getSummarizedPrintCheckBox(),
-                turnManagerView.getDetailedPrintCheckBox(),
-                turnManagerView.getPrintButton(),
-                turnManagerView.getEndTurnButton());
-        turnManagerView.getNoPrintCheckBox().addItemListener(printListener);
-        turnManagerView.getSummarizedPrintCheckBox().addItemListener(printListener);
-        turnManagerView.getDetailedPrintCheckBox().addItemListener(printListener);
+        // Print checkbox listeners
+        turnManagerView.setupPrintCheckboxes();
 
-        // Table scrolling (touch-friendly, shared utility)
-        turnManagerView.getUpButton().addActionListener(e ->
-                ControllerUtils.scrollTable(turnManagerView.getTurnDetailsTable(), -1));
-        turnManagerView.getDownButton().addActionListener(e ->
-                ControllerUtils.scrollTable(turnManagerView.getTurnDetailsTable(), 1));
+        // Table scrolling (touch-friendly)
+        turnManagerView.onUpButton(() -> turnManagerView.scrollTurnDetailsTable(-1));
+        turnManagerView.onDownButton(() -> turnManagerView.scrollTurnDetailsTable(1));
 
         // Turn details table selection listener — enables delete for sale and room types
         // that have not already been refunded
-        turnManagerView.getTurnDetailsTable().getSelectionModel().addListSelectionListener(event -> {
+        turnManagerView.onTurnDetailsSelection(event -> {
             if (!event.getValueIsAdjusting()) {
-                int selectedRow = turnManagerView.getTurnDetailsTable().getSelectedRow();
+                int selectedRow = turnManagerView.getSelectedDetailRow();
                 if (selectedRow != -1 && !isListAdjusting) {
                     isListAdjusting = true;
                     TurnActivityData selectedItem = turnManagerView.getCurrentSelectedItem(selectedRow);
@@ -94,14 +84,14 @@ public class TurnController {
                             && !selectedItem.isRefunded()) {
                         enabled = true;
                     }
-                    turnManagerView.getRefundButton().setEnabled(enabled);
+                    turnManagerView.setRefundEnabled(enabled);
                     isListAdjusting = false;
                 }
             }
         });
-        turnManagerView.getRefundButton().addActionListener(e -> deleteRegisterFromTurn());
-        turnManagerView.getSummarizedTurnButton().addActionListener(e -> showCurrentSummarizedTurn());
-        turnManagerView.getBackFromSummarizedTurn().addActionListener(e -> closeSummarizedPopup());
+        turnManagerView.onRefundButton(() -> deleteRegisterFromTurn());
+        turnManagerView.onSummarizedTurn(() -> showCurrentSummarizedTurn());
+        turnManagerView.onBackFromSummarizedTurn(() -> closeSummarizedPopup());
     }
 
     // ========== Turn Lifecycle ==========
@@ -118,8 +108,8 @@ public class TurnController {
 
     /** Opens the turn management view with current turn data. */
     public void showTurnManagement() {
-        turnManagerView.getEndTurnButton().setEnabled(false);
-        turnManagerView.getPrintButton().setEnabled(false);
+        turnManagerView.setEndTurnEnabled(false);
+        turnManagerView.setPrintEnabled(false);
 
         List<TurnActivityData> activities = motelManager.getTurnActivityDataList();
         TurnDetails totals = motelManager.getCurrentTurnDetailedInfo();
@@ -128,11 +118,11 @@ public class TurnController {
                 totals.getTotalRooms(), totals.getTotalItems(), totals.getTotalSales(),
                 totals.getTotalRefunds(), totals.getTotalSpending(), totals.getTotalTurn(),
                 totals.getTotalBankTransfers(), totals.getTotalDeposits(), totals.getTotalNet());
-        turnManagerView.getNoPrintCheckBox().setSelected(false);
-        turnManagerView.getSummarizedPrintCheckBox().setSelected(false);
-        turnManagerView.getDetailedPrintCheckBox().setSelected(false);
-        turnManagerView.getRefundButton().setEnabled(false);
-        turnManagerView.getBackButton().setEnabled(true);
+        turnManagerView.setNoPrintSelected(false);
+        turnManagerView.setSummarizedPrintSelected(false);
+        turnManagerView.setDetailedPrintSelected(false);
+        turnManagerView.setRefundEnabled(false);
+        turnManagerView.setBackEnabled(true);
         userInterface.setTurnManagerView();
     }
 
@@ -142,11 +132,11 @@ public class TurnController {
      */
     public void printCurrentTurn() {
         motelManager.timeInformationUpdate();
-        if (turnManagerView.getNoPrintCheckBox().isSelected()) {
+        if (turnManagerView.isNoPrintSelected()) {
             motelManager.turnPrintNoEnd(1);
-        } else if (turnManagerView.getSummarizedPrintCheckBox().isSelected()) {
+        } else if (turnManagerView.isSummarizedPrintSelected()) {
             motelManager.turnPrintNoEnd(2);
-        } else if (turnManagerView.getDetailedPrintCheckBox().isSelected()) {
+        } else if (turnManagerView.isDetailedPrintSelected()) {
             motelManager.turnPrintNoEnd(3);
         }
     }
@@ -162,14 +152,14 @@ public class TurnController {
             return;
         }
         motelManager.timeInformationUpdate();
-        turnManagerView.getBackButton().setEnabled(false);
-        turnManagerView.getEndTurnButton().setEnabled(false);
+        turnManagerView.setBackEnabled(false);
+        turnManagerView.setEndTurnEnabled(false);
         motelManager.turnEnded();
-        if (turnManagerView.getNoPrintCheckBox().isSelected()) {
+        if (turnManagerView.isNoPrintSelected()) {
             motelManager.turnEndPrint(1);
-        } else if (turnManagerView.getSummarizedPrintCheckBox().isSelected()) {
+        } else if (turnManagerView.isSummarizedPrintSelected()) {
             motelManager.turnEndPrint(2);
-        } else if (turnManagerView.getDetailedPrintCheckBox().isSelected()) {
+        } else if (turnManagerView.isDetailedPrintSelected()) {
             motelManager.turnEndPrint(3);
         }
         userInterface.setTurnSelect();
@@ -179,7 +169,7 @@ public class TurnController {
 
     /** Refunds a room booking or item sale from the current turn by creating a refund entry. */
     public void deleteRegisterFromTurn() {
-        int row = turnManagerView.getTurnDetailsTable().getSelectedRow();
+        int row = turnManagerView.getSelectedDetailRow();
         if (row == -1) return;
 
         TurnActivityData selectedItem = turnManagerView.getCurrentSelectedItem(row);
@@ -200,7 +190,7 @@ public class TurnController {
                 totals.getTotalRooms(), totals.getTotalItems(), totals.getTotalSales(),
                 totals.getTotalRefunds(), totals.getTotalSpending(), totals.getTotalTurn(),
                 totals.getTotalBankTransfers(), totals.getTotalDeposits(), totals.getTotalNet());
-        turnManagerView.getRefundButton().setEnabled(false);
+        turnManagerView.setRefundEnabled(false);
         saveMainFiles.run();
         saveBackupFilesTransaction.run();
     }
@@ -208,12 +198,12 @@ public class TurnController {
     /** Shows the summarized turn popup. */
     public void showCurrentSummarizedTurn() {
         turnManagerView.updateSummarizedTurnData(motelManager.getTurnSummaryDataList());
-        turnManagerView.getSummarizedPopup().setVisible(true);
+        turnManagerView.showSummarizedPopup(true);
     }
 
     /** Closes the summarized turn popup. */
     public void closeSummarizedPopup() {
-        turnManagerView.getSummarizedPopup().setVisible(false);
+        turnManagerView.showSummarizedPopup(false);
     }
 
 }

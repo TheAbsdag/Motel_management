@@ -8,6 +8,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.*;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumnModel;
 import net.miginfocom.swing.*;
@@ -20,27 +21,6 @@ import view.interfaces.TimeLabelInterface;
  * @author Santiago
  */
 public class HistoryView extends JPanel implements TimeLabelInterface {
-
-    /**
-     * @return the upButton
-     */
-    public JButton getUpButton() {
-        return upButton;
-    }
-
-    /**
-     * @return the downButton
-     */
-    public JButton getDownButton() {
-        return downButton;
-    }
-
-    /**
-     * @return the turnHistoryTable
-     */
-    public JTable getTurnHistoryTable() {
-        return turnHistoryTable;
-    }
 
     private JTable turnHistoryTable;
     private TunHistoryTableModel turnHistoryTableModel;
@@ -292,102 +272,53 @@ public class HistoryView extends JPanel implements TimeLabelInterface {
     private TurnHistoryManagerView turnDetailsView;
     // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
 
-    /**
-     * @return the turnSelectionPanel
-     */
-    public JPanel getTurnSelectionPanel() {
-        return turnSelectionPanel;
+    public void onBackButton(Runnable action) {
+        backButton.addActionListener(e -> action.run());
     }
 
-    /**
-     * @return the turnDateInformativeLabel
-     */
-    public JLabel getTurnDateInformativeLabel() {
-        return turnDateInformativeLabel;
+    public void onTurnDetailsButton(Runnable action) {
+        turnDetailsButton.addActionListener(e -> action.run());
     }
 
-    /**
-     * @return the turnDateLabel
-     */
-    public JLabel getTurnDateLabel() {
-        return turnDateLabel;
+    public void onUpButton(Runnable action) {
+        upButton.addActionListener(e -> action.run());
     }
 
-    /**
-     * @return the startDateInformativeLabel
-     */
-    public JLabel getStartDateInformativeLabel() {
-        return startDateInformativeLabel;
+    public void onDownButton(Runnable action) {
+        downButton.addActionListener(e -> action.run());
     }
 
-    /**
-     * @return the turnStartLabel
-     */
-    public JLabel getTurnStartLabel() {
-        return turnStartLabel;
+    public void setTurnDetailsEnabled(boolean enabled) {
+        turnDetailsButton.setEnabled(enabled);
     }
 
-    /**
-     * @return the turnEndInformativeLabel
-     */
-    public JLabel getTurnEndInformativeLabel() {
-        return turnEndInformativeLabel;
+    public void showPopupTurn(boolean visible) {
+        popupTurn.setVisible(visible);
     }
 
-    /**
-     * @return the turnEndLabel
-     */
-    public JLabel getTurnEndLabel() {
-        return turnEndLabel;
+    public void setSelectedTurnInfo(String start, String end, String date, String duration) {
+        turnStartLabel.setText(start);
+        turnEndLabel.setText(end);
+        turnDateLabel.setText(date);
+        durationLabel.setText(duration);
     }
 
-    /**
-     * @return the durationInformativeLabel
-     */
-    public JLabel getDurationInformativeLabel() {
-        return durationInformativeLabel;
+    public int getSelectedTurnRow() {
+        return turnHistoryTable.getSelectedRow();
     }
 
-    /**
-     * @return the durationLabel
-     */
-    public JLabel getDurationLabel() {
-        return durationLabel;
+    public void scrollTurnHistoryTable(int direction) {
+        view.helpers.TableScroller.scroll(turnHistoryTable, direction);
     }
 
-    /**
-     * @return the backButton
-     */
-    public JButton getBackButton() {
-        return backButton;
+    public void onTurnHistorySelection(javax.swing.event.ListSelectionListener listener) {
+        turnHistoryTable.getSelectionModel().addListSelectionListener(listener);
     }
 
-    /**
-     * @return the timeLabel
-     */
-    public JLabel getTimeLabel() {
-        return timeLabel;
-    }
-
-    /**
-     * @return the dateLabel
-     */
-    public JLabel getDateLabel() {
-        return dateLabel;
-    }
-
-    /**
-     * @return the turnDetailsButton
-     */
-    public JButton getTurnDetailsButton() {
-        return turnDetailsButton;
-    }
-
-    /**
-     * @return the popupTurn
-     */
-    public JFrame getPopupTurn() {
-        return popupTurn;
+    @Override
+    public void updateTimeDisplay(String timeText, String dateText) {
+        timeLabel.setText(timeText);
+        dateLabel.setText(dateText);
     }
 
     /**

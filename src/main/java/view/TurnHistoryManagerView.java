@@ -5,6 +5,7 @@ package view;
 
 import view.helpers.TouchScrollHandler;
 import java.awt.*;
+
 import java.text.NumberFormat;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -415,214 +416,23 @@ public class TurnHistoryManagerView extends JPanel {
     private JButton printButton;
     // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
 
-    /**
-     * @return the turnDetailsPanel
-     */
-    public JPanel getTurnDetailsPanel() {
-        return turnDetailsPanel;
-    }
+    public void onBackButton(Runnable action) { backButton.addActionListener(e -> action.run()); }
+    public void onPrintButton(Runnable action) { printButton.addActionListener(e -> action.run()); }
 
-    /**
-     * @return the turnNumberInformativeLabel
-     */
-    public JLabel getTurnNumberInformativeLabel() {
-        return turnNumberInformativeLabel;
-    }
+    public void setPrintEnabled(boolean e) { printButton.setEnabled(e); }
 
-    /**
-     * @return the turnNumberLabel
-     */
-    public JLabel getTurnNumberLabel() {
-        return turnNumberLabel;
+    public boolean isNoPrintSelected() { return noPrintCheckBox.isSelected(); }
+    public boolean isSummarizedPrintSelected() { return summarizedPrintCheckBox.isSelected(); }
+    public boolean isDetailedPrintSelected() { return detailedPrintCheckBox.isSelected(); }
+    public void setNoPrintSelected(boolean b) { noPrintCheckBox.setSelected(b); }
+    public void setSummarizedPrintSelected(boolean b) { summarizedPrintCheckBox.setSelected(b); }
+    public void setDetailedPrintSelected(boolean b) { detailedPrintCheckBox.setSelected(b); }
+    public void setupPrintCheckboxes() {
+        var listener = view.helpers.PrintCheckboxHelper.createPrintCheckboxListener(
+                noPrintCheckBox, summarizedPrintCheckBox, detailedPrintCheckBox,
+                printButton, null);
+        noPrintCheckBox.addItemListener(listener);
+        summarizedPrintCheckBox.addItemListener(listener);
+        detailedPrintCheckBox.addItemListener(listener);
     }
-
-    /**
-     * @return the turnStartInformativeLabel
-     */
-    public JLabel getTurnStartInformativeLabel() {
-        return turnStartInformativeLabel;
-    }
-
-    /**
-     * @return the turnStartLabel
-     */
-    public JLabel getTurnStartLabel() {
-        return turnStartLabel;
-    }
-
-    /**
-     * @return the turnEndInformativeLabel
-     */
-    public JLabel getTurnEndInformativeLabel() {
-        return turnEndInformativeLabel;
-    }
-
-    /**
-     * @return the turnEndLabel
-     */
-    public JLabel getTurnEndLabel() {
-        return turnEndLabel;
-    }
-
-    /**
-     * @return the noPrintCheckBox
-     */
-    public JCheckBox getNoPrintCheckBox() {
-        return noPrintCheckBox;
-    }
-
-    /**
-     * @return the summarizedPrintCheckBox
-     */
-    public JCheckBox getSummarizedPrintCheckBox() {
-        return summarizedPrintCheckBox;
-    }
-
-    /**
-     * @return the detailedPrintCheckBox
-     */
-    public JCheckBox getDetailedPrintCheckBox() {
-        return detailedPrintCheckBox;
-    }
-
-    /**
-     * @return the backButton
-     */
-    public JButton getBackButton() {
-        return backButton;
-    }
-
-    /**
-     * @return the printButton
-     */
-    public JButton getPrintButton() {
-        return printButton;
-    }
-
-    /**
-     * @return the totalRoomsInformativeLabel
-     */
-    public JLabel getTotalRoomsInformativeLabel() {
-        return totalRoomsInformativeLabel;
-    }
-
-    /**
-     * @return the totalRoomsLabel
-     */
-    public JLabel getTotalRoomsLabel() {
-        return totalRoomsLabel;
-    }
-
-    /**
-     * @return the totalItemsInformativeLabel
-     */
-    public JLabel getTotalItemsInformativeLabel() {
-        return totalItemsInformativeLabel;
-    }
-
-    /**
-     * @return the totalItemsLabel
-     */
-    public JLabel getTotalItemsLabel() {
-        return totalItemsLabel;
-    }
-
-    /**
-     * @return the totalSalesInformativeLabel
-     */
-    public JLabel getTotalSalesInformativeLabel() {
-        return totalSalesInformativeLabel;
-    }
-
-    /**
-     * @return the totalSalesLabel
-     */
-    public JLabel getTotalSalesLabel() {
-        return totalSalesLabel;
-    }
-
-    /**
-     * @return the totalRefundInformativeLabel
-     */
-    public JLabel getTotalRefundInformativeLabel() {
-        return totalRefundInformativeLabel;
-    }
-
-    /**
-     * @return the totalRefundLabel
-     */
-    public JLabel getTotalRefundLabel() {
-        return totalRefundLabel;
-    }
-
-    /**
-     * @return the totalSpendingInformativeLabel
-     */
-    public JLabel getTotalSpendingInformativeLabel() {
-        return totalSpendingInformativeLabel;
-    }
-
-    /**
-     * @return the totalSpendingLabel
-     */
-    public JLabel getTotalSpendingLabel() {
-        return totalSpendingLabel;
-    }
-
-    /**
-     * @return the totalTurnInformativeLabel
-     */
-    public JLabel getTotalTurnInformativeLabel() {
-        return totalTurnInformativeLabel;
-    }
-
-    /**
-     * @return the totalTurnLabel
-     */
-    public JLabel getTotalTurnLabel() {
-        return totalTurnLabel;
-    }
-
-    /**
-     * @return the totalTransferInformativeLabel
-     */
-    public JLabel getTotalTransferInformativeLabel() {
-        return totalTransferInformativeLabel;
-    }
-
-    /**
-     * @return the totalTransferLabel
-     */
-    public JLabel getTotalTransferLabel() {
-        return totalTransferLabel;
-    }
-
-    /**
-     * @return the totalDepositInformativeLabel
-     */
-    public JLabel getTotalDepositInformativeLabel() {
-        return totalDepositInformativeLabel;
-    }
-
-    /**
-     * @return the totalDepositLabel
-     */
-    public JLabel getTotalDepositLabel() {
-        return totalDepositLabel;
-    }
-
-    /**
-     * @return the totalNetInformativeLabel
-     */
-    public JLabel getTotalNetInformativeLabel() {
-        return totalNetInformativeLabel;
-    }
-
-    /**
-     * @return the totalNetLabel
-     */
-    public JLabel getTotalNetLabel() {
-        return totalNetLabel;
-    }
-
 }

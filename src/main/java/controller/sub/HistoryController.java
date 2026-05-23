@@ -36,41 +36,30 @@ public class HistoryController {
 
     /** Registers action listeners for the history view. */
     public void initListeners() {
-        historyView.getBackButton().addActionListener(e -> onBack.run());
-        historyView.getTurnDetailsButton().addActionListener(e -> turnHistoryDetails());
-        historyView.getTurnDetailsView().getBackButton().addActionListener(e -> closeHistoryDetails());
+        historyView.onBackButton(() -> onBack.run());
+        historyView.onTurnDetailsButton(() -> turnHistoryDetails());
+        historyView.getTurnDetailsView().onBackButton(() -> closeHistoryDetails());
 
-        // Print checkbox listeners for history turn details (shared utility)
-        var printListener = ControllerUtils.createPrintCheckboxListener(
-                historyView.getTurnDetailsView().getNoPrintCheckBox(),
-                historyView.getTurnDetailsView().getSummarizedPrintCheckBox(),
-                historyView.getTurnDetailsView().getDetailedPrintCheckBox(),
-                historyView.getTurnDetailsView().getPrintButton(),
-                null);
-        historyView.getTurnDetailsView().getNoPrintCheckBox().addItemListener(printListener);
-        historyView.getTurnDetailsView().getSummarizedPrintCheckBox().addItemListener(printListener);
-        historyView.getTurnDetailsView().getDetailedPrintCheckBox().addItemListener(printListener);
+        // Print checkbox listeners for history turn details
+        historyView.getTurnDetailsView().setupPrintCheckboxes();
 
-        historyView.getTurnDetailsView().getPrintButton().addActionListener(e -> printHistoryTurn());
+        historyView.getTurnDetailsView().onPrintButton(() -> printHistoryTurn());
 
-        // Table scrolling (touch-friendly, shared utility)
-        historyView.getUpButton().addActionListener(e ->
-                ControllerUtils.scrollTable(historyView.getTurnHistoryTable(), -1));
-        historyView.getDownButton().addActionListener(e ->
-                ControllerUtils.scrollTable(historyView.getTurnHistoryTable(), 1));
+        // Table scrolling (touch-friendly)
+        historyView.onUpButton(() -> historyView.scrollTurnHistoryTable(-1));
+        historyView.onDownButton(() -> historyView.scrollTurnHistoryTable(1));
 
         // Turn history table selection listener
-        historyView.getTurnHistoryTable().getSelectionModel().addListSelectionListener(event -> {
+        historyView.onTurnHistorySelection(event -> {
             if (!event.getValueIsAdjusting()) {
-                int selectedRow = historyView.getTurnHistoryTable().getSelectedRow();
+                int selectedRow = historyView.getSelectedTurnRow();
                 if (selectedRow != -1 && !isListAdjusting) {
                     isListAdjusting = true;
                     TurnHistoryData selected = cachedHistory.get(selectedRow);
-                    historyView.getTurnStartLabel().setText(selected.getStartString());
-                    historyView.getTurnEndLabel().setText(selected.getEndString());
-                    historyView.getTurnDateLabel().setText(selected.getStartDate());
-                    historyView.getDurationLabel().setText(selected.getDuration());
-                    historyView.getTurnDetailsButton().setEnabled(true);
+                    historyView.setSelectedTurnInfo(selected.getStartString(),
+                            selected.getEndString(), selected.getStartDate(),
+                            selected.getDuration());
+                    historyView.setTurnDetailsEnabled(true);
                     isListAdjusting = false;
                 }
             }
@@ -81,31 +70,32 @@ public class HistoryController {
     public void openView() {
         cachedHistory = historyService.getTurnHistoryDataList();
         historyView.setTurnHistoryDetails(cachedHistory);
-        historyView.getTurnDetailsButton().setEnabled(false);
+        historyView.setTurnDetailsEnabled(false);
     }
 
     /** Opens the popup with detailed activity for the selected historical turn. */
     public void turnHistoryDetails() {
-        int selectedRow = historyView.getTurnHistoryTable().getSelectedRow();
+        int selectedRow = historyView.getSelectedTurnRow();
         TurnHistoryData selected = cachedHistory.get(selectedRow);
         historyView.getTurnDetailsView().setTurnDetailsData(selected);
-        historyView.getPopupTurn().setVisible(true);
-        historyView.getTurnDetailsView().getPrintButton().setEnabled(false);
+        historyView.showPopupTurn(true);
+        historyView.getTurnDetailsView().setPrintEnabled(false);
     }
 
     /** Closes the history details popup. */
     public void closeHistoryDetails() {
-        historyView.getPopupTurn().setVisible(false);
+        historyView.showPopupTurn(false);
     }
 
     /** Prints the selected historical turn report. */
     public void printHistoryTurn() {
-        int selectedRow = historyView.getTurnHistoryTable().getSelectedRow();
-        if (historyView.getTurnDetailsView().getNoPrintCheckBox().isSelected()) {
+        int selectedRow = historyView.getSelectedTurnRow();
+        if (historyView.getTurnDetailsView().isNoPrintSelected()) {
             historyService.turnHistoryPrint(1, selectedRow);
-        } else if (historyView.getTurnDetailsView().getSummarizedPrintCheckBox().isSelected()) {
+        } else if (historyView.getTurnDetailsView().isSummarizedPrintSelected()) {
             historyService.turnHistoryPrint(2, selectedRow);
-        } else if (historyView.getTurnDetailsView().getDetailedPrintCheckBox().isSelected()) {
+        } else if (historyView.getTurnDetailsView().isDetailedPrintSelected()) {
             historyService.turnHistoryPrint(3, selectedRow);
         }
-    }}
+    }
+}

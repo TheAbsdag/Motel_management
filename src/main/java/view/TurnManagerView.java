@@ -539,63 +539,53 @@ public class TurnManagerView extends JPanel implements TimeLabelInterface {
     private JButton backFromSummarizedTurn;
     // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
 
-    public JLabel getTimeLabel() {
-        return timeLabel;
+    @Override
+    public void updateTimeDisplay(String timeText, String dateText) {
+        timeLabel.setText(timeText);
+        dateLabel.setText(dateText);
     }
 
-    public JLabel getDateLabel() {
-        return dateLabel;
+    // -- Buttons --
+    public void onBackButton(Runnable action) { backButton.addActionListener(e -> action.run()); }
+    public void onPrintButton(Runnable action) { printButton.addActionListener(e -> action.run()); }
+    public void onEndTurnButton(Runnable action) { endTurnButton.addActionListener(e -> action.run()); }
+    public void onRefundButton(Runnable action) { refundButton.addActionListener(e -> action.run()); }
+    public void onSummarizedTurn(Runnable action) { summarizedTurnButton.addActionListener(e -> action.run()); }
+    public void onBackFromSummarizedTurn(Runnable action) { backFromSummarizedTurn.addActionListener(e -> action.run()); }
+    public void onUpButton(Runnable action) { upButton.addActionListener(e -> action.run()); }
+    public void onDownButton(Runnable action) { downButton.addActionListener(e -> action.run()); }
+
+    // -- Enable/disable --
+    public void setBackEnabled(boolean e) { backButton.setEnabled(e); }
+    public void setPrintEnabled(boolean e) { printButton.setEnabled(e); }
+    public void setEndTurnEnabled(boolean e) { endTurnButton.setEnabled(e); }
+    public void setRefundEnabled(boolean e) { refundButton.setEnabled(e); }
+
+    // -- Checkboxes --
+    public boolean isNoPrintSelected() { return noPrintCheckBox.isSelected(); }
+    public boolean isSummarizedPrintSelected() { return summarizedPrintCheckBox.isSelected(); }
+    public boolean isDetailedPrintSelected() { return detailedPrintCheckBox.isSelected(); }
+    public void setNoPrintSelected(boolean b) { noPrintCheckBox.setSelected(b); }
+    public void setSummarizedPrintSelected(boolean b) { summarizedPrintCheckBox.setSelected(b); }
+    public void setDetailedPrintSelected(boolean b) { detailedPrintCheckBox.setSelected(b); }
+    public void setupPrintCheckboxes() {
+        var listener = view.helpers.PrintCheckboxHelper.createPrintCheckboxListener(
+                noPrintCheckBox, summarizedPrintCheckBox, detailedPrintCheckBox,
+                printButton, endTurnButton);
+        noPrintCheckBox.addItemListener(listener);
+        summarizedPrintCheckBox.addItemListener(listener);
+        detailedPrintCheckBox.addItemListener(listener);
+    }
+    public void scrollTurnDetailsTable(int direction) {
+        view.helpers.TableScroller.scroll(turnDetailsTable, direction);
     }
 
-    public JCheckBox getNoPrintCheckBox() {
-        return noPrintCheckBox;
+    // -- Table --
+    public int getSelectedDetailRow() { return turnDetailsTable.getSelectedRow(); }
+    public void onTurnDetailsSelection(javax.swing.event.ListSelectionListener listener) {
+        turnDetailsTable.getSelectionModel().addListSelectionListener(listener);
     }
 
-    public JCheckBox getSummarizedPrintCheckBox() {
-        return summarizedPrintCheckBox;
-    }
-
-    public JCheckBox getDetailedPrintCheckBox() {
-        return detailedPrintCheckBox;
-    }
-
-    public JButton getPrintButton() {
-        return printButton;
-    }
-
-    public JButton getEndTurnButton() {
-        return endTurnButton;
-    }
-
-    public JButton getBackButton() {
-        return backButton;
-    }
-
-    public JTable getTurnDetailsTable() {
-        return turnDetailsTable;
-    }
-
-    public JButton getRefundButton() {
-        return refundButton;
-    }
-
-    public JButton getUpButton() {
-        return upButton;
-    }
-
-    public JButton getDownButton() {
-        return downButton;
-    }
-
-    public JButton getSummarizedTurnButton() {
-        return summarizedTurnButton;
-    }
-
-    public JFrame getSummarizedPopup() {
-        return summarizedPopup;
-    }
-
-    public JButton getBackFromSummarizedTurn() {
-        return backFromSummarizedTurn;
-    }
+    // -- Popup --
+    public void showSummarizedPopup(boolean visible) { summarizedPopup.setVisible(visible); }
 }
