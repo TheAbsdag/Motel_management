@@ -8,6 +8,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.ListSelectionListener;
 import net.miginfocom.swing.*;
 
 /**
@@ -377,6 +378,133 @@ public class FloorConfigurationView extends JPanel {
         return hasUnsavedChanges;
     }
 
+    // ========== Behavior Methods ==========
+
+    public void onBackButton(Runnable action) {
+        backButton.addActionListener(e -> action.run());
+    }
+
+    public void onSaveButton(Runnable action) {
+        saveButton.addActionListener(e -> action.run());
+    }
+
+    public void onDeleteTower(Runnable action) {
+        deleteTowerButton.addActionListener(e -> action.run());
+    }
+
+    public void onNewTower(Runnable action) {
+        newTowerButton.addActionListener(e -> action.run());
+    }
+
+    public void onDeleteFloor(Runnable action) {
+        deleteFloorButton.addActionListener(e -> action.run());
+    }
+
+    public void onNewFloor(Runnable action) {
+        newFloorButton.addActionListener(e -> action.run());
+    }
+
+    public void onNewRoomButton(Runnable action) {
+        newRoomButton.addActionListener(e -> action.run());
+    }
+
+    public void onTowerListLeft(Runnable action) {
+        towerListLeftButton.addActionListener(e -> action.run());
+    }
+
+    public void onTowerListRight(Runnable action) {
+        towerListRightButton.addActionListener(e -> action.run());
+    }
+
+    public void onFloorListUp(Runnable action) {
+        floorListUpButton.addActionListener(e -> action.run());
+    }
+
+    public void onFloorListDown(Runnable action) {
+        floorListDownButton.addActionListener(e -> action.run());
+    }
+
+    // ========== Tower List Encapsulated Methods ==========
+
+    public void setTowerItems(String[] items) {
+        DefaultListModel<String> model = new DefaultListModel<>();
+        for (String item : items) model.addElement(item);
+        towerList.setModel(model);
+        if (model.getSize() > 0) towerList.setSelectedIndex(0);
+    }
+
+    public void selectTower(int index) {
+        if (index >= 0 && index < towerList.getModel().getSize()) {
+            towerList.setSelectedIndex(index);
+        }
+    }
+
+    public int getSelectedTowerIndex() {
+        return towerList.getSelectedIndex();
+    }
+
+    public int getTowerCount() {
+        return towerList.getModel().getSize();
+    }
+
+    // ========== Floor List Encapsulated Methods ==========
+
+    public void setFloorItems(String[] items) {
+        DefaultListModel<String> model = new DefaultListModel<>();
+        for (String item : items) model.addElement(item);
+        floorList.setModel(model);
+        if (model.getSize() > 0) floorList.setSelectedIndex(0);
+    }
+
+    public void selectFloor(int index) {
+        if (index >= 0 && index < floorList.getModel().getSize()) {
+            floorList.setSelectedIndex(index);
+        }
+    }
+
+    public int getSelectedFloorIndex() {
+        return floorList.getSelectedIndex();
+    }
+
+    public int getFloorCount() {
+        return floorList.getModel().getSize();
+    }
+
+    public void onTowerSelection(ListSelectionListener listener) {
+        towerList.addListSelectionListener(listener);
+    }
+
+    public void onFloorSelection(ListSelectionListener listener) {
+        floorList.addListSelectionListener(listener);
+    }
+
+    // ========== Retained Accessors ==========
+
+    public int getCurrentTowerIndex() {
+        return currentTowerIndex;
+    }
+
+    public int getCurrentFloorIndex() {
+        return currentFloorIndex;
+    }
+
+    public void onRoomClick(int tower, int floor, int room, Runnable action) {
+        if (tower < roomButtonGridByTower.size()
+                && floor < roomButtonGridByTower.get(tower).size()
+                && room < roomButtonGridByTower.get(tower).get(floor).size()) {
+            roomButtonGridByTower.get(tower).get(floor).get(room)
+                    .addActionListener(e -> action.run());
+        }
+    }
+
+    public void setRoomButtonText(int tower, int floor, int room, String text) {
+        if (tower < roomButtonGridByTower.size()
+                && floor < roomButtonGridByTower.get(tower).size()
+                && room < roomButtonGridByTower.get(tower).get(floor).size()) {
+            roomButtonGridByTower.get(tower).get(floor).get(room).setText(text);
+        }
+    }
+
     // JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables  @formatter:off
     // Generated using JFormDesigner Educational license - Santiago Esteban Castelblanco Castiblanco (saecastelblancoc)
     private JLabel floorConfigurationTitleLabel;
@@ -402,77 +530,4 @@ public class FloorConfigurationView extends JPanel {
     private JButton newRoomButton;
     private JButton saveButton;
     // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
-
-
-    public JButton getBackButton() {
-        return backButton;
-    }
-
-    public JButton getSaveButton() {
-        return saveButton;
-    }
-
-    public JButton getDeleteTowerButton() {
-        return deleteTowerButton;
-    }
-
-    public JButton getNewTowerButton() {
-        return newTowerButton;
-    }
-
-    public JButton getDeleteFloorButton() {
-        return deleteFloorButton;
-    }
-
-    public JButton getNewFloorButton() {
-        return newFloorButton;
-    }
-
-    public JButton getNewRoomButton() {
-        return newRoomButton;
-    }
-
-    public JButton getTowerListLeftButton() {
-        return towerListLeftButton;
-    }
-
-    public JButton getTowerListRightButton() {
-        return towerListRightButton;
-    }
-
-    public JButton getFloorListUpButton() {
-        return floorListUpButton;
-    }
-
-    public JButton getFloorListDownButton() {
-        return floorListDownButton;
-    }
-
-    public JList getTowerList() {
-        return towerList;
-    }
-
-    public JList getFloorList() {
-        return floorList;
-    }
-
-    public int getCurrentTowerIndex() {
-        return currentTowerIndex;
-    }
-
-    public int getCurrentFloorIndex() {
-        return currentFloorIndex;
-    }
-
-    public ArrayList<ArrayList<ArrayList<JButton>>> getRoomButtonGridByTower() {
-        return roomButtonGridByTower;
-    }
-
-    public JLabel getTowerSelectedLabel() {
-        return towerSelectedLabel;
-    }
-
-    public JLabel getFloorSelectedLabel() {
-        return floorSelectedLabel;
-    }
 }

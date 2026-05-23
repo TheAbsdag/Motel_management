@@ -1,7 +1,5 @@
 package controller.sub;
 
-import java.util.ArrayList;
-import javax.swing.DefaultListModel;
 import javax.swing.event.ListSelectionEvent;
 import model.Room;
 import model.RoomTime;
@@ -55,26 +53,26 @@ public class FloorConfigurationController {
     }
 
     public void initListeners() {
-        view.getTowerList().addListSelectionListener(this::onTowerSelected);
-        view.getFloorList().addListSelectionListener(this::onFloorSelected);
+        view.onTowerSelection(this::onTowerSelected);
+        view.onFloorSelection(this::onFloorSelected);
 
-        view.getTowerListLeftButton().addActionListener(e -> scrollTowerList(-1));
-        view.getTowerListRightButton().addActionListener(e -> scrollTowerList(1));
-        view.getFloorListUpButton().addActionListener(e -> scrollFloorList(-1));
-        view.getFloorListDownButton().addActionListener(e -> scrollFloorList(1));
+        view.onTowerListLeft(() -> scrollTowerList(-1));
+        view.onTowerListRight(() -> scrollTowerList(1));
+        view.onFloorListUp(() -> scrollFloorList(-1));
+        view.onFloorListDown(() -> scrollFloorList(1));
 
-        view.getNewTowerButton().addActionListener(e -> addNewTower());
-        view.getDeleteTowerButton().addActionListener(e -> deleteTower());
-        view.getDeleteFloorButton().addActionListener(e -> deleteFloor());
-        view.getNewRoomButton().addActionListener(e -> addNewRoom());
-        view.getNewFloorButton().addActionListener(e -> addNewFloor());
+        view.onNewTower(this::addNewTower);
+        view.onDeleteTower(this::deleteTower);
+        view.onDeleteFloor(this::deleteFloor);
+        view.onNewRoomButton(this::addNewRoom);
+        view.onNewFloor(this::addNewFloor);
 
-        view.getBackButton().addActionListener(e -> onBackPressed());
-        view.getSaveButton().addActionListener(e -> onSavePressed());
+        view.onBackButton(this::onBackPressed);
+        view.onSaveButton(this::onSavePressed);
 
-        roomConfigView.getBackButton().addActionListener(e -> onRoomConfigBack());
-        roomConfigView.getSaveButton().addActionListener(e -> onRoomConfigSave());
-        roomConfigView.getDeleteRoomButton().addActionListener(e -> onDeleteRoom());
+        roomConfigView.onBackButton(this::onRoomConfigBack);
+        roomConfigView.onSaveButton(this::onRoomConfigSave);
+        roomConfigView.onDeleteRoom(this::onDeleteRoom);
     }
 
     // ========== View Population ==========
@@ -96,35 +94,29 @@ public class FloorConfigurationController {
     }
 
     private void populateTowerList() {
-        DefaultListModel<String> model = new DefaultListModel<>();
         JSONArray roomsPerTower = motelManager.getProgramConfig().getRoomsPerTower();
         if (roomsPerTower != null) {
+            String[] items = new String[roomsPerTower.length()];
             for (int i = 0; i < roomsPerTower.length(); i++) {
                 JSONObject tower = roomsPerTower.getJSONObject(i);
-                model.addElement("Torre " + tower.getInt("towerNumber"));
+                items[i] = "Torre " + tower.getInt("towerNumber");
             }
-        }
-        view.getTowerList().setModel(model);
-        if (model.getSize() > 0) {
-            view.getTowerList().setSelectedIndex(0);
+            view.setTowerItems(items);
         }
     }
 
     private void populateFloorList() {
-        DefaultListModel<String> model = new DefaultListModel<>();
         JSONArray roomsPerTower = motelManager.getProgramConfig().getRoomsPerTower();
         int towerIndex = view.getCurrentTowerIndex();
         if (roomsPerTower != null && towerIndex < roomsPerTower.length()) {
             JSONObject tower = roomsPerTower.getJSONObject(towerIndex);
             JSONArray towerRooms = tower.getJSONArray("towerRooms");
+            String[] items = new String[towerRooms.length()];
             for (int i = 0; i < towerRooms.length(); i++) {
                 JSONObject floorData = towerRooms.getJSONObject(i);
-                model.addElement("Piso " + (floorData.getInt("floor") + 1));
+                items[i] = "Piso " + (floorData.getInt("floor") + 1);
             }
-        }
-        view.getFloorList().setModel(model);
-        if (model.getSize() > 0) {
-            view.getFloorList().setSelectedIndex(0);
+            view.setFloorItems(items);
         }
     }
 
@@ -132,7 +124,7 @@ public class FloorConfigurationController {
 
     private void onTowerSelected(ListSelectionEvent e) {
         if (e.getValueIsAdjusting() || initializing) return;
-        int index = view.getTowerList().getSelectedIndex();
+        int index = view.getSelectedTowerIndex();
         if (index >= 0) {
             view.switchTower(index);
             populateFloorList();
@@ -143,7 +135,7 @@ public class FloorConfigurationController {
 
     private void onFloorSelected(ListSelectionEvent e) {
         if (e.getValueIsAdjusting() || initializing) return;
-        int index = view.getFloorList().getSelectedIndex();
+        int index = view.getSelectedFloorIndex();
         if (index >= 0) {
             view.switchFloor(index);
         }
@@ -152,35 +144,31 @@ public class FloorConfigurationController {
     // ========== Tower/Floor Scroll ==========
 
     private void scrollTowerList(int direction) {
-        int current = view.getTowerList().getSelectedIndex();
+        int current = view.getSelectedTowerIndex();
         int newIndex = current + direction;
-        if (newIndex >= 0 && newIndex < view.getTowerList().getModel().getSize()) {
-            view.getTowerList().setSelectedIndex(newIndex);
+        if (newIndex >= 0 && newIndex < view.getTowerCount()) {
+            view.selectTower(newIndex);
         }
     }
 
     private void scrollFloorList(int direction) {
-        int current = view.getFloorList().getSelectedIndex();
+        int current = view.getSelectedFloorIndex();
         int newIndex = current + direction;
-        if (newIndex >= 0 && newIndex < view.getFloorList().getModel().getSize()) {
-            view.getFloorList().setSelectedIndex(newIndex);
+        if (newIndex >= 0 && newIndex < view.getFloorCount()) {
+            view.selectFloor(newIndex);
         }
     }
 
     // ========== Room Button Wiring ==========
 
     private void wireRoomButtons() {
-        var grid = view.getRoomButtonGridByTower();
-        if (grid == null) return;
-
-        for (int tower = 0; tower < grid.size(); tower++) {
-            for (int floor = 0; floor < grid.get(tower).size(); floor++) {
-                for (int room = 0; room < grid.get(tower).get(floor).size(); room++) {
-                    final int t = tower;
-                    final int f = floor;
-                    final int r = room;
-                    grid.get(t).get(f).get(r).addActionListener(e -> onRoomClicked(t, f, r));
-                    grid.get(t).get(f).get(r).setText(String.valueOf(room + 1));
+        int[][] roomsArray = motelManager.getRoomsArray();
+        for (int tower = 0; tower < roomsArray.length; tower++) {
+            for (int floor = 0; floor < roomsArray[tower].length; floor++) {
+                for (int room = 0; room < roomsArray[tower][floor]; room++) {
+                    final int t = tower, f = floor, r = room;
+                    view.onRoomClick(t, f, r, () -> onRoomClicked(t, f, r));
+                    view.setRoomButtonText(t, f, r, String.valueOf(room + 1));
                 }
             }
         }
@@ -254,8 +242,8 @@ public class FloorConfigurationController {
         wireRoomButtons();
         populateFloorList();
 
-        view.getTowerList().setSelectedIndex(tower);
-        view.getFloorList().setSelectedIndex(floor);
+        view.selectTower(tower);
+        view.selectFloor(floor);
         view.setTowerAndFloor(tower, floor);
 
         showFloorConfigCard.run();
@@ -297,14 +285,14 @@ public class FloorConfigurationController {
         wireRoomButtons();
 
         populateTowerList();
-        int newIndex = view.getTowerList().getModel().getSize() - 1;
-        view.getTowerList().setSelectedIndex(newIndex);
+        int newIndex = view.getTowerCount() - 1;
+        view.selectTower(newIndex);
         populateFloorList();
         view.setTowerAndFloor(newIndex, 0);
     }
 
     private void deleteTower() {
-        int towerIndex = view.getTowerList().getSelectedIndex();
+        int towerIndex = view.getSelectedTowerIndex();
         if (towerIndex < 0) return;
 
         boolean confirm = DialogHelper.confirmDialog(
@@ -326,14 +314,14 @@ public class FloorConfigurationController {
 
         if (roomsArray.length > 0) {
             int newTowerIdx = Math.min(towerIndex, roomsArray.length - 1);
-            view.getTowerList().setSelectedIndex(newTowerIdx);
+            view.selectTower(newTowerIdx);
             view.setTowerAndFloor(newTowerIdx, 0);
         }
     }
 
     private void deleteFloor() {
         int towerIndex = view.getCurrentTowerIndex();
-        int floorListIndex = view.getFloorList().getSelectedIndex();
+        int floorListIndex = view.getSelectedFloorIndex();
         if (floorListIndex < 0) return;
 
         boolean confirm = DialogHelper.confirmDialog(
@@ -352,9 +340,9 @@ public class FloorConfigurationController {
 
         populateFloorList();
         int newFloorIdx = Math.min(floorListIndex,
-                view.getFloorList().getModel().getSize() - 1);
+                view.getFloorCount() - 1);
         if (newFloorIdx >= 0) {
-            view.getFloorList().setSelectedIndex(newFloorIdx);
+            view.selectFloor(newFloorIdx);
             view.setTowerAndFloor(towerIndex, newFloorIdx);
         }
     }
@@ -376,16 +364,16 @@ public class FloorConfigurationController {
         wireRoomButtons();
 
         populateFloorList();
-        int newFloorIdx = view.getFloorList().getModel().getSize() - 1;
+        int newFloorIdx = view.getFloorCount() - 1;
         if (newFloorIdx >= 0) {
-            view.getFloorList().setSelectedIndex(newFloorIdx);
+            view.selectFloor(newFloorIdx);
             view.setTowerAndFloor(towerIndex, newFloorIdx);
         }
     }
 
     private void addNewRoom() {
         int towerIndex = view.getCurrentTowerIndex();
-        int floorListIndex = view.getFloorList().getSelectedIndex();
+        int floorListIndex = view.getSelectedFloorIndex();
         if (floorListIndex < 0) {
             DialogHelper.showInfoMessage("Seleccione un piso primero", "ERROR");
             return;
@@ -417,19 +405,18 @@ public class FloorConfigurationController {
         wireRoomButtons();
         populateFloorList();
 
-        view.getTowerList().setSelectedIndex(towerIndex);
-        view.getFloorList().setSelectedIndex(floorListIndex);
+        view.selectTower(towerIndex);
+        view.selectFloor(floorListIndex);
         view.setTowerAndFloor(towerIndex, floorListIndex);
     }
 
     private void updateRoomButtonLabels() {
-        var grid = view.getRoomButtonGridByTower();
-        if (grid == null) return;
-        for (int tower = 0; tower < grid.size(); tower++) {
-            for (int floor = 0; floor < grid.get(tower).size(); floor++) {
-                for (int room = 0; room < grid.get(tower).get(floor).size(); room++) {
-                    String name = motelManager.getRoom(tower, floor, room).getRoomString();
-                    grid.get(tower).get(floor).get(room).setText(name);
+        int[][] roomsArray = motelManager.getRoomsArray();
+        for (int tower = 0; tower < roomsArray.length; tower++) {
+            for (int floor = 0; floor < roomsArray[tower].length; floor++) {
+                for (int room = 0; room < roomsArray[tower][floor]; room++) {
+                    view.setRoomButtonText(tower, floor, room,
+                            motelManager.getRoom(tower, floor, room).getRoomString());
                 }
             }
         }
