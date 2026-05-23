@@ -7,7 +7,6 @@ import model.modelManagers.ISellingService;
 import model.dto.InventoryItemData;
 import view.InventoryManagementView;
 import view.helpers.InputParser;
-import view.helpers.PriceAdjustmentHelper;
 
 /**
  * Controls inventory management operations (CRUD, quantity/price adjustments).
@@ -41,40 +40,36 @@ public class InventoryController {
 
     /** Registers action listeners for the inventory view. */
     public void initListeners() {
-        inventoryView.getNewitemButton().addActionListener(e -> newItem());
-        inventoryView.getDeleteItemButton().addActionListener(e -> deleteItem());
-        inventoryView.getAddQuantityButton().addActionListener(e -> changeQuantity(1));
-        inventoryView.getRemoveQuantityButton().addActionListener(e -> changeQuantity(-1));
-        inventoryView.getRemoveSmallPriceButton().addActionListener(e -> modifyPrice(-100));
-        inventoryView.getAddSmallPriceButton().addActionListener(e -> modifyPrice(100));
-        inventoryView.getRemoveBigPriceButton().addActionListener(e -> modifyPrice(-1000));
-        inventoryView.getAddBigPriceButton().addActionListener(e -> modifyPrice(1000));
-        inventoryView.getSaveButton().addActionListener(e -> saveItem());
-        inventoryView.getBackButton().addActionListener(e -> onBack.run());
-        inventoryView.getUpButton().addActionListener(e ->
-                ControllerUtils.scrollTable(inventoryView.getInventoryTable(), -1));
-        inventoryView.getDownButton().addActionListener(e ->
-                ControllerUtils.scrollTable(inventoryView.getInventoryTable(), 1));
+        inventoryView.onNewItem(this::newItem);
+        inventoryView.onDeleteItem(this::deleteItem);
+        inventoryView.onAddQuantity(() -> changeQuantity(1));
+        inventoryView.onRemoveQuantity(() -> changeQuantity(-1));
+        inventoryView.onRemoveSmallPrice(() -> modifyPrice(-100));
+        inventoryView.onAddSmallPrice(() -> modifyPrice(100));
+        inventoryView.onRemoveBigPrice(() -> modifyPrice(-1000));
+        inventoryView.onAddBigPrice(() -> modifyPrice(1000));
+        inventoryView.onSaveButton(this::saveItem);
+        inventoryView.onBackButton(onBack);
+        inventoryView.onUpButton(() -> inventoryView.scrollInventoryTable(-1));
+        inventoryView.onDownButton(() -> inventoryView.scrollInventoryTable(1));
 
-        // Name field validation: enable save only when name is non-empty
-        inventoryView.getNameTextField().getDocument().addDocumentListener(new DocumentListener() {
+        inventoryView.onNameTextChanged(new DocumentListener() {
             private void update() { updateSaveButtonState(); }
             @Override public void insertUpdate(DocumentEvent e) { update(); }
             @Override public void removeUpdate(DocumentEvent e) { update(); }
             @Override public void changedUpdate(DocumentEvent e) { update(); }
         });
 
-        // Table selection listener for loading selected item into edit fields
-        inventoryView.getInventoryTable().getSelectionModel().addListSelectionListener(event -> {
+        inventoryView.onInventorySelection(event -> {
             if (!event.getValueIsAdjusting()) {
-                int selectedRow = inventoryView.getInventoryTable().getSelectedRow();
+                int selectedRow = inventoryView.getSelectedInventoryRow();
                 if (selectedRow != -1 && !isListAdjusting) {
                     isListAdjusting = true;
                     InventoryItemData selectedItem = inventoryView.getCurrentSelectedItem(selectedRow);
-                    inventoryView.getInformativeEditLabel().setText("MODIFICANDO");
-                    inventoryView.getNameTextField().setText(selectedItem.name());
-                    inventoryView.getQuantityTextField().setText(String.valueOf(selectedItem.quantity()));
-                    inventoryView.getPriceTextField().setText(String.valueOf(selectedItem.price()));
+                    inventoryView.setEditInfoText("MODIFICANDO");
+                    inventoryView.setNameText(selectedItem.name());
+                    inventoryView.setQuantityText(String.valueOf(selectedItem.quantity()));
+                    inventoryView.setPriceText(String.valueOf(selectedItem.price()));
                     setModificators(true);
                     isListAdjusting = false;
                 }
@@ -84,16 +79,16 @@ public class InventoryController {
 
     /** Prepares the view for creating a new inventory item. */
     public void newItem() {
-        inventoryView.getInventoryTable().clearSelection();
+        inventoryView.clearInventorySelection();
         setModificators(true);
-        inventoryView.getInformativeEditLabel().setText("CREANDO");
+        inventoryView.setEditInfoText("CREANDO");
         updateViewData();
-        inventoryView.getSaveButton().setEnabled(true);
+        inventoryView.setSaveEnabled(true);
     }
 
     /** Deletes the currently selected inventory item. */
     public void deleteItem() {
-        int rowSelected = inventoryView.getInventoryTable().getSelectedRow();
+        int rowSelected = inventoryView.getSelectedInventoryRow();
         if (rowSelected != -1) {
             InventoryItemData selectedItem = inventoryView.getCurrentSelectedItem(rowSelected);
             sellingService.deleteItemFromInventory(selectedItem.itemID());
@@ -102,27 +97,19 @@ public class InventoryController {
         setModificators(false);
     }
 
-    /**
-     * Adjusts the quantity field by the given delta.
-     *
-     * @param delta typically +1 or -1
-     */
     public void changeQuantity(int delta) {
-        PriceAdjustmentHelper.adjust(inventoryView.getQuantityTextField(), delta);
+        inventoryView.adjustQuantity(delta);
     }
 
     public void modifyPrice(int delta) {
-        PriceAdjustmentHelper.adjust(inventoryView.getPriceTextField(), delta);
+        inventoryView.adjustPrice(delta);
     }
 
-    /**
-     * Saves the current item (new or modified) to the inventory.
-     */
     public void saveItem() {
-        int rowSelected = inventoryView.getInventoryTable().getSelectedRow();
-        String newName = inventoryView.getNameTextField().getText();
-        long newQuantity = InputParser.parseLongSafe(inventoryView.getQuantityTextField());
-        long newPrice = InputParser.parseLongSafe(inventoryView.getPriceTextField());
+        int rowSelected = inventoryView.getSelectedInventoryRow();
+        String newName = inventoryView.getNameText();
+        long newQuantity = InputParser.parseLongSafe(inventoryView.getQuantityText());
+        long newPrice = InputParser.parseLongSafe(inventoryView.getPriceText());
 
         if (rowSelected != -1) {
             InventoryItemData selectedItem = inventoryView.getCurrentSelectedItem(rowSelected);
@@ -133,40 +120,36 @@ public class InventoryController {
             sellingService.newItemCreated(newName, newPrice, newQuantity);
         }
         setModificators(false);
-        inventoryView.getInventoryTable().clearSelection();
+        inventoryView.clearInventorySelection();
         saveMainFiles.run();
         saveBackupFilesRoomSwap.run();
     }
 
-    /**
-     * Enables or disables the inventory modification controls.
-     */
     public void setModificators(boolean enable) {
         if (!enable) {
-            inventoryView.getInformativeEditLabel().setText("SELECCIONE O CREE OBJETO");
-            inventoryView.getNameTextField().setText("");
-            inventoryView.getQuantityTextField().setText("0");
-            inventoryView.getPriceTextField().setText("0");
+            inventoryView.setEditInfoText("SELECCIONE O CREE OBJETO");
+            inventoryView.setNameText("");
+            inventoryView.setQuantityText("0");
+            inventoryView.setPriceText("0");
             updateViewData();
         }
-        inventoryView.getDeleteItemButton().setEnabled(enable);
-        inventoryView.getAddQuantityButton().setEnabled(enable);
-        inventoryView.getRemoveQuantityButton().setEnabled(enable);
-        inventoryView.getRemoveSmallPriceButton().setEnabled(enable);
-        inventoryView.getAddSmallPriceButton().setEnabled(enable);
-        inventoryView.getRemoveBigPriceButton().setEnabled(enable);
-        inventoryView.getAddBigPriceButton().setEnabled(enable);
-        inventoryView.getSaveButton().setEnabled(enable && !inventoryView.getNameTextField().getText().trim().isEmpty());
-        inventoryView.getNameTextField().setEnabled(enable);
-        inventoryView.getPriceTextField().setEnabled(enable);
-        inventoryView.getQuantityTextField().setEnabled(enable);
+        inventoryView.setDeleteEnabled(enable);
+        inventoryView.setAddQuantityEnabled(enable);
+        inventoryView.setRemoveQuantityEnabled(enable);
+        inventoryView.setRemoveSmallPriceEnabled(enable);
+        inventoryView.setAddSmallPriceEnabled(enable);
+        inventoryView.setRemoveBigPriceEnabled(enable);
+        inventoryView.setAddBigPriceEnabled(enable);
+        inventoryView.setSaveEnabled(enable && !inventoryView.getNameText().trim().isEmpty());
+        inventoryView.setNameEnabled(enable);
+        inventoryView.setPriceEnabled(enable);
+        inventoryView.setQuantityEnabled(enable);
     }
 
-    /** Enables the save button only when the name field is non-empty. */
     private void updateSaveButtonState() {
-        String name = inventoryView.getNameTextField().getText().trim();
-        inventoryView.getSaveButton().setEnabled(!name.isEmpty()
-                && inventoryView.getNameTextField().isEnabled());
+        String name = inventoryView.getNameText().trim();
+        inventoryView.setSaveEnabled(!name.isEmpty()
+                && inventoryView.isNameEnabled());
     }
 
     /** Opens the inventory management view with modificators disabled. */

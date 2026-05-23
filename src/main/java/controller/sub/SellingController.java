@@ -1,6 +1,5 @@
 package controller.sub;
 
-import javax.swing.JTable;
 import model.modelManagers.MotelManagement;
 import model.dto.InventoryItemData;
 import model.dto.SellingItemData;
@@ -40,33 +39,32 @@ public class SellingController {
 
     /** Registers action listeners for the selling view. */
     public void initListeners() {
-        sellingView.getBackButton().addActionListener(e -> backFromSelling());
-        sellingView.getItemDeleteButton().addActionListener(e -> removeItemFromRegisterList());
-        sellingView.getAddItemButton().addActionListener(e -> addItemToRegisterList());
-        sellingView.getAddQuantityButton().addActionListener(e -> updateItemSaleAmount(1));
-        sellingView.getRemoveQuantityButton().addActionListener(e -> updateItemSaleAmount(-1));
-        sellingView.getFinishSaleButton().addActionListener(e -> finishSale());
-        sellingView.getUpSellingListButton().addActionListener(e -> scrollSelectedTable(-1));
-        sellingView.getDownSellingListButton().addActionListener(e -> scrollSelectedTable(1));
-        sellingView.getCourtesySaleButton().addActionListener(e -> addCourtesyItemToRegister());
+        sellingView.onBackButton(this::backFromSelling);
+        sellingView.onItemDeleteButton(this::removeItemFromRegisterList);
+        sellingView.onAddItemButton(this::addItemToRegisterList);
+        sellingView.onAddQuantityButton(() -> updateItemSaleAmount(1));
+        sellingView.onRemoveQuantityButton(() -> updateItemSaleAmount(-1));
+        sellingView.onFinishSaleButton(this::finishSale);
+        sellingView.onUpSellingListButton(() -> scrollSelectedTable(-1));
+        sellingView.onDownSellingListButton(() -> scrollSelectedTable(1));
+        sellingView.onCourtesySaleButton(this::addCourtesyItemToRegister);
 
-        // Table selection listeners for enabling/disabling add/delete buttons
-        sellingView.getItemTable().getSelectionModel().addListSelectionListener(event -> {
+        sellingView.onItemTableSelection(event -> {
             if (!event.getValueIsAdjusting() && !isListAdjusting) {
                 isListAdjusting = true;
-                sellingView.getQuantityTextField().setText("1");
-                sellingView.getAddItemButton().setEnabled(true);
-                sellingView.getItemDeleteButton().setEnabled(false);
-                sellingView.getSellingTable().clearSelection();
+                sellingView.setQuantityText("1");
+                sellingView.setAddItemEnabled(true);
+                sellingView.setItemDeleteEnabled(false);
+                sellingView.clearSellingTableSelection();
                 isListAdjusting = false;
             }
         });
-        sellingView.getSellingTable().getSelectionModel().addListSelectionListener(event -> {
+        sellingView.onSellingTableSelection(event -> {
             if (!event.getValueIsAdjusting() && !isListAdjusting) {
                 isListAdjusting = true;
-                sellingView.getItemDeleteButton().setEnabled(true);
-                sellingView.getAddItemButton().setEnabled(false);
-                sellingView.getItemTable().clearSelection();
+                sellingView.setItemDeleteEnabled(true);
+                sellingView.setAddItemEnabled(false);
+                sellingView.clearItemTableSelection();
                 isListAdjusting = false;
             }
         });
@@ -74,18 +72,12 @@ public class SellingController {
 
     // ========== Sale Flow ==========
 
-    /**
-     * Starts a new sale session.
-     *
-     * @param receptionSale if true, sale is from reception (no room assignment);
-     *                      if false, sale is charged to the currently selected room
-     */
     public void roomSale(boolean receptionSale) {
         if (receptionSale) {
             motelManager.setCurrentFloorRoom(-1, -1, -1);
-            sellingView.getCourtesySaleButton().setVisible(true);
+            sellingView.setCourtesySaleVisible(true);
         } else {
-            sellingView.getCourtesySaleButton().setVisible(false);
+            sellingView.setCourtesySaleVisible(false);
         }
         motelManager.restartSaleManager();
         String roomString = motelManager.getRoom(
@@ -93,82 +85,71 @@ public class SellingController {
                 motelManager.getCurrentFloorViewed(),
                 motelManager.getCurrentRoomViewed()
         ).getRoomString();
-        sellingView.getSellingToLabel().setText("VENDIENDO A: " + roomString);
+        sellingView.setSellingToText("VENDIENDO A: " + roomString);
         userInterface.setSellingView();
-        sellingView.getAddItemButton().setEnabled(false);
-        sellingView.getItemDeleteButton().setEnabled(false);
-        sellingView.getFinishSaleButton().setEnabled(false);
+        sellingView.setAddItemEnabled(false);
+        sellingView.setItemDeleteEnabled(false);
+        sellingView.setFinishSaleEnabled(false);
         sellingView.updateItemListed(motelManager.getInventoryItemDataList());
         sellingView.updateSellingListed(motelManager.getSellingItemDataList());
     }
 
-    /** Adds the selected item to the selling cart. */
     public void addItemToRegisterList() {
         InventoryItemData itemSelected = sellingView.getCurrentSelectedItemListed(
-                sellingView.getItemTable().getSelectedRow());
-        long quantity = InputParser.parseLongSafe(sellingView.getQuantityTextField(), 1L);
+                sellingView.getSelectedItemRow());
+        long quantity = InputParser.parseLongSafe(sellingView.getQuantityText(), 1L);
         if (quantity == 0L) {
             quantity = 1L;
-            sellingView.getQuantityTextField().setText("1");
+            sellingView.setQuantityText("1");
         }
         long itemID = itemSelected.itemID();
-        sellingView.getFinishSaleButton().setEnabled(true);
+        sellingView.setFinishSaleEnabled(true);
         motelManager.addItemToSelling(itemID, quantity, false);
         long totalPrice = motelManager.getCurrentTotalPriceSellingList();
-        sellingView.getTotalPriceLabel().setText(String.valueOf(totalPrice));
+        sellingView.setTotalPriceText(String.valueOf(totalPrice));
         sellingView.updateSellingListed(motelManager.getSellingItemDataList());
-        sellingView.getItemTable().clearSelection();
-        sellingView.getSellingTable().clearSelection();
-        sellingView.getAddItemButton().setEnabled(false);
+        sellingView.clearItemTableSelection();
+        sellingView.clearSellingTableSelection();
+        sellingView.setAddItemEnabled(false);
     }
 
-    /** Removes the selected item from the selling cart. */
     public void removeItemFromRegisterList() {
         SellingItemData itemSelected = sellingView.getCurrentSelectedSellingListed(
-                sellingView.getSellingTable().getSelectedRow());
+                sellingView.getSelectedSellingRow());
         long itemID = itemSelected.itemID();
         motelManager.removeItemToSelling(itemID);
         long totalPrice = motelManager.getCurrentTotalPriceSellingList();
-        sellingView.getTotalPriceLabel().setText(String.valueOf(totalPrice));
+        sellingView.setTotalPriceText(String.valueOf(totalPrice));
         sellingView.updateSellingListed(motelManager.getSellingItemDataList());
     }
 
-    /**
-     * Adjusts the quantity for the item about to be added.
-     *
-     * @param delta amount to add or subtract (typically +1 or -1)
-     */
     public void updateItemSaleAmount(int delta) {
-        int newValue = (int) InputParser.parseLongSafe(sellingView.getQuantityTextField()) + delta;
+        int newValue = (int) InputParser.parseLongSafe(sellingView.getQuantityText()) + delta;
         if (newValue < 0) newValue = 0;
-        sellingView.getQuantityTextField().setText(String.valueOf(newValue));
+        sellingView.setQuantityText(String.valueOf(newValue));
     }
 
-    /** Adds a courtesy (zero-price) item to the selling cart. */
     public void addCourtesyItemToRegister() {
         InventoryItemData itemSelected = sellingView.getCurrentSelectedItemListed(
-                sellingView.getItemTable().getSelectedRow());
-        long quantity = InputParser.parseLongSafe(sellingView.getQuantityTextField(), 1L);
+                sellingView.getSelectedItemRow());
+        long quantity = InputParser.parseLongSafe(sellingView.getQuantityText(), 1L);
         if (quantity == 0L) {
             quantity = 1L;
-            sellingView.getQuantityTextField().setText("1");
+            sellingView.setQuantityText("1");
         }
         long itemID = itemSelected.itemID();
-        sellingView.getFinishSaleButton().setEnabled(true);
+        sellingView.setFinishSaleEnabled(true);
         motelManager.addItemToSelling(itemID, quantity, true);
         long totalPrice = motelManager.getCurrentTotalPriceSellingList();
-        sellingView.getTotalPriceLabel().setText(String.valueOf(totalPrice));
+        sellingView.setTotalPriceText(String.valueOf(totalPrice));
         sellingView.updateSellingListed(motelManager.getSellingItemDataList());
-        sellingView.getItemTable().clearSelection();
-        sellingView.getSellingTable().clearSelection();
-        sellingView.getAddItemButton().setEnabled(false);
+        sellingView.clearItemTableSelection();
+        sellingView.clearSellingTableSelection();
+        sellingView.setAddItemEnabled(false);
     }
 
-    /**
-     * Completes the sale, records the transaction, and optionally prints a receipt.
-     */
     public void finishSale() {
-        boolean print = sellingView.getPrintingCheckBox().isSelected();
+        boolean print = sellingView.isPrintSelected();
         if (!print) {
             boolean noPrintingConfirmation = DialogHelper.confirmPrinting();
             if (noPrintingConfirmation) {
@@ -185,7 +166,6 @@ public class SellingController {
         }
     }
 
-    /** Cancels the sale and returns to the floor view. */
     public void backFromSelling() {
         motelManager.restartSaleManager();
         userInterface.setFloorView();
@@ -193,21 +173,7 @@ public class SellingController {
 
     // ========== Table Scrolling (Touch-Friendly) ==========
 
-    /**
-     * Scrolls whichever table currently has a row selected.
-     * If the selling table is selected, scrolls that one; otherwise scrolls the item table.
-     *
-     * @param direction +1 for down, -1 for up
-     */
     private void scrollSelectedTable(int direction) {
-        JTable table = sellingView.getSellingTable().getSelectedRow() >= 0
-                ? sellingView.getSellingTable()
-                : sellingView.getItemTable();
-        int currentRow = table.getSelectedRow();
-        int targetRow = Math.max(0, Math.min(currentRow + direction, table.getRowCount() - 1));
-        if (targetRow >= 0) {
-            table.setRowSelectionInterval(targetRow, targetRow);
-            table.scrollRectToVisible(table.getCellRect(targetRow, 0, true));
-        }
+        sellingView.scrollSelectedTable(direction);
     }
 }

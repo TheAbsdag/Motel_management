@@ -5,6 +5,7 @@ package view;
 
 import view.helpers.NumericDocumentFilter;
 import view.helpers.FocusHighlighter;
+import view.helpers.TableScroller;
 import view.helpers.TouchScrollHandler;
 import java.awt.*;
 import java.util.ArrayList;
@@ -96,7 +97,7 @@ public class SellingView extends JPanel implements TimeLabelInterface {
 
         public void updateData(List<SellingItemData> data) {
             sellingItems = data;
-            getSellingTable().repaint();
+            sellingTable.repaint();
             fireTableDataChanged();
         }
 
@@ -149,7 +150,7 @@ public class SellingView extends JPanel implements TimeLabelInterface {
 
         public void updateData(List<InventoryItemData> data) {
             inventoryItems = data;
-            getItemTable().repaint();
+            itemTable.repaint();
             fireTableDataChanged();
         }
 
@@ -367,121 +368,73 @@ public class SellingView extends JPanel implements TimeLabelInterface {
     /**
      * @return the dateLabel
      */
-    public JLabel getDateLabel() {
-        return dateLabel;
+    // ========== Encapsulated API ==========
+
+    @Override
+    public void updateTimeDisplay(String timeText, String dateText) {
+        timeLabel.setText(timeText);
+        dateLabel.setText(dateText);
     }
 
-    /**
-     * @return the timeLabel
-     */
-    public JLabel getTimeLabel() {
-        return timeLabel;
+    // -- Buttons --
+
+    public void onBackButton(Runnable action) { backButton.addActionListener(e -> action.run()); }
+    public void onItemDeleteButton(Runnable action) { itemDeleteButton.addActionListener(e -> action.run()); }
+    public void onAddItemButton(Runnable action) { addItemButton.addActionListener(e -> action.run()); }
+    public void onAddQuantityButton(Runnable action) { addQuantityButton.addActionListener(e -> action.run()); }
+    public void onRemoveQuantityButton(Runnable action) { removeQuantityButton.addActionListener(e -> action.run()); }
+    public void onFinishSaleButton(Runnable action) { finishSaleButton.addActionListener(e -> action.run()); }
+    public void onUpSellingListButton(Runnable action) { upSellingListButton.addActionListener(e -> action.run()); }
+    public void onDownSellingListButton(Runnable action) { downSellingListButton.addActionListener(e -> action.run()); }
+    public void onCourtesySaleButton(Runnable action) { courtesySaleButton.addActionListener(e -> action.run()); }
+    public void setItemDeleteEnabled(boolean e) { itemDeleteButton.setEnabled(e); }
+    public void setAddItemEnabled(boolean e) { addItemButton.setEnabled(e); }
+    public void setFinishSaleEnabled(boolean e) { finishSaleButton.setEnabled(e); }
+    public void setCourtesySaleVisible(boolean v) { courtesySaleButton.setVisible(v); }
+
+    // -- Text fields --
+
+    public void setQuantityText(String text) { quantityTextField.setText(text); }
+    public String getQuantityText() { return quantityTextField.getText(); }
+
+    // -- Labels --
+
+    public void setTotalPriceText(String text) { totalPriceLabel.setText(text); }
+    public void setSellingToText(String text) { sellingToLabel.setText(text); }
+
+    // -- Checkbox --
+
+    public boolean isPrintSelected() { return printingCheckBox.isSelected(); }
+
+    // -- Tables: item table --
+
+    public int getSelectedItemRow() { return itemTable.getSelectedRow(); }
+    public void clearItemTableSelection() { itemTable.clearSelection(); }
+    public void onItemTableSelection(javax.swing.event.ListSelectionListener listener) {
+        itemTable.getSelectionModel().addListSelectionListener(listener);
     }
 
-    public JTextField getQuantityTextField() {
-        return quantityTextField;
+    // -- Tables: selling table --
+
+    public int getSelectedSellingRow() { return sellingTable.getSelectedRow(); }
+    public void clearSellingTableSelection() { sellingTable.clearSelection(); }
+    public void onSellingTableSelection(javax.swing.event.ListSelectionListener listener) {
+        sellingTable.getSelectionModel().addListSelectionListener(listener);
     }
 
-    /**
-     * @return the itemDeleteButton
-     */
-    public JButton getItemDeleteButton() {
-        return itemDeleteButton;
+    // -- Table scrolling --
+
+    public void scrollItemTable(int direction) {
+        TableScroller.scroll(itemTable, direction);
     }
 
-    /**
-     * @return the printingCheckBox
-     */
-    public JCheckBox getPrintingCheckBox() {
-        return printingCheckBox;
+    public void scrollSellingTable(int direction) {
+        TableScroller.scroll(sellingTable, direction);
     }
 
-    /**
-     * @return the sellingToLabel
-     */
-    public JLabel getSellingToLabel() {
-        return sellingToLabel;
+    public void scrollSelectedTable(int direction) {
+        JTable table = sellingTable.getSelectedRow() >= 0 ? sellingTable : itemTable;
+        TableScroller.scroll(table, direction);
+    }
     }
 
-    /**
-     * @return the finishSaleButton
-     */
-    public JButton getFinishSaleButton() {
-        return finishSaleButton;
-    }
-
-    /**
-     * @return the addQuantityButton
-     */
-    public JButton getAddQuantityButton() {
-        return addQuantityButton;
-    }
-
-    /**
-     * @return the removeQuantityButton
-     */
-    public JButton getRemoveQuantityButton() {
-        return removeQuantityButton;
-    }
-
-    /**
-     * @return the addItemButton
-     */
-    public JButton getAddItemButton() {
-        return addItemButton;
-    }
-
-    /**
-     * @return the backButton
-     */
-    public JButton getBackButton() {
-        return backButton;
-    }
-
-    /**
-     * @return the itemTable
-     */
-    public JTable getItemTable() {
-        return itemTable;
-    }
-
-    /**
-     * @return the sellingTable
-     */
-    public JTable getSellingTable() {
-        return sellingTable;
-    }
-
-    /**
-     * @return the totalPriceInformativeLabel
-     */
-    public JLabel getTotalPriceInformativeLabel() {
-        return totalPriceInformativeLabel;
-    }
-
-    /**
-     * @return the totalPriceLabel
-     */
-    public JLabel getTotalPriceLabel() {
-        return totalPriceLabel;
-    }
-
-    public JButton getUpSellingListButton() {
-        return upSellingListButton;
-    }
-
-    /**
-     * @return the downSellingListButton
-     */
-    public JButton getDownSellingListButton() {
-        return downSellingListButton;
-    }
-
-    /**
-     * @return the courtesySaleButton
-     */
-    public JButton getCourtesySaleButton() {
-        return courtesySaleButton;
-    }
-
-}

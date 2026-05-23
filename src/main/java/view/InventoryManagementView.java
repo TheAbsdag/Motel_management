@@ -2,6 +2,8 @@ package view;
 
 import view.helpers.NumericDocumentFilter;
 import view.helpers.FocusHighlighter;
+import view.helpers.PriceAdjustmentHelper;
+import view.helpers.TableScroller;
 import view.helpers.TouchScrollHandler;
 import java.awt.*;
 import java.util.ArrayList;
@@ -21,10 +23,6 @@ import view.interfaces.TimeLabelInterface;
  * Uses typed {@link InventoryItemData} DTOs instead of raw JSON.
  */
 public class InventoryManagementView extends JPanel implements TimeLabelInterface {
-
-    public JButton getUpButton() { return upButton; }
-    public JButton getDownButton() { return downButton; }
-    public JTable getInventoryTable() { return inventoryTable; }
 
     public InventoryManagementView() {
         this.cellFont = new Font("Segoe UI", Font.BOLD, 18);
@@ -273,21 +271,76 @@ public class InventoryManagementView extends JPanel implements TimeLabelInterfac
     private JButton saveButton;
     // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
 
-    // Getters for JFormDesigner components
-    public JButton getDeleteItemButton() { return deleteItemButton; }
-    public JButton getNewitemButton() { return newitemButton; }
-    public JLabel getInformativeEditLabel() { return informativeEditLabel; }
-    public JTextField getNameTextField() { return nameTextField; }
-    public JTextField getQuantityTextField() { return quantityTextField; }
-    public JButton getAddQuantityButton() { return addQuantityButton; }
-    public JButton getRemoveQuantityButton() { return removeQuantityButton; }
-    public JTextField getPriceTextField() { return priceTextField; }
-    public JButton getRemoveSmallPriceButton() { return removeSmallPriceButton; }
-    public JButton getAddSmallPriceButton() { return addSmallPriceButton; }
-    public JButton getRemoveBigPriceButton() { return removeBigPriceButton; }
-    public JButton getAddBigPriceButton() { return addBigPriceButton; }
-    public JButton getBackButton() { return backButton; }
-    public JLabel getTimeLabel() { return timeLabel; }
-    public JLabel getDateLabel() { return dateLabel; }
-    public JButton getSaveButton() { return saveButton; }
+    // ========== Encapsulated API ==========
+
+    @Override
+    public void updateTimeDisplay(String timeText, String dateText) {
+        timeLabel.setText(timeText);
+        dateLabel.setText(dateText);
+    }
+
+    // -- Button listeners --
+    public void onNewItem(Runnable action) { newitemButton.addActionListener(e -> action.run()); }
+    public void onDeleteItem(Runnable action) { deleteItemButton.addActionListener(e -> action.run()); }
+    public void onAddQuantity(Runnable action) { addQuantityButton.addActionListener(e -> action.run()); }
+    public void onRemoveQuantity(Runnable action) { removeQuantityButton.addActionListener(e -> action.run()); }
+    public void onRemoveSmallPrice(Runnable action) { removeSmallPriceButton.addActionListener(e -> action.run()); }
+    public void onAddSmallPrice(Runnable action) { addSmallPriceButton.addActionListener(e -> action.run()); }
+    public void onRemoveBigPrice(Runnable action) { removeBigPriceButton.addActionListener(e -> action.run()); }
+    public void onAddBigPrice(Runnable action) { addBigPriceButton.addActionListener(e -> action.run()); }
+    public void onSaveButton(Runnable action) { saveButton.addActionListener(e -> action.run()); }
+    public void onBackButton(Runnable action) { backButton.addActionListener(e -> action.run()); }
+    public void onUpButton(Runnable action) { upButton.addActionListener(e -> action.run()); }
+    public void onDownButton(Runnable action) { downButton.addActionListener(e -> action.run()); }
+
+    // -- Button enable/disable --
+    public void setDeleteEnabled(boolean e) { deleteItemButton.setEnabled(e); }
+    public void setAddQuantityEnabled(boolean e) { addQuantityButton.setEnabled(e); }
+    public void setRemoveQuantityEnabled(boolean e) { removeQuantityButton.setEnabled(e); }
+    public void setRemoveSmallPriceEnabled(boolean e) { removeSmallPriceButton.setEnabled(e); }
+    public void setAddSmallPriceEnabled(boolean e) { addSmallPriceButton.setEnabled(e); }
+    public void setRemoveBigPriceEnabled(boolean e) { removeBigPriceButton.setEnabled(e); }
+    public void setAddBigPriceEnabled(boolean e) { addBigPriceButton.setEnabled(e); }
+    public void setSaveEnabled(boolean e) { saveButton.setEnabled(e); }
+
+    // -- Text fields --
+    public String getNameText() { return nameTextField.getText(); }
+    public void setNameText(String text) { nameTextField.setText(text); }
+    public void setNameEnabled(boolean e) { nameTextField.setEnabled(e); }
+    public boolean isNameEnabled() { return nameTextField.isEnabled(); }
+    public void onNameTextChanged(javax.swing.event.DocumentListener listener) {
+        nameTextField.getDocument().addDocumentListener(listener);
+    }
+    public String getQuantityText() { return quantityTextField.getText(); }
+    public void setQuantityText(String text) { quantityTextField.setText(text); }
+    public void setQuantityEnabled(boolean e) { quantityTextField.setEnabled(e); }
+    public String getPriceText() { return priceTextField.getText(); }
+    public void setPriceText(String text) { priceTextField.setText(text); }
+    public void setPriceEnabled(boolean e) { priceTextField.setEnabled(e); }
+
+    // -- Labels --
+    public void setEditInfoText(String text) { informativeEditLabel.setText(text); }
+
+    // -- Table --
+    public int getSelectedInventoryRow() { return inventoryTable.getSelectedRow(); }
+    public void clearInventorySelection() { inventoryTable.clearSelection(); }
+    public void onInventorySelection(javax.swing.event.ListSelectionListener listener) {
+        inventoryTable.getSelectionModel().addListSelectionListener(listener);
+    }
+
+    // -- Table scrolling --
+
+    public void scrollInventoryTable(int direction) {
+        TableScroller.scroll(inventoryTable, direction);
+    }
+
+    // -- Quantity & price adjustments --
+
+    public void adjustQuantity(long delta) {
+        PriceAdjustmentHelper.adjust(quantityTextField, delta);
+    }
+
+    public void adjustPrice(long delta) {
+        PriceAdjustmentHelper.adjust(priceTextField, delta);
+    }
 }
