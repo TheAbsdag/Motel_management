@@ -1,8 +1,5 @@
 package controller.sub;
 
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import javax.swing.JCheckBox;
 import view.UserGUI;
 
 /**
@@ -35,25 +32,24 @@ public class ManagementController {
 
     /** Registers action listeners for the management select view. */
     public void initListeners() {
-        userInterface.getManagementSelection().getBackButton().addActionListener(e -> showFloorView());
-        userInterface.getManagementSelection().getTurnButton().addActionListener(e -> onTurnSelected.run());
-        userInterface.getManagementSelection().getInventoryButton().addActionListener(e -> onInventorySelected.run());
-        userInterface.getManagementSelection().getHistoryButton().addActionListener(e -> onHistorySelected.run());
-        userInterface.getManagementSelection().getAppOptionsButton().addActionListener(e -> onAppOptionsSelected.run());
-        userInterface.getManagementSelection().getRoomSummaryButton().addActionListener(e -> showRoomSummary());
-        userInterface.getManagementSelection().getExtraChangesButton().addActionListener(e -> showExtraChanges());
-        userInterface.getManagementSelection().getRegisterSpendingButton().addActionListener(e -> showSpendingRegister());
+        var sel = userInterface.getManagementSelection();
+        sel.onBackButton(this::showFloorView);
+        sel.onTurnButton(onTurnSelected);
+        sel.onInventoryButton(onInventorySelected);
+        sel.onHistoryButton(onHistorySelected);
+        sel.onAppOptionsButton(onAppOptionsSelected);
+        sel.onRoomSummaryButton(this::showRoomSummary);
+        sel.onExtraChangesButton(this::showExtraChanges);
+        sel.onRegisterSpendingButton(this::showSpendingRegister);
 
         // Spending register view listeners
-        userInterface.getSpendingRegisterView().getCancellationButton().addActionListener(e -> showManagementOptions());
+        userInterface.getSpendingRegisterView().onCancellationButton(this::showManagementOptions);
 
-        // Extra turn changes view listeners
-        userInterface.getExtraTurnChangesView().getBackButton().addActionListener(e -> showManagementOptions());
-        userInterface.getExtraTurnChangesView().getBankTransferBox().addItemListener(new CheckBoxListener(userInterface));
-        userInterface.getExtraTurnChangesView().getSaveDespositBox().addItemListener(new CheckBoxListener(userInterface));
+        // Extra turn changes view listeners (mutual exclusion handled inside the view)
+        userInterface.getExtraTurnChangesView().onBackButton(this::showManagementOptions);
 
         // Room summary view listeners
-        userInterface.getRoomSummaryView().getBackButton().addActionListener(e -> showManagementOptions());
+        userInterface.getRoomSummaryView().onBackButton(this::showManagementOptions);
     }
 
     /** Opens the management options menu. */
@@ -87,33 +83,5 @@ public class ManagementController {
     /** Opens the room summary dashboard. */
     public void showRoomSummary() {
         userInterface.setRoomSummaryView();
-    }
-
-    // ========== Checkbox Listener ==========
-
-    /**
-     * Manages mutually exclusive checkboxes for extra turn changes
-     * (bank transfer and safe deposit).
-     */
-    private static class CheckBoxListener implements ItemListener {
-        private final UserGUI view;
-
-        CheckBoxListener(UserGUI view) {
-            this.view = view;
-        }
-
-        @Override
-        public void itemStateChanged(ItemEvent e) {
-            JCheckBox selected = (JCheckBox) e.getSource();
-            if (selected.isSelected()) {
-                view.getExtraTurnChangesView().getConfirmationButton().setEnabled(true);
-                if (selected != view.getExtraTurnChangesView().getBankTransferBox()) {
-                    view.getExtraTurnChangesView().getBankTransferBox().setSelected(false);
-                }
-                if (selected != view.getExtraTurnChangesView().getSaveDespositBox()) {
-                    view.getExtraTurnChangesView().getSaveDespositBox().setSelected(false);
-                }
-            }
-        }
     }
 }

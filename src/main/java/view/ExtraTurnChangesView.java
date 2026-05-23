@@ -30,6 +30,19 @@ public class ExtraTurnChangesView extends JPanel {
         addBigValueButton.addActionListener(e -> updateValue(1000L));
         minusBigValueButton.addActionListener(e -> updateValue(-1000L));
         minusSmallValueButton.addActionListener(e -> updateValue(-100L));
+
+        bankTransferBox.addItemListener(e -> {
+            if (bankTransferBox.isSelected()) {
+                confirmationButton.setEnabled(true);
+                saveDespositBox.setSelected(false);
+            }
+        });
+        saveDespositBox.addItemListener(e -> {
+            if (saveDespositBox.isSelected()) {
+                confirmationButton.setEnabled(true);
+                bankTransferBox.setSelected(false);
+            }
+        });
     }
 
     private void updateValue(long value) {
@@ -44,21 +57,29 @@ public class ExtraTurnChangesView extends JPanel {
         saveDespositBox.setSelected(false);
     }
 
-    // --- Getters ---
+    // --- Encapsulated API ---
 
-    public JLabel getExtraTurnChangesInformativeLabel() { return extraTurnChangesInformativeLabel; }
-    public JLabel getDescriptionLabel() { return descriptionLabel; }
-    public JTextField getDescriptionText() { return descriptionText; }
-    public JLabel getValueLabel() { return valueLabel; }
-    public JTextField getValueTextField() { return valueTextField; }
-    public JButton getMinusSmallValueButton() { return minusSmallValueButton; }
-    public JButton getAddSmallValueButton() { return addSmallValueButton; }
-    public JButton getMinusBigValueButton() { return minusBigValueButton; }
-    public JButton getAddBigValueButton() { return addBigValueButton; }
-    public JCheckBox getBankTransferBox() { return bankTransferBox; }
-    public JCheckBox getSaveDespositBox() { return saveDespositBox; }
-    public JButton getBackButton() { return backButton; }
-    public JButton getConfirmationButton() { return confirmationButton; }
+    /** Returns the current description text. */
+    public String getDescriptionText() { return descriptionText.getText(); }
+    /** Returns the current value text. */
+    public String getValueText() { return valueTextField.getText(); }
+    /** Sets the value text field. */
+    public void setValueText(String text) { valueTextField.setText(text); }
+    /** Returns whether bank transfer is selected. */
+    public boolean isBankTransferSelected() { return bankTransferBox.isSelected(); }
+    /** Sets bank transfer selection. */
+    public void setBankTransferSelected(boolean sel) { bankTransferBox.setSelected(sel); }
+    /** Returns whether safe deposit is selected. */
+    public boolean isSafeDepositSelected() { return saveDespositBox.isSelected(); }
+    /** Sets safe deposit selection. */
+    public void setSafeDepositSelected(boolean sel) { saveDespositBox.setSelected(sel); }
+
+    /** Registers a listener for the back button. */
+    public void onBackButton(Runnable action) { backButton.addActionListener(e -> action.run()); }
+    /** Registers a listener for the confirmation button. */
+    public void onConfirmationButton(Runnable action) { confirmationButton.addActionListener(e -> action.run()); }
+    /** Enables or disables the confirmation button. */
+    public void setConfirmationEnabled(boolean enabled) { confirmationButton.setEnabled(enabled); }
 
     private void initComponents() {
         // JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents  @formatter:off
