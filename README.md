@@ -23,7 +23,7 @@ Built on Netbeans as a educational project for a specific usecase present on the
 | `.\mvnw.cmd clean compile` | Compile |
 | `.\mvnw.cmd test` | Run all tests |
 | `.\mvnw.cmd clean package` | Build fat JAR |
-| `java -jar target/Motel_management-0.1.4.jar` | Run app |
+| `java -jar target/Motel_management-0.1.3.1.jar` | Run app |
 
 ## Architecture
 
@@ -31,7 +31,7 @@ MVC with manual dependency injection wired in `App.java`. A `MotelManagement` fa
 
 **Packages:** `controller`, `controller.sub`, `model`, `model.modelManagers`, `model.dto`, `model.turn`, `view`, `view.helpers`, `view.customListRenderes`, `view.interfaces`
 
-A detailed [sequence diagram](docs/DIAGRAMS/v0.1.4.md) covering all 10 defensive validation layers across the MVC stack is available in the [diagrams index](docs/DIAGRAMS/DIAGRAMS.md).
+A detailed [sequence diagram](docs/DIAGRAMS/v0.1.3.1.md) covering all 10 defensive validation layers across the MVC stack is available in the [diagrams index](docs/DIAGRAMS/DIAGRAMS.md).
 
 ## Functionality
 
@@ -62,7 +62,7 @@ Features to be added, in no particular order of progress, WIP will be marked and
 ## Versions:
 - **0.1.2:** Up until commits done to september 27th 2025, basic functionality, requires existing applicationProperties to properly function
 - **0.1.3:** Commits done since start of 2026 comprise the current program version, better implementation, separation, and management options prepared, still requires a existing applicationProperties with basic data to function, known conflicts and issues are being actively worked on
-- **0.1.4:** Refactoring and initial setup finished, making the program fully functional for basic details, advanced data output configuration and related will come at a later date
+- **0.1.3.1:** Refactoring and initial setup finished, making the program fully functional for basic details, advanced data output configuration and related will come at a later date
 
 ## **DISCLAIMER:**
 This program has used LLM tools such as OpenCode, Claude, Qwen, and related for code development, refinement and optimization (Though test creation was a godsend)

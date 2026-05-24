@@ -15,7 +15,7 @@ This document is a version index of all the diagrams available for relevant vers
 | Version | App Version | Link | Description |
 |---------|-------------|------|-------------|
 | V0.1.2 | 0.1.2 | [Initial Sequence Diagram](https://github.com/TheAbsdag/New_Project_Designs) | External reference — no dedicated diagram file exists in-repo for this version. |
-| V0.1.3 - [V0.1.4](v0.1.4.md) | 0.1.4 | [Sequence Diagram](v0.1.4.md) | In-repo Mermaid sequence diagram covering all 10 layers across the full MVC stack. |
+| V0.1.3 - [V0.1.3.1](v0.1.3.1.md) | 0.1.3.1 | [Sequence Diagram](v0.1.3.1.md) | In-repo Mermaid sequence diagram covering all 10 layers across the full MVC stack. |
 
 ---
 
