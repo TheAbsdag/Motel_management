@@ -220,6 +220,7 @@ public class Register {
         }
 
         output.put("inventoryItems", inventoryArray);
+        output.put("version", 2);
         return output;
     }
 

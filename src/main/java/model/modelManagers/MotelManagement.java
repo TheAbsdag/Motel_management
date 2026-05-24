@@ -440,7 +440,7 @@ public class MotelManagement implements ISellingService, IHistoryService {
 
         JSONObject roomData = new JSONObject();
         roomData.put("rooms", roomManager.getRoomDataForSaving());
-        roomData.put("version", 1);
+        roomData.put("version", 2);
 
         Map<String, JSONObject> dataMap = new LinkedHashMap<>();
         dataMap.put("turn", turnService.getDetailedTurnInformationAsJson());
@@ -459,7 +459,7 @@ public class MotelManagement implements ISellingService, IHistoryService {
 
         JSONObject roomData = new JSONObject();
         roomData.put("rooms", roomManager.getRoomDataForSaving());
-        roomData.put("version", 1);
+        roomData.put("version", 2);
         files.saveJsonBackupDataPath(roomData, "roomsInformation", localizedTime, saveType);
         files.saveJsonBackupDataPath(programConfig.getProgramData(), "applicationProperties", localizedTime, saveType);
     }

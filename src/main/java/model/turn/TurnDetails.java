@@ -264,6 +264,7 @@ public class TurnDetails {
         json.put("totalBankTransfers", totalBankTransfers);
         json.put("totalDeposits", totalDeposits);
         json.put("totalNet", totalNet);
+        json.put("version", 2);
         return json;
     }
 
@@ -274,6 +275,7 @@ public class TurnDetails {
      * @return the reconstructed turn details
      */
     public static TurnDetails fromJson(JSONObject json) {
+        int version = json.optInt("version", 0);
         TurnDetails details = new TurnDetails();
         details.turnNumber = json.getLong("turnNumber");
         details.turnStart = ZonedDateTime.parse(json.getString("turnStart"));
