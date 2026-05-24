@@ -65,7 +65,10 @@ Features to be added, in no particular order of progress, WIP will be marked and
 - **0.1.3.1:** Refactoring and initial setup finished, making the program fully functional for basic details, advanced data output configuration and related will come at a later date
 
 ## **DISCLAIMER:**
-This program has used LLM tools such as OpenCode, Claude, Qwen, and related for code development, refinement and optimization (Though test creation was a godsend)
-**Design decissions, feature planning, validation, and implementation are still done by me, the repository author**
+This program has used LLM tools such as OpenCode, Claude, Qwen, and related for code development, refinement and optimization (Though test creation was a godsend).
+
+**Design decissions, feature planning, validation, and implementation are still done by me, the repository author**.
+
 This is a educational project made on a simple understanding of MVC, UML, and Object oriented design, meant to apply, develop, and improve on those concepts on a real use case scenario with actual requirements, this is a highly personalized project for the usecase.
+
 Design files for the basic concept can be found on github: [Project designs](https://github.com/TheAbsdag/New_Project_Designs)
