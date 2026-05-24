@@ -17,6 +17,9 @@ public final class TableScroller {
      * @param direction +1 for down, -1 for up
      */
     public static void scroll(JTable table, int direction) {
+        if (table.getRowCount() == 0) {
+            return;
+        }
         int currentRow = table.getSelectedRow();
         int targetRow = Math.max(0, Math.min(currentRow + direction, table.getRowCount() - 1));
         if (targetRow >= 0) {

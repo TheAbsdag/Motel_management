@@ -8,18 +8,18 @@ import org.json.JSONObject;
  *
  * <p>When {@code refundType} is {@link RefundType#ROOM_REFUND} the fields
  * {@code itemID}, {@code quantity} and {@code itemName} are unused; when it is
- * {@link RefundType#SALE_REFUND} the field {@code refundService} is unused.
+ * {@link RefundType#SALE_REFUND} the field {@code refundServiceDuration} is unused.
  *
- * @param changeDate             when the refund was processed
- * @param refundType             type of refund (room or sale)
- * @param consecutiveTrans       consecutive transaction number for this refund
- * @param refundConsecutiveTrans original transaction number being refunded
- * @param refundRoom             room identifier associated with the refund
- * @param price                  monetary amount being refunded
- * @param refundService          service duration for room refunds (in minutes)
- * @param itemID                 inventory item ID for sale refunds
- * @param quantity               quantity refunded for sale refunds
- * @param itemName               item name for sale refunds
+ * @param changeDate               when the refund was processed
+ * @param refundType               type of refund (room or sale)
+ * @param consecutiveTrans         consecutive transaction number for this refund
+ * @param refundConsecutiveTrans   original transaction number being refunded
+ * @param refundRoom               room identifier associated with the refund
+ * @param price                    monetary amount being refunded
+ * @param refundServiceDuration    service duration for room refunds (in seconds)
+ * @param itemID                   inventory item ID for sale refunds
+ * @param quantity                 quantity refunded for sale refunds
+ * @param itemName                 item name for sale refunds
  */
 public record RefundActivity(
         ZonedDateTime changeDate,
@@ -28,7 +28,7 @@ public record RefundActivity(
         int refundConsecutiveTrans,
         String refundRoom,
         long price,
-        int refundService,
+        long refundServiceDuration,
         long itemID,
         long quantity,
         String itemName
@@ -45,7 +45,7 @@ public record RefundActivity(
         json.put("refundRoom", refundRoom);
         json.put("price", price);
         if (refundType == RefundType.ROOM_REFUND) {
-            json.put("refundService", refundService);
+            json.put("refundServiceDuration", refundServiceDuration);
         } else {
             json.put("itemID", itemID);
             json.put("quantity", quantity);
@@ -56,12 +56,20 @@ public record RefundActivity(
 
     /**
      * Deserializes a {@code RefundActivity} from its JSON representation.
+     * Supports both the new format ({@code refundServiceDuration} in seconds)
+     * and the legacy format ({@code refundService} in hours, multiplied by 3600).
      *
-     * @param json JSON object previously produced by {@link #toJson()}
+     * @param json JSON object previously produced by {@link #toJson()} (or legacy format)
      * @return the reconstructed activity
      */
     public static RefundActivity fromJson(JSONObject json) {
         RefundType type = RefundType.fromString(json.getString("refundType"));
+        long refundDur = 0;
+        if (type == RefundType.ROOM_REFUND) {
+            refundDur = json.has("refundServiceDuration")
+                    ? json.getLong("refundServiceDuration")
+                    : (long) json.getInt("refundService") * 3600L;
+        }
         return new RefundActivity(
                 ZonedDateTime.parse(json.getString("changeDate")),
                 type,
@@ -69,7 +77,7 @@ public record RefundActivity(
                 json.optInt("refundConsecutiveTrans", 0),
                 json.getString("refundRoom"),
                 json.getLong("price"),
-                type == RefundType.ROOM_REFUND ? json.getInt("refundService") : 0,
+                refundDur,
                 type == RefundType.SALE_REFUND ? json.getLong("itemID") : 0,
                 type == RefundType.SALE_REFUND ? json.getLong("quantity") : 0,
                 type == RefundType.SALE_REFUND ? json.getString("itemName") : null

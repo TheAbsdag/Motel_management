@@ -64,28 +64,28 @@ class TurnTest {
     void shouldRegisterRoomChangeForNewBooking() {
         turn.setNewTurn(1, startTime);
         Room room = createRoom("1-101", 0, 1, 1);
-        room.setRoomStatus(RoomStatus.OCCUPIED, startTime, 12);
+        room.setRoomStatus(RoomStatus.OCCUPIED, startTime, 43200L);
 
         RoomBookingActivity change = turn.registerRoomChange(room, startTime, 50000, 0, 0);
 
         assertThat(change.roomString()).isEqualTo("1-101");
         assertThat(change.roomStatus()).isEqualTo(RoomStatus.OCCUPIED);
         assertThat(change.price()).isEqualTo(50000);
-        assertThat(change.service()).isEqualTo(12);
-        assertThat(change.servicedExtension()).isZero();
+        assertThat(change.serviceDuration()).isEqualTo(43200L);
+        assertThat(change.servicedExtensionDuration()).isZero();
     }
 
     @Test
     void shouldRegisterRoomChangeForExtension() {
         turn.setNewTurn(1, startTime);
         Room room = createRoom("1-101", 0, 1, 1);
-        room.setRoomStatus(RoomStatus.OCCUPIED, startTime, 3);
-        room.extendRoomTime(3);
+        room.setRoomStatus(RoomStatus.OCCUPIED, startTime, 10800L);
+        room.extendRoomTime(10800L);
 
-        RoomBookingActivity change = turn.registerRoomChange(room, startTime, 30000, 3, 0);
+        RoomBookingActivity change = turn.registerRoomChange(room, startTime, 30000, 10800L, 0);
 
-        assertThat(change.servicedExtension()).isEqualTo(3);
-        assertThat(change.extension()).isEqualTo(3);
+        assertThat(change.servicedExtensionDuration()).isEqualTo(10800L);
+        assertThat(change.extensionDuration()).isEqualTo(10800L);
     }
 
     // ========== Sale Logging ==========
@@ -111,7 +111,7 @@ class TurnTest {
     void shouldGenerateBasicTurnSummaryForBookings() {
         turn.setNewTurn(1, startTime);
         Room room1 = createRoom("1-101", 0, 1, 1);
-        room1.setRoomStatus(RoomStatus.OCCUPIED, startTime, 3);
+        room1.setRoomStatus(RoomStatus.OCCUPIED, startTime, 10800L);
         turn.registerRoomChange(room1, startTime, 30000, 0, 0);
 
         TurnDetails summary = turn.getDetailedTurnInformation();
@@ -122,7 +122,7 @@ class TurnTest {
         List<TurnSummaryItemData> summaryItems = summary.getSummaryItems();
         assertThat(summaryItems).hasSize(1);
         assertThat(summaryItems.get(0).summaryType()).isEqualTo("room");
-        assertThat(summaryItems.get(0).service()).isEqualTo(3);
+        assertThat(summaryItems.get(0).serviceDuration()).isEqualTo(10800L);
         assertThat(summaryItems.get(0).quantity()).isEqualTo(1);
     }
 
@@ -131,11 +131,11 @@ class TurnTest {
         turn.setNewTurn(1, startTime);
 
         Room room1 = createRoom("1-101", 0, 1, 1);
-        room1.setRoomStatus(RoomStatus.OCCUPIED, startTime, 3);
+        room1.setRoomStatus(RoomStatus.OCCUPIED, startTime, 10800L);
         turn.registerRoomChange(room1, startTime, 30000, 0, 0);
 
         Room room2 = createRoom("1-102", 0, 2, 1);
-        room2.setRoomStatus(RoomStatus.OCCUPIED, startTime, 3);
+        room2.setRoomStatus(RoomStatus.OCCUPIED, startTime, 10800L);
         turn.registerRoomChange(room2, startTime, 30000, 0, 0);
 
         TurnDetails summary = turn.getDetailedTurnInformation();
@@ -171,7 +171,7 @@ class TurnTest {
     void shouldGenerateDetailedTotals() {
         turn.setNewTurn(1, startTime);
         Room room = createRoom("1-101", 0, 1, 1);
-        room.setRoomStatus(RoomStatus.OCCUPIED, startTime, 3);
+        room.setRoomStatus(RoomStatus.OCCUPIED, startTime, 10800L);
         turn.registerRoomChange(room, startTime, 30000, 0, 0);
 
         TurnDetails detailed = turn.getDetailedTurnInformation();
@@ -197,7 +197,7 @@ class TurnTest {
     void shouldHandleSummaryBeforeTurnEnd() {
         turn.setNewTurn(1, startTime);
         Room room = createRoom("1-101", 0, 1, 1);
-        room.setRoomStatus(RoomStatus.OCCUPIED, startTime, 3);
+        room.setRoomStatus(RoomStatus.OCCUPIED, startTime, 10800L);
         turn.registerRoomChange(room, startTime, 30000, 0, 0);
 
         TurnDetails summary = turn.getDetailedTurnInformation();
@@ -210,7 +210,7 @@ class TurnTest {
     void shouldConvertActivityToTypedDtoList() {
         turn.setNewTurn(1, startTime);
         Room room = createRoom("1-101", 0, 1, 1);
-        room.setRoomStatus(RoomStatus.OCCUPIED, startTime, 12);
+        room.setRoomStatus(RoomStatus.OCCUPIED, startTime, 43200L);
         turn.registerRoomChange(room, startTime, 50000, 0, 0);
 
         List<TurnActivityData> activities = turn.getActivityDataList();
@@ -218,8 +218,8 @@ class TurnTest {
         assertThat(activities).hasSize(1);
         assertThat(activities.get(0).getChangeType()).isEqualTo("room");
         assertThat(activities.get(0).getPrice()).isEqualTo(50000);
-        assertThat(activities.get(0).getService()).isEqualTo(12);
-        assertThat(activities.get(0).getEffectiveService()).isEqualTo(12);
+        assertThat(activities.get(0).getServiceDuration()).isEqualTo(43200L);
+        assertThat(activities.get(0).getEffectiveServiceDuration()).isEqualTo(43200L);
     }
 
     @Test
@@ -243,14 +243,14 @@ class TurnTest {
     void shouldConvertSummaryToTypedDtoList() {
         turn.setNewTurn(1, startTime);
         Room room = createRoom("1-101", 0, 1, 1);
-        room.setRoomStatus(RoomStatus.OCCUPIED, startTime, 3);
+        room.setRoomStatus(RoomStatus.OCCUPIED, startTime, 10800L);
         turn.registerRoomChange(room, startTime, 30000, 0, 0);
 
         List<TurnSummaryItemData> summaries = turn.getSummaryDataList();
 
         assertThat(summaries).hasSize(1);
         assertThat(summaries.get(0).summaryType()).isEqualTo("room");
-        assertThat(summaries.get(0).service()).isEqualTo(3);
+        assertThat(summaries.get(0).serviceDuration()).isEqualTo(10800L);
         assertThat(summaries.get(0).quantity()).isEqualTo(1);
     }
 
@@ -417,7 +417,7 @@ class TurnTest {
     void shouldRefundRoomTransactionFromTurn() {
         turn.setNewTurn(1, startTime);
         Room room = createRoom("1-101", 0, 1, 1);
-        room.setRoomStatus(RoomStatus.OCCUPIED, startTime, 3);
+        room.setRoomStatus(RoomStatus.OCCUPIED, startTime, 10800L);
         turn.registerRoomChange(room, startTime, 30000, 0, 42);
 
         TurnActivity activity = turn.findActivity(42, ActivityType.ROOM);
@@ -460,7 +460,7 @@ class TurnTest {
     void shouldIncludeRefundsInFinancialTotals() {
         turn.setNewTurn(1, startTime);
         Room room = createRoom("1-101", 0, 1, 1);
-        room.setRoomStatus(RoomStatus.OCCUPIED, startTime, 3);
+        room.setRoomStatus(RoomStatus.OCCUPIED, startTime, 10800L);
         turn.registerRoomChange(room, startTime, 30000, 0, 42);
 
         TurnActivity activity = turn.findActivity(42, ActivityType.ROOM);
@@ -478,7 +478,7 @@ class TurnTest {
     void shouldCalculateNetTotalAcrossAllTransactionTypes() {
         turn.setNewTurn(1, startTime);
         Room room = createRoom("1-101", 0, 1, 1);
-        room.setRoomStatus(RoomStatus.OCCUPIED, startTime, 3);
+        room.setRoomStatus(RoomStatus.OCCUPIED, startTime, 10800L);
         turn.registerRoomChange(room, startTime, 30000, 0, 1);
         turn.registerSpendingTransaction("Gasto", -5000, 2, startTime);
         turn.registerExtraChangeTransaction("Transf", -20000, ExtraChangeType.BANK_TRANSFER, 3, startTime);

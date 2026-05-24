@@ -41,6 +41,7 @@ import model.turn.SaleItem;
 import model.turn.SpendingActivity;
 import model.turn.TurnActivity;
 import model.turn.TurnDetails;
+import view.helpers.TimeFormatter;
 
 /**
  * Handles receipt and turn-report printing, as well as PDF generation.
@@ -285,7 +286,7 @@ public class Printer {
 
         String roomString = activity.roomString();
         long price = activity.price();
-        int service = activity.getEffectiveService();
+        long serviceDuration = activity.getEffectiveServiceDuration();
 
         ZonedDateTime fullDateHourService = activity.startStatus();
         String hourService = fullDateHourService.format(hourFormatter);
@@ -302,7 +303,7 @@ public class Printer {
             printFillerLines(1);
             document.insertString(document.getLength(), spaces(3) + "Hora Entrada: " + hourService + "\n", document.getStyle("TransactionStyle"));
             printFillerLines(1);
-            document.insertString(document.getLength(), spaces(4) + "Servicio: " + service + " Horas" + "\n", document.getStyle("TransactionStyle"));
+            document.insertString(document.getLength(), spaces(4) + "Servicio: " + TimeFormatter.formatDuration(serviceDuration) + "\n", document.getStyle("TransactionStyle"));
             printFillerLines(2);
             document.insertString(document.getLength(), spaces(4) + "Pago Total:\t", document.getStyle("TransactionStyle"));
             document.insertString(document.getLength(), " " + numberFormat.format(price), document.getStyle("TransactionStyleBold"));
@@ -434,7 +435,7 @@ public class Printer {
             for (TurnSummaryItemData si : summaryItems) {
                 String change = si.summaryType();
                 if ("room".equals(change)) {
-                    document.insertString(document.getLength(), spaces(3) + si.quantity() + " Alquiler " + si.service()
+                    document.insertString(document.getLength(), spaces(3) + si.quantity() + " Alquiler " + TimeFormatter.formatDuration(si.serviceDuration())
                             + "\t" + numberFormat.format(si.price()) + "\n", document.getStyle("TransactionStyle"));
                 } else if ("item".equals(change)) {
                     document.insertString(document.getLength(), spaces(3) + si.quantity() + spaces(2) + si.name()
@@ -473,7 +474,7 @@ public class Printer {
         for (TurnSummaryItemData si : turnDetails.getSummaryItems()) {
             String change = si.summaryType();
             if ("roomRefund".equals(change)) {
-                document.insertString(document.getLength(), spaces(1) + si.quantity() + " Alquiler " + si.service()
+                document.insertString(document.getLength(), spaces(1) + si.quantity() + " Alquiler " + TimeFormatter.formatDuration(si.serviceDuration())
                         + "\t" + numberFormat.format(si.price()) + "\n", document.getStyle("TransactionStyle"));
             } else if ("itemRefund".equals(change)) {
                 document.insertString(document.getLength(), spaces(1) + si.quantity() + spaces(2) + si.name()
@@ -561,10 +562,10 @@ public class Printer {
                     }
                     case RoomBookingActivity r -> {
                         if (r.isOccupied()) {
-                            int displayedService = r.getEffectiveService();
+                            long displayedService = r.getEffectiveServiceDuration();
                             document.insertString(document.getLength(),
                                     spaces(1) + formattedDate + "|" + r.roomString()
-                                            + "|" + "Alquiler " + displayedService + "|" + r.price() + "\n",
+                                            + "|" + "Alquiler " + TimeFormatter.formatDuration(displayedService) + "|" + r.price() + "\n",
                                     document.getStyle("TransactionStyle"));
                         }
                     }

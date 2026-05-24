@@ -12,6 +12,7 @@ import view.RoomView;
 import view.UserGUI;
 import view.helpers.DialogHelper;
 import view.helpers.InputParser;
+import view.helpers.TimeFormatter;
 
 /**
  * Controls room-level operations: selection, booking, time extension, room changes.
@@ -193,12 +194,10 @@ public class RoomController {
         RoomTime slot = timeData[slotIndex];
         long price = slot.getPrice();
         long seconds = slot.getTimeSeconds();
-        int serviceHours = (int) (seconds / 3600);
-        if (serviceHours == 0 && seconds > 0) serviceHours = 1;
 
         roomView.setDisplayPrice(String.valueOf(price));
         roomView.setAddTimeEnabled(true);
-        motelManager.setCurrentServiceDesired(serviceHours);
+        motelManager.setCurrentServiceDesired(seconds);
 
         roomView.setBookingButtonHighlight(slotIndex);
 
@@ -206,23 +205,11 @@ public class RoomController {
     }
 
     /**
-     * Formats a RoomTime as a human-readable duration string.
-     * @return e.g. "12H" for whole hours, "45min" for less than an hour
+     * Formats a duration (from RoomTime) as a human-readable string via {@link TimeFormatter#formatDuration}.
+     * @return e.g. "12h" for whole hours, "45min" for less than an hour
      */
     private static String formatTimeText(RoomTime rt) {
-        long seconds = rt.getTimeSeconds();
-        if (seconds >= 3600 && seconds % 3600 == 0) {
-            return (seconds / 3600) + "H";
-        }
-        if (seconds >= 3600) {
-            long hours = seconds / 3600;
-            long mins = (seconds % 3600) / 60;
-            return mins > 0 ? hours + "H " + mins + "min" : hours + "H";
-        }
-        if (seconds >= 60) {
-            return (seconds / 60) + "min";
-        }
-        return seconds + "s";
+        return TimeFormatter.formatDuration(rt.getTimeSeconds());
     }
 
     /**
@@ -247,20 +234,20 @@ public class RoomController {
         int towerNumber = motelManager.getCurrentTowerViewed();
         int roomNumber = motelManager.getCurrentRoomViewed();
         int floorNumber = motelManager.getCurrentFloorViewed();
-        int service = motelManager.getCurrentServiceDesired();
+        long serviceDuration = motelManager.getCurrentServiceDesired();
         long price = InputParser.parseLongSafe(roomView.getDisplayPrice());
         boolean print = roomView.isPrintSelected();
 
         if (!print) {
             boolean noPrintingConfirmation = DialogHelper.confirmPrinting();
             if (noPrintingConfirmation) {
-                motelManager.registerRoomTimeAdded(towerNumber, floorNumber, roomNumber, service, price, false);
+                motelManager.registerRoomTimeAdded(towerNumber, floorNumber, roomNumber, serviceDuration, price, false);
                 userInterface.setFloorView();
                 saveMainFiles.run();
                 saveBackupFilesRoomSwap.run();
             }
         } else {
-            motelManager.registerRoomTimeAdded(towerNumber, floorNumber, roomNumber, service, price, true);
+            motelManager.registerRoomTimeAdded(towerNumber, floorNumber, roomNumber, serviceDuration, price, true);
             userInterface.setFloorView();
             saveMainFiles.run();
             saveBackupFilesRoomSwap.run();

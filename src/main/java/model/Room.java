@@ -28,8 +28,8 @@ public class Room {
     
     private RoomTime[] customRoomTimeData;
 
-    private int service;
-    private int extension;
+    private long serviceDuration;
+    private long extensionDuration;
     private Instant startStatus;
     private Instant endStatus;
     /**
@@ -50,14 +50,14 @@ public class Room {
 
     /**
      * Books the room (sets status to OCCUPIED) with a start time and service duration.
-     * The end time is calculated as start + service hours.
+     * The end time is calculated as start + serviceDuration seconds.
      */
-    public void setRoomStatus(RoomStatus status, Instant start, int service) {
+    public void setRoomStatus(RoomStatus status, Instant start, long serviceDuration) {
         this.status = status;
         this.startStatus = start;
-        this.service = service;
-        this.endStatus = start.plus(Duration.ofHours(service));
-        extension = 0;
+        this.serviceDuration = serviceDuration;
+        this.endStatus = start.plus(Duration.ofSeconds(serviceDuration));
+        extensionDuration = 0;
     }
 
     /**
@@ -66,28 +66,28 @@ public class Room {
     public void setRoomStatus(RoomStatus status, Instant start) {
         this.status = status;
         this.startStatus = start;
-        service = 0;
-        extension = 0;
+        serviceDuration = 0;
+        extensionDuration = 0;
     }
 
     /**
-     * Sets the room status and resets the start time to now, service to 0,
-     * and extension to 0.
+     * Sets the room status and resets the start time to now, serviceDuration to 0,
+     * and extensionDuration to 0.
      */
     public void setRoomStatus(RoomStatus status) {
         this.status = status;
         startStatus = Instant.now();
-        service = 0;
-        extension = 0;
+        serviceDuration = 0;
+        extensionDuration = 0;
     }
 
     /**
-     * Extends the current booking by the given number of hours.
+     * Extends the current booking by the given duration in seconds.
      * Only meaningful when status is OCCUPIED.
      */
-    public void extendRoomTime(int roomTime) {
-        extension += roomTime;
-        endStatus = endStatus.plus(Duration.ofHours(roomTime));
+    public void extendRoomTime(long roomTimeDuration) {
+        extensionDuration += roomTimeDuration;
+        endStatus = endStatus.plus(Duration.ofSeconds(roomTimeDuration));
     }
 
     // --- Getters / Setters ---
@@ -135,12 +135,12 @@ public class Room {
     }
 
     /**
-     * Returns the base service duration in hours.
+     * Returns the base service duration in seconds.
      *
-     * @return service hours
+     * @return service duration in seconds
      */
-    public int getService() {
-        return service;
+    public long getServiceDuration() {
+        return serviceDuration;
     }
 
     /**
@@ -164,21 +164,21 @@ public class Room {
     }
 
     /**
-     * Returns the total extension hours added to the booking.
+     * Returns the total extension duration in seconds.
      *
-     * @return extension hours
+     * @return extension duration in seconds
      */
-    public int getExtension() {
-        return extension;
+    public long getExtensionDuration() {
+        return extensionDuration;
     }
 
     /**
-     * Sets the extension hours for this room.
+     * Sets the extension duration in seconds for this room.
      *
-     * @param extension extension hours to set
+     * @param extensionDuration extension duration in seconds
      */
-    public void setExtension(int extension) {
-        this.extension = extension;
+    public void setExtensionDuration(long extensionDuration) {
+        this.extensionDuration = extensionDuration;
     }
 
     /**

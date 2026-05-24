@@ -16,8 +16,8 @@ public class TurnActivityData {
     private final String roomString;
     private final int roomStatus;
     private final long price;
-    private final int service;
-    private final int servicedExtension;
+    private final long serviceDuration;
+    private final long servicedExtensionDuration;
     private final String itemName;
     private final long itemID;
     private final long quantity;
@@ -36,11 +36,11 @@ public class TurnActivityData {
      * Creates a TurnActivityData for a room booking event.
      */
     public static TurnActivityData forRoomBooking(ZonedDateTime changeDate, String roomString,
-                                                  int roomStatus, long price, int service,
-                                                  int servicedExtension, int consecutiveTrans,
-                                                  boolean refunded) {
+                                                   int roomStatus, long price, long serviceDuration,
+                                                   long servicedExtensionDuration, int consecutiveTrans,
+                                                   boolean refunded) {
         return new TurnActivityData("room", changeDate, roomString, roomStatus,
-                price, service, servicedExtension, null, 0, 0, null, null, null,
+                price, serviceDuration, servicedExtensionDuration, null, 0, 0, null, null, null,
                 consecutiveTrans, null, null, null, refunded);
     }
 
@@ -48,8 +48,8 @@ public class TurnActivityData {
      * Creates a TurnActivityData for a sale event line item.
      */
     public static TurnActivityData forSale(ZonedDateTime changeDate, String roomSoldTo,
-                                           String itemName, long itemID, long quantity, long price,
-                                           int consecutiveTrans, boolean refunded) {
+                                            String itemName, long itemID, long quantity, long price,
+                                            int consecutiveTrans, boolean refunded) {
         return new TurnActivityData("sale", changeDate, null, 0,
                 price, 0, 0, itemName, itemID, quantity, roomSoldTo, null, null,
                 consecutiveTrans, null, null, null, refunded);
@@ -59,7 +59,7 @@ public class TurnActivityData {
      * Creates a TurnActivityData for a room swap event.
      */
     public static TurnActivityData forRoomSwap(ZonedDateTime changeDate, String originalRoom,
-                                               String swappedRoom) {
+                                                String swappedRoom) {
         return new TurnActivityData("roomSwap", changeDate, null, 0,
                 0, 0, 0, null, 0, 0, null, originalRoom, swappedRoom,
                 0, null, null, null, false);
@@ -69,10 +69,10 @@ public class TurnActivityData {
      * Creates a TurnActivityData for a refund event.
      */
     public static TurnActivityData forRefund(ZonedDateTime changeDate, String refundType,
-                                             String roomRef, long price, long itemID,
-                                             long quantity, String itemName, int service) {
+                                              String roomRef, long price, long itemID,
+                                              long quantity, String itemName, long serviceDuration) {
         return new TurnActivityData("refund", changeDate, roomRef, 0,
-                price, service, 0, itemName, itemID, quantity, null, null, null,
+                price, serviceDuration, 0, itemName, itemID, quantity, null, null, null,
                 0, refundType, null, null, false);
     }
 
@@ -89,24 +89,24 @@ public class TurnActivityData {
      * Creates a TurnActivityData for an extra change (bank transfer / safe deposit) event.
      */
     public static TurnActivityData forExtraChange(ZonedDateTime changeDate, String extraType,
-                                                  String description, long value) {
+                                                   String description, long value) {
         return new TurnActivityData("extraChange", changeDate, null, 0,
                 value, 0, 0, null, 0, 0, null, null, null,
                 0, null, extraType, description, false);
     }
 
     private TurnActivityData(String changeType, ZonedDateTime changeDate, String roomString,
-                             int roomStatus, long price, int service, int servicedExtension,
-                             String itemName, long itemID, long quantity, String roomSoldTo,
-                             String originalRoom, String swappedRoom, int consecutiveTrans,
-                             String refundType, String extraType, String description, boolean refunded) {
+                              int roomStatus, long price, long serviceDuration, long servicedExtensionDuration,
+                              String itemName, long itemID, long quantity, String roomSoldTo,
+                              String originalRoom, String swappedRoom, int consecutiveTrans,
+                              String refundType, String extraType, String description, boolean refunded) {
         this.changeType = changeType;
         this.changeDate = changeDate;
         this.roomString = roomString;
         this.roomStatus = roomStatus;
         this.price = price;
-        this.service = service;
-        this.servicedExtension = servicedExtension;
+        this.serviceDuration = serviceDuration;
+        this.servicedExtensionDuration = servicedExtensionDuration;
         this.itemName = itemName;
         this.itemID = itemID;
         this.quantity = quantity;
@@ -127,8 +127,8 @@ public class TurnActivityData {
     public String getRoomString() { return roomString; }
     public int getRoomStatus() { return roomStatus; }
     public long getPrice() { return price; }
-    public int getService() { return service; }
-    public int getServicedExtension() { return servicedExtension; }
+    public long getServiceDuration() { return serviceDuration; }
+    public long getServicedExtensionDuration() { return servicedExtensionDuration; }
     public String getItemName() { return itemName; }
     public long getItemID() { return itemID; }
     public long getQuantity() { return quantity; }
@@ -142,9 +142,9 @@ public class TurnActivityData {
     public boolean isRefunded() { return refunded; }
 
     /**
-     * Returns the effective service duration (uses extension if present).
+     * Returns the effective service duration in seconds (uses extension if present).
      */
-    public int getEffectiveService() {
-        return servicedExtension != 0 ? servicedExtension : service;
+    public long getEffectiveServiceDuration() {
+        return servicedExtensionDuration != 0 ? servicedExtensionDuration : serviceDuration;
     }
 }

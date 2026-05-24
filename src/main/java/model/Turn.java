@@ -103,11 +103,11 @@ public class Turn {
      * @param room                   the room whose status changed
      * @param time                   when the change occurred
      * @param price                  amount charged (0 for non-OCCUPIED transitions)
-     * @param extended               effective service duration in minutes
+     * @param extended               effective service duration in seconds
      * @param consecutiveTransaction consecutive transaction number
      * @return the newly created activity
      */
-    public RoomBookingActivity registerRoomChange(Room room, Instant time, long price, int extended, int consecutiveTransaction) {
+    public RoomBookingActivity registerRoomChange(Room room, Instant time, long price, long extended, int consecutiveTransaction) {
         ZonedDateTime changeDate = time.atZone(zoneID);
         RoomStatus roomStatus = room.getStatus();
 
@@ -121,8 +121,8 @@ public class Turn {
                 room.getStartStatus().atZone(zoneID),
                 roomStatus == RoomStatus.OCCUPIED ? room.getEndStatus().atZone(zoneID) : null,
                 price,
-                room.getService(),
-                room.getExtension(),
+                room.getServiceDuration(),
+                room.getExtensionDuration(),
                 extended,
                 consecutiveTransaction,
                 false
@@ -299,8 +299,8 @@ public class Turn {
                             result.add(TurnActivityData.forRoomBooking(
                                     r.changeDate(), r.roomString(),
                                     r.roomStatus().getCode(),
-                                    r.price(), r.service(),
-                                    r.servicedExtension(),
+                                    r.price(), r.serviceDuration(),
+                                    r.servicedExtensionDuration(),
                                     r.consecutiveTrans(),
                                     r.refunded()
                             ));
@@ -326,7 +326,7 @@ public class Turn {
                                     r.changeDate(), r.refundType().getValue(),
                                     r.refundRoom(), r.price(),
                                     0, 0, null,
-                                    r.refundService()
+                                    r.refundServiceDuration()
                             ));
                         }
                     }
@@ -418,7 +418,7 @@ public class Turn {
                     r.consecutiveTrans(),
                     r.roomString(),
                     r.price() * -1L,
-                    r.service(),
+                    r.serviceDuration(),
                     0, 0, null
             );
             markActivityRefunded(r, 0);
@@ -478,7 +478,7 @@ public class Turn {
             turnDetails.getActivities().set(idx, new RoomBookingActivity(
                     r.changeDate(), r.roomString(), r.roomNumber(), r.floorNumber(), r.towerNumber(),
                     r.roomStatus(), r.startStatus(), r.endStatus(),
-                    r.price(), r.service(), r.extension(), r.servicedExtension(),
+                    r.price(), r.serviceDuration(), r.extensionDuration(), r.servicedExtensionDuration(),
                     r.consecutiveTrans(), true
             ));
         } else if (activity instanceof SaleActivity s) {

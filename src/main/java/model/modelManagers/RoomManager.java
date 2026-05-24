@@ -31,7 +31,7 @@ public class RoomManager {
     private int currentFloorViewed;
     private int currentRoomViewed;
     private int currentTowerViewed;
-    private int currentServiceDesired;
+    private long currentServiceDesired;
 
     // Room change state
     private int selectedRoomChangeRoom;
@@ -128,16 +128,21 @@ public class RoomManager {
                                 ZonedDateTime.parse(room.getString("startStatus")).toInstant());
                         break;
                     case OCCUPIED:
+                        long serviceDuration = room.has("serviceDuration")
+                                ? room.getLong("serviceDuration")
+                                : (long) room.getInt("service") * 3600L;
                         targetRoom.setRoomStatus(RoomStatus.OCCUPIED,
                                 ZonedDateTime.parse(room.getString("startStatus")).toInstant(),
-                                room.getInt("service"));
+                                serviceDuration);
                         break;
                     default:
                         throw new IllegalArgumentException("Invalid status: " + status);
                 }
-                int extension = room.getInt("extension");
-                if (extension != 0) {
-                    targetRoom.extendRoomTime(extension);
+                long extensionDuration = room.has("extensionDuration")
+                        ? room.getLong("extensionDuration")
+                        : (long) room.getInt("extension") * 3600L;
+                if (extensionDuration != 0) {
+                    targetRoom.extendRoomTime(extensionDuration);
                 }
             } else {
                 logger.log(Level.WARNING, "Room not found during restore: " + roomString + " (Tower: " + towerNum
@@ -151,15 +156,15 @@ public class RoomManager {
     /**
      * Books a room or extends time. Returns the extension amount (0 for new bookings).
      */
-    public int registerRoomTimeAdded(int tower, int floor, int room, int service, Instant currentTime) {
+    public long registerRoomTimeAdded(int tower, int floor, int room, long serviceDuration, Instant currentTime) {
         Room targetRoom = rooms.get(tower).get(floor).get(room);
         RoomStatus currentStatus = targetRoom.getStatus();
-        int currentExtension = 0;
+        long currentExtension = 0;
         if (currentStatus == RoomStatus.OCCUPIED) {
-            targetRoom.extendRoomTime(service);
-            currentExtension = service;
+            targetRoom.extendRoomTime(serviceDuration);
+            currentExtension = serviceDuration;
         } else {
-            targetRoom.setRoomStatus(RoomStatus.OCCUPIED, currentTime, service);
+            targetRoom.setRoomStatus(RoomStatus.OCCUPIED, currentTime, serviceDuration);
         }
         return currentExtension;
     }
@@ -189,11 +194,11 @@ public class RoomManager {
         if (desiredChangeRoom.getStatus() == RoomStatus.OCCUPIED) {
             return false;
         }
-        int currentService = currentRoom.getService();
-        int currentTotalExtension = currentRoom.getExtension();
+        long currentService = currentRoom.getServiceDuration();
+        long currentTotalExtension = currentRoom.getExtensionDuration();
         Instant currentStartTime = currentRoom.getStartStatus();
         desiredChangeRoom.setRoomStatus(RoomStatus.OCCUPIED, currentStartTime, currentService);
-        desiredChangeRoom.setExtension(currentTotalExtension);
+        desiredChangeRoom.setExtensionDuration(currentTotalExtension);
         currentRoom.setRoomStatus(RoomStatus.CLEANING, currentTime);
         return true;
     }
@@ -294,7 +299,7 @@ public class RoomManager {
                     currentRoom.put("floorNumber", room.getFloorNumber());
                     currentRoom.put("roomNumber", room.getRoomNumber());
                     currentRoom.put("status", room.getStatus().getCode());
-                    currentRoom.put("service", room.getService());
+                    currentRoom.put("serviceDuration", room.getServiceDuration());
 
                     Instant startStatus = room.getStartStatus();
                     currentRoom.put("startStatus", startStatus == null ? "" : startStatus.atZone(zoneID).toString());
@@ -302,7 +307,7 @@ public class RoomManager {
                     Instant endStatus = room.getEndStatus();
                     currentRoom.put("endStatus", endStatus == null ? "" : endStatus.atZone(zoneID).toString());
 
-                    currentRoom.put("extension", room.getExtension());
+                    currentRoom.put("extensionDuration", room.getExtensionDuration());
 
                     roomDataArray.put(currentRoom);
                 }
@@ -429,9 +434,9 @@ public class RoomManager {
     public int getCurrentFloorViewed() { return currentFloorViewed; }
     public int getCurrentRoomViewed() { return currentRoomViewed; }
     public int getCurrentTowerViewed() { return currentTowerViewed; }
-    public int getCurrentServiceDesired() { return currentServiceDesired; }
+    public long getCurrentServiceDesired() { return currentServiceDesired; }
 
-    public void setCurrentServiceDesired(int service) { this.currentServiceDesired = service; }
+    public void setCurrentServiceDesired(long service) { this.currentServiceDesired = service; }
 
     public void setCurrentFloorRoom(int tower, int floor, int room) {
         this.currentTowerViewed = tower;

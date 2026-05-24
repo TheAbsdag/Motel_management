@@ -36,21 +36,21 @@ class RoomTest {
 
     @Test
     void shouldSetOccupiedWhenBooked() {
-        room.setRoomStatus(RoomStatus.OCCUPIED, now, 12);
+        room.setRoomStatus(RoomStatus.OCCUPIED, now, 43200L);
 
         assertThat(room.getStatus()).isEqualTo(RoomStatus.OCCUPIED);
-        assertThat(room.getService()).isEqualTo(12);
+        assertThat(room.getServiceDuration()).isEqualTo(43200L);
         assertThat(room.getStartStatus()).isEqualTo(now);
-        assertThat(room.getExtension()).isZero();
+        assertThat(room.getExtensionDuration()).isZero();
     }
 
     @Test
     void shouldCalculateEndStatusOnBooking() {
-        room.setRoomStatus(RoomStatus.OCCUPIED, now, 3);
+        room.setRoomStatus(RoomStatus.OCCUPIED, now, 10800L);
 
         assertThat(room.getEndStatus())
                 .isNotNull()
-                .isEqualTo(now.plus(java.time.Duration.ofHours(3)));
+                .isEqualTo(now.plus(java.time.Duration.ofSeconds(10800L)));
     }
 
     @Test
@@ -73,8 +73,8 @@ class RoomTest {
 
         assertThat(room.getStatus()).isEqualTo(RoomStatus.CLEANING);
         assertThat(room.getStartStatus()).isEqualTo(now);
-        assertThat(room.getService()).isZero();
-        assertThat(room.getExtension()).isZero();
+        assertThat(room.getServiceDuration()).isZero();
+        assertThat(room.getExtensionDuration()).isZero();
     }
 
     // ========== Free ==========
@@ -82,35 +82,35 @@ class RoomTest {
     @Test
     void shouldSetFreeWithNoTimeTracking() {
         // Book room first, then free it
-        room.setRoomStatus(RoomStatus.OCCUPIED, now, 3);
+        room.setRoomStatus(RoomStatus.OCCUPIED, now, 10800L);
         room.setRoomStatus(RoomStatus.FREE);
 
         assertThat(room.getStatus()).isEqualTo(RoomStatus.FREE);
-        assertThat(room.getService()).isZero();
-        assertThat(room.getExtension()).isZero();
+        assertThat(room.getServiceDuration()).isZero();
+        assertThat(room.getExtensionDuration()).isZero();
     }
 
     // ========== Time Extension ==========
 
     @Test
     void shouldExtendTimeWhenOccupied() {
-        room.setRoomStatus(RoomStatus.OCCUPIED, now, 6);
+        room.setRoomStatus(RoomStatus.OCCUPIED, now, 21600L);
         Instant originalEnd = room.getEndStatus();
 
-        room.extendRoomTime(3);
+        room.extendRoomTime(10800L);
 
-        assertThat(room.getExtension()).isEqualTo(3);
-        assertThat(room.getEndStatus()).isEqualTo(originalEnd.plus(java.time.Duration.ofHours(3)));
+        assertThat(room.getExtensionDuration()).isEqualTo(10800L);
+        assertThat(room.getEndStatus()).isEqualTo(originalEnd.plus(java.time.Duration.ofSeconds(10800L)));
     }
 
     @Test
     void shouldAccumulateExtensions() {
-        room.setRoomStatus(RoomStatus.OCCUPIED, now, 3);
+        room.setRoomStatus(RoomStatus.OCCUPIED, now, 10800L);
 
-        room.extendRoomTime(3);
-        room.extendRoomTime(6);
+        room.extendRoomTime(10800L);
+        room.extendRoomTime(21600L);
 
-        assertThat(room.getExtension()).isEqualTo(9);
+        assertThat(room.getExtensionDuration()).isEqualTo(32400L);
     }
 
     // ========== Status Transitions ==========
@@ -118,11 +118,11 @@ class RoomTest {
     @Test
     void shouldTransitionFromFreeToOccupiedToCleaningToFree() {
         // FREE -> OCCUPIED
-        room.setRoomStatus(RoomStatus.OCCUPIED, now, 3);
+        room.setRoomStatus(RoomStatus.OCCUPIED, now, 10800L);
         assertThat(room.getStatus()).isEqualTo(RoomStatus.OCCUPIED);
 
         // OCCUPIED -> CLEANING
-        room.setRoomStatus(RoomStatus.CLEANING, now.plus(java.time.Duration.ofHours(3)));
+        room.setRoomStatus(RoomStatus.CLEANING, now.plus(java.time.Duration.ofSeconds(10800L)));
         assertThat(room.getStatus()).isEqualTo(RoomStatus.CLEANING);
 
         // CLEANING -> FREE
@@ -132,8 +132,8 @@ class RoomTest {
 
     @Test
     void shouldSetExtensionViaSetter() {
-        room.setExtension(6);
-        assertThat(room.getExtension()).isEqualTo(6);
+        room.setExtensionDuration(21600L);
+        assertThat(room.getExtensionDuration()).isEqualTo(21600L);
     }
 
     // ========== Custom Time Data ==========

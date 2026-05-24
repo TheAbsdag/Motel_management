@@ -19,6 +19,7 @@ import model.dto.TurnActivityData;
 import model.dto.TurnSummaryItemData;
 import view.customListRenderes.CustomCellRenderer;
 import view.customListRenderes.CustomHeaderRenderer;
+import view.helpers.TimeFormatter;
 import view.interfaces.TimeLabelInterface;
 
 /**
@@ -150,7 +151,7 @@ public class TurnManagerView extends JPanel implements TimeLabelInterface {
                 case 2 -> formattedDate;
                 case 3 -> {
                     if ("sale".equals(changeType)) yield item.getQuantity() + " de " + item.getItemName();
-                    else if ("room".equals(changeType)) yield "Alquiler " + item.getEffectiveService();
+                    else if ("room".equals(changeType)) yield "Alquiler " + TimeFormatter.formatDuration(item.getEffectiveServiceDuration());
                     else if ("roomSwap".equals(changeType)) yield "Cambio de habitacion a: " + item.getSwappedRoom();
                     else if ("refund".equals(changeType)) {
                         if ("saleRefund".equals(item.getRefundType()))

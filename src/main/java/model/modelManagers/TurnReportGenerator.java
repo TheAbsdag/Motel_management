@@ -19,6 +19,9 @@ import model.turn.SaleItem;
 import model.turn.SpendingActivity;
 import model.turn.TurnActivity;
 import model.turn.TurnDetails;
+import view.helpers.TimeFormatter;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -43,9 +46,6 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  *
  * <p>Reports are saved to the {@code reports/} directory with filenames following
  * the pattern {@code Turno_<number>_<timestamp>.xlsx}.
- *
- * <p><b>Note:</b> Report generation is currently disabled (the body of
- * {@link #generateReport(TurnDetails)} is commented out).
  */
 public class TurnReportGenerator {
 
@@ -58,10 +58,10 @@ public class TurnReportGenerator {
         "#", "Habitacion", "Tiempo", "Accion", "Valor", "Trans. Consecutiva", "Dev."
     };
 
+    private static final Logger logger = Logger.getLogger(TurnReportGenerator.class.getName());
+
     /**
-     * Generates and saves an Excel report for the given turn.
-     *
-     * <p><b>Currently disabled</b> — the implementation body is commented out.
+     * Generates and saves a 3-sheet Excel report for the given turn.
      *
      * @param turnDetails the turn data to include in the report
      */
@@ -83,9 +83,9 @@ public class TurnReportGenerator {
             try (FileOutputStream fos = new FileOutputStream(filePath)) {
                 workbook.write(fos);
             }
-            System.out.println("Turn report saved: " + filePath);
+            logger.log(Level.INFO, "Turn report saved: " + filePath);
         } catch (IOException e) {
-            System.err.println("Failed to generate turn report: " + e.getMessage());
+            logger.log(Level.SEVERE, "Failed to generate turn report", e);
         }
 
     }
@@ -204,7 +204,7 @@ public class TurnReportGenerator {
                 row.createCell(0).setCellValue(rowNum);
                 row.createCell(1).setCellValue(r.roomString());
                 row.createCell(2).setCellValue(r.changeDate().format(DATE_FORMATTER));
-                row.createCell(3).setCellValue("Alquiler " + r.getEffectiveService());
+                row.createCell(3).setCellValue("Alquiler " + TimeFormatter.formatDuration(r.getEffectiveServiceDuration()));
                 setNumberCell(row, 4, r.price(), numberStyle);
                 setNumberCell(row, 5, r.consecutiveTrans(), numberStyle);
                 row.createCell(6).setCellValue(r.refunded() ? "Si" : "");
@@ -420,7 +420,7 @@ public class TurnReportGenerator {
                     Row row = sheet.createRow(rowIdx++);
                     row.createCell(0).setCellValue(r.changeDate().format(DATE_FORMATTER));
                     row.createCell(1).setCellValue(r.roomString());
-                    row.createCell(2).setCellValue("Alquiler " + r.getEffectiveService());
+                    row.createCell(2).setCellValue("Alquiler " + TimeFormatter.formatDuration(r.getEffectiveServiceDuration()));
                     setNumberCell(row, 3, r.price(), numberStyle);
                 }
                 case RoomSwapActivity s -> {
@@ -521,7 +521,7 @@ public class TurnReportGenerator {
         rowIdx++;
 
         String[] headers = {"Fecha", "Habitacion", "Torre", "Piso", "Num Hab", "Estado",
-                "Hora Inicio", "Hora Fin", "Precio", "Servicio", "Extension", "Serv. Efectivo",
+                "Hora Inicio", "Hora Fin", "Precio", "Servicio (s)", "Extension (s)", "Serv. Efectivo (s)",
                 "Trans. Consecutiva", "Reembolsado"};
         Row headerRow = sheet.createRow(rowIdx++);
         for (int i = 0; i < headers.length; i++) {
@@ -542,9 +542,9 @@ public class TurnReportGenerator {
             row.createCell(6).setCellValue(r.startStatus() != null ? r.startStatus().format(DETAIL_DATE_FORMATTER) : "");
             row.createCell(7).setCellValue(r.endStatus() != null ? r.endStatus().format(DETAIL_DATE_FORMATTER) : "");
             setNumberCell(row, 8, r.price(), numberStyle);
-            setNumberCell(row, 9, r.service(), numberStyle);
-            setNumberCell(row, 10, r.extension(), numberStyle);
-            setNumberCell(row, 11, r.getEffectiveService(), numberStyle);
+            setNumberCell(row, 9, r.serviceDuration(), numberStyle);
+            setNumberCell(row, 10, r.extensionDuration(), numberStyle);
+            setNumberCell(row, 11, r.getEffectiveServiceDuration(), numberStyle);
             setNumberCell(row, 12, r.consecutiveTrans(), numberStyle);
             row.createCell(13).setCellValue(r.refunded() ? "Si" : "");
         }
@@ -642,7 +642,7 @@ public class TurnReportGenerator {
         rowIdx++;
 
         String[] headers = {"Fecha", "Tipo Reembolso", "Habitacion", "Precio", "Item ID",
-                "Cantidad", "Item", "Servicio", "Trans. Consecutiva", "Trans. Original"};
+                "Cantidad", "Item", "Servicio (s)", "Trans. Consecutiva", "Trans. Original"};
         Row headerRow = sheet.createRow(rowIdx++);
         for (int i = 0; i < headers.length; i++) {
             Cell cell = headerRow.createCell(i);
@@ -660,7 +660,7 @@ public class TurnReportGenerator {
             setNumberCell(row, 4, r.itemID(), numberStyle);
             setNumberCell(row, 5, r.quantity(), numberStyle);
             row.createCell(6).setCellValue(r.itemName() != null ? r.itemName() : "");
-            setNumberCell(row, 7, r.refundService(), numberStyle);
+            setNumberCell(row, 7, r.refundServiceDuration(), numberStyle);
             setNumberCell(row, 8, r.consecutiveTrans(), numberStyle);
             setNumberCell(row, 9, r.refundConsecutiveTrans(), numberStyle);
         }

@@ -122,7 +122,7 @@ public class TurnDetails {
                 case RoomBookingActivity r -> {
                     if (r.isOccupied()) {
                         long price = r.price();
-                        int serviceKey = r.servicedExtension() != 0 ? r.servicedExtension() : r.service();
+                        long serviceKey = r.servicedExtensionDuration() != 0 ? r.servicedExtensionDuration() : r.serviceDuration();
                         totalSales += price;
                         totalRooms += price;
                         totalTurn += price;
@@ -130,7 +130,7 @@ public class TurnDetails {
                         boolean found = false;
                         for (int j = 0; j < newSummary.size(); j++) {
                             TurnSummaryItemData si = newSummary.get(j);
-                            if ("room".equals(si.summaryType()) && si.service() == serviceKey) {
+                            if ("room".equals(si.summaryType()) && si.serviceDuration() == serviceKey) {
                                 newSummary.set(j, new TurnSummaryItemData("room", si.quantity() + 1, si.price() + price, null, serviceKey));
                                 found = true;
                                 break;
@@ -184,18 +184,18 @@ public class TurnDetails {
                         }
                     } else {
                         totalRoomRefunds += price;
-                        int service = r.refundService();
+                        long serviceKey = r.refundServiceDuration();
                         boolean found = false;
                         for (int j = 0; j < newSummary.size(); j++) {
                             TurnSummaryItemData si = newSummary.get(j);
-                            if ("roomRefund".equals(si.summaryType()) && si.service() == service) {
-                                newSummary.set(j, new TurnSummaryItemData("roomRefund", si.quantity() + 1, si.price() + price, null, service));
+                            if ("roomRefund".equals(si.summaryType()) && si.serviceDuration() == serviceKey) {
+                                newSummary.set(j, new TurnSummaryItemData("roomRefund", si.quantity() + 1, si.price() + price, null, serviceKey));
                                 found = true;
                                 break;
                             }
                         }
                         if (!found) {
-                            newSummary.add(new TurnSummaryItemData("roomRefund", 1, price, null, service));
+                            newSummary.add(new TurnSummaryItemData("roomRefund", 1, price, null, serviceKey));
                         }
                     }
                 }

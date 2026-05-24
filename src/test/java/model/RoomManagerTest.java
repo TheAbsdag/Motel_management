@@ -136,8 +136,8 @@ class RoomManagerTest {
         roomJson.put("floorNumber", 0);
         roomJson.put("roomNumber", 0);
         roomJson.put("status", RoomStatus.FREE.getCode());
-        roomJson.put("service", 0);
-        roomJson.put("extension", 0);
+        roomJson.put("serviceDuration", 0L);
+        roomJson.put("extensionDuration", 0L);
         roomJson.put("startStatus", "");
         roomJson.put("endStatus", "");
         roomsArray.put(roomJson);
@@ -161,6 +161,33 @@ class RoomManagerTest {
         roomJson.put("floorNumber", 0);
         roomJson.put("roomNumber", 0);
         roomJson.put("status", RoomStatus.OCCUPIED.getCode());
+        roomJson.put("serviceDuration", 21600L);
+        roomJson.put("extensionDuration", 10800L);
+        roomJson.put("startStatus", now.atZone(zoneID).toString());
+        roomsArray.put(roomJson);
+        roomData.put("rooms", roomsArray);
+
+        roomManager.restoreRoomStates(roomData);
+
+        Room restored = roomManager.getRoom(0, 0, 0);
+        assertThat(restored.getStatus()).isEqualTo(RoomStatus.OCCUPIED);
+        assertThat(restored.getServiceDuration()).isEqualTo(21600L);
+        assertThat(restored.getExtensionDuration()).isEqualTo(10800L);
+    }
+
+    @Test
+    void shouldRestoreOccupiedRoomStateFromLegacyFormat() {
+        JSONObject programData = createSingleTowerConfig(1, new int[]{1});
+        roomManager.buildRoomGrid(programData);
+
+        JSONObject roomData = new JSONObject();
+        JSONArray roomsArray = new JSONArray();
+        JSONObject roomJson = new JSONObject();
+        roomJson.put("roomString", "1-101");
+        roomJson.put("towerNumber", 0);
+        roomJson.put("floorNumber", 0);
+        roomJson.put("roomNumber", 0);
+        roomJson.put("status", RoomStatus.OCCUPIED.getCode());
         roomJson.put("service", 6);
         roomJson.put("extension", 3);
         roomJson.put("startStatus", now.atZone(zoneID).toString());
@@ -171,8 +198,8 @@ class RoomManagerTest {
 
         Room restored = roomManager.getRoom(0, 0, 0);
         assertThat(restored.getStatus()).isEqualTo(RoomStatus.OCCUPIED);
-        assertThat(restored.getService()).isEqualTo(6);
-        assertThat(restored.getExtension()).isEqualTo(3);
+        assertThat(restored.getServiceDuration()).isEqualTo(21600L);
+        assertThat(restored.getExtensionDuration()).isEqualTo(10800L);
     }
 
     @Test
@@ -188,8 +215,8 @@ class RoomManagerTest {
         roomJson.put("floorNumber", 0);
         roomJson.put("roomNumber", 0);
         roomJson.put("status", RoomStatus.CLEANING.getCode());
-        roomJson.put("service", 0);
-        roomJson.put("extension", 0);
+        roomJson.put("serviceDuration", 0L);
+        roomJson.put("extensionDuration", 0L);
         roomJson.put("startStatus", now.atZone(zoneID).toString());
         roomsArray.put(roomJson);
         roomData.put("rooms", roomsArray);
@@ -224,26 +251,26 @@ class RoomManagerTest {
         JSONObject programData = createSingleTowerConfig(1, new int[]{1});
         roomManager.buildRoomGrid(programData);
 
-        int extension = roomManager.registerRoomTimeAdded(0, 0, 0, 12, now);
+        long extension = roomManager.registerRoomTimeAdded(0, 0, 0, 43200L, now);
 
         assertThat(extension).isZero();
         Room room = roomManager.getRoom(0, 0, 0);
         assertThat(room.getStatus()).isEqualTo(RoomStatus.OCCUPIED);
-        assertThat(room.getService()).isEqualTo(12);
+        assertThat(room.getServiceDuration()).isEqualTo(43200L);
     }
 
     @Test
     void shouldExtendOccupiedRoomAndReturnExtensionAmount() {
         JSONObject programData = createSingleTowerConfig(1, new int[]{1});
         roomManager.buildRoomGrid(programData);
-        roomManager.registerRoomTimeAdded(0, 0, 0, 3, now); // initial booking
+        roomManager.registerRoomTimeAdded(0, 0, 0, 10800L, now); // initial booking
 
-        int extension = roomManager.registerRoomTimeAdded(0, 0, 0, 6, now); // extension
+        long extension = roomManager.registerRoomTimeAdded(0, 0, 0, 21600L, now); // extension
 
-        assertThat(extension).isEqualTo(6);
+        assertThat(extension).isEqualTo(21600L);
         Room room = roomManager.getRoom(0, 0, 0);
-        assertThat(room.getExtension()).isEqualTo(6);
-        assertThat(room.getService()).isEqualTo(3); // original service unchanged
+        assertThat(room.getExtensionDuration()).isEqualTo(21600L);
+        assertThat(room.getServiceDuration()).isEqualTo(10800L); // original service unchanged
     }
 
     // ========== Room Check-Out (registerRoomTimeEnd) ==========
@@ -252,7 +279,7 @@ class RoomManagerTest {
     void shouldSetOccupiedRoomToCleaningOnEnd() {
         JSONObject programData = createSingleTowerConfig(1, new int[]{1});
         roomManager.buildRoomGrid(programData);
-        roomManager.registerRoomTimeAdded(0, 0, 0, 3, now);
+        roomManager.registerRoomTimeAdded(0, 0, 0, 10800L, now);
 
         roomManager.registerRoomTimeEnd(0, 0, 0, now);
 
@@ -263,7 +290,7 @@ class RoomManagerTest {
     void shouldSetCleaningRoomToFreeOnEnd() {
         JSONObject programData = createSingleTowerConfig(1, new int[]{1});
         roomManager.buildRoomGrid(programData);
-        roomManager.registerRoomTimeAdded(0, 0, 0, 3, now);
+        roomManager.registerRoomTimeAdded(0, 0, 0, 10800L, now);
         roomManager.registerRoomTimeEnd(0, 0, 0, now);
 
         roomManager.registerRoomTimeEnd(0, 0, 0, now);
@@ -277,7 +304,7 @@ class RoomManagerTest {
     void shouldSwapGuestToFreeRoom() {
         JSONObject programData = createSingleTowerConfig(1, new int[]{2});
         roomManager.buildRoomGrid(programData);
-        roomManager.registerRoomTimeAdded(0, 0, 0, 12, now); // book room 0
+        roomManager.registerRoomTimeAdded(0, 0, 0, 43200L, now); // book room 0
 
         roomManager.setCurrentFloorRoom(0, 0, 0);         // source: room 0
         roomManager.setDesiredRoomChange(0, 0, 1);        // target: room 1
@@ -287,15 +314,15 @@ class RoomManagerTest {
         assertThat(result).isTrue();
         assertThat(roomManager.getRoom(0, 0, 0).getStatus()).isEqualTo(RoomStatus.CLEANING);
         assertThat(roomManager.getRoom(0, 0, 1).getStatus()).isEqualTo(RoomStatus.OCCUPIED);
-        assertThat(roomManager.getRoom(0, 0, 1).getService()).isEqualTo(12);
+        assertThat(roomManager.getRoom(0, 0, 1).getServiceDuration()).isEqualTo(43200L);
     }
 
     @Test
     void shouldRejectSwapToOccupiedRoom() {
         JSONObject programData = createSingleTowerConfig(1, new int[]{2});
         roomManager.buildRoomGrid(programData);
-        roomManager.registerRoomTimeAdded(0, 0, 0, 3, now); // book room 0
-        roomManager.registerRoomTimeAdded(0, 0, 1, 3, now); // book room 1 (occupied)
+        roomManager.registerRoomTimeAdded(0, 0, 0, 10800L, now); // book room 0
+        roomManager.registerRoomTimeAdded(0, 0, 1, 10800L, now); // book room 1 (occupied)
 
         roomManager.setCurrentFloorRoom(0, 0, 0);
         roomManager.setDesiredRoomChange(0, 0, 1);
@@ -311,8 +338,8 @@ class RoomManagerTest {
     void shouldTransferExtensionAndServiceOnSwap() {
         JSONObject programData = createSingleTowerConfig(1, new int[]{2});
         roomManager.buildRoomGrid(programData);
-        roomManager.registerRoomTimeAdded(0, 0, 0, 6, now);
-        roomManager.registerRoomTimeAdded(0, 0, 0, 3, now); // extend by 3
+        roomManager.registerRoomTimeAdded(0, 0, 0, 21600L, now);
+        roomManager.registerRoomTimeAdded(0, 0, 0, 10800L, now); // extend by 10800s
 
         roomManager.setCurrentFloorRoom(0, 0, 0);
         roomManager.setDesiredRoomChange(0, 0, 1);
@@ -320,8 +347,8 @@ class RoomManagerTest {
         roomManager.changeRoomTimeToAnother(now);
 
         Room target = roomManager.getRoom(0, 0, 1);
-        assertThat(target.getService()).isEqualTo(6);
-        assertThat(target.getExtension()).isEqualTo(3);
+        assertThat(target.getServiceDuration()).isEqualTo(21600L);
+        assertThat(target.getExtensionDuration()).isEqualTo(10800L);
     }
 
     // ========== Remaining Time ==========
@@ -340,7 +367,7 @@ class RoomManagerTest {
     void shouldCalculateRemainingTimeForOccupiedRoom() {
         JSONObject programData = createSingleTowerConfig(1, new int[]{1});
         roomManager.buildRoomGrid(programData);
-        roomManager.registerRoomTimeAdded(0, 0, 0, 3, now);
+        roomManager.registerRoomTimeAdded(0, 0, 0, 10800L, now);
 
         // Check remaining time at booking time (should be ~3 hours)
         String remaining = roomManager.getRemainingTimeRoom(0, 0, 0, now);
@@ -351,7 +378,7 @@ class RoomManagerTest {
     void shouldShowNegativeRemainingForOverTimeRoom() {
         JSONObject programData = createSingleTowerConfig(1, new int[]{1});
         roomManager.buildRoomGrid(programData);
-        roomManager.registerRoomTimeAdded(0, 0, 0, 1, now);
+        roomManager.registerRoomTimeAdded(0, 0, 0, 3600L, now);
 
         // Advance time past the end
         Instant futureTime = now.plus(Duration.ofHours(2));
@@ -375,7 +402,7 @@ class RoomManagerTest {
     void shouldReturnFormattedStartTimeForOccupiedRoom() {
         JSONObject programData = createSingleTowerConfig(1, new int[]{1});
         roomManager.buildRoomGrid(programData);
-        roomManager.registerRoomTimeAdded(0, 0, 0, 3, now);
+        roomManager.registerRoomTimeAdded(0, 0, 0, 10800L, now);
 
         String startTime = roomManager.getStartTimeRoom(0, 0, 0);
         assertThat(startTime).isNotEmpty();
@@ -386,7 +413,7 @@ class RoomManagerTest {
     void shouldReturnFormattedStartDateForOccupiedRoom() {
         JSONObject programData = createSingleTowerConfig(1, new int[]{1});
         roomManager.buildRoomGrid(programData);
-        roomManager.registerRoomTimeAdded(0, 0, 0, 3, now);
+        roomManager.registerRoomTimeAdded(0, 0, 0, 10800L, now);
 
         String startDate = roomManager.getStartDateRoom(0, 0, 0);
         assertThat(startDate).isNotEmpty();
@@ -446,11 +473,11 @@ class RoomManagerTest {
     void shouldTrackCurrentServiceDesired() {
         assertThat(roomManager.getCurrentServiceDesired()).isZero();
 
-        roomManager.setCurrentServiceDesired(12);
-        assertThat(roomManager.getCurrentServiceDesired()).isEqualTo(12);
+        roomManager.setCurrentServiceDesired(43200L);
+        assertThat(roomManager.getCurrentServiceDesired()).isEqualTo(43200L);
 
-        roomManager.setCurrentServiceDesired(3);
-        assertThat(roomManager.getCurrentServiceDesired()).isEqualTo(3);
+        roomManager.setCurrentServiceDesired(10800L);
+        assertThat(roomManager.getCurrentServiceDesired()).isEqualTo(10800L);
     }
 
     // ========== Room Data Serialization ==========
@@ -469,23 +496,23 @@ class RoomManagerTest {
         assertThat(first.has("floorNumber")).isTrue();
         assertThat(first.has("roomNumber")).isTrue();
         assertThat(first.has("status")).isTrue();
-        assertThat(first.has("service")).isTrue();
+        assertThat(first.has("serviceDuration")).isTrue();
         assertThat(first.has("startStatus")).isTrue();
         assertThat(first.has("endStatus")).isTrue();
-        assertThat(first.has("extension")).isTrue();
+        assertThat(first.has("extensionDuration")).isTrue();
     }
 
     @Test
     void shouldSerializeOccupiedRoomWithTimeData() {
         JSONObject programData = createSingleTowerConfig(1, new int[]{1});
         roomManager.buildRoomGrid(programData);
-        roomManager.registerRoomTimeAdded(0, 0, 0, 3, now);
+        roomManager.registerRoomTimeAdded(0, 0, 0, 10800L, now);
 
         JSONArray data = roomManager.getRoomDataForSaving();
         JSONObject roomJson = data.getJSONObject(0);
 
         assertThat(roomJson.getInt("status")).isEqualTo(RoomStatus.OCCUPIED.getCode());
-        assertThat(roomJson.getInt("service")).isEqualTo(3);
+        assertThat(roomJson.getLong("serviceDuration")).isEqualTo(10800L);
         assertThat(roomJson.getString("startStatus")).isNotEmpty();
         assertThat(roomJson.getString("endStatus")).isNotEmpty();
     }
@@ -596,8 +623,8 @@ class RoomManagerTest {
         roomJson.put("floorNumber", 0);
         roomJson.put("roomNumber", 0);
         roomJson.put("status", RoomStatus.FREE.getCode());
-        roomJson.put("service", 0);
-        roomJson.put("extension", 0);
+        roomJson.put("serviceDuration", 0L);
+        roomJson.put("extensionDuration", 0L);
         roomJson.put("startStatus", "");
 
         JSONArray timeArr = new JSONArray();
@@ -629,8 +656,8 @@ class RoomManagerTest {
         roomJson.put("floorNumber", 0);
         roomJson.put("roomNumber", 0);
         roomJson.put("status", RoomStatus.FREE.getCode());
-        roomJson.put("service", 0);
-        roomJson.put("extension", 0);
+        roomJson.put("serviceDuration", 0L);
+        roomJson.put("extensionDuration", 0L);
         roomJson.put("startStatus", "");
         roomsArray.put(roomJson);
         roomData.put("rooms", roomsArray);
@@ -648,7 +675,7 @@ class RoomManagerTest {
     void rebuildRoomGridShouldPreserveRoomState() {
         JSONObject programData = createSingleTowerConfig(1, new int[]{2});
         roomManager.buildRoomGrid(programData);
-        roomManager.registerRoomTimeAdded(0, 0, 0, 3, now);
+        roomManager.registerRoomTimeAdded(0, 0, 0, 10800L, now);
 
         JSONObject newConfig = createSingleTowerConfig(2, new int[]{1, 1});
         roomManager.rebuildRoomGrid(newConfig);

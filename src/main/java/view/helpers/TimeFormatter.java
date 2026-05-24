@@ -28,4 +28,30 @@ public final class TimeFormatter {
     public static String formatDate(ZonedDateTime time) {
         return time.format(DATE_FORMATTER);
     }
+
+    /**
+     * Formats a duration in seconds as a human-readable string, rounding to minutes.
+     * <ul>
+     *   <li>Whole hours: {@code "3h"}</li>
+     *   <li>Hours + minutes: {@code "3h 5min"}</li>
+     *   <li>Minutes only: {@code "45min"}</li>
+     *   <li>Seconds only: {@code "45s"} (rare)</li>
+     * </ul>
+     * @param seconds duration in seconds
+     * @return human-readable duration string
+     */
+    public static String formatDuration(long seconds) {
+        if (seconds >= 3600 && seconds % 3600 == 0) {
+            return (seconds / 3600) + "h";
+        }
+        if (seconds >= 3600) {
+            long hours = seconds / 3600;
+            long mins = (seconds % 3600) / 60;
+            return mins > 0 ? hours + "h " + mins + "min" : hours + "h";
+        }
+        if (seconds >= 60) {
+            return (seconds / 60) + "min";
+        }
+        return seconds + "s";
+    }
 }

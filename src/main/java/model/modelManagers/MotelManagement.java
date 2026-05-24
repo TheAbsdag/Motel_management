@@ -166,10 +166,10 @@ public class MotelManagement implements ISellingService, IHistoryService {
         return roomManager.getRoom(tower, floor, room);
     }
 
-    public void registerRoomTimeAdded(int tower, int floor, int room, int service, long price, boolean print) {
+    public void registerRoomTimeAdded(int tower, int floor, int room, long serviceDuration, long price, boolean print) {
         timeInformationUpdate();
         turnService.addConsecutiveTransaction();
-        int currentExtension = roomManager.registerRoomTimeAdded(tower, floor, room, service, currentTime);
+        long currentExtension = roomManager.registerRoomTimeAdded(tower, floor, room, serviceDuration, currentTime);
         RoomBookingActivity roomChange = turn.registerRoomChange(
                 roomManager.getRoom(tower, floor, room), currentTime, price, currentExtension,
                 programConfig.getConsecutiveTransaction());
@@ -208,9 +208,9 @@ public class MotelManagement implements ISellingService, IHistoryService {
     public int getCurrentFloorViewed() { return roomManager.getCurrentFloorViewed(); }
     public int getCurrentRoomViewed() { return roomManager.getCurrentRoomViewed(); }
     public int getCurrentTowerViewed() { return roomManager.getCurrentTowerViewed(); }
-    public int getCurrentServiceDesired() { return roomManager.getCurrentServiceDesired(); }
+    public long getCurrentServiceDesired() { return roomManager.getCurrentServiceDesired(); }
 
-    public void setCurrentServiceDesired(int service) { roomManager.setCurrentServiceDesired(service); }
+    public void setCurrentServiceDesired(long service) { roomManager.setCurrentServiceDesired(service); }
 
     public void setCurrentFloorRoom(int tower, int floor, int room) {
         roomManager.setCurrentFloorRoom(tower, floor, room);
