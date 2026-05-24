@@ -5,6 +5,8 @@
 package view;
 
 import java.awt.*;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -142,6 +144,12 @@ public class MotelDataConfigurationView extends JPanel {
     public void onBackButton(Runnable action) { backButton.addActionListener(e -> action.run()); }
     /** Registers a listener for the save button. */
     public void onSaveButton(Runnable action) { saveButton.addActionListener(e -> action.run()); }
+    /** Removes all action listeners from the save button (for first-boot re-wiring). */
+    public void removeSaveListeners() {
+        for (var al : saveButton.getActionListeners()) {
+            saveButton.removeActionListener(al);
+        }
+    }
 
     // ========== Dirty Tracking ==========
 
@@ -166,5 +174,45 @@ public class MotelDataConfigurationView extends JPanel {
 
     public boolean isDirty() {
         return hasUnsavedChanges;
+    }
+
+    // ========== First Boot Support ==========
+
+    /** Enables or disables the back button visibility/function. */
+    public void setBackEnabled(boolean enabled) {
+        backButton.setVisible(enabled);
+        backButton.setEnabled(enabled);
+    }
+
+    /**
+     * Sets up prompt placeholder text on all input fields.
+     * Text appears in gray and disappears when the field gains focus.
+     */
+    public void setupPromptTexts() {
+        setupPromptField(nameTextField, "Ingrese nombre del motel aqui");
+        setupPromptField(idTextField, "Ingrese NIT del motel aqui");
+        setupPromptField(addressTextField, "Ingrese direccion del motel aqui");
+    }
+
+    private void setupPromptField(JTextField field, String prompt) {
+        field.setText(prompt);
+        field.setForeground(Color.GRAY);
+        field.addFocusListener(new FocusListener() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                if (field.getText().equals(prompt) && field.getForeground() == Color.GRAY) {
+                    field.setText("");
+                    field.setForeground(Color.BLACK);
+                }
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                if (field.getText().isEmpty()) {
+                    field.setText(prompt);
+                    field.setForeground(Color.GRAY);
+                }
+            }
+        });
     }
 }

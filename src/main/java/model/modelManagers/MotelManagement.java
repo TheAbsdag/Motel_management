@@ -66,9 +66,12 @@ public class MotelManagement implements ISellingService, IHistoryService {
     private final ZoneId zoneID;
     private List<String> overtimeList;
 
+    private boolean firstBoot;
+
     private static final Logger logger = Logger.getLogger(MotelManagement.class.getName());
 
     public MotelManagement() {
+        firstBoot = false;
         files = new FileManager();
         zoneID = ZoneId.of("America/Bogota");
         currentTime = Instant.now();
@@ -97,6 +100,10 @@ public class MotelManagement implements ISellingService, IHistoryService {
 
     public void prepareProgramData() {
         JSONObject rawConfig = files.getJsonData("applicationProperties");
+        if (rawConfig == null) {
+            firstBoot = true;
+            return;
+        }
         programConfig.loadFromJson(rawConfig);
 
         printer.setPrinterVariables(
@@ -111,6 +118,40 @@ public class MotelManagement implements ISellingService, IHistoryService {
 
         roomManager.buildRoomGrid(programConfig.getProgramData());
         roomManager.restoreRoomStates(files.getJsonData("roomsInformation"));
+    }
+
+    public boolean isFirstBoot() {
+        return firstBoot;
+    }
+
+    public void initializeDefaultConfiguration() {
+        JSONArray towerRooms = new JSONArray();
+        JSONObject floorData = new JSONObject();
+        floorData.put("floor", 0);
+        JSONArray rooms = new JSONArray();
+        JSONObject roomJson = new JSONObject();
+        roomJson.put("roomString", "1-101");
+        roomJson.put("roomFloor", 0);
+        roomJson.put("roomNumber", 0);
+        JSONArray timeData = new JSONArray();
+        for (RoomTime rt : RoomTime.getDefaultTimeSlots()) {
+            JSONObject td = new JSONObject();
+            td.put("price", rt.getPrice());
+            td.put("timeSeconds", rt.getTimeSeconds());
+            timeData.put(td);
+        }
+        roomJson.put("customTimeData", timeData);
+        rooms.put(roomJson);
+        floorData.put("rooms", rooms);
+        towerRooms.put(floorData);
+        JSONArray roomsPerTower = new JSONArray();
+        JSONObject towerObj = new JSONObject();
+        towerObj.put("towerNumber", 1);
+        towerObj.put("towerFloors", 1);
+        towerObj.put("towerRooms", towerRooms);
+        roomsPerTower.put(towerObj);
+        programConfig.setRoomsPerTower(roomsPerTower);
+        roomManager.buildRoomGrid(programConfig.getProgramData());
     }
 
     public boolean prepareTurnRegisterData() {

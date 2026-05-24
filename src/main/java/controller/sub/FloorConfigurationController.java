@@ -452,4 +452,35 @@ public class FloorConfigurationController {
         }
         onBack.run();
     }
+
+    // ========== First Boot Support ==========
+
+    /**
+     * Configures this controller for the first-boot flow.
+     * Disables the back button and overrides save to call the provided callback
+     * instead of returning to the options hub.
+     *
+     * @param onCompleted callback invoked after successful save (next step in flow)
+     */
+    public void configureForFirstBoot(Runnable onCompleted) {
+        view.removeBackListeners();
+        view.setBackEnabled(false);
+
+        // Re-wire save button: after saving, proceed to next step instead of returning to options hub
+        view.removeSaveListeners();
+        view.onSaveButton(() -> {
+            boolean confirm = DialogHelper.confirmDialog(
+                    "Guardar todos los cambios de configuracion?",
+                    "CONFIRMAR GUARDAR");
+            if (!confirm) return;
+
+            motelManager.getProgramConfig().ensureSchemaVersion();
+            saveMainFiles.run();
+            view.clearDirty();
+            roomConfigView.clearDirty();
+            rebuildFloorView.run();
+            DialogHelper.showInfoMessage("Configuracion guardada exitosamente", "GUARDADO");
+            onCompleted.run();
+        });
+    }
 }

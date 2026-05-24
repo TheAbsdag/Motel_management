@@ -33,6 +33,23 @@ public class PrinterConfigurationView extends JPanel {
     public void setConfirmPrinterEnabled(boolean enabled) { confirmPrinterButton.setEnabled(enabled); }
     /** Registers a listener for the back button. */
     public void onBackButton(Runnable action) { backButton.addActionListener(e -> action.run()); }
+    /** Enables or disables the back button. */
+    public void setBackEnabled(boolean enabled) { backButton.setVisible(enabled); backButton.setEnabled(enabled); }
+    /**
+     * Re-wires the confirm and back buttons for first-boot flow.
+     * Removes existing listeners, disables back, and calls the provided
+     * completion callback when the user confirms the printer selection.
+     */
+    public void setFirstBootConfirmAction(Runnable onCompleted) {
+        for (var al : confirmPrinterButton.getActionListeners()) {
+            confirmPrinterButton.removeActionListener(al);
+        }
+        for (var al : backButton.getActionListeners()) {
+            backButton.removeActionListener(al);
+        }
+        setBackEnabled(false);
+        onConfirmPrinterButton(() -> onCompleted.run());
+    }
     public PrinterConfigurationView() {
 	initComponents();
     }

@@ -384,8 +384,26 @@ public class FloorConfigurationView extends JPanel {
         backButton.addActionListener(e -> action.run());
     }
 
+    public void removeBackListeners() {
+        for (var al : backButton.getActionListeners()) {
+            backButton.removeActionListener(al);
+        }
+    }
+
     public void onSaveButton(Runnable action) {
         saveButton.addActionListener(e -> action.run());
+    }
+
+    public void removeSaveListeners() {
+        for (var al : saveButton.getActionListeners()) {
+            saveButton.removeActionListener(al);
+        }
+    }
+
+    /** Enables or disables the back button visibility and function. */
+    public void setBackEnabled(boolean enabled) {
+        backButton.setVisible(enabled);
+        backButton.setEnabled(enabled);
     }
 
     public void onDeleteTower(Runnable action) {

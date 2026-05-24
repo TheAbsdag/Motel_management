@@ -145,6 +145,24 @@ public class Controller {
      */
     public void start() {
         motelManager.prepareProgramData();
+
+        if (motelManager.isFirstBoot()) {
+            boolean accept = DialogHelper.confirmDialog(
+                    "No se ha encontrado informacion del programa, por favor continue con la configuracion",
+                    "CONFIGURACION INICIAL");
+            if (!accept) {
+                System.exit(0);
+                return;
+            }
+            motelManager.initializeDefaultConfiguration();
+            int[][] roomsArray = motelManager.getRoomsArray();
+            userInterface.setupFloors(roomsArray);
+            setupListeners();
+            startTimers();
+            startFirstBootConfiguration();
+            return;
+        }
+
         int[][] roomsArray = motelManager.getRoomsArray();
         userInterface.setupFloors(roomsArray);
 
@@ -431,5 +449,41 @@ public class Controller {
                 System.err.println("Error saving backup files: " + e.getMessage());
             }
         });
+    }
+
+    // ========== First-Boot Configuration Flow ==========
+
+    /** Kicks off the first-boot configuration wizard with motel data. */
+    private void startFirstBootConfiguration() {
+        motelDataConfigController.configureForFirstBoot(this::onFirstBootMotelDataDone);
+        userInterface.setMotelDataConfigView();
+    }
+
+    /** Called after motel data is saved. Proceeds to floor/room configuration. */
+    private void onFirstBootMotelDataDone() {
+        DialogHelper.showInfoMessage("Configure las habitaciones del motel", "CONFIGURACION INICIAL");
+        floorConfigurationController.configureForFirstBoot(this::onFirstBootFloorConfigDone);
+        floorConfigurationController.populateView();
+        userInterface.setFloorConfigView();
+    }
+
+    /** Called after floor/room configuration is saved. Proceeds to printer selection. */
+    private void onFirstBootFloorConfigDone() {
+        DialogHelper.showInfoMessage("Seleccione la impresora de recibos, ajuste la impresion",
+                "CONFIGURACION INICIAL");
+        appOptionsController.showPrinterOptions();
+        userInterface.getPrinterConfigView().setFirstBootConfirmAction(() -> {
+            appOptionsController.confirmPrinter();
+            onFirstBootPrinterDone();
+        });
+        userInterface.setPrinterConfigView();
+    }
+
+    /** Called after printer is confirmed. Completes the first-boot flow. */
+    private void onFirstBootPrinterDone() {
+        DialogHelper.showInfoMessage(
+                "Programa configurado, ahora continue seleccionando turno y usando el programa",
+                "CONFIGURACION COMPLETA");
+        userInterface.setTurnSelect();
     }
 }

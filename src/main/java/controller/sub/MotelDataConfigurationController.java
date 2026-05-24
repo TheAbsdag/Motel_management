@@ -84,4 +84,39 @@ public class MotelDataConfigurationController {
         }
         onBack.run();
     }
+
+    // ========== First Boot Support ==========
+
+    /**
+     * Configures this controller for the first-boot flow.
+     * Disables the back button, adds prompt texts, and overrides save to call the
+     * provided callback instead of returning to the options hub.
+     *
+     * @param onCompleted callback invoked after successful save (next step in flow)
+     */
+    public void configureForFirstBoot(Runnable onCompleted) {
+        view.setBackEnabled(false);
+        view.setupPromptTexts();
+        view.clearDirty();
+
+        // Re-wire save button for first-boot flow: skip confirm, proceed to next step
+        view.removeSaveListeners();
+        view.onSaveButton(() -> {
+            String name = view.getNameText();
+            String id = view.getIdText();
+            String address = view.getAddressText();
+
+            if (name.isEmpty() || id.isEmpty() || address.isEmpty()) {
+                DialogHelper.showInfoMessage("Todos los campos (Nombre, NIT, Direccion) deben estar llenos", "ERROR");
+                return;
+            }
+
+            motelManager.saveMotelDataConfiguration(name, address, id);
+            saveMainFiles.run();
+            saveBackupFiles.run();
+            view.clearDirty();
+            DialogHelper.showInfoMessage("Datos del motel guardados exitosamente", "GUARDADO");
+            onCompleted.run();
+        });
+    }
 }
