@@ -3,6 +3,7 @@ package view;
 import view.helpers.NumericDocumentFilter;
 import view.helpers.FocusHighlighter;
 import view.helpers.PriceAdjustmentHelper;
+import view.helpers.TextPromptHelper;
 import view.helpers.TableScroller;
 import view.helpers.TouchScrollHandler;
 import java.awt.*;
@@ -29,6 +30,7 @@ public class InventoryManagementView extends JPanel implements TimeLabelInterfac
         initComponents();
         initCustomTable();
         FocusHighlighter.applyToAll(this);
+        TextPromptHelper.install(nameTextField, "Ingrese el nombre del producto");
     }
 
     private JTable inventoryTable;

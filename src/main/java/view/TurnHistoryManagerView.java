@@ -272,7 +272,7 @@ public class TurnHistoryManagerView extends JPanel {
 	add(totalRoomsInformativeLabel, "cell 5 3");
 
 	//---- totalRoomsLabel ----
-	totalRoomsLabel.setText("text");
+	totalRoomsLabel.setText("0");
 	totalRoomsLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
 	add(totalRoomsLabel, "cell 6 3");
 
@@ -282,7 +282,7 @@ public class TurnHistoryManagerView extends JPanel {
 	add(totalItemsInformativeLabel, "cell 5 4");
 
 	//---- totalItemsLabel ----
-	totalItemsLabel.setText("text");
+	totalItemsLabel.setText("0");
 	totalItemsLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
 	add(totalItemsLabel, "cell 6 4");
 
@@ -292,7 +292,7 @@ public class TurnHistoryManagerView extends JPanel {
 	add(totalSalesInformativeLabel, "cell 5 5");
 
 	//---- totalSalesLabel ----
-	totalSalesLabel.setText("text");
+	totalSalesLabel.setText("0");
 	totalSalesLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
 	add(totalSalesLabel, "cell 6 5");
 
@@ -302,7 +302,7 @@ public class TurnHistoryManagerView extends JPanel {
 	add(totalRefundInformativeLabel, "cell 5 6");
 
 	//---- totalRefundLabel ----
-	totalRefundLabel.setText("text");
+	totalRefundLabel.setText("0");
 	totalRefundLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
 	add(totalRefundLabel, "cell 6 6");
 
@@ -312,7 +312,7 @@ public class TurnHistoryManagerView extends JPanel {
 	add(totalSpendingInformativeLabel, "cell 5 7");
 
 	//---- totalSpendingLabel ----
-	totalSpendingLabel.setText("text");
+	totalSpendingLabel.setText("0");
 	totalSpendingLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
 	add(totalSpendingLabel, "cell 6 7");
 
@@ -322,7 +322,7 @@ public class TurnHistoryManagerView extends JPanel {
 	add(totalTurnInformativeLabel, "cell 5 8");
 
 	//---- totalTurnLabel ----
-	totalTurnLabel.setText("text");
+	totalTurnLabel.setText("0");
 	totalTurnLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
 	add(totalTurnLabel, "cell 6 8");
 
@@ -332,7 +332,7 @@ public class TurnHistoryManagerView extends JPanel {
 	add(totalTransferInformativeLabel, "cell 5 9");
 
 	//---- totalTransferLabel ----
-	totalTransferLabel.setText("text");
+	totalTransferLabel.setText("0");
 	totalTransferLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
 	add(totalTransferLabel, "cell 6 9");
 
@@ -342,7 +342,7 @@ public class TurnHistoryManagerView extends JPanel {
 	add(totalDepositInformativeLabel, "cell 5 10");
 
 	//---- totalDepositLabel ----
-	totalDepositLabel.setText("text");
+	totalDepositLabel.setText("0");
 	totalDepositLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
 	add(totalDepositLabel, "cell 6 10");
 
@@ -352,7 +352,7 @@ public class TurnHistoryManagerView extends JPanel {
 	add(totalNetInformativeLabel, "cell 5 11");
 
 	//---- totalNetLabel ----
-	totalNetLabel.setText("text");
+	totalNetLabel.setText("0");
 	totalNetLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
 	add(totalNetLabel, "cell 6 11");
 

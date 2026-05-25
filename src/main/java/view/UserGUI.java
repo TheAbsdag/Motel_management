@@ -1,5 +1,6 @@
 package view;
 
+import view.helpers.NavigationState;
 import java.awt.CardLayout;
 import java.util.EnumMap;
 import java.util.Map;

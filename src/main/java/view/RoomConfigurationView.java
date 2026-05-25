@@ -9,6 +9,7 @@ import javax.swing.*;
 import model.Room;
 import model.RoomTime;
 import net.miginfocom.swing.*;
+import view.helpers.TextPromptHelper;
 
 /**
  * @author SECC
@@ -26,6 +27,7 @@ public class RoomConfigurationView extends JPanel {
     public RoomConfigurationView() {
         initCustomComponents();
         initComponents();
+        TextPromptHelper.install(roomStringLabel, "Nombre de la habitacion");
     }
 
     private void initCustomComponents() {

@@ -1,5 +1,6 @@
 package view;
 
+import view.helpers.NavigationState;
 import java.awt.Component;
 import java.awt.Color;
 import java.lang.reflect.Field;
@@ -114,14 +115,14 @@ class FloorViewTest {
     }
 
     /**
-     * Verifies that the turn number label displays the correct formatted text.
-     * Expected: setTurnNumber(42) results in label text "TURNO: 42".
+     * Verifies that the turn number label displays the correct numeric value.
+     * Expected: setTurnNumber(42) results in label text "42".
      * Failure: The turn number label is not being updated or the format string has changed.
      */
     @Test
     void shouldSetTurnNumber() throws Exception {
         view.setTurnNumber(42);
-        assertThat(textOf(view, "turnNumberLabel")).isEqualTo("TURNO: 42");
+        assertThat(textOf(view, "turnNumberLabel")).isEqualTo("42");
     }
 
     /**

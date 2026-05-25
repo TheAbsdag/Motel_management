@@ -1,4 +1,4 @@
-package view;
+package view.helpers;
 
 /**
  * Shared navigation state for tower/floor position across FloorView and RoomChangeView.

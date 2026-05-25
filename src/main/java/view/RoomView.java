@@ -37,6 +37,7 @@ public class RoomView extends JPanel implements TimeLabelInterface {
 	dateLabel = new JLabel();
 	timeLabel = new JLabel();
 	roomStatusInformative = new JLabel();
+	detailedSelectedTimeInformativeLabel = new JLabel();
 	detailedSelectedTimeLabel = new JLabel();
 	booking3HoursButton = new JButton();
 	booking12HoursButton = new JButton();
@@ -76,7 +77,8 @@ public class RoomView extends JPanel implements TimeLabelInterface {
 	    "[55,grow]" +
 	    "[63,grow]" +
 	    "[86,grow]" +
-	    "[76,grow]"));
+	    "[76,grow]" +
+	    "[]"));
 
 	//---- roomChangeButton ----
 	roomChangeButton.setText("CAMBIO DE HABITACION");
@@ -168,8 +170,13 @@ public class RoomView extends JPanel implements TimeLabelInterface {
 	roomStatusInformative.setFont(new Font("Segoe UI Black", Font.PLAIN, 30));
 	add(roomStatusInformative, "cell 4 2 5 1,growy");
 
+	//---- detailedSelectedTimeInformativeLabel ----
+	detailedSelectedTimeInformativeLabel.setText("TIEMPO SELECCIONADO:");
+	detailedSelectedTimeInformativeLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 20));
+	add(detailedSelectedTimeInformativeLabel, "cell 4 3 5 1,alignx center,growx 0");
+
 	//---- detailedSelectedTimeLabel ----
-	detailedSelectedTimeLabel.setText("TIEMPO SELECCIONADO: XXH:XXM:XXS");
+	detailedSelectedTimeLabel.setText("XXH:XXM:XXS");
 	detailedSelectedTimeLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 20));
 	add(detailedSelectedTimeLabel, "cell 4 3 5 1");
 
@@ -254,6 +261,7 @@ public class RoomView extends JPanel implements TimeLabelInterface {
     private JLabel dateLabel;
     private JLabel timeLabel;
     private JLabel roomStatusInformative;
+    private JLabel detailedSelectedTimeInformativeLabel;
     private JLabel detailedSelectedTimeLabel;
     private JButton booking3HoursButton;
     private JButton booking12HoursButton;

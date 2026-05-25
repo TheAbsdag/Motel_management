@@ -138,7 +138,7 @@ public class RoomController {
         roomView.setBookingButtonText(0, formatTimeText(timeData[0]));
         roomView.setBookingButtonText(1, formatTimeText(timeData[1]));
         roomView.setBookingButtonText(2, formatTimeText(timeData[2]));
-        roomView.setDetailedSelectedTime("TIEMPO SELECCIONADO: --");
+        roomView.setDetailedSelectedTime("--");
 
         switch (roomStatus) {
             case FREE:
@@ -201,7 +201,7 @@ public class RoomController {
 
         roomView.setBookingButtonHighlight(slotIndex);
 
-        roomView.setDetailedSelectedTime("TIEMPO SELECCIONADO: " + formatTimeText(slot));
+        roomView.setDetailedSelectedTime(formatTimeText(slot));
     }
 
     /**

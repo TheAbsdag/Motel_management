@@ -1,5 +1,6 @@
 package view;
 
+import view.helpers.NavigationState;
 import java.awt.Component;
 import java.awt.Color;
 import java.lang.reflect.Field;

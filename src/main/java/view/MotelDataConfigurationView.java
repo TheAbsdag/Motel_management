@@ -5,12 +5,11 @@
 package view;
 
 import java.awt.*;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import net.miginfocom.swing.*;
+import view.helpers.TextPromptHelper;
 
 /**
  * @author SECC
@@ -185,34 +184,13 @@ public class MotelDataConfigurationView extends JPanel {
     }
 
     /**
-     * Sets up prompt placeholder text on all input fields.
-     * Text appears in gray and disappears when the field gains focus.
+     * Installs gray prompt text on all input fields.
+     * The prompt is painted as an overlay and never modifies the field's
+     * actual text content or foreground color.
      */
     public void setupPromptTexts() {
-        setupPromptField(nameTextField, "Ingrese nombre del motel aqui");
-        setupPromptField(idTextField, "Ingrese NIT del motel aqui");
-        setupPromptField(addressTextField, "Ingrese direccion del motel aqui");
-    }
-
-    private void setupPromptField(JTextField field, String prompt) {
-        field.setText(prompt);
-        field.setForeground(Color.GRAY);
-        field.addFocusListener(new FocusListener() {
-            @Override
-            public void focusGained(FocusEvent e) {
-                if (field.getText().equals(prompt) && field.getForeground() == Color.GRAY) {
-                    field.setText("");
-                    field.setForeground(Color.BLACK);
-                }
-            }
-
-            @Override
-            public void focusLost(FocusEvent e) {
-                if (field.getText().isEmpty()) {
-                    field.setText(prompt);
-                    field.setForeground(Color.GRAY);
-                }
-            }
-        });
+        TextPromptHelper.install(nameTextField, "Ingrese nombre del motel aqui");
+        TextPromptHelper.install(idTextField, "Ingrese NIT del motel aqui");
+        TextPromptHelper.install(addressTextField, "Ingrese direccion del motel aqui");
     }
 }

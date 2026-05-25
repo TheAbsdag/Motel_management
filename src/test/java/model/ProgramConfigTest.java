@@ -28,9 +28,9 @@ class ProgramConfigTest {
     }
 
     @Test
-    void shouldHaveEmptyProgramDataInitially() {
+    void shouldHaveConsecutiveTransactionInProgramDataInitially() {
         assertThat(config.getProgramData()).isNotNull();
-        assertThat(config.getProgramData().isEmpty()).isTrue();
+        assertThat(config.getProgramData().getInt("consecutiveTransaction")).isZero();
     }
 
     // ========== Loading from JSON ==========

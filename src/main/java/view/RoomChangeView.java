@@ -3,6 +3,7 @@
  */
 package view;
 
+import view.helpers.NavigationState;
 import java.awt.*;
 import java.util.ArrayList;
 import javax.swing.*;
@@ -95,7 +96,7 @@ public class RoomChangeView extends JPanel implements TimeLabelInterface {
     }
 
     private void updateTowerLabel() {
-        towerLabelInforfmation.setText("TORRE: " + (nav.getCurrentTowerIndex() + 1));
+        towerNumberLabel.setText(String.valueOf((nav.getCurrentTowerIndex() + 1)));
     }
 
     /**
@@ -115,6 +116,7 @@ public class RoomChangeView extends JPanel implements TimeLabelInterface {
 	// Generated using JFormDesigner Educational license - Santiago Esteban Castelblanco Castiblanco (saecastelblancoc)
 	roomButtonPanel = new JPanel();
 	towerLabelInforfmation = new JLabel();
+	towerNumberLabel = new JLabel();
 	previousTowerButton = new JButton();
 	nextTowerButton = new JButton();
 	timeLabel = new JLabel();
@@ -165,10 +167,15 @@ public class RoomChangeView extends JPanel implements TimeLabelInterface {
 	add(roomButtonPanel, "cell 0 0 2 6,growy");
 
 	//---- towerLabelInforfmation ----
-	towerLabelInforfmation.setText("TOWER: N ");
+	towerLabelInforfmation.setText("TORRE:");
 	towerLabelInforfmation.setHorizontalAlignment(SwingConstants.CENTER);
 	towerLabelInforfmation.setFont(new Font("Segoe UI Black", Font.BOLD, 30));
-	add(towerLabelInforfmation, "cell 2 0 2 1");
+	add(towerLabelInforfmation, "cell 2 0");
+
+	//---- towerNumberLabel ----
+	towerNumberLabel.setText("X");
+	towerNumberLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 30));
+	add(towerNumberLabel, "cell 3 0");
 
 	//---- previousTowerButton ----
 	previousTowerButton.setIcon(new ImageIcon(getClass().getResource("/left.png")));
@@ -225,6 +232,7 @@ public class RoomChangeView extends JPanel implements TimeLabelInterface {
     // Generated using JFormDesigner Educational license - Santiago Esteban Castelblanco Castiblanco (saecastelblancoc)
     private JPanel roomButtonPanel;
     private JLabel towerLabelInforfmation;
+    private JLabel towerNumberLabel;
     private JButton previousTowerButton;
     private JButton nextTowerButton;
     private JLabel timeLabel;

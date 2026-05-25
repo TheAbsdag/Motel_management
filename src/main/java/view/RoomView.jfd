@@ -6,7 +6,7 @@ new FormModel {
 		add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
 			"$layoutConstraints": "fill,hidemode 3"
 			"$columnConstraints": "[145,grow,fill][78,grow,fill][114,grow,fill][79,grow][127,grow,fill][15,grow,fill][83,grow,fill][15,grow,fill][138,grow,fill]"
-			"$rowConstraints": "[42][49,grow][66][grow][49][53,grow][55,grow][63,grow][86,grow][76,grow]"
+			"$rowConstraints": "[42][49,grow][66][grow][49][53,grow][55,grow][63,grow][86,grow][76,grow][]"
 		} ) {
 			name: "this"
 			add( new FormComponent( "javax.swing.JButton" ) {
@@ -114,36 +114,43 @@ new FormModel {
 				"value": "cell 4 2 5 1,growy"
 			} )
 			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "detailedSelectedTimeInformativeLabel"
+				"text": "TIEMPO SELECCIONADO:"
+				"font": &Font0 new java.awt.Font( "Segoe UI Black", 0, 20 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 4 3 5 1,alignx center,growx 0"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
 				name: "detailedSelectedTimeLabel"
-				"text": "TIEMPO SELECCIONADO: XXH:XXM:XXS"
-				"font": new java.awt.Font( "Segoe UI Black", 0, 20 )
+				"text": "XXH:XXM:XXS"
+				"font": #Font0
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 4 3 5 1"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "booking3HoursButton"
 				"text": "3"
-				"font": &Font0 new java.awt.Font( "Segoe UI Black", 0, 48 )
+				"font": &Font1 new java.awt.Font( "Segoe UI Black", 0, 48 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 4 4,growy"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "booking12HoursButton"
 				"text": "12"
-				"font": #Font0
+				"font": #Font1
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 6 4,growy"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "booking24HoursButton"
 				"text": "24"
-				"font": #Font0
+				"font": #Font1
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 8 4,growy"
 			} )
 			add( new FormComponent( "javax.swing.JTextField" ) {
 				name: "priceTextField"
-				"font": #Font0
+				"font": #Font1
 				auxiliary() {
 					"JavaCodeGenerator.postCreateCode": " ((AbstractDocument) priceTextField.getDocument()).setDocumentFilter(new NumericDocumentFilter());"
 				}
@@ -153,28 +160,28 @@ new FormModel {
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "removeSmallQuantityButton"
 				"text": "-100"
-				"font": &Font1 new java.awt.Font( "Segoe UI Black", 0, 42 )
+				"font": &Font2 new java.awt.Font( "Segoe UI Black", 0, 42 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 4 6 2 1,growy"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "addSmallQuantityButton"
 				"text": "+100"
-				"font": #Font1
+				"font": #Font2
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 7 6 2 1,growy"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "removeBigQuantity"
 				"text": "-1000"
-				"font": #Font1
+				"font": #Font2
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 4 7 2 1,growy"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "addBigQuantityButton"
 				"text": "+1000"
-				"font": #Font1
+				"font": #Font2
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 7 7 2 1,growy"
 			} )
@@ -182,7 +189,7 @@ new FormModel {
 				name: "printingCheckBox"
 				"text": "IMPRESION"
 				"horizontalAlignment": 0
-				"font": #Font0
+				"font": #Font1
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 4 8 5 1,growy"
 			} )

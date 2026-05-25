@@ -1,5 +1,6 @@
 package view;
 
+import view.helpers.NavigationState;
 import java.awt.*;
 import java.awt.CardLayout;
 import java.awt.Color;
@@ -93,12 +94,14 @@ public class FloorView extends JPanel implements TimeLabelInterface {
         }
 
         if (roomsPerTower.length == 1) {
-            towerLabelInforfmation.setVisible(false);
+            towerLabelInformation.setVisible(false);
+            towerLabel.setVisible(false);
             previousTowerButton.setVisible(false);
             nextTowerButton.setVisible(false);
         } else {
-            towerLabelInforfmation.setVisible(true);
-            previousTowerButton.setVisible(true);
+            towerLabelInformation.setVisible(true);
+            towerLabel.setVisible(true);
+            previousTowerButton.setVisible(true);  
             nextTowerButton.setVisible(true);
         }
 
@@ -133,11 +136,11 @@ public class FloorView extends JPanel implements TimeLabelInterface {
     }
 
     private void updateTowerLabel() {
-        towerLabelInforfmation.setText("TORRE: " + (nav.getCurrentTowerIndex() + 1));
+        towerLabel.setText(String.valueOf(nav.getCurrentTowerIndex() + 1));
     }
 
     private void updateFloorLabel() {
-        floorLabelInformation.setText("PISO: " + (nav.getCurrentFloorIndex() + 1));
+        floorLabel.setText(String.valueOf(nav.getCurrentFloorIndex() + 1));
     }
 
     // ========== Overtime Warning ==========
@@ -223,13 +226,16 @@ public class FloorView extends JPanel implements TimeLabelInterface {
 	containerPanel = new JPanel();
 	dateLabel = new JLabel();
 	timeLabel = new JLabel();
+	turnNumberInformativeLabel = new JLabel();
 	turnNumberLabel = new JLabel();
 	warningIconLabel = new JLabel();
 	warningScrollPane = new JScrollPane();
-	towerLabelInforfmation = new JLabel();
+	towerLabelInformation = new JLabel();
+	towerLabel = new JLabel();
 	previousTowerButton = new JButton();
 	nextTowerButton = new JButton();
 	floorLabelInformation = new JLabel();
+	floorLabel = new JLabel();
 	floorUpButton = new JButton();
 	floorDownButton = new JButton();
 	receptionSellButton = new JButton();
@@ -251,7 +257,8 @@ public class FloorView extends JPanel implements TimeLabelInterface {
 	    "[]" +
 	    "[]" +
 	    "[grow]" +
-	    "[grow]"));
+	    "[grow]" +
+	    "[]"));
 
 	//======== containerPanel ========
 	{
@@ -272,14 +279,19 @@ public class FloorView extends JPanel implements TimeLabelInterface {
 	timeLabel.setHorizontalAlignment(SwingConstants.CENTER);
 	add(timeLabel, "cell 1 1,growy");
 
+	//---- turnNumberInformativeLabel ----
+	turnNumberInformativeLabel.setText("TURNO:");
+	turnNumberInformativeLabel.setHorizontalAlignment(SwingConstants.CENTER);
+	turnNumberInformativeLabel.setFont(new Font("Segoe UI Black", Font.BOLD, 22));
+	add(turnNumberInformativeLabel, "cell 2 1");
+
 	//---- turnNumberLabel ----
-	turnNumberLabel.setText("turnN");
-	turnNumberLabel.setHorizontalAlignment(SwingConstants.CENTER);
+	turnNumberLabel.setText("X");
+	turnNumberLabel.setHorizontalAlignment(SwingConstants.LEFT);
 	turnNumberLabel.setFont(new Font("Segoe UI Black", Font.BOLD, 22));
 	add(turnNumberLabel, "cell 2 1");
 
 	//---- warningIconLabel ----
-	warningIconLabel.setIcon(new ImageIcon(new ImageIcon(getClass().getResource("/warning.png")).getImage().getScaledInstance(120, 120, Image.SCALE_SMOOTH)));
 	warningIconLabel.setMinimumSize(new Dimension(120, 120));
 	warningIconLabel.setMaximumSize(new Dimension(120, 120));
 	warningIconLabel.setIconTextGap(0);
@@ -294,11 +306,17 @@ public class FloorView extends JPanel implements TimeLabelInterface {
 	warningScrollPane.setAlignmentX(0.0F);
 	add(warningScrollPane, "cell 2 2,grow");
 
-	//---- towerLabelInforfmation ----
-	towerLabelInforfmation.setText("TORRE: N ");
-	towerLabelInforfmation.setHorizontalAlignment(SwingConstants.CENTER);
-	towerLabelInforfmation.setFont(new Font("Segoe UI Black", Font.BOLD, 30));
-	add(towerLabelInforfmation, "cell 1 3 2 1");
+	//---- towerLabelInformation ----
+	towerLabelInformation.setText("TORRE: ");
+	towerLabelInformation.setHorizontalAlignment(SwingConstants.CENTER);
+	towerLabelInformation.setFont(new Font("Segoe UI Black", Font.BOLD, 30));
+	add(towerLabelInformation, "cell 1 3 2 1");
+
+	//---- towerLabel ----
+	towerLabel.setText("X");
+	towerLabel.setHorizontalAlignment(SwingConstants.LEFT);
+	towerLabel.setFont(new Font("Segoe UI Black", Font.BOLD, 30));
+	add(towerLabel, "cell 1 3 2 1");
 
 	//---- previousTowerButton ----
 	previousTowerButton.setIcon(new ImageIcon(getClass().getResource("/left.png")));
@@ -313,10 +331,16 @@ public class FloorView extends JPanel implements TimeLabelInterface {
 	add(nextTowerButton, "cell 2 4,growy");
 
 	//---- floorLabelInformation ----
-	floorLabelInformation.setText("PISO: N ");
+	floorLabelInformation.setText("PISO: ");
 	floorLabelInformation.setHorizontalAlignment(SwingConstants.CENTER);
 	floorLabelInformation.setFont(new Font("Segoe UI Black", Font.BOLD, 30));
 	add(floorLabelInformation, "cell 1 5 2 1");
+
+	//---- floorLabel ----
+	floorLabel.setText("X");
+	floorLabel.setHorizontalAlignment(SwingConstants.LEFT);
+	floorLabel.setFont(new Font("Segoe UI Black", Font.BOLD, 30));
+	add(floorLabel, "cell 1 5 2 1");
 
 	//---- floorUpButton ----
 	floorUpButton.setIcon(new ImageIcon(getClass().getResource("/up.png")));
@@ -345,13 +369,16 @@ public class FloorView extends JPanel implements TimeLabelInterface {
     private JPanel containerPanel;
     private JLabel dateLabel;
     private JLabel timeLabel;
+    private JLabel turnNumberInformativeLabel;
     private JLabel turnNumberLabel;
     private JLabel warningIconLabel;
     private JScrollPane warningScrollPane;
-    private JLabel towerLabelInforfmation;
+    private JLabel towerLabelInformation;
+    private JLabel towerLabel;
     private JButton previousTowerButton;
     private JButton nextTowerButton;
     private JLabel floorLabelInformation;
+    private JLabel floorLabel;
     private JButton floorUpButton;
     private JButton floorDownButton;
     private JButton receptionSellButton;
@@ -368,7 +395,7 @@ public class FloorView extends JPanel implements TimeLabelInterface {
 
     public int getCurrentFloorIndex() { return nav.getCurrentFloorIndex(); }
     public int getCurrentTowerIndex() { return nav.getCurrentTowerIndex(); }
-    public void setTurnNumber(long number) { turnNumberLabel.setText("TURNO: " + number); }
+    public void setTurnNumber(long number) { turnNumberLabel.setText(String.valueOf(number)); }
     public void setWarningVisible(boolean visible) { warningIconLabel.setVisible(visible); }
     public boolean isWarningVisible() { return warningIconLabel.isVisible(); }
 

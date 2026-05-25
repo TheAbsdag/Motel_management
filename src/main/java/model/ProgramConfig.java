@@ -24,6 +24,7 @@ public class ProgramConfig {
     public ProgramConfig() {
         this.programData = new JSONObject();
         this.consecutiveTransaction = 0;
+        this.programData.put("consecutiveTransaction", 0);
         this.schemaVersion = SCHEMA_VERSION;
     }
 
@@ -31,7 +32,7 @@ public class ProgramConfig {
 
     public void loadFromJson(JSONObject rawData) {
         this.programData = rawData;
-        this.consecutiveTransaction = programData.getInt("consecutiveTransaction");
+        this.consecutiveTransaction = programData.optInt("consecutiveTransaction", 0);
         this.motelName = programData.getString("motelName");
         this.motelAddress = programData.getString("motelAddress");
         this.motelID = programData.getString("motelID");

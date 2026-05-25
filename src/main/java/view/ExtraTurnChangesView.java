@@ -3,6 +3,7 @@ package view;
 import view.helpers.NumericDocumentFilter;
 import view.helpers.FocusHighlighter;
 import view.helpers.PriceAdjustmentHelper;
+import view.helpers.TextPromptHelper;
 import java.awt.Font;
 import javax.swing.*;
 import javax.swing.JButton;
@@ -23,6 +24,7 @@ public class ExtraTurnChangesView extends JPanel {
         initComponents();
         prepareInternalListeners();
         FocusHighlighter.applyToAll(this);
+        TextPromptHelper.install(descriptionText, "Ingrese descripcion del cambio (Ej: Abono 202)");
     }
 
     private void prepareInternalListeners() {

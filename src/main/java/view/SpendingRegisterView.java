@@ -3,6 +3,7 @@ package view;
 import view.helpers.NumericDocumentFilter;
 import view.helpers.FocusHighlighter;
 import view.helpers.PriceAdjustmentHelper;
+import view.helpers.TextPromptHelper;
 import java.awt.Font;
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -21,6 +22,7 @@ public class SpendingRegisterView extends JPanel {
         initComponents();
         prepareInternalListeners();
         FocusHighlighter.applyToAll(this);
+        TextPromptHelper.install(descriptionChangeText, "Escriba descripcion del cambio aqui( Ej: Compra de mercancia)");
     }
 
     private void prepareInternalListeners() {
