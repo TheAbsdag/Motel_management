@@ -242,11 +242,11 @@ public class SellingView extends JPanel implements TimeLabelInterface {
 	add(dateLabel, "cell 4 0 3 1");
 
 	//---- upSellingListButton ----
-	upSellingListButton.setIcon(new ImageIcon(getClass().getResource("/up.png")));
+	upSellingListButton.setIcon(new ImageIcon(getClass().getResource("/images/up.png")));
 	add(upSellingListButton, "cell 1 0 1 2,growy");
 
 	//---- downSellingListButton ----
-	downSellingListButton.setIcon(new ImageIcon(getClass().getResource("/down.png")));
+	downSellingListButton.setIcon(new ImageIcon(getClass().getResource("/images/down.png")));
 	add(downSellingListButton, "cell 2 0 1 2,growy");
 
 	//---- courtesySaleButton ----

@@ -217,11 +217,11 @@ public class HistoryView extends JPanel implements TimeLabelInterface {
 	add(timeLabel, "cell 1 8 2 1");
 
 	//---- upButton ----
-	upButton.setIcon(new ImageIcon(getClass().getResource("/up.png")));
+	upButton.setIcon(new ImageIcon(getClass().getResource("/images/up.png")));
 	add(upButton, "cell 3 8,growy");
 
 	//---- downButton ----
-	downButton.setIcon(new ImageIcon(getClass().getResource("/down.png")));
+	downButton.setIcon(new ImageIcon(getClass().getResource("/images/down.png")));
 	add(downButton, "cell 4 8,growy");
 
 	//---- turnDetailsButton ----

@@ -319,13 +319,13 @@ public class FloorView extends JPanel implements TimeLabelInterface {
 	add(towerLabel, "cell 1 3 2 1");
 
 	//---- previousTowerButton ----
-	previousTowerButton.setIcon(new ImageIcon(getClass().getResource("/left.png")));
+	previousTowerButton.setIcon(new ImageIcon(getClass().getResource("/images/left.png")));
 	previousTowerButton.setMargin(new Insets(0, 0, 0, 0));
 	previousTowerButton.setPreferredSize(new Dimension(120, 120));
 	add(previousTowerButton, "cell 1 4,growy");
 
 	//---- nextTowerButton ----
-	nextTowerButton.setIcon(new ImageIcon(getClass().getResource("/right.png")));
+	nextTowerButton.setIcon(new ImageIcon(getClass().getResource("/images/right.png")));
 	nextTowerButton.setMargin(new Insets(0, 0, 0, 0));
 	nextTowerButton.setPreferredSize(new Dimension(120, 120));
 	add(nextTowerButton, "cell 2 4,growy");
@@ -343,12 +343,12 @@ public class FloorView extends JPanel implements TimeLabelInterface {
 	add(floorLabel, "cell 1 5 2 1");
 
 	//---- floorUpButton ----
-	floorUpButton.setIcon(new ImageIcon(getClass().getResource("/up.png")));
+	floorUpButton.setIcon(new ImageIcon(getClass().getResource("/images/up.png")));
 	floorUpButton.setPreferredSize(new Dimension(120, 120));
 	add(floorUpButton, "cell 1 6,growy");
 
 	//---- floorDownButton ----
-	floorDownButton.setIcon(new ImageIcon(getClass().getResource("/down.png")));
+	floorDownButton.setIcon(new ImageIcon(getClass().getResource("/images/down.png")));
 	floorDownButton.setPreferredSize(new Dimension(120, 120));
 	add(floorDownButton, "cell 2 6,grow");
 

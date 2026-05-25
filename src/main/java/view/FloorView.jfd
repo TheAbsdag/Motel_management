@@ -57,7 +57,7 @@ new FormModel {
 				"maximumSize": new java.awt.Dimension( 120, 120 )
 				"iconTextGap": 0
 				auxiliary() {
-					"JavaCodeGenerator.postCreationCode": "warningIconLabel.setIcon(new ImageIcon(new ImageIcon(getClass().getResource(\"/warning.png\")).getImage().getScaledInstance(120, 120, java.awt.Image.SCALE_SMOOTH)));"
+					"JavaCodeGenerator.postCreationCode": "warningIconLabel.setIcon(new ImageIcon(new ImageIcon(getClass().getResource(\"/images/warning.png\")).getImage().getScaledInstance(120, 120, java.awt.Image.SCALE_SMOOTH)));"
 				}
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 1 2,growy"
@@ -91,7 +91,7 @@ new FormModel {
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "previousTowerButton"
-				"icon": new com.jformdesigner.model.SwingIcon( 0, "/left.png" )
+				"icon": new com.jformdesigner.model.SwingIcon( 0, "/images/left.png" )
 				"margin": new java.awt.Insets( 0, 0, 0, 0 )
 				"preferredSize": new java.awt.Dimension( 120, 120 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
@@ -99,7 +99,7 @@ new FormModel {
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "nextTowerButton"
-				"icon": new com.jformdesigner.model.SwingIcon( 0, "/right.png" )
+				"icon": new com.jformdesigner.model.SwingIcon( 0, "/images/right.png" )
 				"margin": new java.awt.Insets( 0, 0, 0, 0 )
 				"preferredSize": new java.awt.Dimension( 120, 120 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
@@ -123,14 +123,14 @@ new FormModel {
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "floorUpButton"
-				"icon": new com.jformdesigner.model.SwingIcon( 0, "/up.png" )
+				"icon": new com.jformdesigner.model.SwingIcon( 0, "/images/up.png" )
 				"preferredSize": new java.awt.Dimension( 120, 120 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 1 6,growy"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "floorDownButton"
-				"icon": new com.jformdesigner.model.SwingIcon( 0, "/down.png" )
+				"icon": new com.jformdesigner.model.SwingIcon( 0, "/images/down.png" )
 				"preferredSize": new java.awt.Dimension( 120, 120 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 2 6,grow"

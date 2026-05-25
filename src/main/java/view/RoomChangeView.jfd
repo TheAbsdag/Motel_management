@@ -31,13 +31,13 @@ new FormModel {
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "previousTowerButton"
-				"icon": new com.jformdesigner.model.SwingIcon( 0, "/left.png" )
+				"icon": new com.jformdesigner.model.SwingIcon( 0, "/images/left.png" )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 2 1,growy"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "nextTowerButton"
-				"icon": new com.jformdesigner.model.SwingIcon( 0, "/right.png" )
+				"icon": new com.jformdesigner.model.SwingIcon( 0, "/images/right.png" )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 3 1,growy"
 			} )
@@ -59,13 +59,13 @@ new FormModel {
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "upButton"
-				"icon": new com.jformdesigner.model.SwingIcon( 0, "/up.png" )
+				"icon": new com.jformdesigner.model.SwingIcon( 0, "/images/up.png" )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 2 4,growy"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "downButton"
-				"icon": new com.jformdesigner.model.SwingIcon( 0, "/down.png" )
+				"icon": new com.jformdesigner.model.SwingIcon( 0, "/images/down.png" )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 3 4,growy"
 			} )

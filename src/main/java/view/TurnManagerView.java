@@ -305,11 +305,11 @@ public class TurnManagerView extends JPanel implements TimeLabelInterface {
 	add(refundButton, "cell 0 0,growy");
 
 	//---- upButton ----
-	upButton.setIcon(new ImageIcon(getClass().getResource("/up.png")));
+	upButton.setIcon(new ImageIcon(getClass().getResource("/images/up.png")));
 	add(upButton, "cell 1 0,growy");
 
 	//---- downButton ----
-	downButton.setIcon(new ImageIcon(getClass().getResource("/down.png")));
+	downButton.setIcon(new ImageIcon(getClass().getResource("/images/down.png")));
 	add(downButton, "cell 2 0,growy");
 
 	//---- summarizedTurnButton ----

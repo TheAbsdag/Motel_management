@@ -197,7 +197,7 @@ public class InventoryManagementView extends JPanel implements TimeLabelInterfac
         add(priceTextField, "cell 6 3 2 1,growy");
 
         //---- upButton ----
-        upButton.setIcon(new ImageIcon(getClass().getResource("/up.png")));
+        upButton.setIcon(new ImageIcon(getClass().getResource("/images/up.png")));
         add(upButton, "cell 5 4,growy");
 
         //---- removeSmallPriceButton ----
@@ -211,7 +211,7 @@ public class InventoryManagementView extends JPanel implements TimeLabelInterfac
         add(addSmallPriceButton, "cell 7 4,growy");
 
         //---- downButton ----
-        downButton.setIcon(new ImageIcon(getClass().getResource("/down.png")));
+        downButton.setIcon(new ImageIcon(getClass().getResource("/images/down.png")));
         add(downButton, "cell 5 5,growy");
 
         //---- removeBigPriceButton ----

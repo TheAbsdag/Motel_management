@@ -178,11 +178,11 @@ public class RoomChangeView extends JPanel implements TimeLabelInterface {
 	add(towerNumberLabel, "cell 3 0");
 
 	//---- previousTowerButton ----
-	previousTowerButton.setIcon(new ImageIcon(getClass().getResource("/left.png")));
+	previousTowerButton.setIcon(new ImageIcon(getClass().getResource("/images/left.png")));
 	add(previousTowerButton, "cell 2 1,growy");
 
 	//---- nextTowerButton ----
-	nextTowerButton.setIcon(new ImageIcon(getClass().getResource("/right.png")));
+	nextTowerButton.setIcon(new ImageIcon(getClass().getResource("/images/right.png")));
 	add(nextTowerButton, "cell 3 1,growy");
 
 	//---- timeLabel ----
@@ -198,11 +198,11 @@ public class RoomChangeView extends JPanel implements TimeLabelInterface {
 	add(dateLabel, "cell 2 3 2 1");
 
 	//---- upButton ----
-	upButton.setIcon(new ImageIcon(getClass().getResource("/up.png")));
+	upButton.setIcon(new ImageIcon(getClass().getResource("/images/up.png")));
 	add(upButton, "cell 2 4,growy");
 
 	//---- downButton ----
-	downButton.setIcon(new ImageIcon(getClass().getResource("/down.png")));
+	downButton.setIcon(new ImageIcon(getClass().getResource("/images/down.png")));
 	add(downButton, "cell 3 4,growy");
 
 	//---- selectedInformativeLabel ----
