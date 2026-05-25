@@ -5,8 +5,8 @@ new FormModel {
 	root: new FormRoot {
 		add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
 			"$layoutConstraints": "fill,hidemode 3"
-			"$columnConstraints": "[fill][fill][fill][fill][fill][fill][fill][fill][fill][fill]"
-			"$rowConstraints": "[][][][][][][][][][][]"
+			"$columnConstraints": "[:80:80,fill][fill][:80:80,fill][grow,fill][:80:80,fill][fill]"
+			"$rowConstraints": "[][][:80:80][][:80:80][:80:80][][][][:80:80][]"
 		} ) {
 			name: "this"
 			add( new FormComponent( "javax.swing.JLabel" ) {
@@ -14,7 +14,7 @@ new FormModel {
 				"text": "CONFIGURACION HABITACIONES MOTEL"
 				"font": &Font0 new java.awt.Font( "Segoe UI Black", 0, 20 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 0 0 10 1"
+				"value": "cell 0 0 6 1"
 			} )
 			add( new FormComponent( "javax.swing.JLabel" ) {
 				name: "towerSelectedInformativeLabel"
@@ -37,7 +37,7 @@ new FormModel {
 				"horizontalAlignment": 0
 				"font": #Font0
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 2 1 8 1"
+				"value": "cell 2 1 4 1"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "deleteTowerButton"
@@ -51,7 +51,7 @@ new FormModel {
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "towerListLeftButton"
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 3 2,growy"
+				"value": "cell 2 2,growy"
 			} )
 			add( new FormContainer( "javax.swing.JScrollPane", new FormLayoutManager( class javax.swing.JScrollPane ) ) {
 				name: "towerScrollPane"
@@ -62,19 +62,19 @@ new FormModel {
 					"selectionMode": 0
 				} )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 4 2 4 1,growy"
+				"value": "cell 3 2,growy"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "towerListRightButton"
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 8 2,growy"
+				"value": "cell 4 2,growy"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "newTowerButton"
 				"text": "AÑADIR TORRE"
 				"font": new java.awt.Font( "Segoe UI Black", 0, 16 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 9 2,growy"
+				"value": "cell 5 2,growy"
 			} )
 			add( new FormComponent( "javax.swing.JLabel" ) {
 				name: "floorSelectedInformativeLabel"
@@ -109,7 +109,7 @@ new FormModel {
 					"JavaCodeGenerator.postInitCode": "containerPanel.setLayout(containerCardLayout);"
 				}
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 2 3 8 7,grow"
+				"value": "cell 2 3 4 7,grow"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "floorListUpButton"
@@ -128,7 +128,7 @@ new FormModel {
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "newFloorButton"
-				"text": "AÑADIR PISO"
+				"text": "<HTML><CENTER>AÑADIR<br>PISO</CENTER></HTML>"
 				"font": new java.awt.Font( "Segoe UI Black", 0, 16 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 1 7,growy"
@@ -150,18 +150,18 @@ new FormModel {
 				"text": "NUEVA HABITACION"
 				"font": #Font3
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 4 10 4 1,growy"
+				"value": "cell 3 10,growy"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "saveButton"
 				"text": "GUARDAR"
 				"font": #Font3
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 9 10,growy"
+				"value": "cell 5 10,growy"
 			} )
 		}, new FormLayoutConstraints( null ) {
 			"location": new java.awt.Point( 0, 0 )
-			"size": new java.awt.Dimension( 855, 545 )
+			"size": new java.awt.Dimension( 1100, 710 )
 		} )
 	}
 }

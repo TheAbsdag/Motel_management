@@ -87,33 +87,29 @@ public class FloorConfigurationView extends JPanel {
 	setLayout(new MigLayout(
 	    "fill,hidemode 3",
 	    // columns
+	    "[:80:80,fill]" +
 	    "[fill]" +
-	    "[fill]" +
-	    "[fill]" +
-	    "[fill]" +
-	    "[fill]" +
-	    "[fill]" +
-	    "[fill]" +
-	    "[fill]" +
-	    "[fill]" +
+	    "[:80:80,fill]" +
+	    "[grow,fill]" +
+	    "[:80:80,fill]" +
 	    "[fill]",
 	    // rows
 	    "[]" +
 	    "[]" +
+	    "[:80:80]" +
+	    "[]" +
+	    "[:80:80]" +
+	    "[:80:80]" +
 	    "[]" +
 	    "[]" +
 	    "[]" +
-	    "[]" +
-	    "[]" +
-	    "[]" +
-	    "[]" +
-	    "[]" +
+	    "[:80:80]" +
 	    "[]"));
 
 	//---- floorConfigurationTitleLabel ----
 	floorConfigurationTitleLabel.setText("CONFIGURACION HABITACIONES MOTEL");
 	floorConfigurationTitleLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 20));
-	add(floorConfigurationTitleLabel, "cell 0 0 10 1");
+	add(floorConfigurationTitleLabel, "cell 0 0 6 1");
 
 	//---- towerSelectedInformativeLabel ----
 	towerSelectedInformativeLabel.setText("TORRE");
@@ -130,7 +126,7 @@ public class FloorConfigurationView extends JPanel {
 	towerSelectionInformativeLabel.setText("SELECCIONE TORRE");
 	towerSelectionInformativeLabel.setHorizontalAlignment(SwingConstants.CENTER);
 	towerSelectionInformativeLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 20));
-	add(towerSelectionInformativeLabel, "cell 2 1 8 1");
+	add(towerSelectionInformativeLabel, "cell 2 1 4 1");
 
 	//---- deleteTowerButton ----
 	deleteTowerButton.setText("ELIMINAR");
@@ -138,7 +134,7 @@ public class FloorConfigurationView extends JPanel {
 	deleteTowerButton.setForeground(Color.black);
 	deleteTowerButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 16));
 	add(deleteTowerButton, "cell 0 2 2 1,growy");
-	add(towerListLeftButton, "cell 3 2,growy");
+	add(towerListLeftButton, "cell 2 2,growy");
 
 	//======== towerScrollPane ========
 	{
@@ -149,13 +145,13 @@ public class FloorConfigurationView extends JPanel {
 	    towerList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 	    towerScrollPane.setViewportView(towerList);
 	}
-	add(towerScrollPane, "cell 4 2 4 1,growy");
-	add(towerListRightButton, "cell 8 2,growy");
+	add(towerScrollPane, "cell 3 2,growy");
+	add(towerListRightButton, "cell 4 2,growy");
 
 	//---- newTowerButton ----
 	newTowerButton.setText("A\u00d1ADIR TORRE");
 	newTowerButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 16));
-	add(newTowerButton, "cell 9 2,growy");
+	add(newTowerButton, "cell 5 2,growy");
 
 	//---- floorSelectedInformativeLabel ----
 	floorSelectedInformativeLabel.setText("PISO");
@@ -181,7 +177,7 @@ public class FloorConfigurationView extends JPanel {
 	    containerPanel.setLayout(null);
 	    containerPanel.setLayout(containerCardLayout);
 	}
-	add(containerPanel, "cell 2 3 8 7,grow");
+	add(containerPanel, "cell 2 3 4 7,grow");
 	add(floorListUpButton, "cell 0 5,growy");
 
 	//======== floorScrollPane ========
@@ -195,7 +191,7 @@ public class FloorConfigurationView extends JPanel {
 	add(floorScrollPane, "cell 0 6 1 3,growy");
 
 	//---- newFloorButton ----
-	newFloorButton.setText("A\u00d1ADIR PISO");
+	newFloorButton.setText("<HTML><CENTER>A\u00d1ADIR<br>PISO</CENTER></HTML>");
 	newFloorButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 16));
 	add(newFloorButton, "cell 1 7,growy");
 	add(floorListDownButton, "cell 0 9,growy");
@@ -208,12 +204,12 @@ public class FloorConfigurationView extends JPanel {
 	//---- newRoomButton ----
 	newRoomButton.setText("NUEVA HABITACION");
 	newRoomButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 16));
-	add(newRoomButton, "cell 4 10 4 1,growy");
+	add(newRoomButton, "cell 3 10,growy");
 
 	//---- saveButton ----
 	saveButton.setText("GUARDAR");
 	saveButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 16));
-	add(saveButton, "cell 9 10,growy");
+	add(saveButton, "cell 5 10,growy");
 	// JFormDesigner - End of component initialization  //GEN-END:initComponents  @formatter:on
 
         setupInternalComponents();

@@ -89,7 +89,7 @@ public class MotelDataConfigurationView extends JPanel {
 	//---- consecutiveTransactionInformativeLabel ----
 	consecutiveTransactionInformativeLabel.setText("CONSECUTIVO ACTUAL:");
 	consecutiveTransactionInformativeLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
-	add(consecutiveTransactionInformativeLabel, "cell 1 4");
+	add(consecutiveTransactionInformativeLabel, "cell 1 4,alignx center,growx 0");
 
 	//---- conescutiveTransactionLabel ----
 	conescutiveTransactionLabel.setText("CONS");

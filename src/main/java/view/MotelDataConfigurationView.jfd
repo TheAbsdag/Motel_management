@@ -60,7 +60,7 @@ new FormModel {
 				"text": "CONSECUTIVO ACTUAL:"
 				"font": #Font0
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 1 4"
+				"value": "cell 1 4,alignx center,growx 0"
 			} )
 			add( new FormComponent( "javax.swing.JLabel" ) {
 				name: "conescutiveTransactionLabel"
