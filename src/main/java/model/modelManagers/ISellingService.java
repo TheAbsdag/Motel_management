@@ -2,17 +2,13 @@ package model.modelManagers;
 
 import model.dto.InventoryItemData;
 import model.dto.SellingItemData;
-import org.json.JSONObject;
 import java.util.List;
 
-/**
- * Interface for inventory management and selling-cart operations.
- */
 public interface ISellingService {
 
     void restartSaleManager();
 
-    JSONObject getInventoryData();
+    String getInventoryData();
 
     boolean saveItemInformation(InventoryItemData item);
 

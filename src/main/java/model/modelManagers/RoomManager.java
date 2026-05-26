@@ -1,27 +1,28 @@
 package model.modelManagers;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import model.Room;
 import model.RoomStatus;
 import model.RoomTime;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import model.json.FloorConfig;
+import model.json.ObjectMapperFactory;
+import model.json.RoomConfigData;
+import model.json.RoomStateData;
+import model.json.TimeSlotConfig;
+import model.json.TowerConfig;
 import view.helpers.TimeFormatter;
 
-/**
- * Manages the motel's room grid (3D: tower → floor → room) and room-level operations.
- * Extracted from {@link MotelManagement} for single-responsibility.
- *
- * @author Santiago
- */
 public class RoomManager {
 
     private final ArrayList<ArrayList<ArrayList<Room>>> rooms;
@@ -33,7 +34,6 @@ public class RoomManager {
     private int currentTowerViewed;
     private long currentServiceDesired;
 
-    // Room change state
     private int selectedRoomChangeRoom;
     private int selectedRoomChangeFloor;
     private int selectedRoomChangeTower;
@@ -48,16 +48,11 @@ public class RoomManager {
 
     // ========== Room Grid Initialization ==========
 
-    /**
-     * Builds the room grid from the application properties JSON.
-     */
-    public void buildRoomGrid(JSONObject programData) {
-        JSONArray roomsPerTower = programData.getJSONArray("roomsPerTower");
-
-        for (int towerIndex = 0; towerIndex < roomsPerTower.length(); towerIndex++) {
-            JSONObject tower = roomsPerTower.getJSONObject(towerIndex);
-            int towerNumber = tower.getInt("towerNumber");
-            int towerFloors = tower.getInt("towerFloors");
+    public void buildRoomGrid(List<TowerConfig> roomsPerTower) {
+        for (int towerIndex = 0; towerIndex < roomsPerTower.size(); towerIndex++) {
+            TowerConfig tower = roomsPerTower.get(towerIndex);
+            int towerNumber = tower.towerNumber();
+            int towerFloors = tower.towerFloors();
 
             rooms.add(new ArrayList<>());
 
@@ -65,27 +60,27 @@ public class RoomManager {
                 rooms.get(towerIndex).add(new ArrayList<>());
             }
 
-            JSONArray towerRooms = tower.getJSONArray("towerRooms");
+            List<FloorConfig> towerRooms = tower.towerRooms();
 
-            for (int floorDataIndex = 0; floorDataIndex < towerRooms.length(); floorDataIndex++) {
-                JSONObject floorData = towerRooms.getJSONObject(floorDataIndex);
-                int floorNumber = floorData.getInt("floor");
-                JSONArray roomsArray = floorData.getJSONArray("rooms");
+            for (int floorDataIndex = 0; floorDataIndex < towerRooms.size(); floorDataIndex++) {
+                FloorConfig floorData = towerRooms.get(floorDataIndex);
+                int floorNumber = floorData.floor();
+                List<RoomConfigData> roomsArray = floorData.rooms();
 
-                for (int roomIndex = 0; roomIndex < roomsArray.length(); roomIndex++) {
-                    JSONObject roomJson = roomsArray.getJSONObject(roomIndex);
-                    String roomString = roomJson.getString("roomString");
-                    int roomFloor = roomJson.getInt("roomFloor");
-                    int roomNumber = roomJson.getInt("roomNumber");
+                for (int roomIndex = 0; roomIndex < roomsArray.size(); roomIndex++) {
+                    RoomConfigData roomJson = roomsArray.get(roomIndex);
+                    String roomString = roomJson.roomString();
+                    int roomFloor = roomJson.roomFloor();
+                    int roomNumber = roomJson.roomNumber();
 
                     Room currentRoom = new Room(roomString, roomFloor, roomNumber, towerNumber);
 
-                    JSONArray customTimeArr = roomJson.optJSONArray("customTimeData");
-                    if (customTimeArr != null && customTimeArr.length() > 0) {
-                        RoomTime[] timeData = new RoomTime[customTimeArr.length()];
-                        for (int t = 0; t < customTimeArr.length(); t++) {
-                            JSONObject td = customTimeArr.getJSONObject(t);
-                            timeData[t] = new RoomTime(td.getLong("price"), td.getLong("timeSeconds"));
+                    List<TimeSlotConfig> customTimeArr = roomJson.customTimeData();
+                    if (customTimeArr != null && !customTimeArr.isEmpty()) {
+                        RoomTime[] timeData = new RoomTime[customTimeArr.size()];
+                        for (int t = 0; t < customTimeArr.size(); t++) {
+                            TimeSlotConfig td = customTimeArr.get(t);
+                            timeData[t] = new RoomTime(td.price(), td.timeSeconds());
                         }
                         currentRoom.setCustomRoomTimeData(timeData);
                     }
@@ -96,21 +91,26 @@ public class RoomManager {
         }
     }
 
-    /**
-     * Restores room states from saved room data JSON.
-     */
-    public void restoreRoomStates(JSONObject roomData) {
-        if (roomData == null || roomData.isEmpty()) {
+    public void restoreRoomStates(String json) {
+        if (json == null || json.isEmpty()) {
             return;
         }
-        JSONArray roomsArray = roomData.getJSONArray("rooms");
-        for (int i = 0; i < roomsArray.length(); i++) {
-            JSONObject room = roomsArray.getJSONObject(i);
-            String roomString = room.getString("roomString");
-            int towerNum = room.getInt("towerNumber");
-            int floor = room.getInt("floorNumber");
-            int roomNum = room.getInt("roomNumber");
-            int status = room.getInt("status");
+        List<RoomStateData> roomsStateList;
+        try {
+            RoomStatesWrapper wrapper = ObjectMapperFactory.get().readValue(json, RoomStatesWrapper.class);
+            roomsStateList = wrapper.rooms();
+        } catch (JsonProcessingException e) {
+            logger.log(Level.SEVERE, "Failed to parse room states", e);
+            return;
+        }
+        if (roomsStateList == null) return;
+
+        for (RoomStateData roomState : roomsStateList) {
+            String roomString = roomState.roomString();
+            int towerNum = roomState.towerNumber();
+            int floor = roomState.floorNumber();
+            int roomNum = roomState.roomNumber();
+            int status = roomState.status();
             RoomStatus roomStatus = RoomStatus.fromCode(status);
 
             if (towerNum >= 0 && towerNum < rooms.size()
@@ -124,23 +124,23 @@ public class RoomManager {
                         targetRoom.setRoomStatus(RoomStatus.FREE);
                         break;
                     case CLEANING:
-                        targetRoom.setRoomStatus(RoomStatus.CLEANING,
-                                ZonedDateTime.parse(room.getString("startStatus")).toInstant());
+                        if (!roomState.startStatus().isEmpty()) {
+                            targetRoom.setRoomStatus(RoomStatus.CLEANING,
+                                    ZonedDateTime.parse(roomState.startStatus()).toInstant());
+                        } else {
+                            targetRoom.setRoomStatus(RoomStatus.CLEANING, Instant.now());
+                        }
                         break;
                     case OCCUPIED:
-                        long serviceDuration = room.has("serviceDuration")
-                                ? room.getLong("serviceDuration")
-                                : (long) room.getInt("service") * 3600L;
+                        long serviceDuration = roomState.serviceDuration();
                         targetRoom.setRoomStatus(RoomStatus.OCCUPIED,
-                                ZonedDateTime.parse(room.getString("startStatus")).toInstant(),
+                                ZonedDateTime.parse(roomState.startStatus()).toInstant(),
                                 serviceDuration);
                         break;
                     default:
                         throw new IllegalArgumentException("Invalid status: " + status);
                 }
-                long extensionDuration = room.has("extensionDuration")
-                        ? room.getLong("extensionDuration")
-                        : (long) room.getInt("extension") * 3600L;
+                long extensionDuration = roomState.extensionDuration();
                 if (extensionDuration != 0) {
                     targetRoom.extendRoomTime(extensionDuration);
                 }
@@ -153,9 +153,6 @@ public class RoomManager {
 
     // ========== Room Operations ==========
 
-    /**
-     * Books a room or extends time. Returns the extension amount (0 for new bookings).
-     */
     public long registerRoomTimeAdded(int tower, int floor, int room, long serviceDuration, Instant currentTime) {
         Room targetRoom = rooms.get(tower).get(floor).get(room);
         RoomStatus currentStatus = targetRoom.getStatus();
@@ -169,9 +166,6 @@ public class RoomManager {
         return currentExtension;
     }
 
-    /**
-     * Ends room service (check-out or cleaning complete).
-     */
     public void registerRoomTimeEnd(int tower, int floor, int room, Instant currentTime) {
         Room targetRoom = rooms.get(tower).get(floor).get(room);
         if (targetRoom.getStatus() == RoomStatus.CLEANING) {
@@ -181,12 +175,6 @@ public class RoomManager {
         }
     }
 
-    /**
-     * Moves a guest from the current room to the desired change room.
-     *
-     * @param currentTime the current time used to set the source room to CLEANING
-     * @return true if the change was valid, false if the target room is occupied
-     */
     public boolean changeRoomTimeToAnother(Instant currentTime) {
         Room currentRoom = rooms.get(currentTowerViewed).get(currentFloorViewed).get(currentRoomViewed);
         Room desiredChangeRoom = rooms.get(selectedRoomChangeTower)
@@ -257,10 +245,6 @@ public class RoomManager {
         return start.format(formatter);
     }
 
-    /**
-     * Returns the room that a sale should be attributed to.
-     * Returns reception room when floor/room is -1 (reception sale).
-     */
     public Room getRoomForSale() {
         if (currentFloorViewed == -1) {
             return reception;
@@ -268,63 +252,48 @@ public class RoomManager {
         return rooms.get(currentTowerViewed).get(currentFloorViewed).get(currentRoomViewed);
     }
 
-    /**
-     * Returns the currently-viewed room for room-swap operations.
-     */
     public Room getCurrentRoom() {
         return rooms.get(currentTowerViewed).get(currentFloorViewed).get(currentRoomViewed);
     }
 
-    /**
-     * Returns the target room for room-swap operations.
-     */
     public Room getDesiredChangeRoom() {
         return rooms.get(selectedRoomChangeTower).get(selectedRoomChangeFloor).get(selectedRoomChangeRoom);
     }
 
     // ========== Room Data for Persistence ==========
 
-    /**
-     * Serializes all room data to a JSONArray for saving.
-     */
-    public JSONArray getRoomDataForSaving() {
-        JSONArray roomDataArray = new JSONArray();
+    public String getRoomDataForSaving() {
+        List<RoomStateData> roomList = new ArrayList<>();
         for (int tower = 0; tower < rooms.size(); tower++) {
             for (int floor = 0; floor < rooms.get(tower).size(); floor++) {
                 for (int roomIndex = 0; roomIndex < rooms.get(tower).get(floor).size(); roomIndex++) {
                     Room room = rooms.get(tower).get(floor).get(roomIndex);
-                    JSONObject currentRoom = new JSONObject();
-                    currentRoom.put("roomString", room.getRoomString());
-                    currentRoom.put("towerNumber", tower);
-                    currentRoom.put("floorNumber", room.getFloorNumber());
-                    currentRoom.put("roomNumber", room.getRoomNumber());
-                    currentRoom.put("status", room.getStatus().getCode());
-                    currentRoom.put("serviceDuration", room.getServiceDuration());
-
                     Instant startStatus = room.getStartStatus();
-                    currentRoom.put("startStatus", startStatus == null ? "" : startStatus.atZone(zoneID).toString());
-
                     Instant endStatus = room.getEndStatus();
-                    currentRoom.put("endStatus", endStatus == null ? "" : endStatus.atZone(zoneID).toString());
-
-                    currentRoom.put("extensionDuration", room.getExtensionDuration());
-
-                    roomDataArray.put(currentRoom);
+                    roomList.add(new RoomStateData(
+                            room.getRoomString(),
+                            tower,
+                            room.getFloorNumber(),
+                            room.getRoomNumber(),
+                            room.getStatus().getCode(),
+                            room.getServiceDuration(),
+                            startStatus == null ? "" : startStatus.atZone(zoneID).toString(),
+                            endStatus == null ? "" : endStatus.atZone(zoneID).toString(),
+                            room.getExtensionDuration()));
                 }
             }
         }
-        return roomDataArray;
+        try {
+            RoomStatesWrapper wrapper = new RoomStatesWrapper(roomList, 2);
+            return ObjectMapperFactory.get().writeValueAsString(wrapper);
+        } catch (JsonProcessingException e) {
+            logger.log(Level.SEVERE, "Failed to serialize room data", e);
+            return "{}";
+        }
     }
 
     // ========== Room Configuration CRUD ==========
 
-    /**
-     * Sets custom time pricing for a specific room.
-     * @param tower    tower index
-     * @param floor    floor index
-     * @param room     room index
-     * @param timeData array of 3 RoomTime instances
-     */
     public void setRoomCustomTimeData(int tower, int floor, int room, RoomTime[] timeData) {
         if (tower >= 0 && tower < rooms.size()
                 && floor >= 0 && floor < rooms.get(tower).size()
@@ -333,13 +302,6 @@ public class RoomManager {
         }
     }
 
-    /**
-     * Renames a room.
-     * @param tower      tower index
-     * @param floor      floor index
-     * @param room       room index
-     * @param roomString new display identifier
-     */
     public void setRoomString(int tower, int floor, int room, String roomString) {
         if (tower >= 0 && tower < rooms.size()
                 && floor >= 0 && floor < rooms.get(tower).size()
@@ -349,17 +311,10 @@ public class RoomManager {
         }
     }
 
-    /**
-     * @return total number of towers in the room grid
-     */
     public int getTotalTowers() {
         return rooms.size();
     }
 
-    /**
-     * @param tower tower index
-     * @return number of floors in the given tower, or 0 if out of bounds
-     */
     public int getTotalFloors(int tower) {
         if (tower >= 0 && tower < rooms.size()) {
             return rooms.get(tower).size();
@@ -369,22 +324,11 @@ public class RoomManager {
 
     // ========== Room Grid Rebuilding ==========
 
-    /**
-     * Clears and rebuilds the entire room grid from a program configuration JSON,
-     * preserving existing room states (status, times, custom data). Rooms are
-     * matched by their {@code (towerNumber, floorNumber, roomNumber)} triplet
-     * from the configuration data. Rooms that no longer exist in the new config
-     * are dropped; new rooms start as FREE.
-     *
-     * @param programData the application properties JSON containing roomsPerTower
-     */
-    public void rebuildRoomGrid(JSONObject programData) {
-        JSONArray savedStates = getRoomDataForSaving();
+    public void rebuildRoomGrid(List<TowerConfig> roomsPerTower) {
+        String savedStates = getRoomDataForSaving();
         rooms.clear();
-        buildRoomGrid(programData);
-        JSONObject wrapper = new JSONObject();
-        wrapper.put("rooms", savedStates);
-        restoreRoomStates(wrapper);
+        buildRoomGrid(roomsPerTower);
+        restoreRoomStates(savedStates);
     }
 
     // ========== Incremental Grid Operations ==========
@@ -455,4 +399,11 @@ public class RoomManager {
     public int getSelectedRoomChangeTower() { return selectedRoomChangeTower; }
 
     public ArrayList<ArrayList<ArrayList<Room>>> getRooms() { return rooms; }
+
+    // ========== Room States Wrapper ==========
+
+    public record RoomStatesWrapper(
+            java.util.List<RoomStateData> rooms,
+            int version
+    ) {}
 }

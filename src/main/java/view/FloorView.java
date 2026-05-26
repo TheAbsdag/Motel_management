@@ -229,6 +229,7 @@ public class FloorView extends JPanel implements TimeLabelInterface {
 	turnNumberInformativeLabel = new JLabel();
 	turnNumberLabel = new JLabel();
 	warningIconLabel = new JLabel();
+	warningIconLabel.setIcon(new ImageIcon(new ImageIcon(getClass().getResource("/images/warning.png")).getImage().getScaledInstance(120,120,Image.SCALE_SMOOTH)));
 	warningScrollPane = new JScrollPane();
 	towerLabelInformation = new JLabel();
 	towerLabel = new JLabel();

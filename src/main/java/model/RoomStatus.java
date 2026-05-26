@@ -1,5 +1,8 @@
 package model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+
 /**
  * Represents the possible states of a room in the motel.
  *
@@ -28,6 +31,7 @@ public enum RoomStatus {
     /**
      * Returns the legacy integer code for JSON persistence.
      */
+    @JsonValue
     public int getCode() {
         return code;
     }
@@ -39,6 +43,7 @@ public enum RoomStatus {
      * @return the matching RoomStatus
      * @throws IllegalArgumentException if the code is not 1, 2, or 3
      */
+    @JsonCreator
     public static RoomStatus fromCode(int code) {
         return switch (code) {
             case 1 -> FREE;

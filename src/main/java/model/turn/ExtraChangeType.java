@@ -1,5 +1,8 @@
 package model.turn;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+
 /**
  * Categorizes financial extra changes that are not part of regular operations.
  *
@@ -21,6 +24,7 @@ public enum ExtraChangeType {
      *
      * @return {@code "bankTransfer"} or {@code "safeDeposit"}
      */
+    @JsonValue
     public String getValue() {
         return value;
     }
@@ -32,6 +36,7 @@ public enum ExtraChangeType {
      * @return the matching enum constant
      * @throws IllegalArgumentException if no match is found
      */
+    @JsonCreator
     public static ExtraChangeType fromString(String s) {
         for (ExtraChangeType t : values()) {
             if (t.value.equals(s)) return t;

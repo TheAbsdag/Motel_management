@@ -5,15 +5,17 @@ import model.Item;
 import model.Register;
 import model.dto.InventoryItemData;
 import model.dto.SellingItemData;
-import org.json.JSONObject;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import model.json.ObjectMapperFactory;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-/**
- * Encapsulates inventory and selling-cart operations, delegating to {@link Register}.
- */
 public class SellingService {
 
     private final Register register;
+    private static final Logger logger = Logger.getLogger(SellingService.class.getName());
 
     public SellingService(Register register) {
         this.register = register;
@@ -23,8 +25,13 @@ public class SellingService {
         register.newSellingList();
     }
 
-    public JSONObject getInventoryData() {
-        return register.getInventoryData();
+    public String getInventoryData() {
+        try {
+            return ObjectMapperFactory.get().writeValueAsString(register.getInventoryData());
+        } catch (JsonProcessingException e) {
+            logger.log(Level.SEVERE, "Failed to serialize inventory data", e);
+            return "{}";
+        }
     }
 
     public boolean saveItemInformation(InventoryItemData item) {
@@ -71,9 +78,6 @@ public class SellingService {
         return register.getSellingItemDataList();
     }
 
-    /**
-     * Creates an inventory item from raw JSON (used during data loading).
-     */
     public void createItemFromJson(String name, int price, int quantity, int itemID) {
         register.createItem(name, price, quantity, itemID);
     }

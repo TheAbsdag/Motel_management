@@ -1,7 +1,8 @@
 package model.turn;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import java.time.ZonedDateTime;
-import org.json.JSONObject;
 
 /**
  * Sealed interface for all turn activity types.
@@ -17,11 +18,19 @@ import org.json.JSONObject;
  * @see SpendingActivity
  * @see ExtraChangeActivity
  */
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "changeType")
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = RoomBookingActivity.class, name = "room"),
+        @JsonSubTypes.Type(value = SaleActivity.class, name = "sale"),
+        @JsonSubTypes.Type(value = RoomSwapActivity.class, name = "roomSwap"),
+        @JsonSubTypes.Type(value = RefundActivity.class, name = "refund"),
+        @JsonSubTypes.Type(value = SpendingActivity.class, name = "spending"),
+        @JsonSubTypes.Type(value = ExtraChangeActivity.class, name = "extraChange"),
+})
 public sealed interface TurnActivity
         permits RoomBookingActivity, SaleActivity, RoomSwapActivity,
                 RefundActivity, SpendingActivity, ExtraChangeActivity {
 
     ZonedDateTime changeDate();
     int consecutiveTrans();
-    JSONObject toJson();
 }

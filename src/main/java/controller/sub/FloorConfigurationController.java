@@ -1,25 +1,21 @@
 package controller.sub;
 
 import javax.swing.event.ListSelectionEvent;
+import java.util.ArrayList;
+import java.util.List;
 import model.Room;
 import model.RoomTime;
 import model.ProgramConfig;
 import model.modelManagers.MotelManagement;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import model.json.FloorConfig;
+import model.json.RoomConfigData;
+import model.json.TimeSlotConfig;
+import model.json.TowerConfig;
 import view.FloorConfigurationView;
 import view.RoomConfigurationView;
 import view.helpers.DialogHelper;
 import view.helpers.InputParser;
 
-/**
- * Controls the floor/room configuration view. Wires tower and floor lists,
- * manages CRUD operations (add/remove towers, floors, and rooms), handles
- * room time/pricing edits via {@link RoomConfigurationView}, and persists
- * configuration changes through the model layer with confirmation dialogs.
- *
- * @author SECC
- */
 public class FloorConfigurationController {
 
     private final MotelManagement motelManager;
@@ -94,27 +90,25 @@ public class FloorConfigurationController {
     }
 
     private void populateTowerList() {
-        JSONArray roomsPerTower = motelManager.getProgramConfig().getRoomsPerTower();
-        if (roomsPerTower != null) {
-            String[] items = new String[roomsPerTower.length()];
-            for (int i = 0; i < roomsPerTower.length(); i++) {
-                JSONObject tower = roomsPerTower.getJSONObject(i);
-                items[i] = "Torre " + tower.getInt("towerNumber");
+        List<TowerConfig> roomsPerTower = motelManager.getProgramConfig().getRoomsPerTower();
+        if (roomsPerTower != null && !roomsPerTower.isEmpty()) {
+            String[] items = new String[roomsPerTower.size()];
+            for (int i = 0; i < roomsPerTower.size(); i++) {
+                items[i] = "Torre " + roomsPerTower.get(i).towerNumber();
             }
             view.setTowerItems(items);
         }
     }
 
     private void populateFloorList() {
-        JSONArray roomsPerTower = motelManager.getProgramConfig().getRoomsPerTower();
+        List<TowerConfig> roomsPerTower = motelManager.getProgramConfig().getRoomsPerTower();
         int towerIndex = view.getCurrentTowerIndex();
-        if (roomsPerTower != null && towerIndex < roomsPerTower.length()) {
-            JSONObject tower = roomsPerTower.getJSONObject(towerIndex);
-            JSONArray towerRooms = tower.getJSONArray("towerRooms");
-            String[] items = new String[towerRooms.length()];
-            for (int i = 0; i < towerRooms.length(); i++) {
-                JSONObject floorData = towerRooms.getJSONObject(i);
-                items[i] = "Piso " + (floorData.getInt("floor") + 1);
+        if (roomsPerTower != null && towerIndex < roomsPerTower.size()) {
+            TowerConfig tower = roomsPerTower.get(towerIndex);
+            List<FloorConfig> towerRooms = tower.towerRooms();
+            String[] items = new String[towerRooms.size()];
+            for (int i = 0; i < towerRooms.size(); i++) {
+                items[i] = "Piso " + (towerRooms.get(i).floor() + 1);
             }
             view.setFloorItems(items);
         }
@@ -141,8 +135,6 @@ public class FloorConfigurationController {
         }
     }
 
-    // ========== Tower/Floor Scroll ==========
-
     private void scrollTowerList(int direction) {
         int current = view.getSelectedTowerIndex();
         int newIndex = current + direction;
@@ -158,8 +150,6 @@ public class FloorConfigurationController {
             view.selectFloor(newIndex);
         }
     }
-
-    // ========== Room Button Wiring ==========
 
     private void wireRoomButtons() {
         int[][] roomsArray = motelManager.getRoomsArray();
@@ -252,11 +242,11 @@ public class FloorConfigurationController {
 
     private void addNewTower() {
         int nextTowerNum = 1;
-        JSONArray roomsPerTower = motelManager.getProgramConfig().getRoomsPerTower();
-        if (roomsPerTower != null && roomsPerTower.length() > 0) {
+        List<TowerConfig> roomsPerTower = motelManager.getProgramConfig().getRoomsPerTower();
+        if (roomsPerTower != null && !roomsPerTower.isEmpty()) {
             int maxNum = 0;
-            for (int i = 0; i < roomsPerTower.length(); i++) {
-                int num = roomsPerTower.getJSONObject(i).getInt("towerNumber");
+            for (int i = 0; i < roomsPerTower.size(); i++) {
+                int num = roomsPerTower.get(i).towerNumber();
                 if (num > maxNum) maxNum = num;
             }
             nextTowerNum = maxNum + 1;
@@ -268,12 +258,9 @@ public class FloorConfigurationController {
         if (towerNum == null) return;
 
         int floors = 1;
-        JSONArray towerRooms = new JSONArray();
+        List<FloorConfig> towerRooms = new ArrayList<>();
         for (int f = 0; f < floors; f++) {
-            JSONObject floorData = new JSONObject();
-            floorData.put("floor", f);
-            floorData.put("rooms", new JSONArray());
-            towerRooms.put(floorData);
+            towerRooms.add(new FloorConfig(f, new ArrayList<>()));
         }
 
         motelManager.getProgramConfig().addTower(towerNum, floors, towerRooms);
@@ -349,11 +336,10 @@ public class FloorConfigurationController {
 
     private void addNewFloor() {
         int towerIndex = view.getCurrentTowerIndex();
-        JSONArray roomsPerTower = motelManager.getProgramConfig().getRoomsPerTower();
-        if (roomsPerTower == null || towerIndex >= roomsPerTower.length()) return;
+        List<TowerConfig> roomsPerTower = motelManager.getProgramConfig().getRoomsPerTower();
+        if (roomsPerTower == null || towerIndex >= roomsPerTower.size()) return;
 
-        JSONObject tower = roomsPerTower.getJSONObject(towerIndex);
-        int floorNumber = tower.getInt("towerFloors");
+        int floorNumber = roomsPerTower.get(towerIndex).towerFloors();
 
         motelManager.getProgramConfig().addFloorToTower(towerIndex, floorNumber, 0);
         motelManager.getRoomManager().addFloorToGrid(towerIndex, floorNumber);
@@ -379,19 +365,19 @@ public class FloorConfigurationController {
             return;
         }
 
-        JSONArray roomsPerTower = motelManager.getProgramConfig().getRoomsPerTower();
-        if (roomsPerTower == null || towerIndex >= roomsPerTower.length()) return;
+        List<TowerConfig> roomsPerTower = motelManager.getProgramConfig().getRoomsPerTower();
+        if (roomsPerTower == null || towerIndex >= roomsPerTower.size()) return;
 
-        JSONObject tower = roomsPerTower.getJSONObject(towerIndex);
-        JSONArray towerRooms = tower.getJSONArray("towerRooms");
-        if (floorListIndex >= towerRooms.length()) return;
+        TowerConfig tower = roomsPerTower.get(towerIndex);
+        List<FloorConfig> towerRooms = tower.towerRooms();
+        if (floorListIndex >= towerRooms.size()) return;
 
-        JSONObject floorData = towerRooms.getJSONObject(floorListIndex);
-        JSONArray rooms = floorData.getJSONArray("rooms");
-        int floorNumber = floorData.getInt("floor");
-        int newRoomNumber = rooms.length();
+        FloorConfig floorData = towerRooms.get(floorListIndex);
+        List<RoomConfigData> rooms = floorData.rooms();
+        int floorNumber = floorData.floor();
+        int newRoomNumber = rooms.size();
 
-        int towerNum = tower.getInt("towerNumber");
+        int towerNum = tower.towerNumber();
         String defaultName = ProgramConfig.buildRoomString(towerNum, floorNumber, newRoomNumber);
 
         motelManager.getProgramConfig().addRoomToFloor(towerIndex, floorListIndex,
@@ -453,20 +439,10 @@ public class FloorConfigurationController {
         onBack.run();
     }
 
-    // ========== First Boot Support ==========
-
-    /**
-     * Configures this controller for the first-boot flow.
-     * Disables the back button and overrides save to call the provided callback
-     * instead of returning to the options hub.
-     *
-     * @param onCompleted callback invoked after successful save (next step in flow)
-     */
     public void configureForFirstBoot(Runnable onCompleted) {
         view.removeBackListeners();
         view.setBackEnabled(false);
 
-        // Re-wire save button: after saving, proceed to next step instead of returning to options hub
         view.removeSaveListeners();
         view.onSaveButton(() -> {
             boolean confirm = DialogHelper.confirmDialog(

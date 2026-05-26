@@ -3,8 +3,8 @@ package model.modelManagers;
 import model.Turn;
 import model.dto.TurnHistoryData;
 import model.turn.TurnDetails;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import model.json.ObjectMapperFactory;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -17,9 +17,6 @@ import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Encapsulates historical turn browsing, DTO transformation, and report generation.
- */
 public class HistoryService {
 
     private final FileManager files;
@@ -33,19 +30,14 @@ public class HistoryService {
         this.zoneID = zoneID;
     }
 
-    public JSONArray getHistoryData() {
-        JSONArray currentHistory = files.getHistoryFiles();
+    public String getHistoryData() {
+        List<String> currentHistory = files.getHistoryFiles();
         turnHistory.clear();
-        for (int i = 0; i < currentHistory.length(); i++) {
-            JSONObject currentTurn = currentHistory.getJSONObject(i);
-            JSONArray activityArray = currentTurn.getJSONArray("turnActivity");
-            Instant start = ZonedDateTime.parse(currentTurn.getString("turnStart")).toInstant();
-            Instant end = ZonedDateTime.parse(currentTurn.getString("turnEnd")).toInstant();
-            int turnNum = currentTurn.getInt("turnNumber");
-            Turn newTurn = new Turn(start, end, turnNum, zoneID, activityArray);
+        for (String jsonStr : currentHistory) {
+            Turn newTurn = new Turn(zoneID, jsonStr);
             turnHistory.add(newTurn);
         }
-        return currentHistory;
+        return files.getHistoryFiles().isEmpty() ? "[]" : String.join("\n", files.getHistoryFiles());
     }
 
     public void generateHistoryTurnReport(int selectedRow) {
@@ -54,20 +46,17 @@ public class HistoryService {
     }
 
     public List<TurnHistoryData> getTurnHistoryDataList() {
-        JSONArray rawHistory = files.getHistoryFiles();
+        List<String> rawHistory = files.getHistoryFiles();
         List<TurnHistoryData> result = new ArrayList<>();
-        for (int i = 0; i < rawHistory.length(); i++) {
-            JSONObject currentTurn = rawHistory.getJSONObject(i);
+        for (String jsonStr : rawHistory) {
             try {
-                JSONArray activityArray = currentTurn.getJSONArray("turnActivity");
-                Instant start = ZonedDateTime.parse(currentTurn.getString("turnStart")).toInstant();
-                Instant end = ZonedDateTime.parse(currentTurn.getString("turnEnd")).toInstant();
-                int turnNum = currentTurn.getInt("turnNumber");
-                Turn historyTurn = new Turn(start, end, turnNum, zoneID, activityArray);
+                JsonNode currentTurn = ObjectMapperFactory.get().readTree(jsonStr);
+                int turnNum = currentTurn.get("turnNumber").asInt();
+                Turn historyTurn = new Turn(zoneID, jsonStr);
                 turnHistory.add(historyTurn);
 
-                ZonedDateTime turnStartZ = ZonedDateTime.parse(currentTurn.getString("turnStart"));
-                ZonedDateTime turnEndZ = ZonedDateTime.parse(currentTurn.getString("turnEnd"));
+                ZonedDateTime turnStartZ = ZonedDateTime.parse(currentTurn.get("turnStart").asText());
+                ZonedDateTime turnEndZ = ZonedDateTime.parse(currentTurn.get("turnEnd").asText());
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd - hh:mm a");
                 DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", new Locale("es", "ES"));
                 Duration durationRaw = Duration.between(turnStartZ, turnEndZ);
@@ -75,15 +64,15 @@ public class HistoryService {
                 long minutes = durationRaw.minusHours(hours).toMinutes();
                 String duration = hours + ":" + minutes;
 
-                long totalSales = currentTurn.optLong("totalSales");
-                long totalItems = currentTurn.optLong("totalItems");
-                long totalRooms = currentTurn.optLong("totalRooms");
-                long totalRefunds = currentTurn.optLong("totalRefunds");
-                long totalSpending = currentTurn.optLong("totalSpending");
-                long totalTurnVal = currentTurn.optLong("totalTurn");
-                long totalBankTransfers = currentTurn.optLong("totalBankTransfers");
-                long totalDeposits = currentTurn.optLong("totalDeposits");
-                long totalNet = currentTurn.optLong("totalNet");
+                long totalSales = currentTurn.has("totalSales") ? currentTurn.get("totalSales").asLong() : 0L;
+                long totalItems = currentTurn.has("totalItems") ? currentTurn.get("totalItems").asLong() : 0L;
+                long totalRooms = currentTurn.has("totalRooms") ? currentTurn.get("totalRooms").asLong() : 0L;
+                long totalRefunds = currentTurn.has("totalRefunds") ? currentTurn.get("totalRefunds").asLong() : 0L;
+                long totalSpending = currentTurn.has("totalSpending") ? currentTurn.get("totalSpending").asLong() : 0L;
+                long totalTurnVal = currentTurn.has("totalTurn") ? currentTurn.get("totalTurn").asLong() : 0L;
+                long totalBankTransfers = currentTurn.has("totalBankTransfers") ? currentTurn.get("totalBankTransfers").asLong() : 0L;
+                long totalDeposits = currentTurn.has("totalDeposits") ? currentTurn.get("totalDeposits").asLong() : 0L;
+                long totalNet = currentTurn.has("totalNet") ? currentTurn.get("totalNet").asLong() : 0L;
 
                 result.add(new TurnHistoryData(
                         turnNum, turnStartZ, turnEndZ,
@@ -95,16 +84,12 @@ public class HistoryService {
                         historyTurn.getActivityDataList()
                 ));
             } catch (Exception e) {
-                logger.log(Level.WARNING, "Skipping malformed history entry at index " + i, e);
+                logger.log(Level.WARNING, "Skipping malformed history entry", e);
             }
         }
         return result;
     }
 
-    /**
-     * Returns the turn at the given index from the cached history list.
-     * {@link #getHistoryData()} or {@link #getTurnHistoryDataList()} must be called first.
-     */
     public Turn getHistoryTurn(int selectedRow) {
         return turnHistory.get(selectedRow);
     }

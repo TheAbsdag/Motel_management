@@ -1,63 +1,75 @@
 package model.turn;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import model.RoomStatus;
 import model.dto.TurnSummaryItemData;
+import model.json.ObjectMapperFactory;
 
 /**
  * Aggregates turn-level data: basic information, activity list, and computed
  * financial totals.
- *
- * <p>Financial totals and summary items are lazily computed via
- * {@link #computeTotalsAndSummary()} and cached until a new activity is added
- * or the activities list is replaced.
- *
- * <p>Serialization to/from JSON is supported via {@link #toJson()} and
- * {@link #fromJson(JSONObject)}.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class TurnDetails {
 
+    private static final Logger logger = Logger.getLogger(TurnDetails.class.getName());
+
+    @JsonProperty("turnNumber")
     private long turnNumber;
+    @JsonProperty("turnStart")
     private ZonedDateTime turnStart;
+    @JsonProperty("turnEnd")
     private ZonedDateTime turnEnd;
+    @JsonProperty("isTurnActive")
     private boolean isTurnActive;
+    @JsonProperty("turnActivity")
     private List<TurnActivity> activities;
 
+    @JsonProperty("totalItems")
     private long totalItems;
+    @JsonProperty("totalSales")
     private long totalSales;
+    @JsonProperty("totalRooms")
     private long totalRooms;
+    @JsonProperty("totalRefunds")
     private long totalRefunds;
+    @JsonProperty("totalItemRefunds")
     private long totalItemRefunds;
+    @JsonProperty("totalRoomRefunds")
     private long totalRoomRefunds;
+    @JsonProperty("totalSpending")
     private long totalSpending;
+    @JsonProperty("totalTurn")
     private long totalTurn;
+    @JsonProperty("totalBankTransfers")
     private long totalBankTransfers;
+    @JsonProperty("totalDeposits")
     private long totalDeposits;
+    @JsonProperty("totalNet")
     private long totalNet;
+    @JsonProperty("version")
+    private int version;
 
+    @JsonIgnore
     private List<TurnSummaryItemData> summaryItems;
+    @JsonIgnore
     private boolean totalsComputed;
 
-    /**
-     * Creates an empty {@code TurnDetails} with no activities and no totals computed.
-     */
     public TurnDetails() {
         this.activities = new ArrayList<>();
         this.summaryItems = new ArrayList<>();
         this.totalsComputed = false;
+        this.version = 2;
     }
 
-    /**
-     * Creates a {@code TurnDetails} with the given turn identity.
-     *
-     * @param turnNumber   the turn number
-     * @param turnStart    when the turn started
-     * @param isTurnActive whether the turn is currently active
-     */
     public TurnDetails(long turnNumber, ZonedDateTime turnStart, boolean isTurnActive) {
         this();
         this.turnNumber = turnNumber;
@@ -65,20 +77,11 @@ public class TurnDetails {
         this.isTurnActive = isTurnActive;
     }
 
-    /**
-     * Adds a new activity and invalidates the cached totals.
-     *
-     * @param activity the activity to add
-     */
     public void addActivity(TurnActivity activity) {
         activities.add(activity);
         totalsComputed = false;
     }
 
-    /**
-     * Resets all fields — activities, totals, and turn identity — to their default
-     * (empty) state. Useful when reusing the same instance.
-     */
     public void clear() {
         activities.clear();
         summaryItems.clear();
@@ -105,13 +108,6 @@ public class TurnDetails {
         summaryItems.clear();
     }
 
-    /**
-     * Iterates through all activities, computes financial totals (sales, refunds,
-     * spending, extra changes) and builds a summary grouped by concept.
-     *
-     * <p>Results are cached. If totals have already been computed and no new
-     * activity has been added, this method returns immediately.
-     */
     public void computeTotalsAndSummary() {
         if (totalsComputed) return;
         resetTotals();
@@ -234,74 +230,39 @@ public class TurnDetails {
     }
 
     /**
-     * Serializes this turn details (including all activities and computed totals)
-     * to a JSON object.
+     * Serializes this turn details to a JSON string.
      *
      * @return JSON representation suitable for persistence
      */
-    public JSONObject toJson() {
+    public String toJson() {
         computeTotalsAndSummary();
-        JSONObject json = new JSONObject();
-        json.put("turnNumber", turnNumber);
-        json.put("turnStart", turnStart.toString());
-        if (turnEnd != null) {
-            json.put("turnEnd", turnEnd.toString());
+        try {
+            return ObjectMapperFactory.get().writeValueAsString(this);
+        } catch (JsonProcessingException e) {
+            logger.log(Level.SEVERE, "Failed to serialize TurnDetails", e);
+            return "{}";
         }
-        json.put("isTurnActive", isTurnActive);
-        JSONArray arr = new JSONArray();
-        for (TurnActivity a : activities) {
-            arr.put(a.toJson());
-        }
-        json.put("turnActivity", arr);
-        json.put("totalItems", totalItems);
-        json.put("totalSales", totalSales);
-        json.put("totalRooms", totalRooms);
-        json.put("totalRefunds", totalRefunds);
-        json.put("totalItemRefunds", totalItemRefunds);
-        json.put("totalRoomRefunds", totalRoomRefunds);
-        json.put("totalSpending", totalSpending);
-        json.put("totalTurn", totalTurn);
-        json.put("totalBankTransfers", totalBankTransfers);
-        json.put("totalDeposits", totalDeposits);
-        json.put("totalNet", totalNet);
-        json.put("version", 2);
-        return json;
     }
 
     /**
      * Deserializes a {@code TurnDetails} from its JSON representation.
      *
-     * @param json JSON object previously produced by {@link #toJson()}
+     * @param json JSON string previously produced by {@link #toJson()}
      * @return the reconstructed turn details
      */
-    public static TurnDetails fromJson(JSONObject json) {
-        int version = json.optInt("version", 0);
-        TurnDetails details = new TurnDetails();
-        details.turnNumber = json.getLong("turnNumber");
-        details.turnStart = ZonedDateTime.parse(json.getString("turnStart"));
-        if (json.has("turnEnd")) {
-            details.turnEnd = ZonedDateTime.parse(json.getString("turnEnd"));
-        }
-        details.isTurnActive = json.getBoolean("isTurnActive");
-        if (json.has("turnActivity")) {
-            JSONArray arr = json.getJSONArray("turnActivity");
-            for (int i = 0; i < arr.length(); i++) {
-                JSONObject obj = arr.getJSONObject(i);
-                String type = obj.getString("changeType");
-                TurnActivity activity = switch (type) {
-                    case "room" -> RoomBookingActivity.fromJson(obj);
-                    case "sale" -> SaleActivity.fromJson(obj);
-                    case "roomSwap" -> RoomSwapActivity.fromJson(obj);
-                    case "refund" -> RefundActivity.fromJson(obj);
-                    case "spending" -> SpendingActivity.fromJson(obj);
-                    case "extraChange" -> ExtraChangeActivity.fromJson(obj);
-                    default -> throw new IllegalArgumentException("Unknown changeType: " + type);
-                };
-                details.activities.add(activity);
+    public static TurnDetails fromJson(String json) {
+        try {
+            TurnDetails details = ObjectMapperFactory.get().readValue(json, TurnDetails.class);
+            if (details.activities == null) {
+                details.activities = new ArrayList<>();
             }
+            details.summaryItems = new ArrayList<>();
+            details.computeTotalsAndSummary();
+            return details;
+        } catch (JsonProcessingException e) {
+            logger.log(Level.SEVERE, "Failed to deserialize TurnDetails", e);
+            return new TurnDetails();
         }
-        details.computeTotalsAndSummary();
-        return details;
     }
 
     // --- Getters / Setters ---
@@ -320,11 +281,6 @@ public class TurnDetails {
 
     public List<TurnActivity> getActivities() { return activities; }
 
-    /**
-     * Replaces the activity list and invalidates the cached totals.
-     *
-     * @param activities the new activity list
-     */
     public void setActivities(List<TurnActivity> activities) {
         this.activities = activities;
         totalsComputed = false;

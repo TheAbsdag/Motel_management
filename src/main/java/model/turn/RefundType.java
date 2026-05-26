@@ -1,5 +1,8 @@
 package model.turn;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+
 /**
  * Categorizes the type of refund processed during a turn.
  *
@@ -21,6 +24,7 @@ public enum RefundType {
      *
      * @return {@code "roomRefund"} or {@code "saleRefund"}
      */
+    @JsonValue
     public String getValue() {
         return value;
     }
@@ -32,6 +36,7 @@ public enum RefundType {
      * @return the matching enum constant
      * @throws IllegalArgumentException if no match is found
      */
+    @JsonCreator
     public static RefundType fromString(String s) {
         for (RefundType t : values()) {
             if (t.value.equals(s)) return t;

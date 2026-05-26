@@ -10,16 +10,10 @@ import model.turn.ActivityType;
 import model.turn.ExtraChangeType;
 import model.turn.SaleActivity;
 import model.turn.TurnDetails;
-import org.json.JSONObject;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-/**
- * Encapsulates turn lifecycle, reporting, spending, extra-changes, and refunds.
- * Coordinates between {@link Turn}, {@link Printer}, {@link ProgramConfig},
- * and {@link FileManager}.
- */
 public class TurnService {
 
     private final Turn turn;
@@ -124,7 +118,7 @@ public class TurnService {
         turn.refundTransactionFromTurn(activity, consecutiveTrans, currentTime, itemID, itemQty);
     }
 
-    public JSONObject getDetailedTurnInformationAsJson() {
+    public String getDetailedTurnInformationAsJson() {
         return turn.getDetailedTurnInformationAsJson();
     }
 }

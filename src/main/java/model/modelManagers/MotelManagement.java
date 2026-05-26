@@ -1,5 +1,7 @@
 package model.modelManagers;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -20,36 +22,24 @@ import model.Register;
 import model.Room;
 import model.RoomTime;
 import model.Turn;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import model.dto.InventoryItemData;
 import model.dto.SellingItemData;
 import model.dto.TurnActivityData;
 import model.dto.TurnHistoryData;
 import model.dto.TurnSummaryItemData;
+import model.json.ObjectMapperFactory;
 import model.turn.ActivityType;
 import model.turn.ExtraChangeType;
 import model.turn.RoomBookingActivity;
 import model.turn.SaleActivity;
 import model.turn.TurnActivity;
 import model.turn.TurnDetails;
+import model.json.FloorConfig;
+import model.json.RoomConfigData;
+import model.json.TimeSlotConfig;
+import model.json.TowerConfig;
 import view.helpers.TimeFormatter;
 
-/**
- * Central model facade that coordinates sub-models, services, persistence, and printing.
- *
- * <p>Domain logic extracted into services:
- * <ul>
- *   <li>{@link SellingService} — inventory and selling-cart operations</li>
- *   <li>{@link TurnService} — turn lifecycle, reporting, and reversals</li>
- *   <li>{@link HistoryService} — historical turn browsing and DTOs</li>
- * </ul>
- *
- * <p>The facade retains cross-cutting coordination (room booking, sale completion,
- * refunds), time management, overtime tracking, printer selection, and persistence.
- *
- * @author Santiago
- */
 public class MotelManagement implements ISellingService, IHistoryService {
 
     private final FileManager files;
@@ -88,8 +78,6 @@ public class MotelManagement implements ISellingService, IHistoryService {
         historyService = new HistoryService(files, zoneID);
     }
 
-    // ========== Service Accessors ==========
-
     public SellingService getSellingService() { return sellingService; }
     public TurnService getTurnService() { return turnService; }
     public HistoryService getHistoryService() { return historyService; }
@@ -99,7 +87,7 @@ public class MotelManagement implements ISellingService, IHistoryService {
     // ========== Initialization ==========
 
     public void prepareProgramData() {
-        JSONObject rawConfig = files.getJsonData("applicationProperties");
+        String rawConfig = files.getJsonData("applicationProperties");
         if (rawConfig == null) {
             firstBoot = true;
             return;
@@ -116,7 +104,7 @@ public class MotelManagement implements ISellingService, IHistoryService {
             printer.setPrinterService(savedPrinter);
         }
 
-        roomManager.buildRoomGrid(programConfig.getProgramData());
+        roomManager.buildRoomGrid(programConfig.getRoomsPerTower());
         roomManager.restoreRoomStates(files.getJsonData("roomsInformation"));
     }
 
@@ -125,40 +113,25 @@ public class MotelManagement implements ISellingService, IHistoryService {
     }
 
     public void initializeDefaultConfiguration() {
-        JSONArray towerRooms = new JSONArray();
-        JSONObject floorData = new JSONObject();
-        floorData.put("floor", 0);
-        JSONArray rooms = new JSONArray();
-        JSONObject roomJson = new JSONObject();
-        roomJson.put("roomString", "1-101");
-        roomJson.put("roomFloor", 0);
-        roomJson.put("roomNumber", 0);
-        JSONArray timeData = new JSONArray();
+        List<TimeSlotConfig> timeData = new ArrayList<>();
         for (RoomTime rt : RoomTime.getDefaultTimeSlots()) {
-            JSONObject td = new JSONObject();
-            td.put("price", rt.getPrice());
-            td.put("timeSeconds", rt.getTimeSeconds());
-            timeData.put(td);
+            timeData.add(new TimeSlotConfig(rt.getPrice(), rt.getTimeSeconds()));
         }
-        roomJson.put("customTimeData", timeData);
-        rooms.put(roomJson);
-        floorData.put("rooms", rooms);
-        towerRooms.put(floorData);
-        JSONArray roomsPerTower = new JSONArray();
-        JSONObject towerObj = new JSONObject();
-        towerObj.put("towerNumber", 1);
-        towerObj.put("towerFloors", 1);
-        towerObj.put("towerRooms", towerRooms);
-        roomsPerTower.put(towerObj);
+        List<RoomConfigData> roomsList = new ArrayList<>();
+        roomsList.add(new RoomConfigData("1-101", 0, 0, timeData));
+        List<FloorConfig> towerRooms = new ArrayList<>();
+        towerRooms.add(new FloorConfig(0, roomsList));
+        List<TowerConfig> roomsPerTower = new ArrayList<>();
+        roomsPerTower.add(new TowerConfig(1, 1, towerRooms));
         programConfig.setRoomsPerTower(roomsPerTower);
-        roomManager.buildRoomGrid(programConfig.getProgramData());
+        roomManager.buildRoomGrid(programConfig.getRoomsPerTower());
     }
 
     public boolean prepareTurnRegisterData() {
-        JSONObject turnData = files.getJsonData("turn");
-        JSONObject inventoryData = files.getJsonData("inventory");
+        String turnData = files.getJsonData("turn");
+        String inventoryData = files.getJsonData("inventory");
         boolean validPreviousTurn = false;
-        if (!(turnData == null || turnData.isEmpty())) {
+        if (turnData != null && !turnData.isEmpty()) {
             validPreviousTurn = turn.setPreviousTurnJSON(turnData);
             if (!validPreviousTurn) {
                 logger.log(Level.INFO, "Found previous turn, but it's no longer active, backing up");
@@ -168,15 +141,21 @@ public class MotelManagement implements ISellingService, IHistoryService {
                 TurnReportGenerator.generateReport(turn.getDetailedTurnInformation());
             }
         }
-        if (!(inventoryData == null || inventoryData.isEmpty())) {
-            JSONArray itemArray = inventoryData.getJSONArray("inventoryItems");
-            for (int i = 0; i < itemArray.length(); i++) {
-                JSONObject currentItem = itemArray.getJSONObject(i);
-                register.createItem(
-                        currentItem.getString("itemName"),
-                        currentItem.getInt("price"),
-                        currentItem.getInt("quantity"),
-                        currentItem.getInt("itemID"));
+        if (inventoryData != null && !inventoryData.isEmpty()) {
+            try {
+                JsonNode root = ObjectMapperFactory.get().readTree(inventoryData);
+                JsonNode itemArray = root.get("inventoryItems");
+                if (itemArray != null && itemArray.isArray()) {
+                    for (JsonNode currentItem : itemArray) {
+                        register.createItem(
+                                currentItem.get("itemName").asText(),
+                                currentItem.get("price").asLong(),
+                                currentItem.get("quantity").asLong(),
+                                currentItem.get("itemID").asLong());
+                    }
+                }
+            } catch (JsonProcessingException e) {
+                logger.log(Level.SEVERE, "Failed to parse inventory data", e);
             }
         }
         return validPreviousTurn;
@@ -197,7 +176,7 @@ public class MotelManagement implements ISellingService, IHistoryService {
         return TimeFormatter.formatDate(localizedTime);
     }
 
-    // ========== Room Operations (delegated to RoomManager) ==========
+    // ========== Room Operations ==========
 
     public int[][] getRoomsArray() {
         return roomManager.getRoomsArray();
@@ -244,7 +223,7 @@ public class MotelManagement implements ISellingService, IHistoryService {
         return roomManager.getStartDateRoom(tower, floor, room);
     }
 
-    // ========== Room View State (delegated to RoomManager) ==========
+    // ========== Room View State ==========
 
     public int getCurrentFloorViewed() { return roomManager.getCurrentFloorViewed(); }
     public int getCurrentRoomViewed() { return roomManager.getCurrentRoomViewed(); }
@@ -265,7 +244,7 @@ public class MotelManagement implements ISellingService, IHistoryService {
     public int getSelectedRoomChangeFloor() { return roomManager.getSelectedRoomChangeFloor(); }
     public int getSelectedRoomChangeTower() { return roomManager.getSelectedRoomChangeTower(); }
 
-    // ========== Turn Operations (delegated to TurnService) ==========
+    // ========== Turn Operations ==========
 
     public void setNewTurn(int turnNumber) {
         turnService.setNewTurn(turnNumber, currentTime);
@@ -287,13 +266,13 @@ public class MotelManagement implements ISellingService, IHistoryService {
         return turnService.getTurnNumber();
     }
 
-    // ========== Inventory / Selling Operations (delegated to SellingService) ==========
+    // ========== Inventory / Selling Operations ==========
 
     public void restartSaleManager() {
         sellingService.restartSaleManager();
     }
 
-    public JSONObject getInventoryData() {
+    public String getInventoryData() {
         return sellingService.getInventoryData();
     }
 
@@ -429,7 +408,7 @@ public class MotelManagement implements ISellingService, IHistoryService {
 
     public void savePrinterConfiguration(String printerName) {
         programConfig.savePrinterConfiguration(printerName);
-        files.saveJsonMainDataPath(programConfig.getProgramData(), "applicationProperties");
+        files.saveJsonMainDataPath(programConfig.toJson(), "applicationProperties");
     }
 
     // ========== File Persistence ==========
@@ -438,15 +417,11 @@ public class MotelManagement implements ISellingService, IHistoryService {
         programConfig.ensureSchemaVersion();
         populateConfigTimeData();
 
-        JSONObject roomData = new JSONObject();
-        roomData.put("rooms", roomManager.getRoomDataForSaving());
-        roomData.put("version", 2);
-
-        Map<String, JSONObject> dataMap = new LinkedHashMap<>();
+        Map<String, String> dataMap = new LinkedHashMap<>();
         dataMap.put("turn", turnService.getDetailedTurnInformationAsJson());
         dataMap.put("inventory", sellingService.getInventoryData());
-        dataMap.put("roomsInformation", roomData);
-        dataMap.put("applicationProperties", programConfig.getProgramData());
+        dataMap.put("roomsInformation", roomManager.getRoomDataForSaving());
+        dataMap.put("applicationProperties", programConfig.toJson());
 
         files.saveAllMainDataAtomic(dataMap);
     }
@@ -456,17 +431,13 @@ public class MotelManagement implements ISellingService, IHistoryService {
 
         files.saveJsonBackupDataPath(turnService.getDetailedTurnInformationAsJson(), "turn", localizedTime, saveType);
         files.saveJsonBackupDataPath(sellingService.getInventoryData(), "inventory", localizedTime, saveType);
-
-        JSONObject roomData = new JSONObject();
-        roomData.put("rooms", roomManager.getRoomDataForSaving());
-        roomData.put("version", 2);
-        files.saveJsonBackupDataPath(roomData, "roomsInformation", localizedTime, saveType);
-        files.saveJsonBackupDataPath(programConfig.getProgramData(), "applicationProperties", localizedTime, saveType);
+        files.saveJsonBackupDataPath(roomManager.getRoomDataForSaving(), "roomsInformation", localizedTime, saveType);
+        files.saveJsonBackupDataPath(programConfig.toJson(), "applicationProperties", localizedTime, saveType);
     }
 
-    // ========== History Operations (delegated to HistoryService) ==========
+    // ========== History Operations ==========
 
-    public JSONArray getHistoryData() {
+    public String getHistoryData() {
         return historyService.getHistoryData();
     }
 
@@ -507,65 +478,55 @@ public class MotelManagement implements ISellingService, IHistoryService {
 
     // ========== Configuration Delegation ==========
 
-    /**
-     * Updates motel identification data (name, NIT, address) in
-     * ProgramConfig, the Printer, and persists to disk immediately.
-     */
     public void saveMotelDataConfiguration(String name, String address, String id) {
         programConfig.setMotelName(name);
         programConfig.setMotelAddress(address);
         programConfig.setMotelID(id);
         printer.setPrinterVariables(name, address, id);
-        files.saveJsonMainDataPath(programConfig.getProgramData(), "applicationProperties");
+        files.saveJsonMainDataPath(programConfig.toJson(), "applicationProperties");
     }
 
     public void rebuildRoomGridFromConfig() {
-        roomManager.rebuildRoomGrid(programConfig.getProgramData());
+        roomManager.rebuildRoomGrid(programConfig.getRoomsPerTower());
     }
 
-    /**
-     * Ensures all rooms in ProgramConfig have customTimeData populated
-     * from the runtime Room objects. Used before saving to migrate old
-     * schemas and keep config in sync with runtime changes.
-     */
     private void populateConfigTimeData() {
-        JSONArray roomsPerTower = programConfig.getRoomsPerTower();
+        List<TowerConfig> roomsPerTower = programConfig.getRoomsPerTower();
         if (roomsPerTower == null) return;
 
         ArrayList<ArrayList<ArrayList<Room>>> rooms = roomManager.getRooms();
-        for (int t = 0; t < roomsPerTower.length() && t < rooms.size(); t++) {
-            JSONObject tower = roomsPerTower.getJSONObject(t);
-            JSONArray towerRooms = tower.getJSONArray("towerRooms");
-            for (int fd = 0; fd < towerRooms.length(); fd++) {
-                JSONObject floorData = towerRooms.getJSONObject(fd);
-                int floorNum = floorData.getInt("floor");
+        for (int t = 0; t < roomsPerTower.size() && t < rooms.size(); t++) {
+            TowerConfig tower = roomsPerTower.get(t);
+            List<FloorConfig> towerRooms = new ArrayList<>(tower.towerRooms());
+            for (int fd = 0; fd < towerRooms.size(); fd++) {
+                FloorConfig floorData = towerRooms.get(fd);
+                int floorNum = floorData.floor();
                 if (floorNum >= rooms.get(t).size()) continue;
-                JSONArray configRooms = floorData.getJSONArray("rooms");
+                List<RoomConfigData> configRooms = new ArrayList<>(floorData.rooms());
                 ArrayList<Room> runtimeRooms = rooms.get(t).get(floorNum);
-                for (int r = 0; r < configRooms.length() && r < runtimeRooms.size(); r++) {
-                    JSONObject roomJson = configRooms.getJSONObject(r);
-                    if (roomJson.has("customTimeData")) continue;
+                boolean modified = false;
+                for (int r = 0; r < configRooms.size() && r < runtimeRooms.size(); r++) {
+                    RoomConfigData roomJson = configRooms.get(r);
+                    if (roomJson.customTimeData() != null && !roomJson.customTimeData().isEmpty()) continue;
                     RoomTime[] timeData = runtimeRooms.get(r).getCustomRoomTimeData();
-                    JSONArray arr = new JSONArray();
+                    List<TimeSlotConfig> arr = new ArrayList<>();
                     for (RoomTime rt : timeData) {
-                        JSONObject td = new JSONObject();
-                        td.put("price", rt.getPrice());
-                        td.put("timeSeconds", rt.getTimeSeconds());
-                        arr.put(td);
+                        arr.add(new TimeSlotConfig(rt.getPrice(), rt.getTimeSeconds()));
                     }
-                    roomJson.put("customTimeData", arr);
+                    configRooms.set(r, new RoomConfigData(roomJson.roomString(), roomJson.roomFloor(), roomJson.roomNumber(), arr));
+                    modified = true;
+                }
+                if (modified) {
+                    towerRooms.set(fd, new FloorConfig(floorData.floor(), configRooms));
                 }
             }
+            roomsPerTower.set(t, new TowerConfig(tower.towerNumber(), tower.towerFloors(), towerRooms));
         }
     }
 
-    /**
-     * Reloads ProgramConfig from disk and rebuilds the room grid, effectively
-     * reverting any unsaved in-memory config changes.
-     */
     public void revertToSavedConfig() {
-        JSONObject rawConfig = files.getJsonData("applicationProperties");
+        String rawConfig = files.getJsonData("applicationProperties");
         programConfig.loadFromJson(rawConfig);
-        roomManager.rebuildRoomGrid(programConfig.getProgramData());
+        roomManager.rebuildRoomGrid(programConfig.getRoomsPerTower());
     }
 }

@@ -1,18 +1,14 @@
 package model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import model.dto.InventoryItemData;
 import model.dto.SellingItemData;
 
 /**
  * Manages the motel inventory and the active selling cart list.
- *
- * <p>Inventory is stored as a list of {@link Item} objects. The selling list
- * is stored as a typed {@link List}&lt;{@link CartItem}&gt; for compile-time safety.
  *
  * @author Santiago
  */
@@ -24,34 +20,17 @@ public class Register {
 
     private long historyID;
 
-    /**
-     * Creates an empty register with no inventory history ID.
-     */
     public Register() {
         sellingList = new ArrayList<>();
         inventory = new ArrayList<Item>();
     }
 
-    /**
-     * Creates a register associated with a history record.
-     *
-     * @param historyID the turn history ID this register belongs to
-     */
     public Register(long historyID) {
         this.historyID = historyID;
         sellingList = new ArrayList<>();
         inventory = new ArrayList<>();
     }
 
-    /**
-     * Creates a new inventory item with a suggested ID, auto-incrementing if the ID
-     * is already in use.
-     *
-     * @param name        item display name
-     * @param value       unit price
-     * @param quantity    initial stock
-     * @param itemIDInput suggested item ID
-     */
     public void createItem(String name, long value, long quantity, long itemIDInput) {
         long itemID = itemIDInput;
         HashSet<Long> usedIds = new HashSet<>();
@@ -65,13 +44,6 @@ public class Register {
         inventory.add(newItem);
     }
 
-    /**
-     * Creates a new inventory item with an auto-generated ID.
-     *
-     * @param name     item display name
-     * @param value    unit price
-     * @param quantity initial stock
-     */
     public void createNewItem(String name, long value, long quantity) {
         long itemID = 0;
         HashSet<Long> usedIds = new HashSet<>();
@@ -85,11 +57,6 @@ public class Register {
         inventory.add(newItem);
     }
 
-    /**
-     * Removes an item from the inventory by matching its ID.
-     *
-     * @param item the item to remove
-     */
     public void deleteItemInformation(Item item) {
         for (int i = 0; i < inventory.size(); i++) {
             if (inventory.get(i).getItemID() == item.getItemID()) {
@@ -98,11 +65,6 @@ public class Register {
         }
     }
 
-    /**
-     * Removes an item from the inventory by its numeric ID.
-     *
-     * @param itemID the unique item identifier
-     */
     public void deleteItemById(long itemID) {
         for (int i = 0; i < inventory.size(); i++) {
             if (inventory.get(i).getItemID() == itemID) {
@@ -112,13 +74,6 @@ public class Register {
         }
     }
 
-    /**
-     * Updates an existing inventory item in-place. Returns {@code false} if no
-     * item with the matching ID is found.
-     *
-     * @param item the item with updated values
-     * @return {@code true} if the item was found and updated
-     */
     public boolean saveItemInformation(Item item) {
         for (int i = 0; i < inventory.size(); i++) {
             if (inventory.get(i).getItemID() == item.getItemID()) {
@@ -129,29 +84,15 @@ public class Register {
         return false;
     }
 
-    /**
-     * Clears the selling list and resets the consumed flag.
-     */
     public void newSellingList() {
         sellingList.clear();
         sellingListConsumed = false;
     }
 
-    /**
-     * Removes an item from the selling list by its ID.
-     *
-     * @param item the item to remove from the cart
-     */
     public void removeFromList(Item item) {
         sellingList.removeIf(ci -> ci.itemID() == item.getItemID());
     }
 
-    /**
-     * Adds an item (or increases its quantity if already present) to the selling list.
-     *
-     * @param item     the item to add
-     * @param quantity quantity to add
-     */
     public void addItemToList(Item item, long quantity) {
         for (int i = 0; i < sellingList.size(); i++) {
             CartItem ci = sellingList.get(i);
@@ -166,23 +107,10 @@ public class Register {
                 quantity * item.getPrice()));
     }
 
-    /**
-     * Adds a courtesy (zero-price) item to the selling list.
-     *
-     * @param item     the item to give as courtesy
-     * @param quantity quantity to give
-     */
     public void addCourtesyItemToList(Item item, long quantity) {
         sellingList.add(new CartItem(item.getItemID(), item.getName(), quantity, 0L));
     }
 
-    /**
-     * Consumes the current selling list by decrementing inventory quantities
-     * and returns the list for transaction recording.
-     *
-     * @return the consumed selling list as a typed list
-     * @throws IllegalStateException if the list was already consumed
-     */
     public List<CartItem> consumeRegisterListForSale() {
         if (sellingListConsumed) {
             throw new IllegalStateException("Selling list has already been consumed for this transaction");
@@ -203,33 +131,20 @@ public class Register {
     }
 
     /**
-     * Serialises the full inventory into a JSON object.
-     *
-     * @return a JSON object with an {@code "inventoryItems"} array
+     * Serialises the full inventory into an InventoryData record.
      */
-    public JSONObject getInventoryData() {
-        JSONObject output = new JSONObject();
-        JSONArray inventoryArray = new JSONArray();
+    public InventoryData getInventoryData() {
+        List<InventoryItemJson> items = new ArrayList<>();
         for (int i = 0; i < inventory.size(); i++) {
-            JSONObject item = new JSONObject();
-            item.put("itemID", inventory.get(i).getItemID());
-            item.put("price", inventory.get(i).getPrice());
-            item.put("itemName", inventory.get(i).getName());
-            item.put("quantity", inventory.get(i).getQuantity());
-            inventoryArray.put(item);
+            items.add(new InventoryItemJson(
+                    inventory.get(i).getItemID(),
+                    inventory.get(i).getPrice(),
+                    inventory.get(i).getName(),
+                    inventory.get(i).getQuantity()));
         }
-
-        output.put("inventoryItems", inventoryArray);
-        output.put("version", 2);
-        return output;
+        return new InventoryData(items, 2);
     }
 
-    /**
-     * Looks up an item by its unique identifier.
-     *
-     * @param itemID the item ID to search for
-     * @return the matching item, or {@code null} if not found
-     */
     public Item getItemFromItemID(long itemID) {
         Item output = null;
         for (int i = 0; i < inventory.size(); i++) {
@@ -245,9 +160,6 @@ public class Register {
         }
     }
 
-    /**
-     * Returns all inventory items as a typed list of DTOs.
-     */
     public List<InventoryItemData> getInventoryItemDataList() {
         List<InventoryItemData> result = new ArrayList<>();
         for (Item item : inventory) {
@@ -256,9 +168,6 @@ public class Register {
         return result;
     }
 
-    /**
-     * Returns the current selling list as a typed list of DTOs.
-     */
     public List<SellingItemData> getSellingItemDataList() {
         List<SellingItemData> result = new ArrayList<>();
         for (CartItem ci : sellingList) {
@@ -273,11 +182,6 @@ public class Register {
         return result;
     }
 
-    /**
-     * Calculates the total price of all items currently in the selling list.
-     *
-     * @return total price in the selling list
-     */
     public long getTotalPriceRegisterList() {
         long totalPrice = 0;
         for (CartItem ci : sellingList) {
@@ -286,4 +190,21 @@ public class Register {
         return totalPrice;
     }
 
+    /**
+     * POJO for inventory serialization.
+     */
+    public record InventoryData(
+            @JsonProperty("inventoryItems") List<InventoryItemJson> inventoryItems,
+            @JsonProperty("version") int version
+    ) {}
+
+    /**
+     * POJO for a single inventory item in serialized form.
+     */
+    public record InventoryItemJson(
+            @JsonProperty("itemID") long itemID,
+            @JsonProperty("price") long price,
+            @JsonProperty("itemName") String itemName,
+            @JsonProperty("quantity") long quantity
+    ) {}
 }
