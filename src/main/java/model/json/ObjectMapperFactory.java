@@ -6,6 +6,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
+/**
+ * Singleton {@link com.fasterxml.jackson.databind.ObjectMapper} factory
+ * pre-configured with JSR-310 date/time support and project-standard settings.
+ */
 public final class ObjectMapperFactory {
 
     private static final ObjectMapper INSTANCE = new ObjectMapper();
@@ -20,6 +24,9 @@ public final class ObjectMapperFactory {
 
     private ObjectMapperFactory() {}
 
+    /**
+     * @return the pre-configured singleton {@link ObjectMapper} instance
+     */
     public static ObjectMapper get() {
         return INSTANCE;
     }

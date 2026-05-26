@@ -4,6 +4,9 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
+/**
+ * Represents a tower within the motel room grid configuration.
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record TowerConfig(
         @JsonProperty("towerNumber") int towerNumber,

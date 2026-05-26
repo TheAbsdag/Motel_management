@@ -5,6 +5,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Top-level application configuration DTO mapping the {@code applicationProperties.json} file.
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record AppProperties(
         @JsonProperty("consecutiveTransaction") int consecutiveTransaction,

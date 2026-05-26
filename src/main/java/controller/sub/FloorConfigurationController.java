@@ -16,6 +16,14 @@ import view.RoomConfigurationView;
 import view.helpers.DialogHelper;
 import view.helpers.InputParser;
 
+/**
+ * Controls the floor/room configuration view. Wires tower and floor lists,
+ * manages CRUD operations (add/remove towers, floors, and rooms), handles
+ * room time/pricing edits via {@link RoomConfigurationView}, and persists
+ * configuration changes through the model layer with confirmation dialogs.
+ *
+ * @author SECC
+ */
 public class FloorConfigurationController {
 
     private final MotelManagement motelManager;
@@ -135,6 +143,8 @@ public class FloorConfigurationController {
         }
     }
 
+    // ========== Tower/Floor Scroll ==========
+
     private void scrollTowerList(int direction) {
         int current = view.getSelectedTowerIndex();
         int newIndex = current + direction;
@@ -150,6 +160,8 @@ public class FloorConfigurationController {
             view.selectFloor(newIndex);
         }
     }
+
+    // ========== Room Button Wiring ==========
 
     private void wireRoomButtons() {
         int[][] roomsArray = motelManager.getRoomsArray();
@@ -439,6 +451,15 @@ public class FloorConfigurationController {
         onBack.run();
     }
 
+    // ========== First Boot Support ==========
+
+    /**
+     * Configures this controller for the first-boot flow.
+     * Disables the back button and overrides save to call the provided callback
+     * instead of returning to the options hub.
+     *
+     * @param onCompleted callback invoked after successful save (next step in flow)
+     */
     public void configureForFirstBoot(Runnable onCompleted) {
         view.removeBackListeners();
         view.setBackEnabled(false);

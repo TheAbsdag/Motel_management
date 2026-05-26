@@ -5,6 +5,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents a floor within a tower, containing its room configurations.
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record FloorConfig(
         @JsonProperty("floor") int floor,

@@ -3,6 +3,9 @@ package model.json;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * DTO for a single room's runtime state during persistence in {@code roomsInformation.json}.
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record RoomStateData(
         @JsonProperty("roomString") String roomString,
