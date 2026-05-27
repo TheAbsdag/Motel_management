@@ -257,11 +257,12 @@ public class FloorConfigurationView extends JPanel {
                 ArrayList<JButton> floorButtons = new ArrayList<>();
                 for (int room = 0; room < roomsPerFloor[floor]; room++) {
                     JButton button = new JButton("" + (room + 1));
+                    button.setFont(new Font("Segoe UI", Font.BOLD, 14));
                     button.setBorder(BorderFactory.createLineBorder(Color.BLACK));
                     button.setBackground(Color.WHITE);
                     button.setForeground(Color.BLACK);
                     button.setFocusPainted(false);
-                    button.setFont(new Font("SEGOE UI BLACK", Font.BOLD, 18));
+                    button.setMargin(new Insets(2, 2, 2, 2));
                     floorButtons.add(button);
                     floorButtonPanel.add(button);
                 }
@@ -292,6 +293,8 @@ public class FloorConfigurationView extends JPanel {
         switchToCurrentTowerAndFloor();
         updateTowerSelectedLabel();
         updateFloorSelectedLabel();
+        floorGridPanel.revalidate();
+        floorGridPanel.repaint();
     }
 
     /**
@@ -308,6 +311,8 @@ public class FloorConfigurationView extends JPanel {
             switchToCurrentTowerAndFloor();
             updateTowerSelectedLabel();
             updateFloorSelectedLabel();
+            floorGridPanel.revalidate();
+            floorGridPanel.repaint();
         }
     }
 

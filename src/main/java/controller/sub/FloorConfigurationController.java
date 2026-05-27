@@ -14,6 +14,7 @@ import model.json.TowerConfig;
 import view.FloorConfigurationView;
 import view.RoomConfigurationView;
 import view.helpers.DialogHelper;
+import view.helpers.FormatHelper;
 import view.helpers.InputParser;
 
 /**
@@ -170,7 +171,7 @@ public class FloorConfigurationController {
                 for (int room = 0; room < roomsArray[tower][floor]; room++) {
                     final int t = tower, f = floor, r = room;
                     view.onRoomClick(t, f, r, () -> onRoomClicked(t, f, r));
-                    view.setRoomButtonText(t, f, r, String.valueOf(room + 1));
+                    view.setRoomButtonText(t, f, r, buildRoomButtonText(t, f, r));
                 }
             }
         }
@@ -414,10 +415,42 @@ public class FloorConfigurationController {
             for (int floor = 0; floor < roomsArray[tower].length; floor++) {
                 for (int room = 0; room < roomsArray[tower][floor]; room++) {
                     view.setRoomButtonText(tower, floor, room,
-                            motelManager.getRoom(tower, floor, room).getRoomString());
+                            buildRoomButtonText(tower, floor, room));
                 }
             }
         }
+    }
+
+    private String buildRoomButtonText(int tower, int floor, int room) {
+        Room roomData = motelManager.getRoom(tower, floor, room);
+        String roomNum = String.valueOf(room + 1);
+        String roomStr = roomData.getRoomString();
+        RoomTime[] slots = roomData.getCustomRoomTimeData();
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("<html><div style='font-family:\"Segoe UI Black\",sans-serif;text-align:center;line-height:1.0'>");
+        sb.append("<div style='font-size:15pt;font-weight:bold'>").append(roomNum).append("</div>");
+        sb.append("<div style='font-size:11pt'>").append(roomStr).append("</div>");
+        for (int i = 0; i < 3 && i < slots.length; i++) {
+            sb.append("<div style='font-size:10pt'>").append(formatCompactSlot(slots[i])).append("</div>");
+        }
+        sb.append("</div></html>");
+        return sb.toString();
+    }
+
+    private String formatCompactSlot(RoomTime slot) {
+        long seconds = slot.getTimeSeconds();
+        long totalMinutes = (seconds + 59) / 60;
+        long hours = totalMinutes / 60;
+        long mins = totalMinutes % 60;
+
+        String timeStr;
+        if (mins == 0) {
+            timeStr = hours + "h";
+        } else {
+            timeStr = hours + "h:" + String.format("%02d", mins) + "m";
+        }
+        return timeStr + " = " + FormatHelper.formatPrice(slot.getPrice());
     }
 
     // ========== Save / Back ==========
