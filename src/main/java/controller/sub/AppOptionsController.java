@@ -27,6 +27,7 @@ public class AppOptionsController {
     private final Runnable onShowTimeConfig;
     private final Runnable onShowFloorConfig;
     private final Runnable onShowDataSaving;
+    private final Runnable onShowExportConfig;
     private final Runnable onShowOptions;
 
     /**
@@ -39,6 +40,7 @@ public class AppOptionsController {
      * @param onShowTimeConfig callback to navigate to time config view
      * @param onShowFloorConfig callback to navigate to floor config view
      * @param onShowDataSaving callback to navigate to data saving config view
+     * @param onShowExportConfig callback to navigate to export config view
      * @param onShowOptions   callback to return to the options hub
      */
     public AppOptionsController(MotelManagement motelManager,
@@ -50,6 +52,7 @@ public class AppOptionsController {
                                 Runnable onShowTimeConfig,
                                 Runnable onShowFloorConfig,
                                 Runnable onShowDataSaving,
+                                Runnable onShowExportConfig,
                                 Runnable onShowOptions) {
         this.motelManager = motelManager;
         this.appOptionsView = appOptionsView;
@@ -60,6 +63,7 @@ public class AppOptionsController {
         this.onShowTimeConfig = onShowTimeConfig;
         this.onShowFloorConfig = onShowFloorConfig;
         this.onShowDataSaving = onShowDataSaving;
+        this.onShowExportConfig = onShowExportConfig;
         this.onShowOptions = onShowOptions;
     }
 
@@ -75,6 +79,7 @@ public class AppOptionsController {
         appOptionsView.onDateTimeConfiguration(() -> onShowTimeConfig.run());
         appOptionsView.onFloorConfiguration(() -> onShowFloorConfig.run());
         appOptionsView.onSaveConfiguration(() -> onShowDataSaving.run());
+        appOptionsView.onExportConfiguration(() -> onShowExportConfig.run());
 
         // Sub-config view back buttons → return to options hub
         printerView.onBackButton(() -> onShowOptions.run());

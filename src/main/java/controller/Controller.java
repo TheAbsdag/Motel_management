@@ -1,6 +1,7 @@
 package controller;
 
 import controller.sub.AppOptionsController;
+import controller.sub.EmailController;
 import controller.sub.FloorConfigurationController;
 import controller.sub.FloorController;
 import controller.sub.HistoryController;
@@ -70,6 +71,7 @@ public class Controller {
     private final AppOptionsController appOptionsController;
     private final FloorConfigurationController floorConfigurationController;
     private final MotelDataConfigurationController motelDataConfigController;
+    private final EmailController emailController;
 
     // Timers
     private Timer timerForTimeUpdates;
@@ -102,6 +104,7 @@ public class Controller {
                 this::openTimeConfig,
                 this::openFloorConfig,
                 this::openDataSavingConfig,
+                this::openExportConfig,
                 this::openAppOptionsHub);
         historyController = new HistoryController(motelManager, userInterface.getHistoryView(),
                 this::showManagementSelection);
@@ -130,9 +133,19 @@ public class Controller {
                 this::saveMainFiles,
                 () -> saveBackupFiles("motelDataConfig"));
 
+        emailController = new EmailController(motelManager,
+                motelManager.getFileManager(),
+                userInterface.getEmailConfigView(),
+                userInterface.getExportConfigView(),
+                this::openExportConfig,
+                this::openEmailConfig,
+                this::saveMainFiles,
+                () -> saveBackupFiles("emailConfig"));
+
         // Wire sub-config view back buttons → return to options hub
         userInterface.getDataSavingConfigView().onBackButton(this::openAppOptionsHub);
         userInterface.getTimeConfigView().onBackButton(this::openAppOptionsHub);
+        userInterface.getExportConfigView().onBackButton(this::openAppOptionsHub);
 
         // Wire spending and extra changes confirmation actions
         userInterface.getSpendingRegisterView().onConfirmationButton(this::registerSpending);
@@ -215,6 +228,7 @@ public class Controller {
         appOptionsController.initListeners();
         floorConfigurationController.initListeners();
         motelDataConfigController.initListeners();
+        emailController.initListeners();
 
         // Floor view management button → management menu
         userInterface.getFloorView().onManagementOptions(this::showManagementSelection);
@@ -296,6 +310,15 @@ public class Controller {
 
     private void openDataSavingConfig() {
         userInterface.setDataSavingConfigView();
+    }
+
+    private void openExportConfig() {
+        userInterface.setExportConfigView();
+    }
+
+    private void openEmailConfig() {
+        emailController.populateView();
+        userInterface.setEmailConfigView();
     }
 
     // ========== Spending / Extra Changes ==========

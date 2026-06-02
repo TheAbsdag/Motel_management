@@ -11,7 +11,7 @@ new FormModel {
 			name: "this"
 			add( new FormComponent( "javax.swing.JLabel" ) {
 				name: "label1"
-				"text": "CONFIGURACION EXPORTACION"
+				"text": "CONFIGURACION EXPORTACION REPORTES"
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 0 0"
 			} )

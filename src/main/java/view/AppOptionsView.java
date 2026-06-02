@@ -160,6 +160,11 @@ public class AppOptionsView extends JPanel implements TimeLabelInterface{
         saveConfigurationButton.addActionListener(e -> action.run());
     }
 
+    /** Registers a listener for the export configuration button. */
+    public void onExportConfiguration(Runnable action) {
+        saveConfigurationButton2.addActionListener(e -> action.run());
+    }
+
     /** Registers a listener for the back/return button. */
     public void onBackButton(Runnable action) {
         backButton.addActionListener(e -> action.run());

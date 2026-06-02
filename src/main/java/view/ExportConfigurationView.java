@@ -40,7 +40,7 @@ public class ExportConfigurationView extends JPanel {
 	    "[]"));
 
 	//---- label1 ----
-	label1.setText("CONFIGURACION EXPORTACION");
+	label1.setText("CONFIGURACION EXPORTACION REPORTES");
 	add(label1, "cell 0 0");
 
 	//---- emailConfigButton ----
@@ -65,4 +65,19 @@ public class ExportConfigurationView extends JPanel {
     private JButton whatsappConfigButton;
     private JButton backButton;
     // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
+
+    /** Registers a listener for the email config button. */
+    public void onEmailConfigButton(Runnable action) {
+        emailConfigButton.addActionListener(e -> action.run());
+    }
+
+    /** Registers a listener for the WhatsApp config button (placeholder). */
+    public void onWhatsappConfigButton(Runnable action) {
+        whatsappConfigButton.addActionListener(e -> action.run());
+    }
+
+    /** Registers a listener for the back button. */
+    public void onBackButton(Runnable action) {
+        backButton.addActionListener(e -> action.run());
+    }
 }

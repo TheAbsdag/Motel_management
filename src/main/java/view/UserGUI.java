@@ -36,6 +36,8 @@ public class UserGUI extends JFrame {
     private SpendingRegisterView spendingRegisterView;
     private ExtraTurnChangesView extraTurnChangesView;
     private RoomSummaryView roomSummaryView;
+    private ExportConfigurationView exportConfigView;
+    private EmailConfigurationView emailConfigView;
 
     private ViewCard currentCard;
     private Map<ViewCard, TimeLabelInterface> timeDisplayPanels;
@@ -110,6 +112,12 @@ public class UserGUI extends JFrame {
 
         roomSummaryView = new RoomSummaryView();
         addView(roomSummaryView, ViewCard.ROOM_SUMMARY_VIEW);
+
+        exportConfigView = new ExportConfigurationView();
+        addView(getExportConfigView(), ViewCard.EXPORT_CONFIG_VIEW);
+
+        emailConfigView = new EmailConfigurationView();
+        addView(emailConfigView, ViewCard.EMAIL_CONFIG_VIEW);
 
         //Default window configuration
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -230,6 +238,14 @@ public class UserGUI extends JFrame {
 
     public void setRoomSummaryView() {
         setCard(ViewCard.ROOM_SUMMARY_VIEW);
+    }
+
+    public void setExportConfigView() {
+        setCard(ViewCard.EXPORT_CONFIG_VIEW);
+    }
+
+    public void setEmailConfigView() {
+        setCard(ViewCard.EMAIL_CONFIG_VIEW);
     }
 
     private void setCard(ViewCard card) {
@@ -357,6 +373,14 @@ public class UserGUI extends JFrame {
      */
     public RoomSummaryView getRoomSummaryView() {
         return roomSummaryView;
+    }
+
+    public ExportConfigurationView getExportConfigView() {
+        return exportConfigView;
+    }
+
+    public EmailConfigurationView getEmailConfigView() {
+        return emailConfigView;
     }
 
 }

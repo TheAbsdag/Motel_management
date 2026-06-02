@@ -1,8 +1,10 @@
 package view.helpers;
 
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.UIManager;
 import javax.swing.text.AbstractDocument;
@@ -10,6 +12,7 @@ import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DocumentFilter;
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.Font;
 
 /**
@@ -33,10 +36,17 @@ public final class DialogHelper {
 
     private DialogHelper() { }
 
-    private static JLabel styledMessage(String text) {
-        JLabel label = new JLabel(text);
-        label.setFont(MESSAGE_FONT);
-        return label;
+    private static JComponent styledMessage(String text) {
+        JTextArea textArea = new JTextArea(text);
+        textArea.setFont(MESSAGE_FONT);
+        textArea.setWrapStyleWord(true);
+        textArea.setLineWrap(true);
+        textArea.setEditable(false);
+        textArea.setOpaque(false);
+        textArea.setFocusable(false);
+        textArea.setColumns(35);
+        textArea.setMinimumSize(new Dimension(400, textArea.getPreferredSize().height));
+        return textArea;
     }
 
     // ========== Dialogs ==========
@@ -108,9 +118,7 @@ public final class DialogHelper {
             }
         });
 
-        JLabel label = new JLabel(message);
-        label.setFont(MESSAGE_FONT);
-
+        JComponent label = styledMessage(message);
         JPanel panel = new JPanel(new BorderLayout(15, 20));
         panel.add(label, BorderLayout.NORTH);
         panel.add(textField, BorderLayout.CENTER);

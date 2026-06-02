@@ -83,6 +83,7 @@ public class MotelManagement implements ISellingService, IHistoryService {
     public HistoryService getHistoryService() { return historyService; }
     public ProgramConfig getProgramConfig() { return programConfig; }
     public RoomManager getRoomManager() { return roomManager; }
+    public FileManager getFileManager() { return files; }
 
     // ========== Initialization ==========
 

@@ -24,7 +24,9 @@ public enum ViewCard {
     MOTEL_DATA_CONFIG_VIEW("motelDataConfigView"),
     DATA_SAVING_CONFIG_VIEW("dataSavingConfigView"),
     FLOOR_CONFIG_VIEW("floorConfigView"),
-    TIME_CONFIG_VIEW("timeConfigView");
+    TIME_CONFIG_VIEW("timeConfigView"),
+    EXPORT_CONFIG_VIEW("exportConfigView"),
+    EMAIL_CONFIG_VIEW("emailConfigView");
 
     private final String cardName;
 

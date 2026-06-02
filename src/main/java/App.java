@@ -1,12 +1,17 @@
 import controller.Controller;
 import view.UserGUI;
-import model.modelManagers.MotelManagement;	
+import model.modelManagers.MotelManagement;
+import model.email.config.EmailConfig;
+import model.email.dto.EmailMessage;
+import model.email.service.EmailSender;
+import model.json.ObjectMapperFactory;
+import java.awt.Font;
 import java.io.*;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.awt.Font;
+import java.nio.file.Paths;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
@@ -35,6 +40,10 @@ public class App {
         UserGUI userInterface = new UserGUI();
         Controller controller = new Controller(motelManager, userInterface);
         controller.start();
+
+        if (Boolean.getBoolean("demo.email")) {
+            javax.swing.SwingUtilities.invokeLater(() -> runDemoEmail(motelManager));
+        }
     }
 
     /**
@@ -85,6 +94,26 @@ public class App {
             Files.deleteIfExists(LOCK_PATH);
         } catch (IOException e) {
             // Best-effort cleanup on shutdown
+        }
+    }
+
+    private static void runDemoEmail(MotelManagement motelManager) {
+        try {
+            String json = motelManager.getFileManager().getJsonData("email-config");
+            if (json == null || json.isBlank()) {
+                System.out.println("Demo email: no se encontro configuracion de correo");
+                return;
+            }
+            EmailConfig config = ObjectMapperFactory.get().readValue(json, EmailConfig.class);
+            EmailMessage msg = new EmailMessage(
+                    config.username(), null,
+                    "Prueba de envio - Motel Management",
+                    "<html><body><h2>Prueba de Configuracion</h2><p>Correo de prueba enviado correctamente.</p></body></html>",
+                    true, null);
+            new EmailSender(config).send(msg);
+            System.out.println("Demo email enviado exitosamente a " + config.username());
+        } catch (Exception e) {
+            System.err.println("Demo email fallo: " + e.getMessage());
         }
     }
 }
