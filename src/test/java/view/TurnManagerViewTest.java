@@ -9,8 +9,10 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import model.dto.TurnActivityData;
 import model.dto.TurnSummaryItemData;
+import model.json.CurrencyConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import view.helpers.CurrencyFormatter;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -226,9 +228,9 @@ class TurnManagerViewTest {
         view.setTurnDetailsData(
                 List.of(), 5, 10, 50000, 2000, 3000, 52000, 10000, 20000, 42000);
 
-        assertThat(textOf(view, "totalRoomsLabel")).isEqualTo("5");
-        assertThat(textOf(view, "totalItemsLabel")).isEqualTo("10");
-        assertThat(textOf(view, "totalSalesLabel")).isEqualTo(String.format("%,d", 50000L));
+        assertThat(textOf(view, "totalRoomsLabel")).isEqualTo(CurrencyFormatter.format(5, CurrencyConfig.defaultConfig()));
+        assertThat(textOf(view, "totalItemsLabel")).isEqualTo(CurrencyFormatter.format(10, CurrencyConfig.defaultConfig()));
+        assertThat(textOf(view, "totalSalesLabel")).isEqualTo(CurrencyFormatter.format(50000, CurrencyConfig.defaultConfig()));
     }
 
     /**

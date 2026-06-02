@@ -38,6 +38,7 @@ public class UserGUI extends JFrame {
     private RoomSummaryView roomSummaryView;
     private ExportConfigurationView exportConfigView;
     private EmailConfigurationView emailConfigView;
+    private CurrencyConfigurationView currencyConfigurationView;
 
     private ViewCard currentCard;
     private Map<ViewCard, TimeLabelInterface> timeDisplayPanels;
@@ -118,6 +119,9 @@ public class UserGUI extends JFrame {
 
         emailConfigView = new EmailConfigurationView();
         addView(emailConfigView, ViewCard.EMAIL_CONFIG_VIEW);
+
+        currencyConfigurationView = new CurrencyConfigurationView();
+        addView(currencyConfigurationView, ViewCard.CURRENCY_CONFIG_VIEW);
 
         //Default window configuration
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -381,6 +385,12 @@ public class UserGUI extends JFrame {
 
     public EmailConfigurationView getEmailConfigView() {
         return emailConfigView;
+    }
+
+    public CurrencyConfigurationView getCurrencyConfigurationView() { return currencyConfigurationView; }
+
+    public void setCurrencyConfigurationView() {
+        setCard(ViewCard.CURRENCY_CONFIG_VIEW);
     }
 
 }

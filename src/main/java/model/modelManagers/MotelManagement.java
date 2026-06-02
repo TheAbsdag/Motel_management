@@ -34,6 +34,7 @@ import model.turn.RoomBookingActivity;
 import model.turn.SaleActivity;
 import model.turn.TurnActivity;
 import model.turn.TurnDetails;
+import model.json.CurrencyConfig;
 import model.json.FloorConfig;
 import model.json.RoomConfigData;
 import model.json.TimeSlotConfig;
@@ -523,6 +524,11 @@ public class MotelManagement implements ISellingService, IHistoryService {
             }
             roomsPerTower.set(t, new TowerConfig(tower.towerNumber(), tower.towerFloors(), towerRooms));
         }
+    }
+
+    public void saveCurrencyConfiguration(CurrencyConfig config) {
+        programConfig.setCurrencyConfig(config);
+        files.saveJsonMainDataPath(programConfig.toJson(), "applicationProperties");
     }
 
     public void revertToSavedConfig() {

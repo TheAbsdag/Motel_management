@@ -17,6 +17,7 @@ import javax.swing.text.AbstractDocument;
 import net.miginfocom.swing.*;
 import model.dto.InventoryItemData;
 import model.dto.SellingItemData;
+import model.json.CurrencyConfig;
 import view.customListRenderes.*;
 import view.interfaces.TimeLabelInterface;
 
@@ -31,6 +32,12 @@ public class SellingView extends JPanel implements TimeLabelInterface {
     private ItemTableModel itemTableModel;
     private SellingTableModel sellingTableModel;
     private final Font cellFont;
+
+    private CurrencyConfig currencyConfig = CurrencyConfig.defaultConfig();
+
+    public void setCurrencyConfig(CurrencyConfig cfg) {
+        this.currencyConfig = cfg != null ? cfg : CurrencyConfig.defaultConfig();
+    }
 
     public SellingView() {
         this.cellFont = new Font("Segoe UI", Font.BOLD, 18);

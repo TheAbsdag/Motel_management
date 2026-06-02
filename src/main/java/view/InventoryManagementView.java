@@ -16,6 +16,7 @@ import javax.swing.table.TableColumnModel;
 import javax.swing.text.AbstractDocument;
 import net.miginfocom.swing.*;
 import model.dto.InventoryItemData;
+import model.json.CurrencyConfig;
 import view.customListRenderes.*;
 import view.interfaces.TimeLabelInterface;
 
@@ -24,6 +25,12 @@ import view.interfaces.TimeLabelInterface;
  * Uses typed {@link InventoryItemData} DTOs instead of raw JSON.
  */
 public class InventoryManagementView extends JPanel implements TimeLabelInterface {
+
+    private CurrencyConfig currencyConfig = CurrencyConfig.defaultConfig();
+
+    public void setCurrencyConfig(CurrencyConfig cfg) {
+        this.currencyConfig = cfg != null ? cfg : CurrencyConfig.defaultConfig();
+    }
 
     public InventoryManagementView() {
         this.cellFont = new Font("Segoe UI", Font.BOLD, 18);

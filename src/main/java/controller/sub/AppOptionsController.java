@@ -28,6 +28,7 @@ public class AppOptionsController {
     private final Runnable onShowFloorConfig;
     private final Runnable onShowDataSaving;
     private final Runnable onShowExportConfig;
+    private final Runnable onShowCurrencyConfig;
     private final Runnable onShowOptions;
 
     /**
@@ -41,6 +42,7 @@ public class AppOptionsController {
      * @param onShowFloorConfig callback to navigate to floor config view
      * @param onShowDataSaving callback to navigate to data saving config view
      * @param onShowExportConfig callback to navigate to export config view
+     * @param onShowCurrencyConfig callback to navigate to currency config view
      * @param onShowOptions   callback to return to the options hub
      */
     public AppOptionsController(MotelManagement motelManager,
@@ -53,6 +55,7 @@ public class AppOptionsController {
                                 Runnable onShowFloorConfig,
                                 Runnable onShowDataSaving,
                                 Runnable onShowExportConfig,
+                                Runnable onShowCurrencyConfig,
                                 Runnable onShowOptions) {
         this.motelManager = motelManager;
         this.appOptionsView = appOptionsView;
@@ -64,6 +67,7 @@ public class AppOptionsController {
         this.onShowFloorConfig = onShowFloorConfig;
         this.onShowDataSaving = onShowDataSaving;
         this.onShowExportConfig = onShowExportConfig;
+        this.onShowCurrencyConfig = onShowCurrencyConfig;
         this.onShowOptions = onShowOptions;
     }
 
@@ -80,6 +84,7 @@ public class AppOptionsController {
         appOptionsView.onFloorConfiguration(() -> onShowFloorConfig.run());
         appOptionsView.onSaveConfiguration(() -> onShowDataSaving.run());
         appOptionsView.onExportConfiguration(() -> onShowExportConfig.run());
+        appOptionsView.onCurrencyConfiguration(() -> onShowCurrencyConfig.run());
 
         // Sub-config view back buttons → return to options hub
         printerView.onBackButton(() -> onShowOptions.run());

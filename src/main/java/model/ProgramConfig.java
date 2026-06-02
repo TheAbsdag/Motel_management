@@ -10,6 +10,7 @@ import model.json.FloorConfig;
 import model.json.ObjectMapperFactory;
 import model.json.RoomConfigData;
 import model.json.TimeSlotConfig;
+import model.json.CurrencyConfig;
 import model.json.TowerConfig;
 
 /**
@@ -29,11 +30,13 @@ public class ProgramConfig {
     private String motelID;
     private String configuredPrinterName;
     private int schemaVersion;
+    private CurrencyConfig currencyConfig;
     private List<TowerConfig> roomsPerTower;
 
     public ProgramConfig() {
         this.consecutiveTransaction = 0;
         this.schemaVersion = SCHEMA_VERSION;
+        this.currencyConfig = CurrencyConfig.defaultConfig();
         this.roomsPerTower = new ArrayList<>();
     }
 
@@ -47,6 +50,7 @@ public class ProgramConfig {
             this.configuredPrinterName = props.printerName();
             this.schemaVersion = props.version();
             this.roomsPerTower = new ArrayList<>(props.roomsPerTower());
+            this.currencyConfig = props.currencyConfig() != null ? props.currencyConfig() : CurrencyConfig.defaultConfig();
         } catch (JsonProcessingException e) {
             logger.log(Level.SEVERE, "Failed to load application properties", e);
         }
@@ -56,7 +60,7 @@ public class ProgramConfig {
         try {
             AppProperties props = new AppProperties(
                     consecutiveTransaction, motelName, motelAddress, motelID,
-                    configuredPrinterName, schemaVersion, roomsPerTower);
+                    configuredPrinterName, schemaVersion, roomsPerTower, currencyConfig);
             return ObjectMapperFactory.get().writeValueAsString(props);
         } catch (JsonProcessingException e) {
             logger.log(Level.SEVERE, "Failed to serialize application properties", e);
@@ -302,6 +306,14 @@ public class ProgramConfig {
      * @param roomNumber  zero-based room number
      * @return formatted string like "1-105"
      */
+    // ========== Currency Configuration ==========
+
+    public CurrencyConfig getCurrencyConfig() { return currencyConfig; }
+
+    public void setCurrencyConfig(CurrencyConfig currencyConfig) {
+        this.currencyConfig = currencyConfig;
+    }
+
     public static String buildRoomString(int towerNumber, int floorNumber, int roomNumber) {
         return towerNumber + "-" + (floorNumber + 1) + "0" + (roomNumber + 1);
     }

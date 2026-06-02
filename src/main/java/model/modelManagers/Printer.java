@@ -2,7 +2,6 @@ package model.modelManagers;
 
 import model.modelManagers.FileManager;
 import java.io.FileOutputStream;
-import java.text.NumberFormat;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
@@ -30,6 +29,7 @@ import java.awt.print.Paper;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 import model.dto.TurnSummaryItemData;
+import model.json.CurrencyConfig;
 import model.turn.ExtraChangeActivity;
 import model.turn.ExtraChangeType;
 import model.turn.RefundActivity;
@@ -41,6 +41,7 @@ import model.turn.SaleItem;
 import model.turn.SpendingActivity;
 import model.turn.TurnActivity;
 import model.turn.TurnDetails;
+import view.helpers.CurrencyFormatter;
 import view.helpers.TimeFormatter;
 
 /**
@@ -66,7 +67,7 @@ public class Printer {
     private String motelID;
     private final DateTimeFormatter hourFormatter;
     private final DateTimeFormatter dateFormatter;
-    private final NumberFormat numberFormat;
+    private CurrencyConfig currencyConfig = CurrencyConfig.defaultConfig();
     private StyledDocument document;
     private final String PDF_SAVE_PATH = FileManager.PATH + File.separator + "receiptPrints";
     private PrintService printerService;
@@ -83,11 +84,14 @@ public class Printer {
                 .appendText(ChronoField.AMPM_OF_DAY, Map.of(0L, "AM", 1L, "PM"))
                 .toFormatter();
         dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd", new Locale("es", "ES"));
-        numberFormat = NumberFormat.getNumberInstance(Locale.US);
         initializeStyles();
         File preparePDFRoute = new File(PDF_SAVE_PATH);
         preparePDFRoute.mkdirs();
         printerService = PrinterJob.getPrinterJob().getPrintService();
+    }
+
+    public void setCurrencyConfig(CurrencyConfig cfg) {
+        this.currencyConfig = cfg != null ? cfg : CurrencyConfig.defaultConfig();
     }
 
     /**
@@ -252,14 +256,14 @@ public class Printer {
         printSeparator();
         document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
         document.insertString(document.getLength(), spaces(2) + "Habitaciones: ", document.getStyle("DefaultStyle"));
-        document.insertString(document.getLength(), numberFormat.format(totalRooms) + "\n", document.getStyle("DefaultStyleBold"));
+        document.insertString(document.getLength(), CurrencyFormatter.format(totalRooms, currencyConfig) + "\n", document.getStyle("DefaultStyleBold"));
         document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
         document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
         document.insertString(document.getLength(), spaces(4) + "Productos: ", document.getStyle("DefaultStyle"));
-        document.insertString(document.getLength(), numberFormat.format(totalItems) + "\n", document.getStyle("DefaultStyleBold"));
+        document.insertString(document.getLength(), CurrencyFormatter.format(totalItems, currencyConfig) + "\n", document.getStyle("DefaultStyleBold"));
         document.insertString(document.getLength(), " \n", document.getStyle("FillerStyle"));
         document.insertString(document.getLength(), "Total Turno: ", document.getStyle("DefaultStyle"));
-        document.insertString(document.getLength(), numberFormat.format(totalSales) + "\n", document.getStyle("DefaultStyleBold"));
+        document.insertString(document.getLength(), CurrencyFormatter.format(totalSales, currencyConfig) + "\n", document.getStyle("DefaultStyleBold"));
     }
 
     /**
@@ -306,7 +310,7 @@ public class Printer {
             document.insertString(document.getLength(), spaces(4) + "Servicio: " + TimeFormatter.formatDuration(serviceDuration) + "\n", document.getStyle("TransactionStyle"));
             printFillerLines(2);
             document.insertString(document.getLength(), spaces(4) + "Pago Total:\t", document.getStyle("TransactionStyle"));
-            document.insertString(document.getLength(), " " + numberFormat.format(price), document.getStyle("TransactionStyleBold"));
+            document.insertString(document.getLength(), " " + CurrencyFormatter.format(price, currencyConfig), document.getStyle("TransactionStyleBold"));
             document.insertString(document.getLength(), "\n", document.getStyle("TransactionStyle"));
             document.insertString(document.getLength(), "\n \n", document.getStyle("TransactionStyle"));
             printSeparator();
@@ -361,11 +365,11 @@ public class Printer {
                 String name = item.itemName();
                 long price = item.price();
                 totalPrice += price;
-                document.insertString(document.getLength(), spaces(2) + quantity + spaces(3) + name + "\t" + numberFormat.format(price) + " \n", document.getStyle("TransactionStyle"));
+                document.insertString(document.getLength(), spaces(2) + quantity + spaces(3) + name + "\t" + CurrencyFormatter.format(price, currencyConfig) + " \n", document.getStyle("TransactionStyle"));
                 printFillerLines(1);
             }
             document.insertString(document.getLength(), spaces(4) + "\n\nPago Total:\t", document.getStyle("TransactionStyle"));
-            document.insertString(document.getLength(), " " + numberFormat.format(totalPrice), document.getStyle("TransactionStyleBold"));
+            document.insertString(document.getLength(), " " + CurrencyFormatter.format(totalPrice, currencyConfig), document.getStyle("TransactionStyleBold"));
             document.insertString(document.getLength(), "\n", document.getStyle("TransactionStyle"));
             printFillerLines(1);
             document.insertString(document.getLength(), spaces(6) + motelAddress + "\n", document.getStyle("FooterStyleBold"));
@@ -436,10 +440,10 @@ public class Printer {
                 String change = si.summaryType();
                 if ("room".equals(change)) {
                     document.insertString(document.getLength(), spaces(3) + si.quantity() + " Alquiler " + TimeFormatter.formatDuration(si.serviceDuration())
-                            + "\t" + numberFormat.format(si.price()) + "\n", document.getStyle("TransactionStyle"));
+                            + "\t" + CurrencyFormatter.format(si.price(), currencyConfig) + "\n", document.getStyle("TransactionStyle"));
                 } else if ("item".equals(change)) {
                     document.insertString(document.getLength(), spaces(3) + si.quantity() + spaces(2) + si.name()
-                            + "\t" + numberFormat.format(si.price()) + "\n", document.getStyle("TransactionStyle"));
+                            + "\t" + CurrencyFormatter.format(si.price(), currencyConfig) + "\n", document.getStyle("TransactionStyle"));
                 }
             }
 
@@ -475,41 +479,41 @@ public class Printer {
             String change = si.summaryType();
             if ("roomRefund".equals(change)) {
                 document.insertString(document.getLength(), spaces(1) + si.quantity() + " Alquiler " + TimeFormatter.formatDuration(si.serviceDuration())
-                        + "\t" + numberFormat.format(si.price()) + "\n", document.getStyle("TransactionStyle"));
+                        + "\t" + CurrencyFormatter.format(si.price(), currencyConfig) + "\n", document.getStyle("TransactionStyle"));
             } else if ("itemRefund".equals(change)) {
                 document.insertString(document.getLength(), spaces(1) + si.quantity() + spaces(2) + si.name()
-                        + "\t" + numberFormat.format(si.price()) + "\n", document.getStyle("TransactionStyle"));
+                        + "\t" + CurrencyFormatter.format(si.price(), currencyConfig) + "\n", document.getStyle("TransactionStyle"));
             }
         }
         printFillerLines(1);
         printSeparator();
         printFillerLines(1);
         document.insertString(document.getLength(), spaces(2) + "Reembolsos Habitaciones: ", document.getStyle("DefaultStyle"));
-        document.insertString(document.getLength(), numberFormat.format(totalRoomRefunds) + "\n", document.getStyle("DefaultStyleBold"));
+        document.insertString(document.getLength(), CurrencyFormatter.format(totalRoomRefunds, currencyConfig) + "\n", document.getStyle("DefaultStyleBold"));
         printFillerLines(2);
         document.insertString(document.getLength(), spaces(4) + "Reembolsos Productos: ", document.getStyle("DefaultStyle"));
-        document.insertString(document.getLength(), numberFormat.format(totalItemRefunds) + "\n", document.getStyle("DefaultStyleBold"));
+        document.insertString(document.getLength(), CurrencyFormatter.format(totalItemRefunds, currencyConfig) + "\n", document.getStyle("DefaultStyleBold"));
         printFillerLines(1);
         document.insertString(document.getLength(), "Total Reembolsos: ", document.getStyle("DefaultStyle"));
-        document.insertString(document.getLength(), numberFormat.format(totalRefunds) + "\n", document.getStyle("DefaultStyleBold"));
+        document.insertString(document.getLength(), CurrencyFormatter.format(totalRefunds, currencyConfig) + "\n", document.getStyle("DefaultStyleBold"));
         printSeparator();
         printFillerLines(1);
 
         document.insertString(document.getLength(), spaces(2) + "Gastos: ", document.getStyle("DefaultStyle"));
-        document.insertString(document.getLength(), numberFormat.format(turnDetails.getTotalSpending()) + "\n", document.getStyle("DefaultStyleBold"));
+        document.insertString(document.getLength(), CurrencyFormatter.format(turnDetails.getTotalSpending(), currencyConfig) + "\n", document.getStyle("DefaultStyleBold"));
         printFillerLines(1);
         document.insertString(document.getLength(), "Total Turno: ", document.getStyle("DefaultStyle"));
-        document.insertString(document.getLength(), numberFormat.format(turnDetails.getTotalTurn()) + "\n", document.getStyle("DefaultStyleBold"));
+        document.insertString(document.getLength(), CurrencyFormatter.format(turnDetails.getTotalTurn(), currencyConfig) + "\n", document.getStyle("DefaultStyleBold"));
         printSeparator();
         printFillerLines(1);
         document.insertString(document.getLength(), spaces(2) + "Transferencias: ", document.getStyle("DefaultStyle"));
-        document.insertString(document.getLength(), numberFormat.format(turnDetails.getTotalBankTransfers()) + "\n", document.getStyle("DefaultStyleBold"));
+        document.insertString(document.getLength(), CurrencyFormatter.format(turnDetails.getTotalBankTransfers(), currencyConfig) + "\n", document.getStyle("DefaultStyleBold"));
         printFillerLines(2);
         document.insertString(document.getLength(), spaces(2) + "Depositos: ", document.getStyle("DefaultStyle"));
-        document.insertString(document.getLength(), numberFormat.format(turnDetails.getTotalDeposits()) + "\n", document.getStyle("DefaultStyleBold"));
+        document.insertString(document.getLength(), CurrencyFormatter.format(turnDetails.getTotalDeposits(), currencyConfig) + "\n", document.getStyle("DefaultStyleBold"));
         printFillerLines(1);
         document.insertString(document.getLength(), "Total Neto: ", document.getStyle("DefaultStyle"));
-        document.insertString(document.getLength(), numberFormat.format(turnDetails.getTotalNet()) + "\n", document.getStyle("DefaultStyleBold"));
+        document.insertString(document.getLength(), CurrencyFormatter.format(turnDetails.getTotalNet(), currencyConfig) + "\n", document.getStyle("DefaultStyleBold"));
     }
 
     public void printDetailedCurrentTurn(TurnDetails turnDetails) {
@@ -556,7 +560,7 @@ public class Printer {
                         for (SaleItem item : s.items()) {
                             document.insertString(document.getLength(),
                                     spaces(1) + formattedDate + "|" + s.roomSoldTo()
-                                            + "|" + item.itemName() + "|" + item.price() + "\n",
+                                            + "|" + item.itemName() + "|" + CurrencyFormatter.format(item.price(), currencyConfig) + "\n",
                                     document.getStyle("TransactionStyle"));
                         }
                     }
@@ -565,7 +569,7 @@ public class Printer {
                             long displayedService = r.getEffectiveServiceDuration();
                             document.insertString(document.getLength(),
                                     spaces(1) + formattedDate + "|" + r.roomString()
-                                            + "|" + "Alquiler " + TimeFormatter.formatDuration(displayedService) + "|" + r.price() + "\n",
+                                            + "|" + "Alquiler " + TimeFormatter.formatDuration(displayedService) + "|" + CurrencyFormatter.format(r.price(), currencyConfig) + "\n",
                                     document.getStyle("TransactionStyle"));
                         }
                     }
@@ -580,12 +584,12 @@ public class Printer {
                             if (r.refundType() == RefundType.SALE_REFUND) {
                                 document.insertString(document.getLength(),
                                         spaces(1) + formattedDate + "|Reembolso de " + r.quantity()
-                                                + " de " + r.itemName() + "|" + r.price() + "\n",
+                                                + " de " + r.itemName() + "|" + CurrencyFormatter.format(r.price(), currencyConfig) + "\n",
                                         document.getStyle("TransactionStyle"));
                             } else {
                                 document.insertString(document.getLength(),
                                         spaces(1) + formattedDate + "|Reembolso de habitacion " + r.refundRoom()
-                                                + "|" + r.price() + "\n",
+                                                + "|" + CurrencyFormatter.format(r.price(), currencyConfig) + "\n",
                                         document.getStyle("TransactionStyle"));
                             }
                         }
@@ -594,7 +598,7 @@ public class Printer {
                         if (isCurrent) {
                             document.insertString(document.getLength(),
                                     spaces(1) + formattedDate + "|Gasto de: " + s.description()
-                                            + "|" + s.value() + "\n",
+                                            + "|" + CurrencyFormatter.format(s.value(), currencyConfig) + "\n",
                                     document.getStyle("TransactionStyle"));
                         }
                     }
@@ -603,7 +607,7 @@ public class Printer {
                             String label = e.extraType() == ExtraChangeType.SAFE_DEPOSIT ? "Deposito de: " : "Transferencia de: ";
                             document.insertString(document.getLength(),
                                     spaces(1) + formattedDate + "|" + label + e.description()
-                                            + "|" + e.value() + "\n",
+                                            + "|" + CurrencyFormatter.format(e.value(), currencyConfig) + "\n",
                                     document.getStyle("TransactionStyle"));
                         }
                     }
@@ -631,23 +635,23 @@ public class Printer {
         printSeparator();
         printFillerLines(1);
         document.insertString(document.getLength(), spaces(2) + "Reembolsos: ", document.getStyle("DefaultStyle"));
-        document.insertString(document.getLength(), numberFormat.format(turnDetails.getTotalRefunds()) + "\n", document.getStyle("DefaultStyleBold"));
+        document.insertString(document.getLength(), CurrencyFormatter.format(turnDetails.getTotalRefunds(), currencyConfig) + "\n", document.getStyle("DefaultStyleBold"));
         printFillerLines(2);
         document.insertString(document.getLength(), spaces(4) + "Gastos: ", document.getStyle("DefaultStyle"));
-        document.insertString(document.getLength(), numberFormat.format(turnDetails.getTotalSpending()) + "\n", document.getStyle("DefaultStyleBold"));
+        document.insertString(document.getLength(), CurrencyFormatter.format(turnDetails.getTotalSpending(), currencyConfig) + "\n", document.getStyle("DefaultStyleBold"));
         printFillerLines(1);
         document.insertString(document.getLength(), "Total Turno: ", document.getStyle("DefaultStyle"));
-        document.insertString(document.getLength(), numberFormat.format(turnDetails.getTotalTurn()) + "\n", document.getStyle("DefaultStyleBold"));
+        document.insertString(document.getLength(), CurrencyFormatter.format(turnDetails.getTotalTurn(), currencyConfig) + "\n", document.getStyle("DefaultStyleBold"));
         printSeparator();
         printFillerLines(1);
         document.insertString(document.getLength(), spaces(2) + "Transferencias: ", document.getStyle("DefaultStyle"));
-        document.insertString(document.getLength(), numberFormat.format(turnDetails.getTotalBankTransfers()) + "\n", document.getStyle("DefaultStyleBold"));
+        document.insertString(document.getLength(), CurrencyFormatter.format(turnDetails.getTotalBankTransfers(), currencyConfig) + "\n", document.getStyle("DefaultStyleBold"));
         printFillerLines(2);
         document.insertString(document.getLength(), spaces(2) + "Depositos: ", document.getStyle("DefaultStyle"));
-        document.insertString(document.getLength(), numberFormat.format(turnDetails.getTotalDeposits()) + "\n", document.getStyle("DefaultStyleBold"));
+        document.insertString(document.getLength(), CurrencyFormatter.format(turnDetails.getTotalDeposits(), currencyConfig) + "\n", document.getStyle("DefaultStyleBold"));
         printFillerLines(1);
         document.insertString(document.getLength(), "Total Neto: ", document.getStyle("DefaultStyle"));
-        document.insertString(document.getLength(), numberFormat.format(turnDetails.getTotalNet()) + "\n", document.getStyle("DefaultStyleBold"));
+        document.insertString(document.getLength(), CurrencyFormatter.format(turnDetails.getTotalNet(), currencyConfig) + "\n", document.getStyle("DefaultStyleBold"));
     }
 
     // ========== PDF & Print ==========

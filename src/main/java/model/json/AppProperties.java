@@ -16,13 +16,15 @@ public record AppProperties(
         @JsonProperty("motelID") String motelID,
         @JsonProperty("printerName") String printerName,
         @JsonProperty("version") int version,
-        @JsonProperty("roomsPerTower") List<TowerConfig> roomsPerTower
+        @JsonProperty("roomsPerTower") List<TowerConfig> roomsPerTower,
+        @JsonProperty("currencyConfig") CurrencyConfig currencyConfig
 ) {
     public AppProperties {
         if (roomsPerTower == null) roomsPerTower = new ArrayList<>();
+        if (currencyConfig == null) currencyConfig = CurrencyConfig.defaultConfig();
     }
 
     public AppProperties() {
-        this(0, "", "", "", null, 2, new ArrayList<>());
+        this(0, "", "", "", null, 2, new ArrayList<>(), CurrencyConfig.defaultConfig());
     }
 }

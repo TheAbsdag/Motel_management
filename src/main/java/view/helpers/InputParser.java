@@ -1,6 +1,7 @@
 package view.helpers;
 
 import javax.swing.JTextField;
+import model.json.CurrencyConfig;
 
 /**
  * Safe numeric parsing utilities for view input fields.
@@ -49,5 +50,21 @@ public final class InputParser {
      */
     public static long parseLongSafe(String text) {
         return parseLongSafe(text, 0L);
+    }
+
+    /**
+     * Parses the text of a JTextField as a price value, converting from display
+     * format to smallest unit using the provided CurrencyConfig.
+     */
+    public static long parsePriceSafe(JTextField field, CurrencyConfig cfg) {
+        if (field == null) return 0L;
+        return CurrencyFormatter.parse(field.getText(), cfg);
+    }
+
+    /**
+     * Parses the text of a JTextField as a price value, using the default COP config.
+     */
+    public static long parsePriceSafe(JTextField field) {
+        return parsePriceSafe(field, CurrencyConfig.defaultConfig());
     }
 }

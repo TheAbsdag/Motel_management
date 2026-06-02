@@ -11,12 +11,19 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.text.AbstractDocument;
 import net.miginfocom.swing.MigLayout;
+import model.json.CurrencyConfig;
 
 /**
  * View for registering spending/expenses during a turn.
  * @author Santiago
  */
 public class SpendingRegisterView extends JPanel {
+
+    private CurrencyConfig currencyConfig = CurrencyConfig.defaultConfig();
+
+    public void setCurrencyConfig(CurrencyConfig cfg) {
+        this.currencyConfig = cfg != null ? cfg : CurrencyConfig.defaultConfig();
+    }
 
     public SpendingRegisterView() {
         initComponents();

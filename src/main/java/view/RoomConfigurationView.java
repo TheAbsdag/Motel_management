@@ -8,7 +8,9 @@ import java.awt.*;
 import javax.swing.*;
 import model.Room;
 import model.RoomTime;
+import model.json.CurrencyConfig;
 import net.miginfocom.swing.*;
+import view.helpers.CurrencyFormatter;
 import view.helpers.TextPromptHelper;
 
 /**
@@ -23,6 +25,12 @@ public class RoomConfigurationView extends JPanel {
     private RoomTime[] timeSlots;
     private boolean hasUnsavedChanges;
     private ButtonGroup unitButtonGroup;
+
+    private CurrencyConfig currencyConfig = CurrencyConfig.defaultConfig();
+
+    public void setCurrencyConfig(CurrencyConfig cfg) {
+        this.currencyConfig = cfg != null ? cfg : CurrencyConfig.defaultConfig();
+    }
 
     public RoomConfigurationView() {
         initCustomComponents();
@@ -353,12 +361,12 @@ public class RoomConfigurationView extends JPanel {
 
     private void updateTimeSlotButtonLabels() {
         if (timeSlots != null && timeSlots.length >= 3) {
-            firstTimeConfiguration.setText(formatDuration(timeSlots[0].getTimeSeconds())
-                    + " / $" + timeSlots[0].getPrice());
-            secondTimeConfiguration.setText(formatDuration(timeSlots[1].getTimeSeconds())
-                    + " / $" + timeSlots[1].getPrice());
-            thirdTimeConfiguration.setText(formatDuration(timeSlots[2].getTimeSeconds())
-                    + " / $" + timeSlots[2].getPrice());
+        firstTimeConfiguration.setText(formatDuration(timeSlots[0].getTimeSeconds())
+                + " / " + CurrencyFormatter.format(timeSlots[0].getPrice(), currencyConfig));
+        secondTimeConfiguration.setText(formatDuration(timeSlots[1].getTimeSeconds())
+                + " / " + CurrencyFormatter.format(timeSlots[1].getPrice(), currencyConfig));
+        thirdTimeConfiguration.setText(formatDuration(timeSlots[2].getTimeSeconds())
+                + " / " + CurrencyFormatter.format(timeSlots[2].getPrice(), currencyConfig));
         }
     }
 

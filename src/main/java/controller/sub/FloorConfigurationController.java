@@ -450,7 +450,7 @@ public class FloorConfigurationController {
         } else {
             timeStr = hours + "h:" + String.format("%02d", mins) + "m";
         }
-        return timeStr + " = " + FormatHelper.formatPrice(slot.getPrice());
+        return timeStr + " = " + FormatHelper.formatPrice(slot.getPrice(), motelManager.getProgramConfig().getCurrencyConfig());
     }
 
     // ========== Save / Back ==========

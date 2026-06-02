@@ -47,6 +47,7 @@ public class AppOptionsView extends JPanel implements TimeLabelInterface{
 	    "[]" +
 	    "[]" +
 	    "[]" +
+	    "[]" +
 	    "[]"));
 
 	//---- optionsInformativeLabel ----
@@ -104,10 +105,15 @@ public class AppOptionsView extends JPanel implements TimeLabelInterface{
 	saveConfigurationButton2.setFont(new Font("Segoe UI Black", Font.PLAIN, 20));
 	add(saveConfigurationButton2, "cell 2 5,growy");
 
+	//---- currencyConfigButton ----
+	currencyConfigButton = new JButton("CONFIGURAR MONEDA");
+	currencyConfigButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 20));
+	add(currencyConfigButton, "cell 2 6,growy");
+
 	//---- backButton ----
 	backButton.setText("VOLVER");
 	backButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 24));
-	add(backButton, "cell 0 6,growy");
+	add(backButton, "cell 0 7,growy");
 	// JFormDesigner - End of component initialization  //GEN-END:initComponents  @formatter:on
     }
 
@@ -124,6 +130,7 @@ public class AppOptionsView extends JPanel implements TimeLabelInterface{
     private JButton floorConfigurationButton;
     private JButton saveConfigurationButton;
     private JButton saveConfigurationButton2;
+    private JButton currencyConfigButton;
     private JButton backButton;
     // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
 
@@ -163,6 +170,11 @@ public class AppOptionsView extends JPanel implements TimeLabelInterface{
     /** Registers a listener for the export configuration button. */
     public void onExportConfiguration(Runnable action) {
         saveConfigurationButton2.addActionListener(e -> action.run());
+    }
+
+    /** Registers a listener for the currency configuration button. */
+    public void onCurrencyConfiguration(Runnable action) {
+        currencyConfigButton.addActionListener(e -> action.run());
     }
 
     /** Registers a listener for the back/return button. */

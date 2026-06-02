@@ -5,20 +5,20 @@ package view;
 
 import view.helpers.TouchScrollHandler;
 import java.awt.*;
-import java.text.NumberFormat;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumnModel;
 import net.miginfocom.swing.*;
 import model.dto.TurnActivityData;
 import model.dto.TurnSummaryItemData;
+import model.json.CurrencyConfig;
 import view.customListRenderes.CustomCellRenderer;
 import view.customListRenderes.CustomHeaderRenderer;
+import view.helpers.CurrencyFormatter;
 import view.helpers.TimeFormatter;
 import view.interfaces.TimeLabelInterface;
 
@@ -30,12 +30,15 @@ public class TurnManagerView extends JPanel implements TimeLabelInterface {
     private JTable turnDetailsTable;
     private TurnDetailsTableModel turnDetailsTableModel;
     private final Font cellFont;
-    private final NumberFormat numberFormat;
+    private CurrencyConfig currencyConfig = CurrencyConfig.defaultConfig();
     private JTable summarizedTurnTable;
     private SummarizedTurnTableModel summarizedTurnTableModel;
 
+    public void setCurrencyConfig(CurrencyConfig cfg) {
+        this.currencyConfig = cfg != null ? cfg : CurrencyConfig.defaultConfig();
+    }
+
     public TurnManagerView() {
-        numberFormat = NumberFormat.getNumberInstance(Locale.US);
         this.cellFont = new Font("Segoe UI", Font.BOLD, 16);
         initComponents();
         initCustomTable();
@@ -47,15 +50,15 @@ public class TurnManagerView extends JPanel implements TimeLabelInterface {
                                     long totalRefunds, long totalSpending, long totalTurnVal,
                                     long totalBankTransfers, long totalDeposits, long totalNet) {
         turnDetailsTableModel.updateData(activities);
-        totalRoomsLabel.setText(numberFormat.format(totalRooms));
-        totalItemsLabel.setText(numberFormat.format(totalItems));
-        totalSalesLabel.setText(numberFormat.format(totalSales));
-        totalRefundLabel.setText(numberFormat.format(totalRefunds));
-        totalSpendingLabel.setText(numberFormat.format(totalSpending));
-        totalTurnLabel.setText(numberFormat.format(totalTurnVal));
-        totalTransferLabel.setText(numberFormat.format(totalBankTransfers));
-        totalDepositLabel.setText(numberFormat.format(totalDeposits));
-        totalNetLabel.setText(numberFormat.format(totalNet));
+        totalRoomsLabel.setText(CurrencyFormatter.format(totalRooms, currencyConfig));
+        totalItemsLabel.setText(CurrencyFormatter.format(totalItems, currencyConfig));
+        totalSalesLabel.setText(CurrencyFormatter.format(totalSales, currencyConfig));
+        totalRefundLabel.setText(CurrencyFormatter.format(totalRefunds, currencyConfig));
+        totalSpendingLabel.setText(CurrencyFormatter.format(totalSpending, currencyConfig));
+        totalTurnLabel.setText(CurrencyFormatter.format(totalTurnVal, currencyConfig));
+        totalTransferLabel.setText(CurrencyFormatter.format(totalBankTransfers, currencyConfig));
+        totalDepositLabel.setText(CurrencyFormatter.format(totalDeposits, currencyConfig));
+        totalNetLabel.setText(CurrencyFormatter.format(totalNet, currencyConfig));
         turnDetailsTable.repaint();
     }
 
@@ -226,7 +229,7 @@ public class TurnManagerView extends JPanel implements TimeLabelInterface {
             return switch (columnIndex) {
                 case 0 -> item.quantity();
                 case 1 -> item.displayConcept();
-                case 2 -> numberFormat.format(item.price());
+                case 2 -> CurrencyFormatter.format(item.price(), currencyConfig);
                 default -> "";
             };
         }

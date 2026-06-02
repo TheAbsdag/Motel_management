@@ -1,6 +1,7 @@
 package controller;
 
 import controller.sub.AppOptionsController;
+import controller.sub.CurrencyConfigurationController;
 import controller.sub.EmailController;
 import controller.sub.FloorConfigurationController;
 import controller.sub.FloorController;
@@ -72,6 +73,7 @@ public class Controller {
     private final FloorConfigurationController floorConfigurationController;
     private final MotelDataConfigurationController motelDataConfigController;
     private final EmailController emailController;
+    private CurrencyConfigurationController currencyConfigurationController;
 
     // Timers
     private Timer timerForTimeUpdates;
@@ -105,6 +107,7 @@ public class Controller {
                 this::openFloorConfig,
                 this::openDataSavingConfig,
                 this::openExportConfig,
+                this::openCurrencyConfig,
                 this::openAppOptionsHub);
         historyController = new HistoryController(motelManager, userInterface.getHistoryView(),
                 this::showManagementSelection);
@@ -140,7 +143,14 @@ public class Controller {
                 this::openExportConfig,
                 this::openEmailConfig,
                 this::saveMainFiles,
-                () -> saveBackupFiles("emailConfig"));
+                 () -> saveBackupFiles("emailConfig"));
+
+        currencyConfigurationController = new CurrencyConfigurationController(
+                motelManager,
+                userInterface.getCurrencyConfigurationView(),
+                () -> userInterface.setAppOptionsView(),
+                this::saveMainFiles,
+                () -> saveBackupFiles("CURRENCY_CONFIG_SAVE"));
 
         // Wire sub-config view back buttons → return to options hub
         userInterface.getDataSavingConfigView().onBackButton(this::openAppOptionsHub);
@@ -229,6 +239,7 @@ public class Controller {
         floorConfigurationController.initListeners();
         motelDataConfigController.initListeners();
         emailController.initListeners();
+        currencyConfigurationController.initListeners();
 
         // Floor view management button → management menu
         userInterface.getFloorView().onManagementOptions(this::showManagementSelection);
@@ -319,6 +330,11 @@ public class Controller {
     private void openEmailConfig() {
         emailController.populateView();
         userInterface.setEmailConfigView();
+    }
+
+    private void openCurrencyConfig() {
+        currencyConfigurationController.populateView();
+        userInterface.setCurrencyConfigurationView();
     }
 
     // ========== Spending / Extra Changes ==========
@@ -482,8 +498,16 @@ public class Controller {
         userInterface.setMotelDataConfigView();
     }
 
-    /** Called after motel data is saved. Proceeds to floor/room configuration. */
+    /** Called after motel data is saved. Proceeds to currency configuration. */
     private void onFirstBootMotelDataDone() {
+        DialogHelper.showInfoMessage("Configure la moneda del motel", "CONFIGURACION INICIAL");
+        currencyConfigurationController.populateView();
+        currencyConfigurationController.configureForFirstBoot(this::onFirstBootCurrencyDone);
+        userInterface.setCurrencyConfigurationView();
+    }
+
+    /** Called after currency is saved. Proceeds to floor/room configuration. */
+    private void onFirstBootCurrencyDone() {
         DialogHelper.showInfoMessage("Configure las habitaciones del motel", "CONFIGURACION INICIAL");
         floorConfigurationController.configureForFirstBoot(this::onFirstBootFloorConfigDone);
         floorConfigurationController.populateView();

@@ -26,6 +26,7 @@ public enum ViewCard {
     FLOOR_CONFIG_VIEW("floorConfigView"),
     TIME_CONFIG_VIEW("timeConfigView"),
     EXPORT_CONFIG_VIEW("exportConfigView"),
+    CURRENCY_CONFIG_VIEW("currencyConfigView"),
     EMAIL_CONFIG_VIEW("emailConfigView");
 
     private final String cardName;

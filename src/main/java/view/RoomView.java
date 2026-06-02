@@ -11,12 +11,20 @@ import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.text.AbstractDocument;
 import net.miginfocom.swing.*;
+import model.json.CurrencyConfig;
 import view.interfaces.TimeLabelInterface;
 
 /**
  * @author Santiago
  */
 public class RoomView extends JPanel implements TimeLabelInterface {
+
+    private CurrencyConfig currencyConfig = CurrencyConfig.defaultConfig();
+
+    public void setCurrencyConfig(CurrencyConfig cfg) {
+        this.currencyConfig = cfg != null ? cfg : CurrencyConfig.defaultConfig();
+    }
+
     public RoomView() {
 	initComponents();
         FocusHighlighter.applyToAll(this);

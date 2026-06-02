@@ -13,12 +13,19 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.text.AbstractDocument;
 import net.miginfocom.swing.MigLayout;
+import model.json.CurrencyConfig;
 
 /**
  * View for registering bank transfers and safe deposits during a turn.
  * @author Santiago
  */
 public class ExtraTurnChangesView extends JPanel {
+
+    private CurrencyConfig currencyConfig = CurrencyConfig.defaultConfig();
+
+    public void setCurrencyConfig(CurrencyConfig cfg) {
+        this.currencyConfig = cfg != null ? cfg : CurrencyConfig.defaultConfig();
+    }
 
     public ExtraTurnChangesView() {
         initComponents();

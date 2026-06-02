@@ -5,21 +5,20 @@ package view;
 
 import view.helpers.TouchScrollHandler;
 import java.awt.*;
-
-import java.text.NumberFormat;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumnModel;
 import net.miginfocom.swing.*;
 import model.dto.TurnActivityData;
 import model.dto.TurnHistoryData;
+import model.json.CurrencyConfig;
 import view.customListRenderes.CustomCellRenderer;
 import view.customListRenderes.CustomHeaderRenderer;
+import view.helpers.CurrencyFormatter;
 import view.helpers.TimeFormatter;
 
 /**
@@ -30,10 +29,13 @@ public class TurnHistoryManagerView extends JPanel {
     private JTable turnDetailsTable;
     private TurnDetailsTableModel turnDetailsTableModel;
     private final Font cellFont;
-    private final NumberFormat numberFormat;
+    private CurrencyConfig currencyConfig = CurrencyConfig.defaultConfig();
+
+    public void setCurrencyConfig(CurrencyConfig cfg) {
+        this.currencyConfig = cfg != null ? cfg : CurrencyConfig.defaultConfig();
+    }
 
     public TurnHistoryManagerView() {
-        numberFormat = NumberFormat.getNumberInstance(Locale.US);
         this.cellFont = new Font("Segoe UI", Font.BOLD, 16);
         initComponents();
         initCustomTable();
@@ -43,16 +45,16 @@ public class TurnHistoryManagerView extends JPanel {
         turnDetailsTableModel.updateData(turnDetails.getActivities());
         turnStartLabel.setText(turnDetails.getStartString());
         turnEndLabel.setText(turnDetails.getEndString());
-        totalRoomsLabel.setText(numberFormat.format(turnDetails.getTotalRooms()));
-        totalItemsLabel.setText(numberFormat.format(turnDetails.getTotalItems()));
-        totalSalesLabel.setText(numberFormat.format(turnDetails.getTotalSales()));
+        totalRoomsLabel.setText(CurrencyFormatter.format(turnDetails.getTotalRooms(), currencyConfig));
+        totalItemsLabel.setText(CurrencyFormatter.format(turnDetails.getTotalItems(), currencyConfig));
+        totalSalesLabel.setText(CurrencyFormatter.format(turnDetails.getTotalSales(), currencyConfig));
         turnNumberLabel.setText(String.valueOf(turnDetails.getTurnNumber()));
-        totalRefundLabel.setText(numberFormat.format(turnDetails.getTotalRefunds()));
-        totalSpendingLabel.setText(numberFormat.format(turnDetails.getTotalSpending()));
-        totalTurnLabel.setText(numberFormat.format(turnDetails.getTotalTurn()));
-        totalTransferLabel.setText(numberFormat.format(turnDetails.getTotalBankTransfers()));
-        totalDepositLabel.setText(numberFormat.format(turnDetails.getTotalDeposits()));
-        totalNetLabel.setText(numberFormat.format(turnDetails.getTotalNet()));
+        totalRefundLabel.setText(CurrencyFormatter.format(turnDetails.getTotalRefunds(), currencyConfig));
+        totalSpendingLabel.setText(CurrencyFormatter.format(turnDetails.getTotalSpending(), currencyConfig));
+        totalTurnLabel.setText(CurrencyFormatter.format(turnDetails.getTotalTurn(), currencyConfig));
+        totalTransferLabel.setText(CurrencyFormatter.format(turnDetails.getTotalBankTransfers(), currencyConfig));
+        totalDepositLabel.setText(CurrencyFormatter.format(turnDetails.getTotalDeposits(), currencyConfig));
+        totalNetLabel.setText(CurrencyFormatter.format(turnDetails.getTotalNet(), currencyConfig));
         turnDetailsTable.repaint();
     }
 

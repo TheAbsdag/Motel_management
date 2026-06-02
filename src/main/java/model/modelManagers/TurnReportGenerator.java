@@ -8,6 +8,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import model.RoomStatus;
 import model.dto.TurnSummaryItemData;
+import model.json.CurrencyConfig;
 import model.turn.ExtraChangeActivity;
 import model.turn.ExtraChangeType;
 import model.turn.RefundActivity;
@@ -73,7 +74,7 @@ public class TurnReportGenerator {
 
         try (Workbook workbook = new XSSFWorkbook()) {
             CellStyle headerStyle = createHeaderStyle(workbook);
-            CellStyle numberStyle = createNumberStyle(workbook);
+            CellStyle numberStyle = createNumberStyle(workbook, 0);
             CellStyle boldStyle = createBoldStyle(workbook);
 
             createSheet1(workbook, turnDetails, headerStyle, numberStyle, boldStyle);
@@ -783,9 +784,12 @@ public class TurnReportGenerator {
     /**
      * Creates a right-aligned, comma-formatted number cell style.
      */
-    private static CellStyle createNumberStyle(Workbook workbook) {
+    private static CellStyle createNumberStyle(Workbook workbook, int decimalPlaces) {
         CellStyle style = workbook.createCellStyle();
-        style.setDataFormat(workbook.createDataFormat().getFormat("#,##0"));
+        String pattern = decimalPlaces > 0
+                ? "#,##0." + "0".repeat(decimalPlaces)
+                : "#,##0";
+        style.setDataFormat(workbook.createDataFormat().getFormat(pattern));
         style.setAlignment(HorizontalAlignment.RIGHT);
         return style;
     }
