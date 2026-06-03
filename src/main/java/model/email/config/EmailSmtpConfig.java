@@ -10,12 +10,15 @@ public record EmailSmtpConfig(
         @JsonProperty("authMode") AuthMode authMode,
         @JsonProperty("connectionTimeoutMs") int connectionTimeoutMs) {
 
+    private static final int MIN_PORT = 1;
+    private static final int MAX_PORT = 65535;
+
     public EmailSmtpConfig {
         if (smtpHost == null || smtpHost.isBlank()) {
             throw new IllegalArgumentException("smtpHost must not be blank");
         }
-        if (smtpPort < 1 || smtpPort > 65535) {
-            throw new IllegalArgumentException("smtpPort must be between 1 and 65535");
+        if (smtpPort < MIN_PORT || smtpPort > MAX_PORT) {
+            throw new IllegalArgumentException("smtpPort must be between " + MIN_PORT + " and " + MAX_PORT);
         }
         if (authMode == null) {
             authMode = AuthMode.NONE;

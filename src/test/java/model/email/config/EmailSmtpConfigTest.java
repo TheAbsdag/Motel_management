@@ -2,6 +2,8 @@ package model.email.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import model.json.ObjectMapperFactory;
 import org.junit.jupiter.api.Test;
 
 class EmailSmtpConfigTest {
@@ -41,5 +43,19 @@ class EmailSmtpConfigTest {
     void defaultNegativeTimeoutTo5000() {
         var config = new EmailSmtpConfig("host", 587, true, false, AuthMode.NONE, -1);
         assertThat(config.connectionTimeoutMs()).isEqualTo(5000);
+    }
+
+    @Test
+    void rejectNullHost() {
+        assertThatThrownBy(() -> new EmailSmtpConfig(null, 587, true, false, AuthMode.PASSWORD, 5000))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void jacksonRoundTrip() throws JsonProcessingException {
+        var original = new EmailSmtpConfig("smtp.gmail.com", 587, true, false, AuthMode.PASSWORD, 5000);
+        String json = ObjectMapperFactory.get().writeValueAsString(original);
+        var restored = ObjectMapperFactory.get().readValue(json, EmailSmtpConfig.class);
+        assertThat(restored).isEqualTo(original);
     }
 }
