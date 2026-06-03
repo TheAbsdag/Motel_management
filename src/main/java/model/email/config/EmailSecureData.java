@@ -39,7 +39,9 @@ public record EmailSecureData(
         if (caseSpecificReceivers == null) {
             caseSpecificReceivers = Map.of();
         } else {
-            caseSpecificReceivers = Collections.unmodifiableMap(new HashMap<>(caseSpecificReceivers));
+            var map = new HashMap<Integer, List<String>>();
+            caseSpecificReceivers.forEach((k, v) -> map.put(k, List.copyOf(v)));
+            caseSpecificReceivers = Collections.unmodifiableMap(map);
         }
     }
 }

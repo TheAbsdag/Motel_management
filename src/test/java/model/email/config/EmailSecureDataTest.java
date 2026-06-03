@@ -1,6 +1,7 @@
 package model.email.config;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import model.json.ObjectMapperFactory;
@@ -106,6 +107,14 @@ class EmailSecureDataTest {
         assertThat(config.bcc()).containsExactly("bcc@c.com");
         assertThat(config.caseSpecificReceivers()).containsKey(0);
         assertThat(config.caseSpecificReceivers().get(0)).containsExactly("case0@c.com");
+    }
+
+    @Test
+    void caseSpecificReceiversValuesAreUnmodifiable() {
+        var config = new EmailSecureData("u", "p", List.of(), null, null,
+                Map.of(0, new ArrayList<>(List.of("a@b.com"))));
+        assertThatThrownBy(() -> config.caseSpecificReceivers().get(0).add("x"))
+                .isInstanceOf(UnsupportedOperationException.class);
     }
 
     @Test
