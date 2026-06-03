@@ -136,14 +136,12 @@ public class Controller {
                 this::saveMainFiles,
                 () -> saveBackupFiles("motelDataConfig"));
 
-        emailController = new EmailController(motelManager,
-                motelManager.getFileManager(),
+        emailController = new EmailController(
                 userInterface.getEmailConfigView(),
                 userInterface.getExportConfigView(),
+                userInterface,
                 this::openExportConfig,
-                this::openEmailConfig,
-                this::saveMainFiles,
-                 () -> saveBackupFiles("emailConfig"));
+                motelManager.getEmailConfigurationService());
 
         currencyConfigurationController = new CurrencyConfigurationController(
                 motelManager,
@@ -325,11 +323,6 @@ public class Controller {
 
     private void openExportConfig() {
         userInterface.setExportConfigView();
-    }
-
-    private void openEmailConfig() {
-        emailController.populateView();
-        userInterface.setEmailConfigView();
     }
 
     private void openCurrencyConfig() {

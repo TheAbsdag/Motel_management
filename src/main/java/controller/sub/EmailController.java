@@ -121,7 +121,7 @@ public class EmailController {
                 existingSecure != null ? existingSecure.caseSpecificReceivers() : Map.of());
 
         List<EmailCaseConfig> cases = emailService.loadCaseConfigs().orElse(List.of());
-        String senderName = emailService.loadSenderName().orElse(name);
+        String senderName = name;
 
         emailService.saveEmailConfig(senderName, smtp, cases);
         emailService.saveSecureData(secure);
@@ -249,6 +249,9 @@ public class EmailController {
             fillListModel(globalView.getBindCarbonCopyList(), secure.bcc());
         });
 
+        boolean masterEnabled = emailService.isEmailEnabled();
+        emailHubView.setEmailStatus(masterEnabled ? "HABILITADO" : "DESHABILITADO");
+
         emailService.loadCaseConfigs().ifPresent(cases -> {
             for (int i = 0; i < cases.size(); i++) {
                 EmailCaseConfig cfg = cases.get(i);
@@ -267,14 +270,7 @@ public class EmailController {
                     var item = attModel.getElementAt(ai);
                     item.setSelected(cfg.attachments().contains(item.getName()));
                 }
-            }
-        });
-
-        boolean masterEnabled = emailService.isEmailEnabled();
-        emailHubView.setEmailStatus(masterEnabled ? "HABILITADO" : "DESHABILITADO");
-        emailService.loadCaseConfigs().ifPresent(cases -> {
-            for (int i = 0; i < cases.size(); i++) {
-                emailHubView.setCaseEnabled(i, cases.get(i).enabled());
+                emailHubView.setCaseEnabled(i, cfg.enabled());
             }
         });
     }
