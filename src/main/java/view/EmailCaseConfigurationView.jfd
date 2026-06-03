@@ -1,0 +1,167 @@
+JFDML JFormDesigner: "8.2.2.0.382" Java: "25.0.2" encoding: "UTF-8"
+
+new FormModel {
+	contentType: "form/swing"
+	root: new FormRoot {
+		add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
+			"$layoutConstraints": "fill,hidemode 3"
+			"$columnConstraints": "[fill][fill][fill]"
+			"$rowConstraints": "[][][][][][][][][grow][][][70]"
+		} ) {
+			name: "this"
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "caseConfigurationMainLabel"
+				"text": "CONFIGURACION CASO:"
+				"font": &Font0 new java.awt.Font( "Segoe UI Black", 0, 18 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 0 3 1,alignx center,growx 0"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "currentCaseLabel"
+				"text": "CASO"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 0 3 1"
+			} )
+			add( new FormComponent( "javax.swing.JCheckBox" ) {
+				name: "caseEnabledCheckBox"
+				"text": "HABILITAR CASO"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 1"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "receiverInformativeLabel"
+				"text": "DESTINATARIO:"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 2"
+			} )
+			add( new FormComponent( "javax.swing.JRadioButton" ) {
+				name: "globalReceiverConfigurationRadioButton"
+				"text": "USAR CONFIGURACION GLOBAL"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 3"
+			} )
+			add( new FormComponent( "javax.swing.JRadioButton" ) {
+				name: "specificReceiverRadioButton"
+				"text": "AÑADIR ESPECIFICOS:"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 4"
+			} )
+			add( new FormContainer( "javax.swing.JScrollPane", new FormLayoutManager( class javax.swing.JScrollPane ) ) {
+				name: "receiverScrollPane"
+				add( new FormComponent( "javax.swing.JList" ) {
+					name: "specificReceiversList"
+					"font": new java.awt.Font( "Segoe UI Black", 0, 16 )
+				} )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 1 4"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "addAdditionalReceiverButton"
+				"text": "AÑADIR"
+				"font": &Font1 new java.awt.Font( "Segoe UI Black", 0, 18 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 2 4,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "removeAdditionalReceiverButton"
+				"text": "ELIMINAR"
+				"font": #Font1
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 2 4,growy"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "subjectInformativeLabel"
+				"text": "ASUNTO:"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 5"
+			} )
+			add( new FormComponent( "javax.swing.JTextField" ) {
+				name: "subjectTextField"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 6 2 1"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "bodyInformativeLabel"
+				"text": "CUERPO (Markdown):"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 7"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "markdownHelpButton"
+				"text": "Ayuda Markdown"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 1 7,growy"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "availableVariablesInformativeLabel"
+				"text": "VARIABLES DISPONIBLES"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 2 7"
+			} )
+			add( new FormContainer( "javax.swing.JScrollPane", new FormLayoutManager( class javax.swing.JScrollPane ) ) {
+				name: "bodyScrollPane"
+				"font": #Font0
+				add( new FormComponent( "javax.swing.JTextArea" ) {
+					name: "bodyTextArea"
+					"font": #Font0
+				} )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 8 2 1,growy"
+			} )
+			add( new FormContainer( "javax.swing.JScrollPane", new FormLayoutManager( class javax.swing.JScrollPane ) ) {
+				name: "variableListTextPane"
+				"font": #Font0
+				add( new FormComponent( "javax.swing.JList" ) {
+					name: "availableVariablesList"
+					"font": #Font0
+				} )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 2 8"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "attachmentInformativeLabel"
+				"text": "ADJUNTOS DISPONIBLES PARA EL CASO:"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 9"
+			} )
+			add( new FormContainer( "javax.swing.JScrollPane", new FormLayoutManager( class javax.swing.JScrollPane ) ) {
+				name: "attachmentListScrollPane"
+				"font": #Font0
+				add( new FormComponent( "javax.swing.JList" ) {
+					name: "attachmentList"
+					"font": #Font0
+				} )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 10"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "backButton"
+				"text": "VOLVER"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 11,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "saveButton"
+				"text": "GUARDAR"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 2 11,growy"
+			} )
+		}, new FormLayoutConstraints( null ) {
+			"location": new java.awt.Point( 0, 0 )
+			"size": new java.awt.Dimension( 1110, 620 )
+		} )
+	}
+}

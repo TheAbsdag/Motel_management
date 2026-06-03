@@ -1,0 +1,116 @@
+JFDML JFormDesigner: "8.2.2.0.382" Java: "25.0.2" encoding: "UTF-8"
+
+new FormModel {
+	contentType: "form/swing"
+	root: new FormRoot {
+		add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
+			"$layoutConstraints": "fill,hidemode 3"
+			"$columnConstraints": "[70:n,fill][grow,fill][fill]"
+			"$rowConstraints": "[][][][][][80:80]"
+		} ) {
+			name: "this"
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "titleLabel"
+				"text": "CONFIGURACION GLOBAL CORREO"
+				"font": &Font0 new java.awt.Font( "Segoe UI Black", 0, 16 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 0 2 1"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "senderNameInformativeLabel"
+				"text": "NOMBRE REMITENTE"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 1"
+			} )
+			add( new FormComponent( "javax.swing.JTextField" ) {
+				name: "senderNameTextField"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 1 1"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "receiverInformativeLabel"
+				"text": "DESTINATARIOS"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 2"
+			} )
+			add( new FormContainer( "javax.swing.JScrollPane", new FormLayoutManager( class javax.swing.JScrollPane ) ) {
+				name: "receiverScrollPane"
+				"font": #Font0
+				add( new FormComponent( "javax.swing.JList" ) {
+					name: "receiverList"
+					"font": #Font0
+				} )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 1 2"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "addReceiverButton"
+				"text": "AÑADIR"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 2 2,growy"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "carbonCopyInformativeLabel"
+				"text": "CC"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 3"
+			} )
+			add( new FormContainer( "javax.swing.JScrollPane", new FormLayoutManager( class javax.swing.JScrollPane ) ) {
+				name: "carbonCopyScrollPane"
+				"font": #Font0
+				add( new FormComponent( "javax.swing.JList" ) {
+					name: "carbonCopyList"
+					"font": #Font0
+				} )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 1 3"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "removeReceiverButton"
+				"text": "QUITAR"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 2 3,growy"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "blindCarbonCopyInformativeLabel"
+				"text": "BCC"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 4"
+			} )
+			add( new FormContainer( "javax.swing.JScrollPane", new FormLayoutManager( class javax.swing.JScrollPane ) ) {
+				name: "blindCarbonCopyScrollPane"
+				"font": #Font0
+				add( new FormComponent( "javax.swing.JList" ) {
+					name: "bindCarbonCopyList"
+					"font": #Font0
+				} )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 1 4"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "backButton"
+				"text": "VOLVER"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 5,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "saveButton"
+				"text": "GUARDAR"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 2 5,growy"
+			} )
+		}, new FormLayoutConstraints( null ) {
+			"location": new java.awt.Point( 0, 35 )
+			"size": new java.awt.Dimension( 990, 640 )
+		} )
+	}
+}

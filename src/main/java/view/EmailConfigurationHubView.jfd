@@ -1,0 +1,129 @@
+JFDML JFormDesigner: "8.2.2.0.382" Java: "25.0.2" encoding: "UTF-8"
+
+new FormModel {
+	contentType: "form/swing"
+	root: new FormRoot {
+		add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
+			"$layoutConstraints": "fill,hidemode 3"
+			"$columnConstraints": "[fill][fill][fill]"
+			"$rowConstraints": "[][][][][][][][]"
+		} ) {
+			name: "this"
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "titleInformativeLabel"
+				"text": "CONFIGURAR CORREO"
+				"font": &Font0 new java.awt.Font( "Segoe UI Black", 0, 20 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 0"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "emailStatusInformativeLabel"
+				"text": "ESTADO ACTUAL CORREO:"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 1,alignx center,growx 0"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "emailStatusLabel"
+				"text": "xxx"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 18 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 1"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "providerButton"
+				"text": "CONFIGURAR PROOVEDOR"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 1 1,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "generalConfigurationButton"
+				"text": "CONFIGURACION GENERAL"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 2,growy"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "emailCasesInformativeLabel"
+				"text": "CASOS CORREO"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 3"
+			} )
+			add( new FormComponent( "javax.swing.JCheckBox" ) {
+				name: "roomSaleCaseInformativeCheckBox"
+				"text": "HABITACIONES"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 4,alignx right,growx 0"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "roomSaleCaseInformativeLabel"
+				"text": "ACTIVO-INACTIVO"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 4"
+			} )
+			add( new FormComponent( "javax.swing.JCheckBox" ) {
+				name: "saleCaseInformativeCheckbox"
+				"text": "VENTAS:"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 1 4,alignx center,growx 0"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "saleCaseInformativeLabel"
+				"text": "ACTIVO-INACTIVO"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 1 4"
+			} )
+			add( new FormComponent( "javax.swing.JCheckBox" ) {
+				name: "turnCaseInformativeCheckBox"
+				"text": "REPORTE TURNOS"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 2 4,alignx center,growx 0"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "turnCaseInformativeLabel"
+				"text": "ACTIVO-INACTIVO"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 2 4"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "roomSaleCaseButton"
+				"text": "CONFIGURAR HABITACIONES"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 5,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "saleCaseButton"
+				"text": "CONFIGURAR VENTAS"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 1 5,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "turnCaseButton"
+				"text": "CONFIGURAR REPORTE TURNOS"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 2 5,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "backButton"
+				"text": "VOLVER"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 7,growy"
+			} )
+		}, new FormLayoutConstraints( null ) {
+			"location": new java.awt.Point( 0, 0 )
+			"size": new java.awt.Dimension( 1375, 630 )
+		} )
+	}
+}

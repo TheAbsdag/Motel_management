@@ -1,0 +1,215 @@
+JFDML JFormDesigner: "8.2.2.0.382" Java: "25.0.2" encoding: "UTF-8"
+
+new FormModel {
+	contentType: "form/swing"
+	root: new FormRoot {
+		add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
+			"$layoutConstraints": "fill,hidemode 3"
+			"$columnConstraints": "[fill][grow,fill][fill]"
+			"$rowConstraints": "[][50][50][50][60][grow][100]"
+		} ) {
+			name: "this"
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "providerConfigurationTitleLabel"
+				"text": "CONFIGURAR PROOVEDOR"
+				"font": &Font0 new java.awt.Font( "Segoe UI Black", 0, 18 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 0 3 1"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "emailInformativeLabel"
+				"text": "CORREO:"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 1,alignx center,growx 0"
+			} )
+			add( new FormComponent( "javax.swing.JTextField" ) {
+				name: "emailTextField"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 1 1,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "verifyEmailConnectionButton"
+				"text": "VERIFICAR CONEXION"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 2 1 1 2,growy"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "nameInformativeLabel"
+				"text": "NOMBRE:"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 2,alignx center,growx 0"
+			} )
+			add( new FormComponent( "javax.swing.JTextField" ) {
+				name: "nameTextField"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 1 2,growy"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "providerInformativeLabel"
+				"text": "PROOVEDOR"
+				"horizontalAlignment": 0
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 3 3 1"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "providerSelectionInformativeLabel"
+				"text": "SELECCIONE PROOVEDOR:"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 4"
+			} )
+			add( new FormComponent( "javax.swing.JComboBox" ) {
+				name: "providerComboBox"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 1 4,growy"
+			} )
+			add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
+				"$layoutConstraints": "fill,hidemode 3"
+				"$columnConstraints": "[fill]"
+				"$rowConstraints": "[]"
+			} ) {
+				name: "providerPanel"
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 5 3 1,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "backButton"
+				"text": "VOLVER"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 6,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "saveButton"
+				"text": "GUARDAR"
+				"font": #Font0
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 2 6,growy"
+			} )
+		}, new FormLayoutConstraints( null ) {
+			"location": new java.awt.Point( 15, 15 )
+			"size": new java.awt.Dimension( 1020, 630 )
+		} )
+		add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
+			"$layoutConstraints": "fill,hidemode 3"
+			"$columnConstraints": "[fill][grow,fill]"
+			"$rowConstraints": "[][][]"
+		} ) {
+			name: "appPasswordPanel"
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "appPasswordInformativeLabel"
+				"text": "CONTRASEÑA APLICACIÓN"
+				"horizontalAlignment": 0
+				"font": &Font1 new java.awt.Font( "Segoe UI Black", 0, 20 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 0 2 1,growy"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "appPasswordProviderInformativeLabel"
+				"text": "PROOVEDOR:"
+				"font": #Font1
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 1,alignx center,growx 0"
+			} )
+			add( new FormComponent( "javax.swing.JComboBox" ) {
+				name: "appPasswordProviderComboBox"
+				"font": #Font1
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 1 1,growy"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "appPasswordInputInformativeLabel"
+				"text": "CONTRASEÑA"
+				"font": #Font1
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 2,alignx center,growx 0"
+			} )
+			add( new FormComponent( "javax.swing.JPasswordField" ) {
+				name: "appPasswordInputTextField"
+				"font": #Font1
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 1 2,growy"
+			} )
+		}, new FormLayoutConstraints( null ) {
+			"location": new java.awt.Point( 1070, 25 )
+			"size": new java.awt.Dimension( 505, 335 )
+		} )
+		add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
+			"$layoutConstraints": "fill,hidemode 3"
+			"$columnConstraints": "[fill][grow,fill]"
+			"$rowConstraints": "[][][][][]"
+		} ) {
+			name: "smtpPanel"
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "smtpInformativeLabel"
+				"text": "SMTP PERSONALIZADO"
+				"horizontalAlignment": 0
+				"font": &Font2 new java.awt.Font( "Segoe UI Black", 0, 20 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 0 2 1,growy"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "smtpHostInformativeLabel"
+				"text": "HOST:"
+				"font": #Font2
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 1,alignx center,growx 0"
+			} )
+			add( new FormComponent( "javax.swing.JTextField" ) {
+				name: "smtpHostTextField"
+				"font": #Font2
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 1 1,growy"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "smtpPortInformativeLabel"
+				"text": "PUERTO:"
+				"font": #Font2
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 2,alignx center,growx 0"
+			} )
+			add( new FormComponent( "javax.swing.JTextField" ) {
+				name: "smtpPortTextField"
+				"font": #Font2
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 1 2,growy"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "smtpUserInformativeLabel"
+				"text": "USUARIO:"
+				"font": #Font2
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 3,alignx center,growx 0"
+			} )
+			add( new FormComponent( "javax.swing.JTextField" ) {
+				name: "smtpUserTextField"
+				"font": #Font2
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 1 3,growy"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "smtpPasswordInformativeLabel"
+				"text": "CONTRASEÑA:"
+				"font": #Font2
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 4,alignx center,growx 0"
+			} )
+			add( new FormComponent( "javax.swing.JPasswordField" ) {
+				name: "smtpPasswordPasswordField"
+				"font": #Font2
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 1 4,growy"
+			} )
+		}, new FormLayoutConstraints( null ) {
+			"location": new java.awt.Point( 1080, 370 )
+			"size": new java.awt.Dimension( 500, 335 )
+		} )
+	}
+}
