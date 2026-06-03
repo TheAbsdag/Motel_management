@@ -122,6 +122,7 @@ public class EmailConfigurationService {
             transport.connect();
             return true;
         } catch (Exception e) {
+            System.err.println("Email connection verification failed: " + e.getMessage());
             return false;
         }
     }
@@ -222,6 +223,7 @@ public class EmailConfigurationService {
                 secureData = null;
             }
         } catch (Exception e) {
+            System.err.println("Failed to load encrypted email data: " + e.getMessage());
             secureData = null;
         }
     }
