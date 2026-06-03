@@ -52,6 +52,7 @@ public class MotelManagement implements ISellingService, IHistoryService {
     private final SellingService sellingService;
     private final TurnService turnService;
     private final HistoryService historyService;
+    private final EmailConfigurationService emailConfigurationService;
     private Instant currentTime;
     private ZonedDateTime localizedTime;
     private final ZoneId zoneID;
@@ -77,11 +78,13 @@ public class MotelManagement implements ISellingService, IHistoryService {
         sellingService = new SellingService(register);
         turnService = new TurnService(turn, programConfig, printer, files);
         historyService = new HistoryService(files, zoneID);
+        emailConfigurationService = new EmailConfigurationService(files, ObjectMapperFactory.get());
     }
 
     public SellingService getSellingService() { return sellingService; }
     public TurnService getTurnService() { return turnService; }
     public HistoryService getHistoryService() { return historyService; }
+    public EmailConfigurationService getEmailConfigurationService() { return emailConfigurationService; }
     public ProgramConfig getProgramConfig() { return programConfig; }
     public RoomManager getRoomManager() { return roomManager; }
     public FileManager getFileManager() { return files; }
@@ -424,6 +427,7 @@ public class MotelManagement implements ISellingService, IHistoryService {
         dataMap.put("inventory", sellingService.getInventoryData());
         dataMap.put("roomsInformation", roomManager.getRoomDataForSaving());
         dataMap.put("applicationProperties", programConfig.toJson());
+        dataMap.put("emailConfig", emailConfigurationService.toJson());
 
         files.saveAllMainDataAtomic(dataMap);
     }
@@ -435,6 +439,7 @@ public class MotelManagement implements ISellingService, IHistoryService {
         files.saveJsonBackupDataPath(sellingService.getInventoryData(), "inventory", localizedTime, saveType);
         files.saveJsonBackupDataPath(roomManager.getRoomDataForSaving(), "roomsInformation", localizedTime, saveType);
         files.saveJsonBackupDataPath(programConfig.toJson(), "applicationProperties", localizedTime, saveType);
+        files.saveJsonBackupDataPath(emailConfigurationService.toJson(), "emailConfig", localizedTime, saveType);
     }
 
     // ========== History Operations ==========
