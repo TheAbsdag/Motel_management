@@ -1,413 +1,310 @@
 package controller.sub;
 
-import java.lang.System.Logger;
-import java.lang.System.Logger.Level;
-import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import model.email.config.CredentialStore;
+import java.util.Map;
+import javax.swing.DefaultListModel;
+import javax.swing.JList;
 import model.email.config.AuthMode;
-import model.email.config.EmailConfig;
+import model.email.config.EmailCaseConfig;
 import model.email.config.EmailSecureData;
-import model.email.dto.EmailMessage;
-import model.email.service.EmailSender;
-import model.json.ObjectMapperFactory;
-import model.modelManagers.FileManager;
-import model.modelManagers.MotelManagement;
-import view.EmailConfigurationView;
+import model.email.config.EmailSmtpConfig;
+import model.modelManagers.EmailConfigurationService;
+import view.EmailCaseConfigurationView;
+import view.EmailConfigurationHubView;
+import view.EmailGlobalConfigurationView;
+import view.EmailProviderConfigurationView;
 import view.ExportConfigurationView;
+import view.UserGUI;
 import view.helpers.DialogHelper;
 
-/**
- * Orchestrates email configuration UI actions: loading/saving config,
- * provider switching, credential management, and test email sending.
- * <p>
- * Sensitive data (username, credential, receivers) is stored in a single
- * encrypted file ({@code email-secure.dat}) while non-sensitive SMTP
- * settings are stored in plain JSON ({@code email-config}).
- */
 public class EmailController {
 
-    private static final Logger LOG = System.getLogger(EmailController.class.getName());
-    private static final String CONFIG_FILE = "email-config";
-    private static final String EMAIL_SECURE_FILE = "email-secure.dat";
-
-    private final MotelManagement motelManager;
-    private final FileManager fileManager;
-    private final EmailConfigurationView emailView;
+    private final EmailConfigurationHubView emailHubView;
     private final ExportConfigurationView exportView;
+    private final UserGUI userInterface;
     private final Runnable onBackToExport;
-    private final Runnable onShowEmailConfig;
-    private final Runnable onSaveMainFiles;
-    private final Runnable onSaveBackupFiles;
+    private final EmailConfigurationService emailService;
 
-    private EmailConfig currentConfig;
-    private EmailSecureData currentSecureData;
-    private boolean isFirstTime;
+    private static final int CASE_ROOM = 0;
+    private static final int CASE_ITEM = 1;
+    private static final int CASE_TURN = 2;
 
-    public EmailController(MotelManagement motelManager,
-                           FileManager fileManager,
-                           EmailConfigurationView emailView,
-                           ExportConfigurationView exportView,
-                           Runnable onBackToExport,
-                           Runnable onShowEmailConfig,
-                           Runnable onSaveMainFiles,
-                           Runnable onSaveBackupFiles) {
-        this.motelManager = motelManager;
-        this.fileManager = fileManager;
-        this.emailView = emailView;
+    public EmailController(
+            EmailConfigurationHubView emailHubView,
+            ExportConfigurationView exportView,
+            UserGUI userInterface,
+            Runnable onBackToExport,
+            EmailConfigurationService emailService) {
+        this.emailHubView = emailHubView;
         this.exportView = exportView;
+        this.userInterface = userInterface;
         this.onBackToExport = onBackToExport;
-        this.onShowEmailConfig = onShowEmailConfig;
-        this.onSaveMainFiles = onSaveMainFiles;
-        this.onSaveBackupFiles = onSaveBackupFiles;
+        this.emailService = emailService;
     }
 
     public void initListeners() {
-        emailView.onProviderChanged(this::handleProviderChange);
-        emailView.onAppPassProviderChanged(this::handleAppPassProviderChange);
-        emailView.onTestEmail(this::handleTestEmail);
-        emailView.onSaveConfig(this::handleSaveConfig);
-        emailView.onBackButton(onBackToExport);
-
+        // Export view → email hub
         exportView.onEmailConfigButton(() -> {
-            if (isFirstTime()) {
-                showFirstTimeSetup();
-            }
-            populateView();
-            onShowEmailConfig.run();
+            loadDataIntoViews();
+            userInterface.setEmailConfigView();
         });
-        exportView.onWhatsappConfigButton(() -> {/* placeholder: not yet implemented */});
+
+        // Hub → subview navigation
+        emailHubView.onProviderButton(() -> userInterface.setEmailProviderView());
+        emailHubView.onGeneralConfigurationButton(() -> userInterface.setEmailGlobalSettingsView());
+        emailHubView.onRoomSaleCaseButton(() -> userInterface.setEmailRoomCaseView());
+        emailHubView.onSaleCaseButton(() -> userInterface.setEmailItemCaseView());
+        emailHubView.onTurnCaseButton(() -> userInterface.setEmailTurnCaseView());
+        emailHubView.onBackButton(onBackToExport);
+
+        // Subview back buttons → hub
+        userInterface.getEmailProviderView().onBackButton(() -> userInterface.setEmailConfigView());
+        userInterface.getEmailRoomCaseView().onBackButton(() -> userInterface.setEmailConfigView());
+        userInterface.getEmailItemCaseView().onBackButton(() -> userInterface.setEmailConfigView());
+        userInterface.getEmailTurnCaseView().onBackButton(() -> userInterface.setEmailConfigView());
+        userInterface.getEmailGlobalSettingsView().onBackButton(() -> userInterface.setEmailConfigView());
+
+        // === Provider save ===
+        userInterface.getEmailProviderView().onSaveButton(this::onProviderSave);
+
+        // === Verify connection ===
+        userInterface.getEmailProviderView().onVerifyConnection(this::onVerifyConnection);
+
+        // === Case saves (room, item, turn) ===
+        userInterface.getEmailRoomCaseView().onSaveButton(() -> onCaseSave(CASE_ROOM));
+        userInterface.getEmailItemCaseView().onSaveButton(() -> onCaseSave(CASE_ITEM));
+        userInterface.getEmailTurnCaseView().onSaveButton(() -> onCaseSave(CASE_TURN));
+
+        // === Global settings save ===
+        userInterface.getEmailGlobalSettingsView().onSaveButton(this::onGlobalSettingsSave);
     }
 
-    public void populateView() {
-        try {
-            loadConfig();
-            if (currentConfig == null) {
-                isFirstTime = true;
-                return;
-            }
+    // ========== Provider Save ==========
 
-            boolean secureLoaded = loadSecureData();
-            if (!secureLoaded) {
-                showSecureDataCorruptionWarning();
-                currentConfig = null;
-                currentSecureData = null;
-                isFirstTime = true;
-                return;
-            }
-
-            isFirstTime = false;
-            populateFieldsFromConfig();
-            emailView.setReceivers(currentSecureData.receivers());
-            if (emailView.getTestRecipient().isBlank() && !emailView.getEmail().isBlank()) {
-                emailView.setTestRecipient(emailView.getEmail());
-            }
-        } catch (Exception e) {
-            LOG.log(Level.WARNING, "Error loading email config", e);
-            showSecureDataCorruptionWarning();
-            currentConfig = null;
-            currentSecureData = null;
-            isFirstTime = true;
-        }
-    }
-
-    private boolean isFirstTime() {
-        return currentConfig == null;
-    }
-
-    private void showFirstTimeSetup() {
-        DialogHelper.showInfoMessage(
-            "No se ha encontrado configuracion de correo.\n"
-            + "Seleccione un proveedor, ingrese sus datos y guarde la configuracion.\n"
-            + "Luego podra probar el envio con el boton ENVIAR PRUEBA.",
-            "CONFIGURACION INICIAL DE CORREO");
-    }
-
-    private void showSecureDataCorruptionWarning() {
-        DialogHelper.showInfoMessage(
-            "No se pudieron leer los datos de configuracion de correo.\n"
-            + "Esto puede deberse a que el archivo de configuracion haya sido\n"
-            + "modificado, este corrupto, o que el programa se este ejecutando\n"
-            + "en un equipo diferente.\n\n"
-            + "Por favor, configure el correo nuevamente.",
-            "ERROR DE LECTURA");
-    }
-
-    private void loadConfig() {
-        String json = fileManager.getJsonData(CONFIG_FILE);
-        if (json != null && !json.isBlank()) {
-            try {
-                currentConfig = ObjectMapperFactory.get().readValue(json, EmailConfig.class);
-            } catch (Exception e) {
-                LOG.log(Level.WARNING, "Failed to parse email config, using defaults", e);
-                currentConfig = null;
-            }
-        }
-    }
-
-    private boolean loadSecureData() {
-        try {
-            Path securePath = Path.of(FileManager.PATH, "data", EMAIL_SECURE_FILE);
-            Optional<String> json = CredentialStore.loadEncryptedJson(securePath);
-            if (json.isEmpty()) {
-                LOG.log(Level.WARNING, "Email secure data file not found");
-                return false;
-            }
-            currentSecureData = ObjectMapperFactory.get().readValue(json.get(), EmailSecureData.class);
-            return true;
-        } catch (Exception e) {
-            LOG.log(Level.WARNING, "Failed to load email secure data", e);
-            return false;
-        }
-    }
-
-    private void populateFieldsFromConfig() {
-        String username = currentSecureData.username();
-        emailView.setEmail(username);
-        emailView.setDisplayName(username);
-
-        switch (currentConfig.authMode()) {
-            case PASSWORD: {
-                String host = currentConfig.smtpHost().toLowerCase();
-                if (host.contains("gmail")) {
-                    emailView.setSelectedProvider(0);
-                    emailView.showProviderCard(0);
-                    emailView.setAppPassProvider(0);
-                    emailView.showAppPassSubCard(0);
-                } else if (host.contains("office365") || host.contains("outlook")) {
-                    emailView.setSelectedProvider(0);
-                    emailView.showProviderCard(0);
-                    emailView.setAppPassProvider(1);
-                    emailView.showAppPassSubCard(1);
-                } else {
-                    emailView.setSelectedProvider(1);
-                    emailView.showProviderCard(1);
-                    emailView.setSmtpHost(currentConfig.smtpHost());
-                    emailView.setSmtpPort(String.valueOf(currentConfig.smtpPort()));
-                    emailView.setSmtpUser(username);
-                    emailView.setSmtpTls(currentConfig.useStartTls());
-                    emailView.setSmtpSsl(currentConfig.useImplicitSsl());
-                }
-                break;
-            }
-            default:
-                emailView.setSelectedProvider(1);
-                emailView.showProviderCard(1);
-                break;
-        }
-
-        String cred = currentSecureData.credential();
-        if (cred != null && !cred.isBlank()) {
-            int provider = emailView.getSelectedProvider();
-            switch (provider) {
-                case 0 -> {
-                    int sub = emailView.getAppPassProvider();
-                    switch (sub) {
-                        case 0 -> emailView.setGmailAppPassword(cred.toCharArray());
-                        case 1 -> emailView.setOutlookAppPassword(cred.toCharArray());
-                    }
-                }
-                case 1 -> emailView.setSmtpPassword(cred.toCharArray());
-            }
-        }
-    }
-
-    private void handleProviderChange(int index) {
-        emailView.showProviderCard(index);
-        switch (index) {
-            case 0:
-                emailView.showAppPassSubCard(0);
-                emailView.setSmtpHost("smtp.gmail.com");
-                break;
-            case 1:
-                if (emailView.getSmtpHost().isEmpty()) {
-                    emailView.setSmtpHost("");
-                }
-                if (emailView.getSmtpPort().isEmpty()) {
-                    emailView.setSmtpPort("587");
-                }
-                emailView.setSmtpTls(true);
-                break;
-        }
-    }
-
-    private void handleAppPassProviderChange(int index) {
-        emailView.showAppPassSubCard(index);
-        switch (index) {
-            case 0 -> emailView.setSmtpHost("smtp.gmail.com");
-            case 1 -> emailView.setSmtpHost("smtp.office365.com");
-        }
-    }
-
-    private void handleSaveConfig() {
-        String email = emailView.getEmail();
+    private void onProviderSave() {
+        EmailProviderConfigurationView view = userInterface.getEmailProviderView();
+        String email = view.getEmailText();
+        String name = view.getNameText();
         if (email.isBlank()) {
-            DialogHelper.showInfoMessage("El campo CORREO no puede estar vacio", "ERROR");
+            DialogHelper.showInfoMessage("Debe ingresar un correo electr\u00f3nico", "ERROR");
             return;
         }
 
-        boolean confirm = DialogHelper.confirmDialog("Guardar configuracion de correo?", "CONFIRMACION");
-        if (!confirm) return;
-
-        EmailConfig config = buildConfigFromFields();
-        if (config == null) return;
-
-        String credential = getCredentialFromFields();
-        List<String> receivers = emailView.getReceivers();
-        EmailSecureData secureData = new EmailSecureData(email, credential, receivers);
-
+        String host = view.getSmtpHost();
+        int port;
         try {
-            String json = ObjectMapperFactory.get().writeValueAsString(config);
-            fileManager.saveJsonMainDataPath(json, CONFIG_FILE);
-
-            String secureJson = ObjectMapperFactory.get().writeValueAsString(secureData);
-            Path securePath = Path.of(FileManager.PATH, "data", EMAIL_SECURE_FILE);
-            CredentialStore.saveEncryptedJson(secureJson, securePath);
-
-            currentConfig = config;
-            currentSecureData = secureData;
-            isFirstTime = false;
-            onSaveMainFiles.run();
-            onSaveBackupFiles.run();
-
-            DialogHelper.showInfoMessage("Configuracion de correo guardada exitosamente", "GUARDADO");
-        } catch (Exception e) {
-            LOG.log(Level.ERROR, "Failed to save email config", e);
-            DialogHelper.showInfoMessage("Error al guardar configuracion: " + e.getMessage(), "ERROR");
+            port = Integer.parseInt(view.getSmtpPort());
+        } catch (NumberFormatException e) {
+            port = 587;
         }
+        String smtpUser = view.getSmtpUser();
+        String smtpPass = view.getSmtpPassword();
+        boolean useTls = port != 465;
+        boolean useSsl = port == 465;
+
+        EmailSmtpConfig smtp = new EmailSmtpConfig(
+                host.isBlank() ? "smtp.gmail.com" : host,
+                port, useTls, useSsl,
+                smtpUser.isBlank() ? AuthMode.NONE : AuthMode.PASSWORD, 5000);
+
+        String username = smtpUser.isBlank() ? email : smtpUser;
+        String credential = smtpPass.isBlank() ? view.getAppPasswordText() : smtpPass;
+
+        EmailSecureData existingSecure = emailService.loadSecureData().orElse(null);
+        EmailSecureData secure = new EmailSecureData(
+                username,
+                credential,
+                existingSecure != null ? existingSecure.receivers() : List.of(),
+                existingSecure != null ? existingSecure.cc() : List.of(),
+                existingSecure != null ? existingSecure.bcc() : List.of(),
+                existingSecure != null ? existingSecure.caseSpecificReceivers() : Map.of());
+
+        List<EmailCaseConfig> cases = emailService.loadCaseConfigs().orElse(List.of());
+        String senderName = emailService.loadSenderName().orElse(name);
+
+        emailService.saveEmailConfig(senderName, smtp, cases);
+        emailService.saveSecureData(secure);
+        DialogHelper.showInfoMessage("Configuraci\u00f3n de correo guardada", "GUARDADO");
     }
 
-    private String getCredentialFromFields() {
-        int provider = emailView.getSelectedProvider();
-        return switch (provider) {
-            case 0 -> {
-                int sub = emailView.getAppPassProvider();
-                yield switch (sub) {
-                    case 0 -> new String(emailView.getGmailAppPassword());
-                    case 1 -> new String(emailView.getOutlookAppPassword());
-                    default -> "";
-                };
-            }
-            case 1 -> new String(emailView.getSmtpPassword());
-            default -> "";
-        };
-    }
+    // ========== Verify Connection ==========
 
-    private EmailConfig buildConfigFromFields() {
-        int provider = emailView.getSelectedProvider();
-        String email = emailView.getEmail();
-
-        return switch (provider) {
-            case 0 -> {
-                int subProvider = emailView.getAppPassProvider();
-                yield switch (subProvider) {
-                    case 0 -> {
-                        String password = new String(emailView.getGmailAppPassword());
-                        if (password.isBlank()) {
-                            DialogHelper.showInfoMessage("CONTRASENA requerida para Gmail", "ERROR");
-                            yield null;
-                        }
-                        yield EmailConfig.gmailAppPassword(email, password);
-                    }
-                    case 1 -> {
-                        String password = new String(emailView.getOutlookAppPassword());
-                        if (password.isBlank()) {
-                            DialogHelper.showInfoMessage("CONTRASENA requerida para Outlook", "ERROR");
-                            yield null;
-                        }
-                        yield EmailConfig.outlookPassword(email, password);
-                    }
-                    default -> {
-                        DialogHelper.showInfoMessage("Seleccione un proveedor valido", "ERROR");
-                        yield null;
-                    }
-                };
-            }
-            case 1 -> {
-                String host = emailView.getSmtpHost();
-                String portStr = emailView.getSmtpPort();
-                String user = emailView.getSmtpUser();
-                String pass = new String(emailView.getSmtpPassword());
-                boolean tls = emailView.isSmtpTls();
-                boolean ssl = emailView.isSmtpSsl();
-                if (host.isBlank() || user.isBlank() || pass.isBlank()) {
-                    DialogHelper.showInfoMessage("Todos los campos SMTP deben estar llenos", "ERROR");
-                    yield null;
-                }
-                int port = parsePort(portStr, ssl ? 465 : 587);
-                yield EmailConfig.builder()
-                        .smtpHost(host)
-                        .smtpPort(port)
-                        .useStartTls(!ssl && tls)
-                        .useImplicitSsl(ssl)
-                        .authMode(AuthMode.PASSWORD)
-                        .username(user)
-                        .credential(pass)
-                        .extraProperty("mail.smtp.ssl.protocols", "TLSv1.2 TLSv1.3")
-                        .build();
-            }
-            default -> {
-                DialogHelper.showInfoMessage("Seleccione un proveedor valido", "ERROR");
-                yield null;
-            }
-        };
-    }
-
-    private void handleTestEmail() {
-        EmailConfig config = buildConfigFromFields();
-        if (config == null) return;
-
-        String recipient = emailView.getTestRecipient();
-        if (recipient.isBlank()) {
-            DialogHelper.showInfoMessage("Ingrese un correo de destino para la prueba", "ERROR");
+    private void onVerifyConnection() {
+        EmailProviderConfigurationView view = userInterface.getEmailProviderView();
+        String email = view.getEmailText();
+        if (email.isBlank()) {
+            DialogHelper.showInfoMessage("Debe ingresar un correo electr\u00f3nico", "ERROR");
             return;
         }
 
-        String subject = emailView.getTestSubject();
-        if (subject.isBlank()) {
-            subject = "Prueba de configuracion correo";
+        String host = view.getSmtpHost();
+        int port;
+        try {
+            port = Integer.parseInt(view.getSmtpPort());
+        } catch (NumberFormatException e) {
+            port = 587;
+        }
+        String smtpUser = view.getSmtpUser();
+        String smtpPass = view.getSmtpPassword();
+        boolean useTls = port != 465;
+        boolean useSsl = port == 465;
+
+        String username = smtpUser.isBlank() ? email : smtpUser;
+        String credential = smtpPass.isBlank() ? view.getAppPasswordText() : smtpPass;
+
+        if (credential.isBlank()) {
+            DialogHelper.showInfoMessage("Debe ingresar una contrase\u00f1a para verificar la conexi\u00f3n", "ERROR");
+            return;
         }
 
-        String body = emailView.getTestBody();
-        boolean isHtml = emailView.isHtml();
+        EmailSmtpConfig smtp = new EmailSmtpConfig(
+                host.isBlank() ? "smtp.gmail.com" : host,
+                port, useTls, useSsl, AuthMode.PASSWORD, 5000);
 
-        body = replaceTemplatePlaceholders(body, config.username());
+        boolean ok = emailService.verifyConnection(smtp, username, credential);
+        if (ok) {
+            DialogHelper.showInfoMessage("Conexi\u00f3n exitosa", "VERIFICAR");
+        } else {
+            DialogHelper.showErrorMessage("Error de conexi\u00f3n. Revise los datos del proveedor", "ERROR");
+        }
+    }
 
-        final String finalSubject = subject;
-        final String finalBody = body;
+    // ========== Case Save ==========
 
-        CompletableFuture.runAsync(() -> {
-            try {
-                EmailMessage msg = new EmailMessage(recipient, null, finalSubject, finalBody, isHtml, null);
-                new EmailSender(config).send(msg);
-                javax.swing.SwingUtilities.invokeLater(() ->
-                        DialogHelper.showInfoMessage("Correo de prueba enviado exitosamente a " + recipient,
-                                "CORREO ENVIADO"));
-            } catch (Exception e) {
-                LOG.log(Level.ERROR, "Test email failed", e);
-                javax.swing.SwingUtilities.invokeLater(() ->
-                        DialogHelper.showInfoMessage("Error al enviar correo de prueba: " + e.getMessage(),
-                                "ERROR CORREO"));
+    private void onCaseSave(int caseIndex) {
+        EmailCaseConfigurationView view = getCaseView(caseIndex);
+        boolean enabled = view.isCaseEnabled();
+        boolean useGlobal = view.isUsingGlobalReceivers();
+        List<String> specificReceivers = new ArrayList<>();
+        var receiverModel = view.getSpecificReceiversModel();
+        for (int i = 0; i < receiverModel.size(); i++) {
+            specificReceivers.add(receiverModel.getElementAt(i));
+        }
+        String subject = view.getSubject();
+        String body = view.getBody();
+        List<String> attachments = new ArrayList<>();
+        var attModel = view.getAttachmentModel();
+        for (int i = 0; i < attModel.size(); i++) {
+            if (attModel.getElementAt(i).isSelected()) {
+                attachments.add(attModel.getElementAt(i).getName());
+            }
+        }
+
+        List<EmailCaseConfig> cases = new ArrayList<>(emailService.loadCaseConfigs().orElse(List.of()));
+        while (cases.size() <= caseIndex) {
+            cases.add(new EmailCaseConfig(cases.size(), false, true, List.of(), "", "", List.of()));
+        }
+        cases.set(caseIndex, new EmailCaseConfig(caseIndex, enabled, useGlobal,
+                specificReceivers, subject, body, attachments));
+
+        String senderName = emailService.loadSenderName().orElse("");
+        EmailSmtpConfig smtp = emailService.loadSmtpConfig().orElse(null);
+        emailService.saveEmailConfig(senderName, smtp, cases);
+
+        DialogHelper.showInfoMessage("Configuraci\u00f3n guardada", "GUARDADO");
+    }
+
+    // ========== Global Settings Save ==========
+
+    private void onGlobalSettingsSave() {
+        EmailGlobalConfigurationView view = userInterface.getEmailGlobalSettingsView();
+        String senderName = view.getSenderName();
+
+        List<String> receivers = listModelToList(view.getReceiverList());
+        List<String> cc = listModelToList(view.getCarbonCopyList());
+        List<String> bcc = listModelToList(view.getBindCarbonCopyList());
+
+        EmailSecureData existing = emailService.loadSecureData().orElse(null);
+        String username = existing != null ? existing.username() : "";
+        String credential = existing != null ? existing.credential() : "";
+        Map<Integer, List<String>> caseSpecific = existing != null
+                ? existing.caseSpecificReceivers() : Map.of();
+
+        EmailSecureData secure = new EmailSecureData(
+                username, credential, receivers, cc, bcc, caseSpecific);
+        emailService.saveSecureData(secure);
+
+        EmailSmtpConfig smtp = emailService.loadSmtpConfig().orElse(null);
+        List<EmailCaseConfig> cases = emailService.loadCaseConfigs().orElse(List.of());
+        emailService.saveEmailConfig(senderName, smtp, cases);
+
+        DialogHelper.showInfoMessage("Configuraci\u00f3n global guardada", "GUARDADO");
+    }
+
+    // ========== Load Data Into Views ==========
+
+    private void loadDataIntoViews() {
+        EmailProviderConfigurationView providerView = userInterface.getEmailProviderView();
+        emailService.loadSenderName().ifPresent(providerView::setNameText);
+        emailService.loadSecureData().ifPresent(secure -> {
+            providerView.setEmailText(secure.username());
+        });
+
+        EmailGlobalConfigurationView globalView = userInterface.getEmailGlobalSettingsView();
+        emailService.loadSenderName().ifPresent(globalView::setSenderName);
+        emailService.loadSecureData().ifPresent(secure -> {
+            fillListModel(globalView.getReceiverList(), secure.receivers());
+            fillListModel(globalView.getCarbonCopyList(), secure.cc());
+            fillListModel(globalView.getBindCarbonCopyList(), secure.bcc());
+        });
+
+        emailService.loadCaseConfigs().ifPresent(cases -> {
+            for (int i = 0; i < cases.size(); i++) {
+                EmailCaseConfig cfg = cases.get(i);
+                EmailCaseConfigurationView caseView = getCaseView(i);
+                caseView.setCaseEnabled(cfg.enabled());
+                caseView.setUseGlobalReceivers(cfg.useGlobalReceivers());
+                caseView.setSubject(cfg.subject());
+                caseView.setBody(cfg.body());
+                DefaultListModel<String> recvModel = caseView.getSpecificReceiversModel();
+                recvModel.clear();
+                for (String r : cfg.specificReceivers()) {
+                    recvModel.addElement(r);
+                }
+                var attModel = caseView.getAttachmentModel();
+                for (int ai = 0; ai < attModel.size(); ai++) {
+                    var item = attModel.getElementAt(ai);
+                    item.setSelected(cfg.attachments().contains(item.getName()));
+                }
+            }
+        });
+
+        boolean masterEnabled = emailService.isEmailEnabled();
+        emailHubView.setEmailStatus(masterEnabled ? "HABILITADO" : "DESHABILITADO");
+        emailService.loadCaseConfigs().ifPresent(cases -> {
+            for (int i = 0; i < cases.size(); i++) {
+                emailHubView.setCaseEnabled(i, cases.get(i).enabled());
             }
         });
     }
 
-    private static String replaceTemplatePlaceholders(String body, String senderEmail) {
-        String currentDate = java.time.ZonedDateTime.now()
-                .format(java.time.format.DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy HH:mm:ss"));
-        return body.replace("{motelName}", "")
-                .replace("{date}", currentDate)
-                .replace("{senderName}", "")
-                .replace("{senderEmail}", senderEmail);
+    // ========== Helpers ==========
+
+    private EmailCaseConfigurationView getCaseView(int caseIndex) {
+        return switch (caseIndex) {
+            case 0 -> userInterface.getEmailRoomCaseView();
+            case 1 -> userInterface.getEmailItemCaseView();
+            case 2 -> userInterface.getEmailTurnCaseView();
+            default -> throw new IllegalArgumentException("Unknown case index: " + caseIndex);
+        };
     }
 
-    private static int parsePort(String str, int defaultPort) {
-        try {
-            int p = Integer.parseInt(str.trim());
-            if (p > 0 && p <= 65535) return p;
-        } catch (NumberFormatException ignored) {}
-        return defaultPort;
+    private static List<String> listModelToList(JList list) {
+        var model = list.getModel();
+        List<String> result = new ArrayList<>();
+        for (int i = 0; i < model.getSize(); i++) {
+            Object elem = model.getElementAt(i);
+            if (elem != null) result.add(elem.toString());
+        }
+        return result;
+    }
+
+    private static void fillListModel(JList list, List<String> values) {
+        DefaultListModel<String> model = new DefaultListModel<>();
+        for (String v : values) {
+            model.addElement(v);
+        }
+        list.setModel(model);
     }
 }

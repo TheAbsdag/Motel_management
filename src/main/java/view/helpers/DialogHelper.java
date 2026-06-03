@@ -82,6 +82,15 @@ public final class DialogHelper {
         );
     }
 
+    public static void showErrorMessage(String message, String title) {
+        JOptionPane.showMessageDialog(
+                null,
+                styledMessage(message),
+                title,
+                JOptionPane.ERROR_MESSAGE
+        );
+    }
+
     public static boolean confirmDialog(String message, String title) {
         int response = JOptionPane.showConfirmDialog(
                 null,
