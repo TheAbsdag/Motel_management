@@ -95,6 +95,13 @@ new FormModel {
 				"value": "cell 0 7"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "previewBodyButton"
+				"text": "PREVISUALIZAR"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 18 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 7,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "markdownHelpButton"
 				"text": "Ayuda Markdown"
 				"font": #Font0
@@ -126,7 +133,7 @@ new FormModel {
 					"font": #Font0
 				} )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 2 8"
+				"value": "cell 2 8,growy"
 			} )
 			add( new FormComponent( "javax.swing.JLabel" ) {
 				name: "attachmentInformativeLabel"

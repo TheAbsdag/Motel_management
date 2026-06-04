@@ -45,6 +45,7 @@ public class EmailCaseConfigurationView extends JPanel implements TimeLabelInter
 	subjectInformativeLabel = new JLabel();
 	subjectTextField = new JTextField();
 	bodyInformativeLabel = new JLabel();
+	previewBodyButton = new JButton();
 	markdownHelpButton = new JButton();
 	availableVariablesInformativeLabel = new JLabel();
 	bodyScrollPane = new JScrollPane();
@@ -141,6 +142,11 @@ public class EmailCaseConfigurationView extends JPanel implements TimeLabelInter
 	bodyInformativeLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
 	add(bodyInformativeLabel, "cell 0 7");
 
+	//---- previewBodyButton ----
+	previewBodyButton.setText("PREVISUALIZAR");
+	previewBodyButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
+	add(previewBodyButton, "cell 0 7,growy");
+
 	//---- markdownHelpButton ----
 	markdownHelpButton.setText("Ayuda Markdown");
 	markdownHelpButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
@@ -169,7 +175,7 @@ public class EmailCaseConfigurationView extends JPanel implements TimeLabelInter
 	    availableVariablesList.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
 	    variableListTextPane.setViewportView(availableVariablesList);
 	}
-	add(variableListTextPane, "cell 2 8");
+	add(variableListTextPane, "cell 2 8,growy");
 
 	//---- attachmentInformativeLabel ----
 	attachmentInformativeLabel.setText("ADJUNTOS DISPONIBLES PARA EL CASO:");
@@ -213,6 +219,7 @@ public class EmailCaseConfigurationView extends JPanel implements TimeLabelInter
     private JLabel subjectInformativeLabel;
     private JTextField subjectTextField;
     private JLabel bodyInformativeLabel;
+    private JButton previewBodyButton;
     private JButton markdownHelpButton;
     private JLabel availableVariablesInformativeLabel;
     private JScrollPane bodyScrollPane;
