@@ -7,13 +7,22 @@ package view;
 import java.awt.*;
 import javax.swing.*;
 import net.miginfocom.swing.*;
+import view.interfaces.TimeLabelInterface;
+import javax.swing.DefaultListModel;
+import javax.swing.JList;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 
 /**
  * @author SECC
  */
-public class EmailGlobalConfigurationView extends JPanel {
+public class EmailGlobalConfigurationView extends JPanel implements TimeLabelInterface {
+    private JList<?> activeList;
+
     public EmailGlobalConfigurationView() {
 	initComponents();
+	trackActiveList();
+	ensureModels();
     }
 
     private void initComponents() {
@@ -151,4 +160,89 @@ public class EmailGlobalConfigurationView extends JPanel {
     private JButton backButton;
     private JButton saveButton;
     // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
+
+    private void trackActiveList() {
+	javax.swing.event.ListSelectionListener updateRemove = e -> updateRemoveButton();
+	FocusAdapter fl = new FocusAdapter() {
+	    @Override
+	    public void focusGained(FocusEvent e) {
+		activeList = (JList<?>) e.getSource();
+		updateRemoveButton();
+	    }
+	};
+	for (JList list : new JList[]{receiverList, carbonCopyList, bindCarbonCopyList}) {
+	    list.addFocusListener(fl);
+	    list.addListSelectionListener(updateRemove);
+	}
+	activeList = receiverList;
+	removeReceiverButton.setEnabled(false);
+    }
+
+    private void updateRemoveButton() {
+	boolean valid = activeList != null
+		&& activeList.getSelectedIndex() >= 0
+		&& activeList.getModel().getSize() > 0;
+	removeReceiverButton.setEnabled(valid);
+    }
+
+    private void ensureModels() {
+	if (!(receiverList.getModel() instanceof DefaultListModel)) {
+	    receiverList.setModel(new DefaultListModel<String>());
+	}
+	if (!(carbonCopyList.getModel() instanceof DefaultListModel)) {
+	    carbonCopyList.setModel(new DefaultListModel<String>());
+	}
+	if (!(bindCarbonCopyList.getModel() instanceof DefaultListModel)) {
+	    bindCarbonCopyList.setModel(new DefaultListModel<String>());
+	}
+    }
+
+    @Override
+    public void updateTimeDisplay(String timeText, String dateText) {
+    }
+
+    public void onBackButton(Runnable action) {
+	backButton.addActionListener(e -> action.run());
+    }
+
+    public void onSaveButton(Runnable action) {
+	saveButton.addActionListener(e -> action.run());
+    }
+
+    public void onAddReceiverButton(Runnable action) {
+	addReceiverButton.addActionListener(e -> action.run());
+    }
+
+    public void onRemoveReceiverButton(Runnable action) {
+	removeReceiverButton.addActionListener(e -> action.run());
+    }
+
+    public String getSenderName() {
+	return senderNameTextField.getText().trim();
+    }
+
+    public void setSenderName(String name) {
+	senderNameTextField.setText(name);
+    }
+
+    public JList<?> getActiveList() {
+	return activeList;
+    }
+
+    public JList getReceiverList() {
+	return receiverList;
+    }
+
+    public JList getCarbonCopyList() {
+	return carbonCopyList;
+    }
+
+    public JList getBindCarbonCopyList() {
+	return bindCarbonCopyList;
+    }
+
+    public void clearActiveSelection() {
+	activeList.clearSelection();
+	updateRemoveButton();
+    }
 }

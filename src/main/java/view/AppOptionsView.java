@@ -30,7 +30,8 @@ public class AppOptionsView extends JPanel implements TimeLabelInterface{
 	dateAndTimeConfigurationButton = new JButton();
 	floorConfigurationButton = new JButton();
 	saveConfigurationButton = new JButton();
-	saveConfigurationButton2 = new JButton();
+	exportConfigurationButton = new JButton();
+	currencyConfigButton = new JButton();
 	backButton = new JButton();
 
 	//======== this ========
@@ -100,13 +101,13 @@ public class AppOptionsView extends JPanel implements TimeLabelInterface{
 	saveConfigurationButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 20));
 	add(saveConfigurationButton, "cell 2 4,growy");
 
-	//---- saveConfigurationButton2 ----
-	saveConfigurationButton2.setText("CONFIGURAR EXPORTACION");
-	saveConfigurationButton2.setFont(new Font("Segoe UI Black", Font.PLAIN, 20));
-	add(saveConfigurationButton2, "cell 2 5,growy");
+	//---- exportConfigurationButton ----
+	exportConfigurationButton.setText("CONFIGURAR EXPORTACION");
+	exportConfigurationButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 20));
+	add(exportConfigurationButton, "cell 2 5,growy");
 
 	//---- currencyConfigButton ----
-	currencyConfigButton = new JButton("CONFIGURAR MONEDA");
+	currencyConfigButton.setText("CONFIGURAR MONEDA");
 	currencyConfigButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 20));
 	add(currencyConfigButton, "cell 2 6,growy");
 
@@ -129,7 +130,7 @@ public class AppOptionsView extends JPanel implements TimeLabelInterface{
     private JButton dateAndTimeConfigurationButton;
     private JButton floorConfigurationButton;
     private JButton saveConfigurationButton;
-    private JButton saveConfigurationButton2;
+    private JButton exportConfigurationButton;
     private JButton currencyConfigButton;
     private JButton backButton;
     // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
@@ -169,7 +170,7 @@ public class AppOptionsView extends JPanel implements TimeLabelInterface{
 
     /** Registers a listener for the export configuration button. */
     public void onExportConfiguration(Runnable action) {
-        saveConfigurationButton2.addActionListener(e -> action.run());
+        exportConfigurationButton.addActionListener(e -> action.run());
     }
 
     /** Registers a listener for the currency configuration button. */

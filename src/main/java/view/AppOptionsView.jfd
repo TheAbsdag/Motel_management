@@ -6,7 +6,7 @@ new FormModel {
 		add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
 			"$layoutConstraints": "fill,hidemode 3"
 			"$columnConstraints": "[shrink 0,fill][grow,fill][grow,fill]"
-			"$rowConstraints": "[][][][][][][]"
+			"$rowConstraints": "[][][][][][][][]"
 		} ) {
 			name: "this"
 			add( new FormComponent( "javax.swing.JLabel" ) {
@@ -80,18 +80,25 @@ new FormModel {
 				"value": "cell 2 4,growy"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
-				name: "saveConfigurationButton2"
+				name: "exportConfigurationButton"
 				"text": "CONFIGURAR EXPORTACION"
 				"font": #Font1
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 2 5,growy"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "currencyConfigButton"
+				"text": "CONFIGURAR MONEDA"
+				"font": #Font1
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 2 6,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "backButton"
 				"text": "VOLVER"
 				"font": new java.awt.Font( "Segoe UI Black", 0, 24 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 0 6,growy"
+				"value": "cell 0 7,growy"
 			} )
 		}, new FormLayoutConstraints( null ) {
 			"location": new java.awt.Point( 20, 40 )

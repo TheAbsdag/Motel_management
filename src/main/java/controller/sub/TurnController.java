@@ -1,9 +1,13 @@
 package controller.sub;
 
+import java.util.HashMap;
 import java.util.List;
-import model.modelManagers.MotelManagement;
+import java.util.Map;
+import model.ProgramConfig;
 import model.dto.TurnActivityData;
 import model.dto.TurnSummaryItemData;
+import model.modelManagers.EmailConfigurationService;
+import model.modelManagers.MotelManagement;
 import model.turn.ActivityType;
 import model.turn.TurnDetails;
 import view.TurnManagerView;
@@ -144,9 +148,27 @@ public class TurnController {
     /**
      * Ends the current turn: asks for confirmation, ends the turn,
      * prints based on selected checkbox options, saves history,
-     * clears backups, and transitions to turn select view.
+     * clears backups, and attempts email report if configured.
      */
     public void endTurn() {
+        // --- Email pre-check (walidaci\u00f3n de conexi\u00f3n antes de terminar) ---
+        EmailConfigurationService emailSvc = motelManager.getEmailConfigurationService();
+        if (emailSvc.isEmailEnabled() && emailSvc.validateCaseConfig(2)) {
+            var smtpOpt = emailSvc.loadSmtpConfig();
+            var secureOpt = emailSvc.loadSecureData();
+            if (smtpOpt.isPresent() && secureOpt.isPresent()) {
+                boolean connOk = emailSvc.verifyConnection(
+                        smtpOpt.get(), secureOpt.get().username(), secureOpt.get().credential());
+                if (!connOk) {
+                    boolean proceed = DialogHelper.confirmDialog(
+                            "Error de conexi\u00f3n de correo.\n\u00bfDesea continuar?",
+                            "CORREO ELECTR\u00d3NICO");
+                    if (!proceed) return;
+                }
+            }
+        }
+
+        // --- Normal turn end flow ---
         boolean turnEndConfirmation = DialogHelper.confirmTurnEnd();
         if (!turnEndConfirmation) {
             return;
@@ -162,7 +184,45 @@ public class TurnController {
         } else if (turnManagerView.isDetailedPrintSelected()) {
             motelManager.turnEndPrint(3);
         }
+
+        // --- Email send attempt ---
+        attemptTurnEmail();
+
         userInterface.setTurnSelect();
+    }
+
+    private void attemptTurnEmail() {
+        EmailConfigurationService emailSvc = motelManager.getEmailConfigurationService();
+        if (!emailSvc.isEmailEnabled() || !emailSvc.validateCaseConfig(2)) return;
+
+        TurnDetails details = motelManager.getCurrentTurnDetailedInfo();
+        if (details == null) return;
+
+        ProgramConfig cfg = motelManager.getProgramConfig();
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("{motelName}", cfg.getMotelName());
+        placeholders.put("{motelAddress}", cfg.getMotelAddress());
+        placeholders.put("{motelID}", cfg.getMotelID());
+        placeholders.put("{turnNumber}", String.valueOf(details.getTurnNumber()));
+        placeholders.put("{turnStart}", details.getTurnStart() != null ? details.getTurnStart().toString() : "");
+        placeholders.put("{turnEnd}", details.getTurnEnd() != null ? details.getTurnEnd().toString() : "");
+        placeholders.put("{totalRooms}", String.valueOf(details.getTotalRooms()));
+        placeholders.put("{totalItems}", String.valueOf(details.getTotalItems()));
+        placeholders.put("{totalSales}", String.valueOf(details.getTotalSales()));
+        placeholders.put("{totalRefunds}", String.valueOf(details.getTotalRefunds()));
+        placeholders.put("{totalSpending}", String.valueOf(details.getTotalSpending()));
+        placeholders.put("{totalTurn}", String.valueOf(details.getTotalTurn()));
+        placeholders.put("{totalBankTransfers}", String.valueOf(details.getTotalBankTransfers()));
+        placeholders.put("{totalDeposits}", String.valueOf(details.getTotalDeposits()));
+        placeholders.put("{totalNet}", String.valueOf(details.getTotalNet()));
+        placeholders.put("{consecutiveTrans}", String.valueOf(motelManager.getTurnService().getConsecutiveTransaction()));
+        placeholders.put("{date}", java.time.LocalDate.now().toString());
+
+        boolean sent = emailSvc.sendCaseEmail(2, placeholders, List.of());
+        if (!sent) {
+            DialogHelper.showInfoMessage(
+                    "Error al enviar correo de reporte de turno", "CORREO");
+        }
     }
 
     // ========== Turn Details ==========

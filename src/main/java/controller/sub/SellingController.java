@@ -1,8 +1,12 @@
 package controller.sub;
 
-import model.modelManagers.MotelManagement;
+import java.util.List;
+import java.util.Map;
+import model.ProgramConfig;
 import model.dto.InventoryItemData;
 import model.dto.SellingItemData;
+import model.modelManagers.EmailConfigurationService;
+import model.modelManagers.MotelManagement;
 import view.SellingView;
 import view.UserGUI;
 import view.helpers.DialogHelper;
@@ -157,12 +161,31 @@ public class SellingController {
                 userInterface.setFloorView();
                 saveMainFiles.run();
                 saveBackupFilesTransaction.run();
+                attemptSaleEmail();
             }
         } else {
             motelManager.roomSaleFinished(true);
             userInterface.setFloorView();
             saveMainFiles.run();
             saveBackupFilesTransaction.run();
+            attemptSaleEmail();
+        }
+    }
+
+    private void attemptSaleEmail() {
+        EmailConfigurationService emailSvc = motelManager.getEmailConfigurationService();
+        if (!emailSvc.isEmailEnabled() || !emailSvc.validateCaseConfig(1)) return;
+        ProgramConfig cfg = motelManager.getProgramConfig();
+        Map<String, String> placeholders = Map.of(
+                "{motelName}", cfg.getMotelName(),
+                "{motelAddress}", cfg.getMotelAddress(),
+                "{motelID}", cfg.getMotelID(),
+                "{totalPrice}", String.valueOf(motelManager.getCurrentTotalPriceSellingList()),
+                "{date}", java.time.LocalDate.now().toString());
+        boolean sent = emailSvc.sendCaseEmail(1, placeholders, List.of());
+        if (!sent) {
+            DialogHelper.showInfoMessage(
+                    "Error al enviar correo de venta", "CORREO");
         }
     }
 

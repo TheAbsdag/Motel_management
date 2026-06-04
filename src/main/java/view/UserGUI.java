@@ -37,7 +37,12 @@ public class UserGUI extends JFrame {
     private ExtraTurnChangesView extraTurnChangesView;
     private RoomSummaryView roomSummaryView;
     private ExportConfigurationView exportConfigView;
-    private EmailConfigurationView emailConfigView;
+    private EmailConfigurationHubView emailConfigView;
+    private EmailProviderConfigurationView emailProviderView;
+    private EmailCaseConfigurationView emailRoomCaseView;
+    private EmailCaseConfigurationView emailItemCaseView;
+    private EmailCaseConfigurationView emailTurnCaseView;
+    private EmailGlobalConfigurationView emailGlobalSettingsView;
     private CurrencyConfigurationView currencyConfigurationView;
 
     private ViewCard currentCard;
@@ -117,8 +122,23 @@ public class UserGUI extends JFrame {
         exportConfigView = new ExportConfigurationView();
         addView(getExportConfigView(), ViewCard.EXPORT_CONFIG_VIEW);
 
-        emailConfigView = new EmailConfigurationView();
+        emailConfigView = new EmailConfigurationHubView();
         addView(emailConfigView, ViewCard.EMAIL_CONFIG_VIEW);
+
+        emailProviderView = new EmailProviderConfigurationView();
+        addView(emailProviderView, ViewCard.EMAIL_PROVIDER_VIEW);
+
+        emailRoomCaseView = new EmailCaseConfigurationView(0);
+        addView(emailRoomCaseView, ViewCard.EMAIL_ROOM_CASE_VIEW);
+
+        emailItemCaseView = new EmailCaseConfigurationView(1);
+        addView(emailItemCaseView, ViewCard.EMAIL_ITEM_CASE_VIEW);
+
+        emailTurnCaseView = new EmailCaseConfigurationView(2);
+        addView(emailTurnCaseView, ViewCard.EMAIL_TURN_CASE_VIEW);
+
+        emailGlobalSettingsView = new EmailGlobalConfigurationView();
+        addView(emailGlobalSettingsView, ViewCard.EMAIL_GLOBAL_SETTINGS_VIEW);
 
         currencyConfigurationView = new CurrencyConfigurationView();
         addView(currencyConfigurationView, ViewCard.CURRENCY_CONFIG_VIEW);
@@ -251,6 +271,11 @@ public class UserGUI extends JFrame {
     public void setEmailConfigView() {
         setCard(ViewCard.EMAIL_CONFIG_VIEW);
     }
+    public void setEmailProviderView() { setCard(ViewCard.EMAIL_PROVIDER_VIEW); }
+    public void setEmailRoomCaseView() { setCard(ViewCard.EMAIL_ROOM_CASE_VIEW); }
+    public void setEmailItemCaseView() { setCard(ViewCard.EMAIL_ITEM_CASE_VIEW); }
+    public void setEmailTurnCaseView() { setCard(ViewCard.EMAIL_TURN_CASE_VIEW); }
+    public void setEmailGlobalSettingsView() { setCard(ViewCard.EMAIL_GLOBAL_SETTINGS_VIEW); }
 
     private void setCard(ViewCard card) {
         currentCard = card;
@@ -383,9 +408,12 @@ public class UserGUI extends JFrame {
         return exportConfigView;
     }
 
-    public EmailConfigurationView getEmailConfigView() {
-        return emailConfigView;
-    }
+    public EmailConfigurationHubView getEmailConfigView() { return emailConfigView; }
+    public EmailProviderConfigurationView getEmailProviderView() { return emailProviderView; }
+    public EmailGlobalConfigurationView getEmailGlobalSettingsView() { return emailGlobalSettingsView; }
+    public EmailCaseConfigurationView getEmailRoomCaseView() { return emailRoomCaseView; }
+    public EmailCaseConfigurationView getEmailItemCaseView() { return emailItemCaseView; }
+    public EmailCaseConfigurationView getEmailTurnCaseView() { return emailTurnCaseView; }
 
     public CurrencyConfigurationView getCurrencyConfigurationView() { return currencyConfigurationView; }
 

@@ -1,11 +1,15 @@
 package controller.sub;
 
 import java.awt.Color;
+import java.util.List;
+import java.util.Map;
 import javax.swing.JButton;
-import model.modelManagers.MotelManagement;
+import model.ProgramConfig;
 import model.Room;
 import model.RoomStatus;
 import model.RoomTime;
+import model.modelManagers.EmailConfigurationService;
+import model.modelManagers.MotelManagement;
 import view.FloorView;
 import view.RoomChangeView;
 import view.RoomView;
@@ -266,7 +270,29 @@ public class RoomController {
         motelManager.registerRoomTimeEnd(towerNumber, floorNumber, roomNumber);
         saveMainFiles.run();
         saveBackupFilesRoomSwap.run();
+        attemptRoomEmail(towerNumber, floorNumber, roomNumber);
         userInterface.setFloorView();
+    }
+
+    private void attemptRoomEmail(int tower, int floor, int room) {
+        EmailConfigurationService emailSvc = motelManager.getEmailConfigurationService();
+        if (!emailSvc.isEmailEnabled() || !emailSvc.validateCaseConfig(0)) return;
+        Room roomObj = motelManager.getRoom(tower, floor, room);
+        if (roomObj == null) return;
+        ProgramConfig cfg = motelManager.getProgramConfig();
+        Map<String, String> placeholders = java.util.Map.of(
+                "{motelName}", cfg.getMotelName(),
+                "{motelAddress}", cfg.getMotelAddress(),
+                "{motelID}", cfg.getMotelID(),
+                "{roomString}", roomObj.getRoomString(),
+                "{towerNumber}", String.valueOf(tower),
+                "{floorNumber}", String.valueOf(floor),
+                "{date}", java.time.LocalDate.now().toString());
+        boolean sent = emailSvc.sendCaseEmail(0, placeholders, List.of());
+        if (!sent) {
+            DialogHelper.showInfoMessage(
+                    "Error al enviar correo de habitaci\u00f3n", "CORREO");
+        }
     }
 
     // ========== Room Reassignment ==========

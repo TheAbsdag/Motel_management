@@ -7,13 +7,26 @@ package view;
 import java.awt.*;
 import javax.swing.*;
 import net.miginfocom.swing.*;
+import view.interfaces.TimeLabelInterface;
+import view.customListRenderes.CheckboxListCellRenderer;
+import javax.swing.DefaultListModel;
+import javax.swing.ButtonGroup;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 /**
  * @author SECC
  */
-public class EmailCaseConfigurationView extends JPanel {
-    public EmailCaseConfigurationView() {
+public class EmailCaseConfigurationView extends JPanel implements TimeLabelInterface {
+    private final int caseIndex;
+    private DefaultListModel<CheckableItem> attachmentModel;
+
+    public EmailCaseConfigurationView(int caseIndex) {
+	this.caseIndex = caseIndex;
 	initComponents();
+	wireAttachmentCheckboxList();
+	setCaseName(caseIndex);
+	setupReceiverRadioGroup();
     }
 
     private void initComponents() {
@@ -212,4 +225,146 @@ public class EmailCaseConfigurationView extends JPanel {
     private JButton backButton;
     private JButton saveButton;
     // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
+
+    @Override
+    public void updateTimeDisplay(String timeText, String dateText) {
+    }
+
+    public static class CheckableItem {
+	private final String name;
+	private boolean selected;
+
+	public CheckableItem(String name, boolean selected) {
+	    this.name = name;
+	    this.selected = selected;
+	}
+
+	public String getName() { return name; }
+	public boolean isSelected() { return selected; }
+	public void setSelected(boolean selected) { this.selected = selected; }
+
+	@Override
+	public String toString() { return name; }
+    }
+
+    private void wireAttachmentCheckboxList() {
+	attachmentModel = new DefaultListModel<>();
+	if (caseIndex == 2) {
+	    attachmentModel.addElement(new CheckableItem("Resumen PDF", false));
+	    attachmentModel.addElement(new CheckableItem("Detalle PDF", false));
+	    attachmentModel.addElement(new CheckableItem("Reporte XLSX", false));
+	} else {
+	    attachmentModel.addElement(new CheckableItem("Recibo PDF", false));
+	}
+	attachmentList.setModel(attachmentModel);
+	attachmentList.setCellRenderer(new CheckboxListCellRenderer());
+	attachmentList.addMouseListener(new MouseAdapter() {
+	    @Override
+	    public void mouseClicked(MouseEvent e) {
+		int index = attachmentList.locationToIndex(e.getPoint());
+		if (index >= 0) {
+		    CheckableItem item = attachmentModel.getElementAt(index);
+		    item.setSelected(!item.isSelected());
+		    attachmentList.repaint();
+		}
+	    }
+	});
+    }
+
+    private void setCaseName(int caseIndex) {
+	switch (caseIndex) {
+	    case 0 -> currentCaseLabel.setText("HABITACIONES");
+	    case 1 -> currentCaseLabel.setText("VENTAS");
+	    case 2 -> currentCaseLabel.setText("REPORTE TURNOS");
+	}
+    }
+
+    private void setupReceiverRadioGroup() {
+	ButtonGroup group = new ButtonGroup();
+	group.add(globalReceiverConfigurationRadioButton);
+	group.add(specificReceiverRadioButton);
+	globalReceiverConfigurationRadioButton.setSelected(true);
+	specificReceiversList.setEnabled(false);
+	addAdditionalReceiverButton.setEnabled(false);
+	removeAdditionalReceiverButton.setEnabled(false);
+	globalReceiverConfigurationRadioButton.addActionListener(e -> {
+	    specificReceiversList.setEnabled(false);
+	    addAdditionalReceiverButton.setEnabled(false);
+	    removeAdditionalReceiverButton.setEnabled(false);
+	});
+	specificReceiverRadioButton.addActionListener(e -> {
+	    specificReceiversList.setEnabled(true);
+	    addAdditionalReceiverButton.setEnabled(true);
+	    removeAdditionalReceiverButton.setEnabled(true);
+	});
+    }
+
+    public void onBackButton(Runnable action) {
+	backButton.addActionListener(e -> action.run());
+    }
+
+    public void onSaveButton(Runnable action) {
+	saveButton.addActionListener(e -> action.run());
+    }
+
+    public void onMarkdownHelp(Runnable action) {
+	markdownHelpButton.addActionListener(e -> action.run());
+    }
+
+    public boolean isCaseEnabled() {
+	return caseEnabledCheckBox.isSelected();
+    }
+
+    public boolean isUsingGlobalReceivers() {
+	return globalReceiverConfigurationRadioButton.isSelected();
+    }
+
+    public String getSubject() {
+	return subjectTextField.getText().trim();
+    }
+
+    public String getBody() {
+	return bodyTextArea.getText();
+    }
+
+    public JList getAvailableVariablesList() {
+	return availableVariablesList;
+    }
+
+    public DefaultListModel<CheckableItem> getAttachmentModel() {
+	return attachmentModel;
+    }
+
+    public DefaultListModel<String> getSpecificReceiversModel() {
+	if (!(specificReceiversList.getModel() instanceof DefaultListModel)) {
+	    specificReceiversList.setModel(new DefaultListModel<String>());
+	}
+	return (DefaultListModel<String>) specificReceiversList.getModel();
+    }
+
+    public void setCaseEnabled(boolean enabled) {
+	caseEnabledCheckBox.setSelected(enabled);
+    }
+
+    public void setUseGlobalReceivers(boolean useGlobal) {
+	globalReceiverConfigurationRadioButton.setSelected(useGlobal);
+	specificReceiverRadioButton.setSelected(!useGlobal);
+	if (useGlobal) {
+	    specificReceiversList.setEnabled(false);
+	    addAdditionalReceiverButton.setEnabled(false);
+	    removeAdditionalReceiverButton.setEnabled(false);
+	} else {
+	    specificReceiversList.setEnabled(true);
+	    addAdditionalReceiverButton.setEnabled(true);
+	    removeAdditionalReceiverButton.setEnabled(true);
+	}
+    }
+
+    public void setSubject(String subject) {
+	subjectTextField.setText(subject);
+    }
+
+    public void setBody(String body) {
+	bodyTextArea.setText(body);
+    }
 }

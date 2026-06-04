@@ -7,14 +7,25 @@ package view;
 import java.awt.*;
 import javax.swing.*;
 import net.miginfocom.swing.*;
+import model.email.config.ProviderPreset;
+import view.interfaces.TimeLabelInterface;
 
 /**
  * @author SECC
  */
-public class EmailProviderConfigurationView extends JPanel {
+public class EmailProviderConfigurationView extends JPanel implements TimeLabelInterface {
     public EmailProviderConfigurationView() {
 	initComponents();
     }
+
+    private static final String APP_PASSWORD_HELP =
+	"<html><body style='width:400px'>"
+	+ "Para proveedores que requieren <b>Contrase\u00f1a de Aplicaci\u00f3n</b> "
+	+ "(Gmail, Outlook, Yahoo):<br><br>"
+	+ "1. Active la verificaci\u00f3n en dos pasos en su cuenta<br>"
+	+ "2. Genere una contrase\u00f1a de aplicaci\u00f3n en la p\u00e1gina de seguridad<br>"
+	+ "3. C\u00f3pela e p\u00e9guela aqu\u00ed<br><br>"
+	+ "No use su contrase\u00f1a personal. Use la contrase\u00f1a de aplicaci\u00f3n.</body></html>";
 
     private void initComponents() {
 	// JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents  @formatter:off
@@ -255,4 +266,116 @@ public class EmailProviderConfigurationView extends JPanel {
     private JLabel smtpPasswordInformativeLabel;
     private JPasswordField smtpPasswordPasswordField;
     // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
+
+    @Override
+    public void updateTimeDisplay(String timeText, String dateText) {
+    }
+
+    public void onBackButton(Runnable action) {
+	backButton.addActionListener(e -> action.run());
+    }
+
+    public void onSaveButton(Runnable action) {
+	saveButton.addActionListener(e -> action.run());
+    }
+
+    public void onVerifyConnection(Runnable action) {
+	verifyEmailConnectionButton.addActionListener(e -> action.run());
+    }
+
+    public String getEmailText() {
+	return emailTextField.getText().trim();
+    }
+
+    public String getNameText() {
+	return nameTextField.getText().trim();
+    }
+
+    public int getSelectedProviderIndex() {
+	return providerComboBox.getSelectedIndex();
+    }
+
+    public int getSelectedAppPasswordProviderIndex() {
+	return appPasswordProviderComboBox.getSelectedIndex();
+    }
+
+    public String getAppPasswordText() {
+	return new String(appPasswordInputTextField.getPassword());
+    }
+
+    public String getSmtpHost() {
+	return smtpHostTextField.getText().trim();
+    }
+
+    public String getSmtpPort() {
+	return smtpPortTextField.getText().trim();
+    }
+
+    public String getSmtpUser() {
+	return smtpUserTextField.getText().trim();
+    }
+
+    public String getSmtpPassword() {
+	return new String(smtpPasswordPasswordField.getPassword());
+    }
+
+    public void setEmailText(String text) {
+	emailTextField.setText(text);
+    }
+
+    public void setNameText(String text) {
+	nameTextField.setText(text);
+    }
+
+    public void setSelectedProviderIndex(int index) {
+	providerComboBox.setSelectedIndex(index);
+    }
+
+    public void showProviderSubPanel(boolean appPasswordMode) {
+	providerPanel.removeAll();
+	if (appPasswordMode) {
+	    providerPanel.add(appPasswordPanel, "grow");
+	} else {
+	    providerPanel.add(smtpPanel, "grow");
+	}
+	providerPanel.revalidate();
+	providerPanel.repaint();
+    }
+
+    public void setSmtpHost(String host) {
+	smtpHostTextField.setText(host);
+    }
+
+    public void setSmtpPort(String port) {
+	smtpPortTextField.setText(port);
+    }
+
+    public void populateProviderCombos() {
+	providerComboBox.setModel(new DefaultComboBoxModel<>(new String[]{
+	    "Contrase\u00f1a Aplicaci\u00f3n", "SMTP Personalizado"}));
+	String[] appPassNames = ProviderPreset.displayNames();
+	appPasswordProviderComboBox.setModel(new DefaultComboBoxModel<>(appPassNames));
+    }
+
+    public void onProviderSelection(java.util.function.Consumer<Integer> action) {
+	providerComboBox.addActionListener(e -> {
+	    int idx = providerComboBox.getSelectedIndex();
+	    if (idx >= 0) action.accept(idx);
+	});
+    }
+
+    public void onAppPasswordProviderSelection(java.util.function.Consumer<Integer> action) {
+	appPasswordProviderComboBox.addActionListener(e -> {
+	    int idx = appPasswordProviderComboBox.getSelectedIndex();
+	    if (idx >= 0) action.accept(idx);
+	});
+    }
+
+    public void setAppPasswordProviderIndex(int index) {
+	appPasswordProviderComboBox.setSelectedIndex(index);
+    }
+
+    public String getAppPasswordHelpHtml() {
+	return APP_PASSWORD_HELP;
+    }
 }

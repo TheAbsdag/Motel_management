@@ -19,8 +19,12 @@ import java.util.Optional;
 import model.email.config.AuthMode;
 import model.email.config.CredentialStore;
 import model.email.config.EmailCaseConfig;
+import model.email.config.EmailConfig;
 import model.email.config.EmailSmtpConfig;
 import model.email.config.EmailSecureData;
+import model.email.dto.EmailMessage;
+import model.email.exception.EmailSendingException;
+import model.email.service.EmailSender;
 
 public class EmailConfigurationService {
 
@@ -143,9 +147,68 @@ public class EmailConfigurationService {
         return true;
     }
 
-    public boolean sendCaseEmail(int caseIndex, Map<String, String> placeholderValues) {
-        System.out.println("STUB: sendCaseEmail(" + caseIndex + ") — implement in Phase 2");
-        return false;
+    public boolean sendCaseEmail(int caseIndex, Map<String, String> placeholders, List<Path> attachments) {
+        if (!validateCaseConfig(caseIndex)) {
+            System.err.println("Email: case " + caseIndex + " not configured for sending");
+            return false;
+        }
+        if (secureData == null || secureData.credential() == null || secureData.credential().isBlank()) {
+            System.err.println("Email: no credentials available");
+            return false;
+        }
+        if (smtpConfig == null) {
+            System.err.println("Email: no SMTP config");
+            return false;
+        }
+
+        EmailCaseConfig caseCfg = caseConfigs.get(caseIndex);
+
+        String to = caseCfg.useGlobalReceivers()
+                ? String.join(",", secureData.receivers())
+                : String.join(",", caseCfg.specificReceivers());
+        if (to.isBlank()) {
+            System.err.println("Email: no receivers for case " + caseIndex);
+            return false;
+        }
+
+        String cc = null;
+        if (caseCfg.useGlobalReceivers()
+                && secureData.cc() != null && !secureData.cc().isEmpty()) {
+            cc = String.join(",", secureData.cc());
+        }
+
+        String subject = resolvePlaceholders(caseCfg.subject(), placeholders);
+        String body = resolvePlaceholders(caseCfg.body(), placeholders);
+
+        EmailMessage msg = new EmailMessage(to, cc, subject, body, false,
+                attachments != null ? attachments : List.of());
+
+        EmailConfig emailConfig = new EmailConfig(
+                smtpConfig.smtpHost(), smtpConfig.smtpPort(),
+                smtpConfig.useStartTls(), smtpConfig.useImplicitSsl(),
+                smtpConfig.authMode(),
+                secureData.username(), secureData.credential(),
+                smtpConfig.connectionTimeoutMs(),
+                Map.of("mail.smtp.ssl.protocols", "TLSv1.2 TLSv1.3"));
+
+        try {
+            EmailSender sender = new EmailSender(emailConfig);
+            sender.send(msg);
+            System.out.println("Email sent successfully for case " + caseIndex);
+            return true;
+        } catch (EmailSendingException e) {
+            System.err.println("Email send failed: " + e.getMessage());
+            return false;
+        }
+    }
+
+    private static String resolvePlaceholders(String text, Map<String, String> placeholders) {
+        if (text == null || text.isBlank()) return text;
+        String result = text;
+        for (Map.Entry<String, String> entry : placeholders.entrySet()) {
+            result = result.replace(entry.getKey(), entry.getValue() != null ? entry.getValue() : "");
+        }
+        return result;
     }
 
     // ========== Serialization ==========

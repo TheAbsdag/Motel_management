@@ -7,13 +7,18 @@ package view;
 import java.awt.*;
 import javax.swing.*;
 import net.miginfocom.swing.*;
+import view.helpers.DialogHelper;
+import view.interfaces.TimeLabelInterface;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 /**
  * @author SECC
  */
-public class EmailConfigurationHubView extends JPanel {
+public class EmailConfigurationHubView extends JPanel implements TimeLabelInterface {
     public EmailConfigurationHubView() {
 	initComponents();
+	wireInformativeCheckboxes();
     }
 
     private void initComponents() {
@@ -22,6 +27,7 @@ public class EmailConfigurationHubView extends JPanel {
 	titleInformativeLabel = new JLabel();
 	emailStatusInformativeLabel = new JLabel();
 	emailStatusLabel = new JLabel();
+	emailFeatureEnableCheckBox = new JCheckBox();
 	providerButton = new JButton();
 	generalConfigurationButton = new JButton();
 	emailCasesInformativeLabel = new JLabel();
@@ -68,10 +74,15 @@ public class EmailConfigurationHubView extends JPanel {
 	emailStatusLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
 	add(emailStatusLabel, "cell 0 1");
 
+	//---- emailFeatureEnableCheckBox ----
+	emailFeatureEnableCheckBox.setText("HABILITAR SISTEMA CORREOS");
+	emailFeatureEnableCheckBox.setFont(new Font("Segoe UI Black", Font.PLAIN, 20));
+	add(emailFeatureEnableCheckBox, "cell 1 1");
+
 	//---- providerButton ----
 	providerButton.setText("CONFIGURAR PROOVEDOR");
 	providerButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 20));
-	add(providerButton, "cell 1 1,growy");
+	add(providerButton, "cell 2 1,growy");
 
 	//---- generalConfigurationButton ----
 	generalConfigurationButton.setText("CONFIGURACION GENERAL");
@@ -140,6 +151,7 @@ public class EmailConfigurationHubView extends JPanel {
     private JLabel titleInformativeLabel;
     private JLabel emailStatusInformativeLabel;
     private JLabel emailStatusLabel;
+    private JCheckBox emailFeatureEnableCheckBox;
     private JButton providerButton;
     private JButton generalConfigurationButton;
     private JLabel emailCasesInformativeLabel;
@@ -154,4 +166,93 @@ public class EmailConfigurationHubView extends JPanel {
     private JButton turnCaseButton;
     private JButton backButton;
     // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
+
+    private void wireInformativeCheckboxes() {
+	roomSaleCaseInformativeCheckBox.setEnabled(false);
+	saleCaseInformativeCheckbox.setEnabled(false);
+	turnCaseInformativeCheckBox.setEnabled(false);
+
+	roomSaleCaseInformativeCheckBox.addMouseListener(new MouseAdapter() {
+	    private int clickCount = 0;
+	    @Override
+	    public void mouseClicked(MouseEvent e) {
+		clickCount++;
+		if (clickCount >= 5) {
+		    clickCount = 0;
+		    DialogHelper.showInfoMessage("Seleccione el bot\u00f3n para configurar el caso", "HABITACIONES");
+		}
+	    }
+	});
+	saleCaseInformativeCheckbox.addMouseListener(new MouseAdapter() {
+	    private int clickCount = 0;
+	    @Override
+	    public void mouseClicked(MouseEvent e) {
+		clickCount++;
+		if (clickCount >= 5) {
+		    clickCount = 0;
+		    DialogHelper.showInfoMessage("Seleccione el bot\u00f3n para configurar el caso", "VENTAS");
+		}
+	    }
+	});
+	turnCaseInformativeCheckBox.addMouseListener(new MouseAdapter() {
+	    private int clickCount = 0;
+	    @Override
+	    public void mouseClicked(MouseEvent e) {
+		clickCount++;
+		if (clickCount >= 5) {
+		    clickCount = 0;
+		    DialogHelper.showInfoMessage("Seleccione el bot\u00f3n para configurar el caso", "REPORTE TURNOS");
+		}
+	    }
+	});
+    }
+
+    @Override
+    public void updateTimeDisplay(String timeText, String dateText) {
+    }
+
+    public void onProviderButton(Runnable action) {
+	providerButton.addActionListener(e -> action.run());
+    }
+
+    public void onGeneralConfigurationButton(Runnable action) {
+	generalConfigurationButton.addActionListener(e -> action.run());
+    }
+
+    public void onRoomSaleCaseButton(Runnable action) {
+	roomSaleCaseButton.addActionListener(e -> action.run());
+    }
+
+    public void onSaleCaseButton(Runnable action) {
+	saleCaseButton.addActionListener(e -> action.run());
+    }
+
+    public void onTurnCaseButton(Runnable action) {
+	turnCaseButton.addActionListener(e -> action.run());
+    }
+
+    public void onBackButton(Runnable action) {
+	backButton.addActionListener(e -> action.run());
+    }
+
+    public void setCaseEnabled(int caseIndex, boolean enabled) {
+	switch (caseIndex) {
+	    case 0 -> {
+		roomSaleCaseInformativeCheckBox.setSelected(enabled);
+		roomSaleCaseInformativeLabel.setText(enabled ? "ACTIVO" : "INACTIVO");
+	    }
+	    case 1 -> {
+		saleCaseInformativeCheckbox.setSelected(enabled);
+		saleCaseInformativeLabel.setText(enabled ? "ACTIVO" : "INACTIVO");
+	    }
+	    case 2 -> {
+		turnCaseInformativeCheckBox.setSelected(enabled);
+		turnCaseInformativeLabel.setText(enabled ? "ACTIVO" : "INACTIVO");
+	    }
+	}
+    }
+
+    public void setEmailStatus(String status) {
+	emailStatusLabel.setText(status);
+    }
 }

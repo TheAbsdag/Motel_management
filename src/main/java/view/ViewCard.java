@@ -27,7 +27,12 @@ public enum ViewCard {
     TIME_CONFIG_VIEW("timeConfigView"),
     EXPORT_CONFIG_VIEW("exportConfigView"),
     CURRENCY_CONFIG_VIEW("currencyConfigView"),
-    EMAIL_CONFIG_VIEW("emailConfigView");
+    EMAIL_CONFIG_VIEW("emailConfigView"),
+    EMAIL_PROVIDER_VIEW("emailProviderView"),
+    EMAIL_ROOM_CASE_VIEW("emailRoomCaseView"),
+    EMAIL_ITEM_CASE_VIEW("emailItemCaseView"),
+    EMAIL_TURN_CASE_VIEW("emailTurnCaseView"),
+    EMAIL_GLOBAL_SETTINGS_VIEW("emailGlobalSettingsView");
 
     private final String cardName;
 
