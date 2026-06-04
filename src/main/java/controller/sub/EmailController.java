@@ -133,6 +133,27 @@ public class EmailController {
         userInterface.getEmailItemCaseView().onSaveButton(() -> onCaseSave(CASE_ITEM));
         userInterface.getEmailTurnCaseView().onSaveButton(() -> onCaseSave(CASE_TURN));
 
+        // === Markdown help ===
+        Runnable showMarkdownHelp = () -> DialogHelper.showInfoMessage(
+            "FORMATO MARKDOWN SOPORTADO:\n\n"
+          + "# Título principal\n"
+          + "## Subtítulo\n"
+          + "### Sección\n\n"
+          + "**texto en negrita**\n"
+          + "*texto en cursiva*\n"
+          + "__texto subrayado__\n\n"
+          + "- Elemento de lista\n"
+          + "1. Elemento numerado\n\n"
+          + "[texto del enlace](https://url.com)\n\n"
+          + "--- (línea horizontal)\n\n"
+          + "Doble salto de línea = nuevo párrafo\n"
+          + "Salto simple = nueva línea",
+          "AYUDA MARKDOWN"
+        );
+        userInterface.getEmailRoomCaseView().onMarkdownHelp(showMarkdownHelp);
+        userInterface.getEmailItemCaseView().onMarkdownHelp(showMarkdownHelp);
+        userInterface.getEmailTurnCaseView().onMarkdownHelp(showMarkdownHelp);
+
         // === Global settings save ===
         EmailGlobalConfigurationView globalView = userInterface.getEmailGlobalSettingsView();
         globalView.onSaveButton(this::onGlobalSettingsSave);
