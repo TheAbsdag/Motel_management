@@ -18,6 +18,7 @@ import view.LoadingDialog;
 import view.TurnManagerView;
 import view.UserGUI;
 import view.helpers.DialogHelper;
+import view.helpers.FormatHelper;
 
 /**
  * Controls turn management operations: start, view details, print, end, and reversals.
@@ -326,8 +327,8 @@ public class TurnController {
                     ? " style='color:#c00;'" : "";
             table.append("<tr>");
             table.append("<td>").append(date).append("</td>");
-            table.append("<td>").append(escapeHtml(room)).append("</td>");
-            table.append("<td>").append(escapeHtml(concept)).append("</td>");
+            table.append("<td>").append(FormatHelper.escapeHtml(room)).append("</td>");
+            table.append("<td>").append(FormatHelper.escapeHtml(concept)).append("</td>");
             table.append("<td").append(bg).append(">").append(value).append("</td>");
             table.append("<td>").append(trans).append("</td>");
             table.append("</tr>");
@@ -335,12 +336,6 @@ public class TurnController {
 
         table.append("</tbody></table>");
         return table.toString();
-    }
-
-    private static String escapeHtml(String text) {
-        if (text == null) return "";
-        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-                .replace("\"", "&quot;").replace("'", "&#39;");
     }
 
     // ========== Turn Details ==========

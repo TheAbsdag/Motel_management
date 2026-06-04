@@ -1,6 +1,7 @@
 package controller.sub;
 
 import java.awt.Window;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -607,5 +608,14 @@ public class EmailController {
             model.addElement(v);
         }
         list.setModel(model);
+    }
+
+    public static List<Path> resolveCaseAttachments(EmailConfigurationService emailSvc, int caseIndex, int consecutive) {
+        List<String> names = emailSvc.loadCaseConfigs()
+                .filter(cases -> caseIndex < cases.size())
+                .map(cases -> cases.get(caseIndex).attachments())
+                .orElse(List.of());
+        if (names == null || names.isEmpty()) return List.of();
+        return emailSvc.resolveAttachmentPaths(names, consecutive);
     }
 }

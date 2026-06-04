@@ -18,6 +18,7 @@ import view.SellingView;
 import view.UserGUI;
 import view.helpers.CurrencyFormatter;
 import view.helpers.DialogHelper;
+import view.helpers.FormatHelper;
 import view.helpers.InputParser;
 import view.helpers.TimeFormatter;
 
@@ -206,7 +207,7 @@ public class SellingController {
         placeholders.put("{hourService}", now.format(DateTimeFormatter.ofPattern("hh:mm a")));
         placeholders.put("{dateService}", now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
         placeholders.put("{register}", buildSaleRegisterHtml(items, currency, formattedTotal));
-        List<Path> attachments = resolveCaseAttachments(emailSvc, 1, consecutive);
+        List<Path> attachments = EmailController.resolveCaseAttachments(emailSvc, 1, consecutive);
         EmailController.sendEmailAsync(1, placeholders, attachments, emailSvc);
     }
 
@@ -218,7 +219,7 @@ public class SellingController {
         for (SellingItemData item : items) {
             table.append("<tr>");
             table.append("<td>").append(item.quantity()).append("</td>");
-            table.append("<td>").append(escapeHtml(item.itemName())).append("</td>");
+            table.append("<td>").append(FormatHelper.escapeHtml(item.itemName())).append("</td>");
             table.append("<td>").append(CurrencyFormatter.format(item.price(), currency)).append("</td>");
             table.append("</tr>");
         }
@@ -227,21 +228,7 @@ public class SellingController {
         return table.toString();
     }
 
-    private static String escapeHtml(String text) {
-        if (text == null) return "";
-        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-                .replace("\"", "&quot;").replace("'", "&#39;");
-    }
-
-    private static List<Path> resolveCaseAttachments(EmailConfigurationService emailSvc, int caseIndex, int consecutive) {
-        List<String> names = emailSvc.loadCaseConfigs()
-                .filter(cases -> caseIndex < cases.size())
-                .map(cases -> cases.get(caseIndex).attachments())
-                .orElse(List.of());
-        if (names == null || names.isEmpty()) return List.of();
-        return emailSvc.resolveAttachmentPaths(names, consecutive);
-    }
-
+    
     public void backFromSelling() {
         motelManager.restartSaleManager();
         userInterface.setFloorView();

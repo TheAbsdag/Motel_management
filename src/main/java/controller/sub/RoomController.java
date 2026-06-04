@@ -22,6 +22,7 @@ import view.RoomView;
 import view.UserGUI;
 import view.helpers.CurrencyFormatter;
 import view.helpers.DialogHelper;
+import view.helpers.FormatHelper;
 import view.helpers.InputParser;
 import view.helpers.TimeFormatter;
 
@@ -308,7 +309,7 @@ public class RoomController {
         placeholders.put("{hourService}", now.format(DateTimeFormatter.ofPattern("hh:mm a")));
         placeholders.put("{dateService}", now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
         placeholders.put("{register}", buildRoomRegisterHtml(roomObj.getRoomString(), formattedDuration, formattedPrice, now));
-        List<Path> attachments = resolveCaseAttachments(emailSvc, 0, consecutive);
+        List<Path> attachments = EmailController.resolveCaseAttachments(emailSvc, 0, consecutive);
         EmailController.sendEmailAsync(0, placeholders, attachments, emailSvc);
     }
 
@@ -317,23 +318,8 @@ public class RoomController {
         String date = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         return "<table border='1' cellpadding='4' cellspacing='0' style='border-collapse:collapse;font-family:Segoe UI,sans-serif;font-size:12px;'>"
                 + "<tr><th>Habitación</th><th>Servicio</th><th>Valor</th><th>Hora</th><th>Fecha</th></tr>"
-                + "<tr><td>" + escapeHtml(roomString) + "</td><td>" + escapeHtml(duration) + "</td><td>" + price + "</td><td>" + time + "</td><td>" + date + "</td></tr>"
+                + "<tr><td>" + FormatHelper.escapeHtml(roomString) + "</td><td>" + FormatHelper.escapeHtml(duration) + "</td><td>" + price + "</td><td>" + time + "</td><td>" + date + "</td></tr>"
                 + "</table>";
-    }
-
-    private static String escapeHtml(String text) {
-        if (text == null) return "";
-        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-                .replace("\"", "&quot;").replace("'", "&#39;");
-    }
-
-    private static List<Path> resolveCaseAttachments(EmailConfigurationService emailSvc, int caseIndex, int consecutive) {
-        List<String> names = emailSvc.loadCaseConfigs()
-                .filter(cases -> caseIndex < cases.size())
-                .map(cases -> cases.get(caseIndex).attachments())
-                .orElse(List.of());
-        if (names == null || names.isEmpty()) return List.of();
-        return emailSvc.resolveAttachmentPaths(names, consecutive);
     }
 
     // ========== Room Reassignment ==========

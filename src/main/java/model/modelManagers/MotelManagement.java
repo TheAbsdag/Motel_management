@@ -570,6 +570,7 @@ public class MotelManagement implements ISellingService, IHistoryService {
 
     public void saveCurrencyConfiguration(CurrencyConfig config) {
         programConfig.setCurrencyConfig(config);
+        printer.setCurrencyConfig(config);
         files.saveJsonMainDataPath(programConfig.toJson(), "applicationProperties");
     }
 

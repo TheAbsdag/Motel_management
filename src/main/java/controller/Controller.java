@@ -224,7 +224,7 @@ public class Controller {
      * Wires all action/list selection listeners by delegating to each sub-controller's
      * initListeners() method, then setting up cross-view listeners.
      */
-    public void setupListeners() {
+    private void setupListeners() {
         // Have each sub-controller register its own listeners
         floorController.initListeners();
         roomController.initListeners();
