@@ -1,5 +1,6 @@
 package controller.sub;
 
+import java.awt.Window;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +20,7 @@ import view.EmailConfigurationHubView;
 import view.EmailGlobalConfigurationView;
 import view.EmailProviderConfigurationView;
 import view.ExportConfigurationView;
+import view.LoadingDialog;
 import view.UserGUI;
 import view.helpers.DialogHelper;
 
@@ -84,11 +86,13 @@ public class EmailController {
         },
         CASE_TURN, new String[]{
             "{motelName}", "{motelAddress}", "{motelID}",
-            "{turnNumber}", "{turnStart}", "{turnEnd}",
+            "{turnNumber}", "{turnStart}", "{turnEnd}", "{turnDuration}",
             "{totalRooms}", "{totalItems}", "{totalSales}",
-            "{totalRefunds}", "{totalSpending}", "{totalTurn}",
+            "{totalItemRefunds}", "{totalRoomRefunds}", "{totalRefunds}",
+            "{totalSpending}", "{totalTurn}",
             "{totalBankTransfers}", "{totalDeposits}", "{totalNet}",
-            "{consecutiveTrans}", "{date}"
+            "{consecutiveTrans}", "{date}",
+            "{activityTable}"
         }
     );
 
@@ -323,6 +327,10 @@ public class EmailController {
             port = preset.getSmtpPort();
             username = email;
             credential = view.getAppPasswordText();
+            if ("\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022".equals(credential)) {
+                credential = emailService.loadSecureData()
+                        .map(EmailSecureData::credential).orElse("");
+            }
         } else {
             host = view.getSmtpHost();
             if (host.isBlank()) {
@@ -338,9 +346,13 @@ public class EmailController {
             String smtpUser = view.getSmtpUser();
             username = smtpUser.isBlank() ? email : smtpUser;
             credential = view.getSmtpPassword();
+            if ("\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022".equals(credential)) {
+                credential = emailService.loadSecureData()
+                        .map(EmailSecureData::credential).orElse("");
+            }
         }
 
-        if (credential.isBlank()) {
+        if (credential == null || credential.isBlank()) {
             DialogHelper.showInfoMessage("Debe ingresar una contrase\u00f1a para verificar la conexi\u00f3n", "ERROR");
             return;
         }
@@ -349,13 +361,22 @@ public class EmailController {
         boolean useSsl = port == 465;
 
         EmailSmtpConfig smtp = new EmailSmtpConfig(host, port, useTls, useSsl, AuthMode.PASSWORD, 5000);
+        EmailSmtpConfig finalSmtp = smtp;
+        String finalUsername = username;
+        String finalCredential = credential;
 
-        boolean ok = emailService.verifyConnection(smtp, username, credential);
-        if (ok) {
-            DialogHelper.showInfoMessage("Conexi\u00f3n exitosa", "VERIFICAR");
-        } else {
-            DialogHelper.showErrorMessage("Error de conexi\u00f3n. Revise los datos del proveedor", "ERROR");
-        }
+        java.awt.Window parent = SwingUtilities.getWindowAncestor(view);
+        LoadingDialog loading = new LoadingDialog(parent, "Verificando conexi\u00f3n SMTP...");
+        loading.showAsync(() -> {
+            boolean ok = emailService.verifyConnection(finalSmtp, finalUsername, finalCredential);
+            SwingUtilities.invokeLater(() -> {
+                if (ok) {
+                    DialogHelper.showInfoMessage("Conexi\u00f3n exitosa", "VERIFICAR");
+                } else {
+                    DialogHelper.showErrorMessage("Error de conexi\u00f3n. Revise los datos del proveedor", "ERROR");
+                }
+            });
+        });
     }
 
     // ========== Case Save ==========
@@ -512,10 +533,12 @@ public class EmailController {
                     recvModel.addElement(r);
                 }
                 var attModel = caseView.getAttachmentModel();
+                List<String> savedAttachments = cfg.attachments();
                 for (int ai = 0; ai < attModel.size(); ai++) {
                     var item = attModel.getElementAt(ai);
-                    item.setSelected(cfg.attachments().contains(item.getName()));
+                    item.setSelected(savedAttachments != null && savedAttachments.contains(item.getName()));
                 }
+                caseView.refreshAttachmentList();
                 emailHubView.setCaseEnabled(i, cfg.enabled());
             }
         });

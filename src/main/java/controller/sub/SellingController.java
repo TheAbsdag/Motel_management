@@ -1,5 +1,6 @@
 package controller.sub;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import model.ProgramConfig;
@@ -176,14 +177,25 @@ public class SellingController {
         EmailConfigurationService emailSvc = motelManager.getEmailConfigurationService();
         if (!emailSvc.isEmailEnabled() || !emailSvc.validateCaseConfig(1)) return;
         ProgramConfig cfg = motelManager.getProgramConfig();
+        int consecutive = motelManager.getTurnService().getConsecutiveTransaction();
         Map<String, String> placeholders = Map.of(
                 "{motelName}", cfg.getMotelName(),
                 "{motelAddress}", cfg.getMotelAddress(),
                 "{motelID}", cfg.getMotelID(),
                 "{totalPrice}", String.valueOf(motelManager.getCurrentTotalPriceSellingList()),
-                "{consecutiveTrans}", String.valueOf(motelManager.getTurnService().getConsecutiveTransaction()),
+                "{consecutiveTrans}", String.valueOf(consecutive),
                 "{date}", java.time.LocalDate.now().toString());
-        EmailController.sendEmailAsync(1, placeholders, List.of(), emailSvc);
+        List<Path> attachments = resolveCaseAttachments(emailSvc, 1, consecutive);
+        EmailController.sendEmailAsync(1, placeholders, attachments, emailSvc);
+    }
+
+    private static List<Path> resolveCaseAttachments(EmailConfigurationService emailSvc, int caseIndex, int consecutive) {
+        List<String> names = emailSvc.loadCaseConfigs()
+                .filter(cases -> caseIndex < cases.size())
+                .map(cases -> cases.get(caseIndex).attachments())
+                .orElse(List.of());
+        if (names == null || names.isEmpty()) return List.of();
+        return emailSvc.resolveAttachmentPaths(names, consecutive);
     }
 
     public void backFromSelling() {

@@ -1,6 +1,7 @@
 package controller.sub;
 
 import java.awt.Window;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -201,12 +202,21 @@ public class TurnController {
         Map<String, String> placeholders = buildTurnPlaceholders();
         if (placeholders == null) return;
 
+        int turnNumber = Integer.parseInt(placeholders.getOrDefault("{turnNumber}", "0"));
+        EmailConfigurationService emailSvc = motelManager.getEmailConfigurationService();
+        List<String> attNames = emailSvc.loadCaseConfigs()
+                .filter(cases -> 2 < cases.size())
+                .map(cases -> cases.get(2).attachments())
+                .orElse(List.of());
+        List<Path> attachments = (attNames != null && !attNames.isEmpty())
+                ? emailSvc.resolveAttachmentPaths(attNames, turnNumber)
+                : List.of();
+
         Window parent = SwingUtilities.getWindowAncestor(turnManagerView);
         LoadingDialog loading = new LoadingDialog(parent, "Enviando correo de reporte de turno...");
 
         loading.showAsync(() -> {
-            EmailConfigurationService emailSvc = motelManager.getEmailConfigurationService();
-            boolean sent = emailSvc.sendCaseEmail(2, placeholders, List.of());
+            boolean sent = emailSvc.sendCaseEmail(2, placeholders, attachments);
             if (!sent) {
                 SwingUtilities.invokeLater(() ->
                     DialogHelper.showErrorMessage(
@@ -226,9 +236,12 @@ public class TurnController {
         placeholders.put("{turnNumber}", String.valueOf(details.getTurnNumber()));
         placeholders.put("{turnStart}", details.getTurnStart() != null ? details.getTurnStart().toString() : "");
         placeholders.put("{turnEnd}", details.getTurnEnd() != null ? details.getTurnEnd().toString() : "");
+        placeholders.put("{turnDuration}", formatDuration(details));
         placeholders.put("{totalRooms}", String.valueOf(details.getTotalRooms()));
         placeholders.put("{totalItems}", String.valueOf(details.getTotalItems()));
         placeholders.put("{totalSales}", String.valueOf(details.getTotalSales()));
+        placeholders.put("{totalItemRefunds}", String.valueOf(details.getTotalItemRefunds()));
+        placeholders.put("{totalRoomRefunds}", String.valueOf(details.getTotalRoomRefunds()));
         placeholders.put("{totalRefunds}", String.valueOf(details.getTotalRefunds()));
         placeholders.put("{totalSpending}", String.valueOf(details.getTotalSpending()));
         placeholders.put("{totalTurn}", String.valueOf(details.getTotalTurn()));
@@ -237,7 +250,86 @@ public class TurnController {
         placeholders.put("{totalNet}", String.valueOf(details.getTotalNet()));
         placeholders.put("{consecutiveTrans}", String.valueOf(motelManager.getTurnService().getConsecutiveTransaction()));
         placeholders.put("{date}", java.time.LocalDate.now().toString());
+        placeholders.put("{activityTable}", buildActivityTableHtml(details));
         return placeholders;
+    }
+
+    private static String formatDuration(TurnDetails details) {
+        if (details.getTurnStart() == null) return "";
+        java.time.ZonedDateTime end = details.getTurnEnd() != null
+                ? details.getTurnEnd() : java.time.ZonedDateTime.now();
+        long seconds = java.time.Duration.between(details.getTurnStart(), end).getSeconds();
+        long hours = seconds / 3600;
+        long minutes = (seconds % 3600) / 60;
+        if (hours > 0) return hours + "h " + minutes + "m";
+        return minutes + "m";
+    }
+
+    private static String buildActivityTableHtml(TurnDetails details) {
+        List<model.turn.TurnActivity> activities = details.getActivities();
+        if (activities == null || activities.isEmpty()) return "<p>Sin actividades</p>";
+
+        StringBuilder table = new StringBuilder();
+        table.append("<table border='1' cellpadding='4' cellspacing='0' style='border-collapse:collapse;width:100%;font-family:Segoe UI,sans-serif;font-size:12px;'>");
+        table.append("<thead><tr style='background:#f0f0f0;'>");
+        table.append("<th>Fecha</th><th>Habitación</th><th>Concepto</th><th>Valor</th><th>Trans</th>");
+        table.append("</tr></thead><tbody>");
+
+        for (model.turn.TurnActivity act : activities) {
+            String date = act.changeDate() != null
+                    ? act.changeDate().format(java.time.format.DateTimeFormatter.ofPattern("MM/dd HH:mm"))
+                    : "";
+            String room = "";
+            String concept = "";
+            String value = "";
+            String trans = String.valueOf(act.consecutiveTrans());
+
+            if (act instanceof model.turn.RoomBookingActivity r) {
+                room = r.roomString();
+                concept = "Habitación";
+                value = String.valueOf(r.price());
+            } else if (act instanceof model.turn.SaleActivity s) {
+                room = s.roomSoldTo();
+                concept = "Venta (" + s.items().size() + " ítems)";
+                value = String.valueOf(s.items().stream().mapToLong(model.turn.SaleItem::price).sum());
+            } else if (act instanceof model.turn.RoomSwapActivity sw) {
+                room = sw.originalRoom() + " → " + sw.swappedRoom();
+                concept = "Cambio";
+                value = "—";
+            } else if (act instanceof model.turn.RefundActivity ref) {
+                room = ref.refundRoom();
+                concept = "Devolución " + (ref.refundType() == model.turn.RefundType.ROOM_REFUND ? "hab." : "venta");
+                value = String.valueOf(ref.price());
+            } else if (act instanceof model.turn.SpendingActivity sp) {
+                room = "—";
+                concept = "Gasto: " + sp.description();
+                value = String.valueOf(sp.value());
+            } else if (act instanceof model.turn.ExtraChangeActivity ec) {
+                room = "—";
+                concept = (ec.extraType() == model.turn.ExtraChangeType.BANK_TRANSFER ? "Transf." : "Depósito")
+                        + ": " + ec.description();
+                value = String.valueOf(ec.value());
+            }
+
+            String bg = (value.startsWith("-") || (act instanceof model.turn.RefundActivity))
+                    ? " style='color:#c00;'" : "";
+            table.append("<tr>");
+            table.append("<td>").append(date).append("</td>");
+            table.append("<td>").append(escapeHtml(room)).append("</td>");
+            table.append("<td>").append(escapeHtml(concept)).append("</td>");
+            table.append("<td").append(bg).append(">").append(value).append("</td>");
+            table.append("<td>").append(trans).append("</td>");
+            table.append("</tr>");
+        }
+
+        table.append("</tbody></table>");
+        return table.toString();
+    }
+
+    private static String escapeHtml(String text) {
+        if (text == null) return "";
+        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+                .replace("\"", "&quot;").replace("'", "&#39;");
     }
 
     // ========== Turn Details ==========

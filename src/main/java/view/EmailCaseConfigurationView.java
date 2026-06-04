@@ -6,11 +6,14 @@ package view;
 
 import java.awt.*;
 import javax.swing.*;
+import javax.swing.text.JTextComponent;
 import net.miginfocom.swing.*;
 import view.interfaces.TimeLabelInterface;
 import view.customListRenderes.CheckboxListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.ButtonGroup;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -21,12 +24,16 @@ public class EmailCaseConfigurationView extends JPanel implements TimeLabelInter
     private final int caseIndex;
     private DefaultListModel<CheckableItem> attachmentModel;
 
+    private JTextComponent lastFocusedText;
+
     public EmailCaseConfigurationView(int caseIndex) {
 	this.caseIndex = caseIndex;
 	initComponents();
 	wireAttachmentCheckboxList();
 	setCaseName(caseIndex);
 	setupReceiverRadioGroup();
+	trackTextFocus();
+	setupVariableInsertion();
     }
 
     private void initComponents() {
@@ -350,6 +357,10 @@ public class EmailCaseConfigurationView extends JPanel implements TimeLabelInter
 	return attachmentModel;
     }
 
+    public void refreshAttachmentList() {
+	attachmentList.repaint();
+    }
+
     public DefaultListModel<String> getSpecificReceiversModel() {
 	if (!(specificReceiversList.getModel() instanceof DefaultListModel)) {
 	    specificReceiversList.setModel(new DefaultListModel<String>());
@@ -381,5 +392,37 @@ public class EmailCaseConfigurationView extends JPanel implements TimeLabelInter
 
     public void setBody(String body) {
 	bodyTextArea.setText(body);
+    }
+
+    private void trackTextFocus() {
+	FocusAdapter fl = new FocusAdapter() {
+	    @Override
+	    public void focusGained(FocusEvent e) {
+		lastFocusedText = (JTextComponent) e.getSource();
+	    }
+	};
+	subjectTextField.addFocusListener(fl);
+	bodyTextArea.addFocusListener(fl);
+    }
+
+    private void setupVariableInsertion() {
+	availableVariablesList.addMouseListener(new MouseAdapter() {
+	    @Override
+	    public void mouseClicked(MouseEvent e) {
+		if (e.getClickCount() == 2) {
+		    int idx = availableVariablesList.locationToIndex(e.getPoint());
+		    if (idx >= 0) {
+			String variable = (String) availableVariablesList.getModel().getElementAt(idx);
+			JTextComponent target = lastFocusedText != null ? lastFocusedText : bodyTextArea;
+			int pos = target.getCaretPosition();
+			try {
+			    target.getDocument().insertString(pos, variable, null);
+			} catch (Exception ex) {
+			    target.setText(target.getText() + variable);
+			}
+		    }
+		}
+	    }
+	});
     }
 }

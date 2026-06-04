@@ -9,13 +9,17 @@ import jakarta.mail.Authenticator;
 import jakarta.mail.PasswordAuthentication;
 import jakarta.mail.Session;
 import jakarta.mail.Transport;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Stream;
 import model.email.config.AuthMode;
 import model.email.config.CredentialStore;
 import model.email.config.EmailCaseConfig;
@@ -202,6 +206,41 @@ public class EmailConfigurationService {
         } catch (EmailSendingException e) {
             System.err.println("Email send failed: " + e.getMessage());
             return false;
+        }
+    }
+
+    /**
+     * Resolves attachment display names (e.g. "Recibo PDF") to actual file paths
+     * by scanning the receiptPrints/ and reports/ directories.
+     */
+    public List<Path> resolveAttachmentPaths(List<String> attachmentNames, int consecutiveTrans) {
+        if (attachmentNames == null || attachmentNames.isEmpty()) return List.of();
+        List<Path> resolved = new ArrayList<>();
+        Path receiptDir = Path.of(FileManager.PATH, "receiptPrints");
+        Path reportDir = Path.of(FileManager.PATH, "reports");
+
+        for (String name : attachmentNames) {
+            Path found = switch (name) {
+                case "Recibo PDF" -> findFile(receiptDir, "-No" + consecutiveTrans + "-", ".pdf");
+                case "Resumen PDF" -> findFile(receiptDir, "-No" + consecutiveTrans + "-summarizedTurn", ".pdf");
+                case "Detalle PDF" -> findFile(receiptDir, "-No" + consecutiveTrans + "-detailedTurnTurn", ".pdf");
+                case "Reporte XLSX" -> findFile(reportDir, "Turno_" + consecutiveTrans + "_", ".xlsx");
+                default -> null;
+            };
+            if (found != null) resolved.add(found);
+        }
+        return resolved;
+    }
+
+    private static Path findFile(Path dir, String nameContains, String suffix) {
+        if (!Files.isDirectory(dir)) return null;
+        try (Stream<Path> files = Files.list(dir)) {
+            return files.filter(f -> f.getFileName().toString().contains(nameContains)
+                    && f.getFileName().toString().endsWith(suffix))
+                    .max(Comparator.comparing(f -> f.toFile().lastModified()))
+                    .orElse(null);
+        } catch (IOException e) {
+            return null;
         }
     }
 

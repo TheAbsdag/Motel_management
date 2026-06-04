@@ -1,6 +1,7 @@
 package controller.sub;
 
 import java.awt.Color;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import javax.swing.JButton;
@@ -280,6 +281,7 @@ public class RoomController {
         Room roomObj = motelManager.getRoom(tower, floor, room);
         if (roomObj == null) return;
         ProgramConfig cfg = motelManager.getProgramConfig();
+        int consecutive = motelManager.getTurnService().getConsecutiveTransaction();
         Map<String, String> placeholders = java.util.Map.of(
                 "{motelName}", cfg.getMotelName(),
                 "{motelAddress}", cfg.getMotelAddress(),
@@ -287,9 +289,19 @@ public class RoomController {
                 "{roomString}", roomObj.getRoomString(),
                 "{towerNumber}", String.valueOf(tower),
                 "{floorNumber}", String.valueOf(floor),
-                "{consecutiveTrans}", String.valueOf(motelManager.getTurnService().getConsecutiveTransaction()),
+                "{consecutiveTrans}", String.valueOf(consecutive),
                 "{date}", java.time.LocalDate.now().toString());
-        EmailController.sendEmailAsync(0, placeholders, List.of(), emailSvc);
+        List<Path> attachments = resolveCaseAttachments(emailSvc, 0, consecutive);
+        EmailController.sendEmailAsync(0, placeholders, attachments, emailSvc);
+    }
+
+    private static List<Path> resolveCaseAttachments(EmailConfigurationService emailSvc, int caseIndex, int consecutive) {
+        List<String> names = emailSvc.loadCaseConfigs()
+                .filter(cases -> caseIndex < cases.size())
+                .map(cases -> cases.get(caseIndex).attachments())
+                .orElse(List.of());
+        if (names == null || names.isEmpty()) return List.of();
+        return emailSvc.resolveAttachmentPaths(names, consecutive);
     }
 
     // ========== Room Reassignment ==========
