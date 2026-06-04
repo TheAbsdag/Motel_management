@@ -1,8 +1,10 @@
 package controller.sub;
 
+import java.awt.Window;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.swing.SwingUtilities;
 import model.ProgramConfig;
 import model.dto.TurnActivityData;
 import model.dto.TurnSummaryItemData;
@@ -10,6 +12,7 @@ import model.modelManagers.EmailConfigurationService;
 import model.modelManagers.MotelManagement;
 import model.turn.ActivityType;
 import model.turn.TurnDetails;
+import view.LoadingDialog;
 import view.TurnManagerView;
 import view.UserGUI;
 import view.helpers.DialogHelper;
@@ -151,9 +154,10 @@ public class TurnController {
      * clears backups, and attempts email report if configured.
      */
     public void endTurn() {
-        // --- Email pre-check (walidaci\u00f3n de conexi\u00f3n antes de terminar) ---
+        // --- Email pre-check (validaci\u00f3n de conexi\u00f3n antes de terminar) ---
         EmailConfigurationService emailSvc = motelManager.getEmailConfigurationService();
-        if (emailSvc.isEmailEnabled() && emailSvc.validateCaseConfig(2)) {
+        boolean emailConfigured = emailSvc.isEmailEnabled() && emailSvc.validateCaseConfig(2);
+        if (emailConfigured) {
             var smtpOpt = emailSvc.loadSmtpConfig();
             var secureOpt = emailSvc.loadSecureData();
             if (smtpOpt.isPresent() && secureOpt.isPresent()) {
@@ -185,19 +189,35 @@ public class TurnController {
             motelManager.turnEndPrint(3);
         }
 
-        // --- Email send attempt ---
-        attemptTurnEmail();
+        // --- Email send attempt with loading dialog ---
+        if (emailConfigured) {
+            attemptTurnEmailWithLoading();
+        }
 
         userInterface.setTurnSelect();
     }
 
-    private void attemptTurnEmail() {
-        EmailConfigurationService emailSvc = motelManager.getEmailConfigurationService();
-        if (!emailSvc.isEmailEnabled() || !emailSvc.validateCaseConfig(2)) return;
+    private void attemptTurnEmailWithLoading() {
+        Map<String, String> placeholders = buildTurnPlaceholders();
+        if (placeholders == null) return;
 
+        Window parent = SwingUtilities.getWindowAncestor(turnManagerView);
+        LoadingDialog loading = new LoadingDialog(parent, "Enviando correo de reporte de turno...");
+
+        loading.showAsync(() -> {
+            EmailConfigurationService emailSvc = motelManager.getEmailConfigurationService();
+            boolean sent = emailSvc.sendCaseEmail(2, placeholders, List.of());
+            if (!sent) {
+                SwingUtilities.invokeLater(() ->
+                    DialogHelper.showErrorMessage(
+                        "Error al enviar correo de reporte de turno", "CORREO"));
+            }
+        });
+    }
+
+    private Map<String, String> buildTurnPlaceholders() {
         TurnDetails details = motelManager.getCurrentTurnDetailedInfo();
-        if (details == null) return;
-
+        if (details == null) return null;
         ProgramConfig cfg = motelManager.getProgramConfig();
         Map<String, String> placeholders = new HashMap<>();
         placeholders.put("{motelName}", cfg.getMotelName());
@@ -217,12 +237,7 @@ public class TurnController {
         placeholders.put("{totalNet}", String.valueOf(details.getTotalNet()));
         placeholders.put("{consecutiveTrans}", String.valueOf(motelManager.getTurnService().getConsecutiveTransaction()));
         placeholders.put("{date}", java.time.LocalDate.now().toString());
-
-        boolean sent = emailSvc.sendCaseEmail(2, placeholders, List.of());
-        if (!sent) {
-            DialogHelper.showInfoMessage(
-                    "Error al enviar correo de reporte de turno", "CORREO");
-        }
+        return placeholders;
     }
 
     // ========== Turn Details ==========
