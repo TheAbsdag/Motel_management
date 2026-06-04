@@ -6,6 +6,7 @@ package view;
 
 import java.awt.*;
 import javax.swing.*;
+import javax.swing.BorderFactory;
 import net.miginfocom.swing.*;
 import view.interfaces.TimeLabelInterface;
 import javax.swing.DefaultListModel;
@@ -23,6 +24,7 @@ public class EmailGlobalConfigurationView extends JPanel implements TimeLabelInt
 	initComponents();
 	trackActiveList();
 	ensureModels();
+	receiverList.setBorder(BorderFactory.createLineBorder(new java.awt.Color(0, 120, 215), 3));
     }
 
     private void initComponents() {
@@ -166,7 +168,10 @@ public class EmailGlobalConfigurationView extends JPanel implements TimeLabelInt
 	FocusAdapter fl = new FocusAdapter() {
 	    @Override
 	    public void focusGained(FocusEvent e) {
+		JList<?> prev = activeList;
 		activeList = (JList<?>) e.getSource();
+		if (prev != null) prev.setBorder(null);
+		activeList.setBorder(BorderFactory.createLineBorder(new java.awt.Color(0, 120, 215), 3));
 		updateRemoveButton();
 	    }
 	};
@@ -243,6 +248,11 @@ public class EmailGlobalConfigurationView extends JPanel implements TimeLabelInt
 
     public void clearActiveSelection() {
 	activeList.clearSelection();
+	for (JList list : new JList[]{receiverList, carbonCopyList, bindCarbonCopyList}) {
+	    list.setBorder(null);
+	}
+	receiverList.setBorder(BorderFactory.createLineBorder(new java.awt.Color(0, 120, 215), 3));
+	activeList = receiverList;
 	updateRemoveButton();
     }
 }
