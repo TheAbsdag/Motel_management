@@ -157,7 +157,20 @@ public class Controller {
 
         // Wire spending and extra changes confirmation actions
         userInterface.getSpendingRegisterView().onConfirmationButton(this::registerSpending);
-        userInterface.getExtraTurnChangesView().onConfirmationButton(this::registerExtraChanges);
+        var extraChangesView = userInterface.getExtraTurnChangesView();
+        extraChangesView.onConfirmationButton(this::registerExtraChanges);
+        extraChangesView.onBankTransferChange(() -> {
+            if (extraChangesView.isBankTransferSelected()) {
+                extraChangesView.setConfirmationEnabled(true);
+                extraChangesView.setSafeDepositSelected(false);
+            }
+        });
+        extraChangesView.onSafeDepositChange(() -> {
+            if (extraChangesView.isSafeDepositSelected()) {
+                extraChangesView.setConfirmationEnabled(true);
+                extraChangesView.setBankTransferSelected(false);
+            }
+        });
     }
 
     /**

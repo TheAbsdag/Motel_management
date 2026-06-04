@@ -38,7 +38,7 @@ import model.json.TimeSlotConfig;
 import model.json.TowerConfig;
 import view.helpers.TimeFormatter;
 
-public class MotelManagement implements ISellingService, IHistoryService {
+public class MotelManagement {
 
     private final FileManager files;
     private final RoomManager roomManager;
@@ -246,24 +246,6 @@ public class MotelManagement implements ISellingService, IHistoryService {
         roomManager.setDesiredRoomChange(tower, floor, room);
     }
 
-    /**
-     * @deprecated due to encapsulization, used metod: setDesiredRoomChange
-     * @return 
-     */
-    public int getSelectedRoomChangeRoom() { return roomManager.getSelectedRoomChangeRoom(); }
-    
-    /**
-     * @deprecated due to encapsulization, used metod: setDesiredRoomChange
-     * @return 
-     */
-    public int getSelectedRoomChangeFloor() { return roomManager.getSelectedRoomChangeFloor(); }
-    
-    /**
-     * @deprecated due to encapsulization, used metod: setDesiredRoomChange
-     * @return 
-     */
-    public int getSelectedRoomChangeTower() { return roomManager.getSelectedRoomChangeTower(); }
-
     // ========== Turn Operations ==========
 
     public void setNewTurn(int turnNumber) {
@@ -288,42 +270,34 @@ public class MotelManagement implements ISellingService, IHistoryService {
 
     // ========== Inventory / Selling Operations ==========
 
-    @Override
     public void restartSaleManager() {
         sellingService.restartSaleManager();
     }
 
-    @Override
     public String getInventoryData() {
         return sellingService.getInventoryData();
     }
 
-    @Override
     public boolean saveItemInformation(InventoryItemData item) {
         return sellingService.saveItemInformation(item);
     }
 
-    @Override
     public void newItemCreated(String name, long price, long quantity) {
         sellingService.newItemCreated(name, price, quantity);
     }
 
-    @Override
     public void deleteItemFromInventory(long itemID) {
         sellingService.deleteItemFromInventory(itemID);
     }
 
-    @Override
     public void addItemToSelling(long itemID, long quantity, boolean courtesySale) {
         sellingService.addItemToSelling(itemID, quantity, courtesySale);
     }
 
-    @Override
     public void removeItemToSelling(long itemID) {
         sellingService.removeItemToSelling(itemID);
     }
 
-    @Override
     public long getCurrentTotalPriceSellingList() {
         return sellingService.getCurrentTotalPriceSellingList();
     }
@@ -342,23 +316,6 @@ public class MotelManagement implements ISellingService, IHistoryService {
         SaleActivity transaction = turnService.saveTransactionInformation(
                 sellingItems, roomSoldTo, currentTime, programConfig.getConsecutiveTransaction());
         printer.printItemSold(transaction, programConfig.getConsecutiveTransaction(), !print);
-    }
-
-    /**
-     * @deprecated Legacy functionality management, deprecated due to new TurnController and TurnService
-     * @param activity 
-     */
-    public void revertItemSale(TurnActivityData activity) {
-        long itemID = activity.getItemID();
-        long quantity = activity.getQuantity();
-        Item currentItem = sellingService.getItemFromItemID(itemID);
-        if (currentItem != null) {
-            currentItem.itemAdded(quantity);
-        }
-        TurnActivity turnActivity = turnService.findActivity(activity.getConsecutiveTrans(), ActivityType.SALE);
-        if (turnActivity != null) {
-            turnService.reverseItemSaleFromTurn(turnActivity, itemID, quantity);
-        }
     }
 
     // ========== Spending / Extra Changes / Refunds ==========
@@ -471,12 +428,10 @@ public class MotelManagement implements ISellingService, IHistoryService {
 
     // ========== History Operations ==========
 
-    @Override
     public String getHistoryData() {
         return historyService.getHistoryData();
     }
 
-    @Override
     public void generateHistoryTurnReport(int selectedRow) {
         historyService.generateHistoryTurnReport(selectedRow);
     }
@@ -493,12 +448,10 @@ public class MotelManagement implements ISellingService, IHistoryService {
         return turnService.getTurnSummaryDataList();
     }
 
-    @Override
     public List<TurnHistoryData> getTurnHistoryDataList() {
         return historyService.getTurnHistoryDataList();
     }
 
-    @Override
     public void turnHistoryPrint(int option, int selectedRow) {
         TurnDetails details = historyService.getHistoryTurn(selectedRow).getDetailedTurnInformation();
         turnService.turnHistoryPrint(option, details);
@@ -506,12 +459,10 @@ public class MotelManagement implements ISellingService, IHistoryService {
 
     // ========== DTO Access Methods ==========
 
-    @Override
     public List<InventoryItemData> getInventoryItemDataList() {
         return sellingService.getInventoryItemDataList();
     }
 
-    @Override
     public List<SellingItemData> getSellingItemDataList() {
         return sellingService.getSellingItemDataList();
     }
@@ -524,14 +475,6 @@ public class MotelManagement implements ISellingService, IHistoryService {
         programConfig.setMotelID(id);
         printer.setPrinterVariables(name, address, id);
         files.saveJsonMainDataPath(programConfig.toJson(), "applicationProperties");
-    }
-
-    /**
-     * @deprecated legacy code, room manager is called directly when required, and active rebuilt only done 
-     * for in project modifications (roomFloorConfigurationView)
-     */
-    public void rebuildRoomGridFromConfig() {
-        roomManager.rebuildRoomGrid(programConfig.getRoomsPerTower());
     }
 
     private void populateConfigTimeData() {

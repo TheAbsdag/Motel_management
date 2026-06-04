@@ -39,19 +39,6 @@ public class ExtraTurnChangesView extends JPanel {
         addBigValueButton.addActionListener(e -> updateValue(1000L));
         minusBigValueButton.addActionListener(e -> updateValue(-1000L));
         minusSmallValueButton.addActionListener(e -> updateValue(-100L));
-
-        bankTransferBox.addItemListener(e -> {
-            if (bankTransferBox.isSelected()) {
-                confirmationButton.setEnabled(true);
-                saveDespositBox.setSelected(false);
-            }
-        });
-        saveDespositBox.addItemListener(e -> {
-            if (saveDespositBox.isSelected()) {
-                confirmationButton.setEnabled(true);
-                bankTransferBox.setSelected(false);
-            }
-        });
     }
 
     private void updateValue(long value) {
@@ -89,6 +76,10 @@ public class ExtraTurnChangesView extends JPanel {
     public void onConfirmationButton(Runnable action) { confirmationButton.addActionListener(e -> action.run()); }
     /** Enables or disables the confirmation button. */
     public void setConfirmationEnabled(boolean enabled) { confirmationButton.setEnabled(enabled); }
+    /** Registers a listener for bank transfer checkbox changes. */
+    public void onBankTransferChange(Runnable action) { bankTransferBox.addItemListener(e -> action.run()); }
+    /** Registers a listener for safe deposit checkbox changes. */
+    public void onSafeDepositChange(Runnable action) { saveDespositBox.addItemListener(e -> action.run()); }
 
     private void initComponents() {
         // JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents  @formatter:off

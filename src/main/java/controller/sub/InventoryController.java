@@ -3,8 +3,8 @@ package controller.sub;
 import java.util.List;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import model.modelManagers.ISellingService;
 import model.dto.InventoryItemData;
+import model.modelManagers.MotelManagement;
 import view.InventoryManagementView;
 import view.helpers.InputParser;
 
@@ -22,16 +22,16 @@ import view.helpers.InputParser;
  */
 public class InventoryController {
 
-    private final ISellingService sellingService;
+    private final MotelManagement motelManager;
     private final InventoryManagementView inventoryView;
     private final Runnable onBack;
     private final Runnable saveMainFiles;
     private final Runnable saveBackupFilesRoomSwap;
     private boolean isListAdjusting = false;
 
-    public InventoryController(ISellingService sellingService, InventoryManagementView inventoryView,
+    public InventoryController(MotelManagement motelManager, InventoryManagementView inventoryView,
                                Runnable onBack, Runnable saveMainFiles, Runnable saveBackupFilesRoomSwap) {
-        this.sellingService = sellingService;
+        this.motelManager = motelManager;
         this.inventoryView = inventoryView;
         this.onBack = onBack;
         this.saveMainFiles = saveMainFiles;
@@ -91,7 +91,7 @@ public class InventoryController {
         int rowSelected = inventoryView.getSelectedInventoryRow();
         if (rowSelected != -1) {
             InventoryItemData selectedItem = inventoryView.getCurrentSelectedItem(rowSelected);
-            sellingService.deleteItemFromInventory(selectedItem.itemID());
+            motelManager.deleteItemFromInventory(selectedItem.itemID());
         }
         updateViewData();
         setModificators(false);
@@ -115,9 +115,9 @@ public class InventoryController {
             InventoryItemData selectedItem = inventoryView.getCurrentSelectedItem(rowSelected);
             InventoryItemData updatedItem = new InventoryItemData(
                     selectedItem.itemID(), newName, newPrice, newQuantity);
-            sellingService.saveItemInformation(updatedItem);
+            motelManager.saveItemInformation(updatedItem);
         } else {
-            sellingService.newItemCreated(newName, newPrice, newQuantity);
+            motelManager.newItemCreated(newName, newPrice, newQuantity);
         }
         setModificators(false);
         inventoryView.clearInventorySelection();
@@ -159,7 +159,7 @@ public class InventoryController {
 
     /** Refreshes the inventory table data. */
     public void updateViewData() {
-        inventoryView.updateInventory(sellingService.getInventoryItemDataList());
+        inventoryView.updateInventory(motelManager.getInventoryItemDataList());
     }
 
 }

@@ -1,7 +1,7 @@
 package controller.sub;
 
 import java.util.List;
-import model.modelManagers.IHistoryService;
+import model.modelManagers.MotelManagement;
 import model.dto.TurnHistoryData;
 import view.HistoryView;
 
@@ -17,7 +17,7 @@ import view.HistoryView;
  */
 public class HistoryController {
 
-    private final IHistoryService historyService;
+    private final MotelManagement motelManager;
     private final HistoryView historyView;
     private final Runnable onBack;
     private boolean isListAdjusting = false;
@@ -28,8 +28,8 @@ public class HistoryController {
      * @param historyView  the history view panel
      * @param onBack       callback to return to management options view
      */
-    public HistoryController(IHistoryService historyService, HistoryView historyView, Runnable onBack) {
-        this.historyService = historyService;
+    public HistoryController(MotelManagement motelManager, HistoryView historyView, Runnable onBack) {
+        this.motelManager = motelManager;
         this.historyView = historyView;
         this.onBack = onBack;
     }
@@ -68,7 +68,7 @@ public class HistoryController {
 
     /** Opens the history view with turn history data. */
     public void openView() {
-        cachedHistory = historyService.getTurnHistoryDataList();
+        cachedHistory = motelManager.getTurnHistoryDataList();
         historyView.setTurnHistoryDetails(cachedHistory);
         historyView.setTurnDetailsEnabled(false);
     }
@@ -91,11 +91,11 @@ public class HistoryController {
     public void printHistoryTurn() {
         int selectedRow = historyView.getSelectedTurnRow();
         if (historyView.getTurnDetailsView().isNoPrintSelected()) {
-            historyService.turnHistoryPrint(1, selectedRow);
+            motelManager.turnHistoryPrint(1, selectedRow);
         } else if (historyView.getTurnDetailsView().isSummarizedPrintSelected()) {
-            historyService.turnHistoryPrint(2, selectedRow);
+            motelManager.turnHistoryPrint(2, selectedRow);
         } else if (historyView.getTurnDetailsView().isDetailedPrintSelected()) {
-            historyService.turnHistoryPrint(3, selectedRow);
+            motelManager.turnHistoryPrint(3, selectedRow);
         }
     }
 }

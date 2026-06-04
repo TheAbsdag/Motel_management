@@ -1,6 +1,5 @@
 package model.dto;
 
-import view.helpers.FormatHelper;
 import view.helpers.TimeFormatter;
 
 /**
@@ -15,10 +14,6 @@ import view.helpers.TimeFormatter;
  * @param serviceDuration the service duration in seconds (only meaningful for room/roomRefund summaries)
  */
 public record TurnSummaryItemData(String summaryType, int quantity, long price, String name, long serviceDuration) {
-
-    public String formattedPrice() {
-        return FormatHelper.formatPrice(price);
-    }
 
     /**
      * Returns the display concept column value.

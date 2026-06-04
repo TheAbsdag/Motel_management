@@ -1,7 +1,5 @@
 package model.dto;
 
-import view.helpers.FormatHelper;
-
 /**
  * Typed data object for inventory items displayed in views.
  * Replaces raw JSONObject usage for inventory data at the model→view boundary.
@@ -12,12 +10,4 @@ import view.helpers.FormatHelper;
  * @param quantity current stock quantity
  */
 public record InventoryItemData(long itemID, String name, long price, long quantity) {
-
-    public String formattedPrice() {
-        return FormatHelper.formatPrice(price);
-    }
-
-    public String formattedQuantity() {
-        return FormatHelper.formatQuantity(quantity);
-    }
 }
