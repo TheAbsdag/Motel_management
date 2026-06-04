@@ -34,6 +34,25 @@ public class EmailController {
     private static final int CASE_ITEM = 1;
     private static final int CASE_TURN = 2;
 
+    private static final java.util.Map<Integer, String[]> CASE_VARIABLES = java.util.Map.of(
+        CASE_ROOM, new String[]{
+            "{motelName}", "{motelAddress}", "{motelID}",
+            "{roomString}", "{towerNumber}", "{floorNumber}", "{date}"
+        },
+        CASE_ITEM, new String[]{
+            "{motelName}", "{motelAddress}", "{motelID}",
+            "{totalPrice}", "{date}"
+        },
+        CASE_TURN, new String[]{
+            "{motelName}", "{motelAddress}", "{motelID}",
+            "{turnNumber}", "{turnStart}", "{turnEnd}",
+            "{totalRooms}", "{totalItems}", "{totalSales}",
+            "{totalRefunds}", "{totalSpending}", "{totalTurn}",
+            "{totalBankTransfers}", "{totalDeposits}", "{totalNet}",
+            "{consecutiveTrans}", "{date}"
+        }
+    );
+
     public EmailController(
             EmailConfigurationHubView emailHubView,
             ExportConfigurationView exportView,
@@ -393,6 +412,7 @@ public class EmailController {
                 caseView.setUseGlobalReceivers(cfg.useGlobalReceivers());
                 caseView.setSubject(cfg.subject());
                 caseView.setBody(cfg.body());
+                caseView.setAvailableVariables(CASE_VARIABLES.getOrDefault(i, new String[0]));
                 DefaultListModel<String> recvModel = caseView.getSpecificReceiversModel();
                 recvModel.clear();
                 for (String r : cfg.specificReceivers()) {

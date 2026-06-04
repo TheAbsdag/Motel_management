@@ -338,6 +338,10 @@ public class EmailCaseConfigurationView extends JPanel implements TimeLabelInter
 	return availableVariablesList;
     }
 
+    public void setAvailableVariables(String[] variables) {
+	availableVariablesList.setListData(variables);
+    }
+
     public DefaultListModel<CheckableItem> getAttachmentModel() {
 	return attachmentModel;
     }
