@@ -75,11 +75,12 @@ public class EmailController {
     private static final java.util.Map<Integer, String[]> CASE_VARIABLES = java.util.Map.of(
         CASE_ROOM, new String[]{
             "{motelName}", "{motelAddress}", "{motelID}",
-            "{roomString}", "{towerNumber}", "{floorNumber}", "{date}"
+            "{roomString}", "{towerNumber}", "{floorNumber}",
+            "{consecutiveTrans}", "{date}"
         },
         CASE_ITEM, new String[]{
             "{motelName}", "{motelAddress}", "{motelID}",
-            "{totalPrice}", "{date}"
+            "{totalPrice}", "{consecutiveTrans}", "{date}"
         },
         CASE_TURN, new String[]{
             "{motelName}", "{motelAddress}", "{motelID}",

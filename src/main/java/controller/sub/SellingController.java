@@ -181,6 +181,7 @@ public class SellingController {
                 "{motelAddress}", cfg.getMotelAddress(),
                 "{motelID}", cfg.getMotelID(),
                 "{totalPrice}", String.valueOf(motelManager.getCurrentTotalPriceSellingList()),
+                "{consecutiveTrans}", String.valueOf(motelManager.getTurnService().getConsecutiveTransaction()),
                 "{date}", java.time.LocalDate.now().toString());
         EmailController.sendEmailAsync(1, placeholders, List.of(), emailSvc);
     }

@@ -287,6 +287,7 @@ public class RoomController {
                 "{roomString}", roomObj.getRoomString(),
                 "{towerNumber}", String.valueOf(tower),
                 "{floorNumber}", String.valueOf(floor),
+                "{consecutiveTrans}", String.valueOf(motelManager.getTurnService().getConsecutiveTransaction()),
                 "{date}", java.time.LocalDate.now().toString());
         EmailController.sendEmailAsync(0, placeholders, List.of(), emailSvc);
     }
