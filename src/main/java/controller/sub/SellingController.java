@@ -182,11 +182,7 @@ public class SellingController {
                 "{motelID}", cfg.getMotelID(),
                 "{totalPrice}", String.valueOf(motelManager.getCurrentTotalPriceSellingList()),
                 "{date}", java.time.LocalDate.now().toString());
-        boolean sent = emailSvc.sendCaseEmail(1, placeholders, List.of());
-        if (!sent) {
-            DialogHelper.showInfoMessage(
-                    "Error al enviar correo de venta", "CORREO");
-        }
+        EmailController.sendEmailAsync(1, placeholders, List.of(), emailSvc);
     }
 
     public void backFromSelling() {
