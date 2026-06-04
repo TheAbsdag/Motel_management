@@ -6,6 +6,7 @@ import java.util.Map;
 import javax.swing.DefaultListModel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import model.email.config.AuthMode;
 import model.email.config.EmailCaseConfig;
 import model.email.config.EmailSecureData;
@@ -60,6 +61,20 @@ public class EmailController {
         emailHubView.onSaleCaseButton(() -> userInterface.setEmailItemCaseView());
         emailHubView.onTurnCaseButton(() -> userInterface.setEmailTurnCaseView());
         emailHubView.onBackButton(onBackToExport);
+
+        // === Email enable/disable toggle with confirmation ===
+        emailHubView.onEmailFeatureEnableCheckBox(enabled -> {
+            String msg = enabled
+                    ? "¿Habilitar el sistema de correos?"
+                    : "¿Deshabilitar el sistema de correos?";
+            boolean confirmed = DialogHelper.confirmDialog(msg, "CORREO ELECTRÓNICO");
+            if (confirmed) {
+                emailService.saveEmailEnabled(enabled);
+                updateHubStatus();
+            } else {
+                SwingUtilities.invokeLater(() -> emailHubView.setEmailFeatureEnabled(!enabled));
+            }
+        });
 
         // Subview back buttons → hub
         userInterface.getEmailProviderView().onBackButton(() -> userInterface.setEmailConfigView());
@@ -391,6 +406,7 @@ public class EmailController {
                 emailHubView.setCaseEnabled(i, cfg.enabled());
             }
         });
+        emailHubView.setEmailFeatureEnabled(emailService.isEmailEnabled());
         updateHubStatus();
     }
 
@@ -403,6 +419,7 @@ public class EmailController {
 
     private void updateHubStatus() {
         boolean masterEnabled = emailService.isEmailEnabled();
+        emailHubView.setEmailFeatureEnabled(masterEnabled);
         emailHubView.setEmailStatus(masterEnabled ? "HABILITADO" : "DESHABILITADO");
         emailService.loadCaseConfigs().ifPresent(cases -> {
             for (int i = 0; i < cases.size(); i++) {

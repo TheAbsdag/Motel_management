@@ -255,4 +255,19 @@ public class EmailConfigurationHubView extends JPanel implements TimeLabelInterf
     public void setEmailStatus(String status) {
 	emailStatusLabel.setText(status);
     }
+
+    public void onEmailFeatureEnableCheckBox(java.util.function.Consumer<Boolean> action) {
+	emailFeatureEnableCheckBox.addActionListener(e -> {
+	    boolean selected = emailFeatureEnableCheckBox.isSelected();
+	    action.accept(selected);
+	});
+    }
+
+    public void setEmailFeatureEnabled(boolean enabled) {
+	emailFeatureEnableCheckBox.setSelected(enabled);
+    }
+
+    public boolean isEmailFeatureEnabled() {
+	return emailFeatureEnableCheckBox.isSelected();
+    }
 }
