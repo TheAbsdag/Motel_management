@@ -288,11 +288,7 @@ public class RoomController {
                 "{towerNumber}", String.valueOf(tower),
                 "{floorNumber}", String.valueOf(floor),
                 "{date}", java.time.LocalDate.now().toString());
-        boolean sent = emailSvc.sendCaseEmail(0, placeholders, List.of());
-        if (!sent) {
-            DialogHelper.showInfoMessage(
-                    "Error al enviar correo de habitaci\u00f3n", "CORREO");
-        }
+        EmailController.sendEmailAsync(0, placeholders, List.of(), emailSvc);
     }
 
     // ========== Room Reassignment ==========

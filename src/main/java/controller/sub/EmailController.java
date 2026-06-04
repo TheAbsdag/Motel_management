@@ -31,6 +31,43 @@ public class EmailController {
     private final EmailConfigurationService emailService;
     private boolean isLoading = false;
 
+    static final java.util.concurrent.ExecutorService emailExecutor =
+            java.util.concurrent.Executors.newSingleThreadExecutor(r -> {
+                Thread t = new Thread(r, "email-sender");
+                t.setDaemon(true);
+                return t;
+            });
+    private static final long ERROR_COOLDOWN_MS = 30_000;
+    private static volatile long lastEmailErrorShown = 0;
+
+    /**
+     * Sends email asynchronously for cases 0 and 1 (fire-and-forget).
+     * On failure, shows at most one error dialog per ERROR_COOLDOWN_MS window.
+     */
+    public static void sendEmailAsync(int caseIndex, java.util.Map<String, String> placeholders,
+                                      java.util.List<java.nio.file.Path> attachments,
+                                      EmailConfigurationService emailSvc) {
+        emailExecutor.submit(() -> {
+            try {
+                boolean sent = emailSvc.sendCaseEmail(caseIndex, placeholders, attachments);
+                if (!sent) {
+                    showErrorOnce("Error al enviar correo");
+                }
+            } catch (Exception e) {
+                showErrorOnce("Error al enviar correo: " + e.getMessage());
+            }
+        });
+    }
+
+    private static void showErrorOnce(String message) {
+        long now = System.currentTimeMillis();
+        if (now - lastEmailErrorShown > ERROR_COOLDOWN_MS) {
+            lastEmailErrorShown = now;
+            SwingUtilities.invokeLater(() ->
+                DialogHelper.showErrorMessage(message, "CORREO"));
+        }
+    }
+
     private static final int CASE_ROOM = 0;
     private static final int CASE_ITEM = 1;
     private static final int CASE_TURN = 2;
