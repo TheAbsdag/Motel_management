@@ -208,6 +208,10 @@ public class EmailController {
             port = preset.getSmtpPort();
             username = email;
             credential = view.getAppPasswordText();
+            if ("\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022".equals(credential)) {
+                credential = emailService.loadSecureData()
+                        .map(EmailSecureData::credential).orElse("");
+            }
             authMode = AuthMode.PASSWORD;
         } else {
             host = view.getSmtpHost();
@@ -224,6 +228,10 @@ public class EmailController {
             String smtpUser = view.getSmtpUser();
             username = smtpUser.isBlank() ? email : smtpUser;
             credential = view.getSmtpPassword();
+            if ("\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022".equals(credential)) {
+                credential = emailService.loadSecureData()
+                        .map(EmailSecureData::credential).orElse("");
+            }
             authMode = smtpUser.isBlank() ? AuthMode.NONE : AuthMode.PASSWORD;
         }
 
@@ -431,6 +439,15 @@ public class EmailController {
         emailService.loadSenderName().ifPresent(providerView::setNameText);
         emailService.loadSecureData().ifPresent(secure -> {
             providerView.setEmailText(secure.username());
+            String credential = secure.credential();
+            if (credential != null && !credential.isBlank()) {
+                String obfuscated = "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022";
+                if (matchedPreset != ProviderPreset.CUSTOM) {
+                    providerView.setAppPasswordText(obfuscated);
+                } else {
+                    providerView.setSmtpPasswordText(obfuscated);
+                }
+            }
         });
 
         EmailGlobalConfigurationView globalView = userInterface.getEmailGlobalSettingsView();

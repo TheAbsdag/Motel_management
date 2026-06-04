@@ -375,6 +375,14 @@ public class EmailProviderConfigurationView extends JPanel implements TimeLabelI
 	appPasswordProviderComboBox.setSelectedIndex(index);
     }
 
+    public void setAppPasswordText(String password) {
+	appPasswordInputTextField.setText(password);
+    }
+
+    public void setSmtpPasswordText(String password) {
+	smtpPasswordPasswordField.setText(password);
+    }
+
     public String getAppPasswordHelpHtml() {
 	return APP_PASSWORD_HELP;
     }
