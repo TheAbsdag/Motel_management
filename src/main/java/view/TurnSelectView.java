@@ -122,7 +122,7 @@ public class TurnSelectView extends JPanel implements TimeLabelInterface {
     public void onTurn2Button(Runnable action) { turn2Button.addActionListener(e -> action.run()); }
     /** Registers a listener for turn 3 button. */
     public void onTurn3Button(Runnable action) { turn3Button.addActionListener(e -> action.run()); }
-    /** Sets the turn selection label text. */
+    /** Sets the turn selection label text. to be used with i18n in future */
     public void setTurnSelectLabel(String text) { turnSelectLabel.setText(text); }
 
     @Override

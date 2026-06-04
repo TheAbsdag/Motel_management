@@ -412,6 +412,7 @@ public class Turn {
     /**
      * Finds a room booking or sale activity by its consecutive transaction number
      * and activity type.
+     * Test focused method
      */
     public TurnActivity findActivity(int consecutiveTrans, ActivityType activityType) {
         for (TurnActivity a : turnDetails.getActivities()) {
@@ -425,6 +426,8 @@ public class Turn {
 
     /**
      * Returns the full list of turn activities.
+     * Not used, replaced by internal management of turn details
+     * @deprecated 
      */
     public List<TurnActivity> getActivities() {
         return turnDetails.getActivities();
@@ -432,6 +435,8 @@ public class Turn {
 
     /**
      * Returns the activity at the given index.
+     * Not used, replaced by internal management of turn details
+     * @deprecated 
      */
     public TurnActivity getActivity(int index) {
         return turnDetails.getActivities().get(index);

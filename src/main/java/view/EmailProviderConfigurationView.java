@@ -8,12 +8,11 @@ import java.awt.*;
 import javax.swing.*;
 import net.miginfocom.swing.*;
 import model.email.config.ProviderPreset;
-import view.interfaces.TimeLabelInterface;
 
 /**
  * @author SECC
  */
-public class EmailProviderConfigurationView extends JPanel implements TimeLabelInterface {
+public class EmailProviderConfigurationView extends JPanel  {
     public EmailProviderConfigurationView() {
 	initComponents();
     }
@@ -44,6 +43,7 @@ public class EmailProviderConfigurationView extends JPanel implements TimeLabelI
 	saveButton = new JButton();
 	appPasswordPanel = new JPanel();
 	appPasswordInformativeLabel = new JLabel();
+	informativeAppPasswordButton = new JButton();
 	appPasswordProviderInformativeLabel = new JLabel();
 	appPasswordProviderComboBox = new JComboBox();
 	appPasswordInputInformativeLabel = new JLabel();
@@ -157,6 +157,11 @@ public class EmailProviderConfigurationView extends JPanel implements TimeLabelI
 	    appPasswordInformativeLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 20));
 	    appPasswordPanel.add(appPasswordInformativeLabel, "cell 0 0 2 1,growy");
 
+	    //---- informativeAppPasswordButton ----
+	    informativeAppPasswordButton.setText("INFORMACI\u00d3N");
+	    informativeAppPasswordButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 16));
+	    appPasswordPanel.add(informativeAppPasswordButton, "cell 0 0 2 1");
+
 	    //---- appPasswordProviderInformativeLabel ----
 	    appPasswordProviderInformativeLabel.setText("PROOVEDOR:");
 	    appPasswordProviderInformativeLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 20));
@@ -251,6 +256,7 @@ public class EmailProviderConfigurationView extends JPanel implements TimeLabelI
     private JButton saveButton;
     private JPanel appPasswordPanel;
     private JLabel appPasswordInformativeLabel;
+    private JButton informativeAppPasswordButton;
     private JLabel appPasswordProviderInformativeLabel;
     private JComboBox appPasswordProviderComboBox;
     private JLabel appPasswordInputInformativeLabel;
@@ -267,9 +273,6 @@ public class EmailProviderConfigurationView extends JPanel implements TimeLabelI
     private JPasswordField smtpPasswordPasswordField;
     // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
 
-    @Override
-    public void updateTimeDisplay(String timeText, String dateText) {
-    }
 
     public void onBackButton(Runnable action) {
 	backButton.addActionListener(e -> action.run());

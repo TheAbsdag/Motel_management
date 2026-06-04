@@ -742,7 +742,7 @@ public class TurnReportGenerator {
 
     /**
      * Formats a long value as a locale-formatted number string.
-     *
+     * TODO: implementation of currency configuration for custom currency values
      * @param value the raw numeric value
      * @return a formatted string (e.g. "1,234,567")
      */

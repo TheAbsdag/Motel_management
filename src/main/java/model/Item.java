@@ -73,7 +73,7 @@ public class Item {
 
     /**
      * Sets the stock quantity.
-     *
+     * @deprecated Item quantity setup or removed on sale, refund, and item creation, no current external quantity setup,
      * @param quantity new stock quantity
      */
     public void setQuantity(long quantity) {

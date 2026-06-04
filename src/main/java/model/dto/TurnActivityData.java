@@ -125,9 +125,20 @@ public class TurnActivityData {
     public String getChangeType() { return changeType; }
     public ZonedDateTime getChangeDate() { return changeDate; }
     public String getRoomString() { return roomString; }
+    /**
+     * Gets the current activity room status int enum
+     * Currently not used, could be used with history reimplementation
+     * @return the enum of roomstatus
+     */
     public int getRoomStatus() { return roomStatus; }
     public long getPrice() { return price; }
     public long getServiceDuration() { return serviceDuration; }
+    /**
+     * Gets the current activity room extension
+     * Currently not used, could be used with history reimplementation
+     * Method could be deprecated in aloration of functionality of extension and usage
+     * @return the enum of roomstatus
+     */
     public long getServicedExtensionDuration() { return servicedExtensionDuration; }
     public String getItemName() { return itemName; }
     public long getItemID() { return itemID; }

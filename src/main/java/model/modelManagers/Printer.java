@@ -90,6 +90,10 @@ public class Printer {
         printerService = PrinterJob.getPrinterJob().getPrintService();
     }
 
+    /**
+     * Currently not used, to be implemented custom currency configuration
+     * @param cfg 
+     */
     public void setCurrencyConfig(CurrencyConfig cfg) {
         this.currencyConfig = cfg != null ? cfg : CurrencyConfig.defaultConfig();
     }

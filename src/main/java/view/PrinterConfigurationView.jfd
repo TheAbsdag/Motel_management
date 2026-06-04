@@ -69,7 +69,7 @@ new FormModel {
 				"value": "cell 0 4,growy"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
-				name: "button1"
+				name: "setupPrintingPageButton"
 				"text": "CONFIGURAR IMPRESION"
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 3 4,growy"

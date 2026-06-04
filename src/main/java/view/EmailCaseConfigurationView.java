@@ -8,7 +8,6 @@ import java.awt.*;
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import net.miginfocom.swing.*;
-import view.interfaces.TimeLabelInterface;
 import view.customListRenderes.CheckboxListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.ButtonGroup;
@@ -20,7 +19,7 @@ import java.awt.event.MouseEvent;
 /**
  * @author SECC
  */
-public class EmailCaseConfigurationView extends JPanel implements TimeLabelInterface {
+public class EmailCaseConfigurationView extends JPanel {
     private final int caseIndex;
     private DefaultListModel<CheckableItem> attachmentModel;
 
@@ -240,9 +239,6 @@ public class EmailCaseConfigurationView extends JPanel implements TimeLabelInter
     private JButton saveButton;
     // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
 
-    @Override
-    public void updateTimeDisplay(String timeText, String dateText) {
-    }
 
     public static class CheckableItem {
 	private final String name;

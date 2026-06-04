@@ -66,7 +66,7 @@ public class PrinterConfigurationView extends JPanel {
 	selectedPrinterLabel = new JLabel();
 	confirmPrinterButton = new JButton();
 	backButton = new JButton();
-	button1 = new JButton();
+	setupPrintingPageButton = new JButton();
 
 	//======== this ========
 	setLayout(new MigLayout(
@@ -128,9 +128,9 @@ public class PrinterConfigurationView extends JPanel {
 	backButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 22));
 	add(backButton, "cell 0 4,growy");
 
-	//---- button1 ----
-	button1.setText("CONFIGURAR IMPRESION");
-	add(button1, "cell 3 4,growy");
+	//---- setupPrintingPageButton ----
+	setupPrintingPageButton.setText("CONFIGURAR IMPRESION");
+	add(setupPrintingPageButton, "cell 3 4,growy");
 	// JFormDesigner - End of component initialization  //GEN-END:initComponents  @formatter:on
     }
 
@@ -145,6 +145,6 @@ public class PrinterConfigurationView extends JPanel {
     private JLabel selectedPrinterLabel;
     private JButton confirmPrinterButton;
     private JButton backButton;
-    private JButton button1;
+    private JButton setupPrintingPageButton;
     // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
 }

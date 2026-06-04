@@ -18,6 +18,10 @@ public class Register {
     private List<CartItem> sellingList;
     private boolean sellingListConsumed = false;
 
+    /**
+     * Not used like the constructor
+     * @deprecated 
+     */
     private long historyID;
 
     public Register() {
@@ -25,6 +29,12 @@ public class Register {
         inventory = new ArrayList<Item>();
     }
 
+    /**
+     *  Legacy management for history design, new history management on proress
+     * @param historyID 
+     * 
+     * @deprecated 
+     */
     public Register(long historyID) {
         this.historyID = historyID;
         sellingList = new ArrayList<>();
@@ -57,6 +67,10 @@ public class Register {
         inventory.add(newItem);
     }
 
+    /**
+    *¨Method replaced by @deleteItemById
+    * @deprecated
+    */
     public void deleteItemInformation(Item item) {
         for (int i = 0; i < inventory.size(); i++) {
             if (inventory.get(i).getItemID() == item.getItemID()) {
@@ -123,10 +137,6 @@ public class Register {
                 }
             }
         }
-        return sellingList;
-    }
-
-    List<CartItem> getCurrentRegisterList() {
         return sellingList;
     }
 

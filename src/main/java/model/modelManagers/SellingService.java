@@ -78,6 +78,14 @@ public class SellingService {
         return register.getSellingItemDataList();
     }
 
+    /**
+     * Legacy method for cratio of item from json data
+     * @param name
+     * @param price
+     * @param quantity
+     * @param itemID 
+     * @deprecated 
+     */
     public void createItemFromJson(String name, int price, int quantity, int itemID) {
         register.createItem(name, price, quantity, itemID);
     }

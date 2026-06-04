@@ -8,7 +8,6 @@ import java.awt.*;
 import javax.swing.*;
 import javax.swing.BorderFactory;
 import net.miginfocom.swing.*;
-import view.interfaces.TimeLabelInterface;
 import javax.swing.DefaultListModel;
 import javax.swing.JList;
 import java.awt.event.FocusAdapter;
@@ -17,7 +16,7 @@ import java.awt.event.FocusEvent;
 /**
  * @author SECC
  */
-public class EmailGlobalConfigurationView extends JPanel implements TimeLabelInterface {
+public class EmailGlobalConfigurationView extends JPanel {
     private JList<?> activeList;
 
     public EmailGlobalConfigurationView() {
@@ -202,9 +201,6 @@ public class EmailGlobalConfigurationView extends JPanel implements TimeLabelInt
 	}
     }
 
-    @Override
-    public void updateTimeDisplay(String timeText, String dateText) {
-    }
 
     public void onBackButton(Runnable action) {
 	backButton.addActionListener(e -> action.run());

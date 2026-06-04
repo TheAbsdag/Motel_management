@@ -8,14 +8,13 @@ import java.awt.*;
 import javax.swing.*;
 import net.miginfocom.swing.*;
 import view.helpers.DialogHelper;
-import view.interfaces.TimeLabelInterface;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 /**
  * @author SECC
  */
-public class EmailConfigurationHubView extends JPanel implements TimeLabelInterface {
+public class EmailConfigurationHubView extends JPanel  {
     public EmailConfigurationHubView() {
 	initComponents();
 	wireInformativeCheckboxes();
@@ -207,9 +206,6 @@ public class EmailConfigurationHubView extends JPanel implements TimeLabelInterf
 	});
     }
 
-    @Override
-    public void updateTimeDisplay(String timeText, String dateText) {
-    }
 
     public void onProviderButton(Runnable action) {
 	providerButton.addActionListener(e -> action.run());
