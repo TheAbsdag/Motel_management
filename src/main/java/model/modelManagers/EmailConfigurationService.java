@@ -25,6 +25,7 @@ import model.email.config.EmailSecureData;
 import model.email.dto.EmailMessage;
 import model.email.exception.EmailSendingException;
 import model.email.service.EmailSender;
+import model.email.service.MarkdownConverter;
 
 public class EmailConfigurationService {
 
@@ -180,7 +181,9 @@ public class EmailConfigurationService {
         String subject = resolvePlaceholders(caseCfg.subject(), placeholders);
         String body = resolvePlaceholders(caseCfg.body(), placeholders);
 
-        EmailMessage msg = new EmailMessage(to, cc, subject, body, false,
+        MarkdownConverter mdConverter = new MarkdownConverter();
+        String htmlBody = mdConverter.toHtml(body);
+        EmailMessage msg = new EmailMessage(to, cc, subject, htmlBody, true,
                 attachments != null ? attachments : List.of());
 
         EmailConfig emailConfig = new EmailConfig(
