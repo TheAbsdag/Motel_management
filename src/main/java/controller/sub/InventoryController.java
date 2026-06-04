@@ -42,12 +42,12 @@ public class InventoryController {
     public void initListeners() {
         inventoryView.onNewItem(this::newItem);
         inventoryView.onDeleteItem(this::deleteItem);
-        inventoryView.onAddQuantity(() -> changeQuantity(1));
-        inventoryView.onRemoveQuantity(() -> changeQuantity(-1));
-        inventoryView.onRemoveSmallPrice(() -> modifyPrice(-100));
-        inventoryView.onAddSmallPrice(() -> modifyPrice(100));
-        inventoryView.onRemoveBigPrice(() -> modifyPrice(-1000));
-        inventoryView.onAddBigPrice(() -> modifyPrice(1000));
+        inventoryView.onAddQuantity(() -> inventoryView.adjustQuantity(1));
+        inventoryView.onRemoveQuantity(() -> inventoryView.adjustQuantity(-1));
+        inventoryView.onRemoveSmallPrice(() -> inventoryView.adjustPrice(-100));
+        inventoryView.onAddSmallPrice(() -> inventoryView.adjustPrice(100));
+        inventoryView.onRemoveBigPrice(() -> inventoryView.adjustPrice(-1000));
+        inventoryView.onAddBigPrice(() -> inventoryView.adjustPrice(1000));
         inventoryView.onSaveButton(this::saveItem);
         inventoryView.onBackButton(onBack);
         inventoryView.onUpButton(() -> inventoryView.scrollInventoryTable(-1));
@@ -95,14 +95,6 @@ public class InventoryController {
         }
         updateViewData();
         setModificators(false);
-    }
-
-    public void changeQuantity(int delta) {
-        inventoryView.adjustQuantity(delta);
-    }
-
-    public void modifyPrice(int delta) {
-        inventoryView.adjustPrice(delta);
     }
 
     public void saveItem() {

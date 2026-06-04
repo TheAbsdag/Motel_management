@@ -1,6 +1,7 @@
 package controller.sub;
 
 import view.UserGUI;
+import view.ViewCard;
 
 /**
  * Controls navigation between management views and the main floor view.
@@ -54,12 +55,12 @@ public class ManagementController {
 
     /** Opens the management options menu. */
     public void showManagementOptions() {
-        userInterface.setManagementSelection();
+        userInterface.setView(ViewCard.MANAGEMENT_SELECT_VIEW);
     }
 
     /** Returns to the floor view. */
     public void showFloorView() {
-        userInterface.setFloorView();
+        userInterface.setView(ViewCard.FLOOR_VIEW);
     }
 
     // ========== Spending Register ==========
@@ -67,7 +68,7 @@ public class ManagementController {
     /** Opens the spending register view. */
     public void showSpendingRegister() {
         userInterface.getSpendingRegisterView().clearFields();
-        userInterface.setSpendingRegisterView();
+        userInterface.setView(ViewCard.SPENDING_REGISTER_VIEW);
     }
 
     // ========== Extra Changes (Bank Transfer / Safe Deposit) ==========
@@ -75,13 +76,13 @@ public class ManagementController {
     /** Opens the extra turn changes view. */
     public void showExtraChanges() {
         userInterface.getExtraTurnChangesView().clearFields();
-        userInterface.setExtraTurnChangesView();
+        userInterface.setView(ViewCard.EXTRA_TURN_CHANGES_VIEW);
     }
 
     // ========== Room Summary ==========
 
     /** Opens the room summary dashboard. */
     public void showRoomSummary() {
-        userInterface.setRoomSummaryView();
+        userInterface.setView(ViewCard.ROOM_SUMMARY_VIEW);
     }
 }

@@ -17,6 +17,7 @@ import model.turn.TurnDetails;
 import view.LoadingDialog;
 import view.TurnManagerView;
 import view.UserGUI;
+import view.ViewCard;
 import view.helpers.DialogHelper;
 import view.helpers.FormatHelper;
 
@@ -101,7 +102,7 @@ public class TurnController {
         });
         turnManagerView.onRefundButton(() -> deleteRegisterFromTurn());
         turnManagerView.onSummarizedTurn(() -> showCurrentSummarizedTurn());
-        turnManagerView.onBackFromSummarizedTurn(() -> closeSummarizedPopup());
+        turnManagerView.onBackFromSummarizedTurn(() -> turnManagerView.showSummarizedPopup(false));
     }
 
     // ========== Turn Lifecycle ==========
@@ -113,10 +114,9 @@ public class TurnController {
     public void startTurn(int turnNumber) {
         motelManager.timeInformationUpdate();
         motelManager.setNewTurn(turnNumber);
-        userInterface.setFloorView();
+userInterface.setView(ViewCard.FLOOR_VIEW);
     }
 
-    /** Opens the turn management view with current turn data. */
     public void showTurnManagement() {
         turnManagerView.setEndTurnEnabled(false);
         turnManagerView.setPrintEnabled(false);
@@ -133,7 +133,7 @@ public class TurnController {
         turnManagerView.setDetailedPrintSelected(false);
         turnManagerView.setRefundEnabled(false);
         turnManagerView.setBackEnabled(true);
-        userInterface.setTurnManagerView();
+        userInterface.setView(ViewCard.TURN_MANAGER_VIEW);
     }
 
     /**
@@ -207,7 +207,7 @@ public class TurnController {
             attemptTurnEmailWithLoading();
         }
 
-        userInterface.setTurnSelect();
+        userInterface.setView(ViewCard.TURN_SELECT_VIEW);
     }
 
     private void attemptTurnEmailWithLoading() {
@@ -375,8 +375,12 @@ public class TurnController {
     }
 
     /** Closes the summarized turn popup. */
-    public void closeSummarizedPopup() {
-        turnManagerView.showSummarizedPopup(false);
+    /**
+     * Gets the current total price for selling.
+     * @return the total price from the register
+     */
+    private long getTotalPrice() {
+        return motelManager.getCurrentTotalPriceSellingList();
     }
 
 }

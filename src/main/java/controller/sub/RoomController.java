@@ -20,6 +20,7 @@ import view.FloorView;
 import view.RoomChangeView;
 import view.RoomView;
 import view.UserGUI;
+import view.ViewCard;
 import view.helpers.CurrencyFormatter;
 import view.helpers.DialogHelper;
 import view.helpers.FormatHelper;
@@ -81,7 +82,7 @@ public class RoomController {
         roomView.onRoomSellingButton(onRoomSale);
         roomView.onEndTimeButton(this::roomTimeEnd);
         roomView.onAddTimeButton(this::roomTimeSale);
-        roomView.onRoomChangeButton(this::roomReassignment);
+        roomView.onRoomChangeButton(() -> userInterface.setView(ViewCard.ROOM_CHANGE_VIEW));
 
         // Room booking hour buttons (slot indices 0=3h, 1=12h, 2=24h)
         roomView.onBookingHourButton(0, () -> roomTimeModification(0));
@@ -184,7 +185,7 @@ public class RoomController {
                 roomView.showBookingButtons(true);
                 break;
         }
-        userInterface.setRoomView();
+        userInterface.setView(ViewCard.ROOM_VIEW);
     }
 
     // ========== Service / Price Management ==========
@@ -254,14 +255,14 @@ public class RoomController {
             boolean noPrintingConfirmation = DialogHelper.confirmPrinting();
             if (noPrintingConfirmation) {
                 motelManager.registerRoomTimeAdded(towerNumber, floorNumber, roomNumber, serviceDuration, price, false);
-                userInterface.setFloorView();
+                userInterface.setView(ViewCard.FLOOR_VIEW);
                 saveMainFiles.run();
                 saveBackupFilesRoomSwap.run();
                 attemptRoomEmail(towerNumber, floorNumber, roomNumber, serviceDuration, price);
             }
         } else {
             motelManager.registerRoomTimeAdded(towerNumber, floorNumber, roomNumber, serviceDuration, price, true);
-            userInterface.setFloorView();
+            userInterface.setView(ViewCard.FLOOR_VIEW);
             saveMainFiles.run();
             saveBackupFilesRoomSwap.run();
             attemptRoomEmail(towerNumber, floorNumber, roomNumber, serviceDuration, price);
@@ -280,7 +281,7 @@ public class RoomController {
         motelManager.registerRoomTimeEnd(towerNumber, floorNumber, roomNumber);
         saveMainFiles.run();
         saveBackupFilesRoomSwap.run();
-        userInterface.setFloorView();
+        userInterface.setView(ViewCard.FLOOR_VIEW);
     }
 
     private void attemptRoomEmail(int tower, int floor, int room, long serviceDuration, long price) {
@@ -325,10 +326,6 @@ public class RoomController {
     // ========== Room Reassignment ==========
 
     /** Opens the room change view for the currently selected room. */
-    public void roomReassignment() {
-        userInterface.setRoomChangeView();
-    }
-
     /**
      * Handles room selection in the room change view.
      * Validates the target room is available.
@@ -360,7 +357,7 @@ public class RoomController {
         if (validReturn) {
             saveMainFiles.run();
             saveBackupFilesRoomSwap.run();
-            userInterface.setFloorView();
+            userInterface.setView(ViewCard.FLOOR_VIEW);
         }
     }
 
@@ -432,6 +429,6 @@ public class RoomController {
     // ========== Navigation Helpers ==========
 
     private void showFloorPerspective() {
-        userInterface.setFloorView();
+        userInterface.setView(ViewCard.FLOOR_VIEW);
     }
 }

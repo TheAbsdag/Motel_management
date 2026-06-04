@@ -16,6 +16,7 @@ import model.modelManagers.EmailConfigurationService;
 import model.modelManagers.MotelManagement;
 import view.SellingView;
 import view.UserGUI;
+import view.ViewCard;
 import view.helpers.CurrencyFormatter;
 import view.helpers.DialogHelper;
 import view.helpers.FormatHelper;
@@ -59,8 +60,8 @@ public class SellingController {
         sellingView.onAddQuantityButton(() -> updateItemSaleAmount(1));
         sellingView.onRemoveQuantityButton(() -> updateItemSaleAmount(-1));
         sellingView.onFinishSaleButton(this::finishSale);
-        sellingView.onUpSellingListButton(() -> scrollSelectedTable(-1));
-        sellingView.onDownSellingListButton(() -> scrollSelectedTable(1));
+        sellingView.onUpSellingListButton(() -> sellingView.scrollSelectedTable(-1));
+        sellingView.onDownSellingListButton(() -> sellingView.scrollSelectedTable(1));
         sellingView.onCourtesySaleButton(this::addCourtesyItemToRegister);
 
         sellingView.onItemTableSelection(event -> {
@@ -100,7 +101,7 @@ public class SellingController {
                 motelManager.getCurrentRoomViewed()
         ).getRoomString();
         sellingView.setSellingToText("VENDIENDO A: " + roomString);
-        userInterface.setSellingView();
+        userInterface.setView(ViewCard.SELLING_VIEW);
         sellingView.setAddItemEnabled(false);
         sellingView.setItemDeleteEnabled(false);
         sellingView.setFinishSaleEnabled(false);
@@ -173,14 +174,14 @@ public class SellingController {
             boolean noPrintingConfirmation = DialogHelper.confirmPrinting();
             if (noPrintingConfirmation) {
                 motelManager.roomSaleFinished(false);
-                userInterface.setFloorView();
+                userInterface.setView(ViewCard.FLOOR_VIEW);
                 saveMainFiles.run();
                 saveBackupFilesTransaction.run();
                 attemptSaleEmail(items, roomString, totalPrice);
             }
         } else {
             motelManager.roomSaleFinished(true);
-            userInterface.setFloorView();
+            userInterface.setView(ViewCard.FLOOR_VIEW);
             saveMainFiles.run();
             saveBackupFilesTransaction.run();
             attemptSaleEmail(items, roomString, totalPrice);
@@ -231,12 +232,7 @@ public class SellingController {
     
     public void backFromSelling() {
         motelManager.restartSaleManager();
-        userInterface.setFloorView();
+        userInterface.setView(ViewCard.FLOOR_VIEW);
     }
 
-    // ========== Table Scrolling (Touch-Friendly) ==========
-
-    private void scrollSelectedTable(int direction) {
-        sellingView.scrollSelectedTable(direction);
-    }
 }

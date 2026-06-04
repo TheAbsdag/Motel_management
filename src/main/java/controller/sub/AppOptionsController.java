@@ -103,11 +103,6 @@ public class AppOptionsController {
         });
     }
 
-    /** Opens the options hub. */
-    public void showOptions() {
-        onShowOptions.run();
-    }
-
     /** Populates the printer configuration view with current printer data. */
     public void showPrinterOptions() {
         printerView.setConfirmPrinterEnabled(false);

@@ -23,6 +23,7 @@ import view.EmailProviderConfigurationView;
 import view.ExportConfigurationView;
 import view.LoadingDialog;
 import view.UserGUI;
+import view.ViewCard;
 import view.helpers.DialogHelper;
 
 public class EmailController {
@@ -119,15 +120,15 @@ public class EmailController {
         // Export view → email hub
         exportView.onEmailConfigButton(() -> {
             loadDataIntoViews();
-            userInterface.setEmailConfigView();
+            userInterface.setView(ViewCard.EMAIL_CONFIG_VIEW);
         });
 
         // Hub → subview navigation
-        emailHubView.onProviderButton(() -> userInterface.setEmailProviderView());
-        emailHubView.onGeneralConfigurationButton(() -> userInterface.setEmailGlobalSettingsView());
-        emailHubView.onRoomSaleCaseButton(() -> userInterface.setEmailRoomCaseView());
-        emailHubView.onSaleCaseButton(() -> userInterface.setEmailItemCaseView());
-        emailHubView.onTurnCaseButton(() -> userInterface.setEmailTurnCaseView());
+        emailHubView.onProviderButton(() -> userInterface.setView(ViewCard.EMAIL_PROVIDER_VIEW));
+        emailHubView.onGeneralConfigurationButton(() -> userInterface.setView(ViewCard.EMAIL_GLOBAL_SETTINGS_VIEW));
+        emailHubView.onRoomSaleCaseButton(() -> userInterface.setView(ViewCard.EMAIL_ROOM_CASE_VIEW));
+        emailHubView.onSaleCaseButton(() -> userInterface.setView(ViewCard.EMAIL_ITEM_CASE_VIEW));
+        emailHubView.onTurnCaseButton(() -> userInterface.setView(ViewCard.EMAIL_TURN_CASE_VIEW));
         emailHubView.onBackButton(onBackToExport);
 
         // === Email enable/disable toggle with confirmation ===
@@ -145,11 +146,11 @@ public class EmailController {
         });
 
         // Subview back buttons → hub
-        userInterface.getEmailProviderView().onBackButton(() -> userInterface.setEmailConfigView());
-        userInterface.getEmailRoomCaseView().onBackButton(() -> userInterface.setEmailConfigView());
-        userInterface.getEmailItemCaseView().onBackButton(() -> userInterface.setEmailConfigView());
-        userInterface.getEmailTurnCaseView().onBackButton(() -> userInterface.setEmailConfigView());
-        userInterface.getEmailGlobalSettingsView().onBackButton(() -> userInterface.setEmailConfigView());
+        userInterface.getEmailProviderView().onBackButton(() -> userInterface.setView(ViewCard.EMAIL_CONFIG_VIEW));
+        userInterface.getEmailRoomCaseView().onBackButton(() -> userInterface.setView(ViewCard.EMAIL_CONFIG_VIEW));
+        userInterface.getEmailItemCaseView().onBackButton(() -> userInterface.setView(ViewCard.EMAIL_CONFIG_VIEW));
+        userInterface.getEmailTurnCaseView().onBackButton(() -> userInterface.setView(ViewCard.EMAIL_CONFIG_VIEW));
+        userInterface.getEmailGlobalSettingsView().onBackButton(() -> userInterface.setView(ViewCard.EMAIL_CONFIG_VIEW));
 
         // === Provider selection → toggle panel + fill SMTP from preset ===
         EmailProviderConfigurationView providerView = userInterface.getEmailProviderView();

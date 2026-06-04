@@ -20,6 +20,7 @@ import model.modelManagers.MotelManagement;
 import model.RoomStatus;
 import model.turn.ExtraChangeType;
 import view.UserGUI;
+import view.ViewCard;
 import view.helpers.DialogHelper;
 import view.helpers.InputParser;
 
@@ -146,7 +147,7 @@ public class Controller {
         currencyConfigurationController = new CurrencyConfigurationController(
                 motelManager,
                 userInterface.getCurrencyConfigurationView(),
-                () -> userInterface.setAppOptionsView(),
+                () -> userInterface.setView(ViewCard.APP_OPTIONS_VIEW),
                 this::saveMainFiles,
                 () -> saveBackupFiles("CURRENCY_CONFIG_SAVE"));
 
@@ -221,10 +222,10 @@ public class Controller {
         boolean validTurn = motelManager.prepareTurnRegisterData();
         if (validTurn) {
             System.out.println("Valid turn found");
-            userInterface.setFloorView();
+            userInterface.setView(ViewCard.FLOOR_VIEW);
         } else {
             System.out.println("No previous turn found");
-            userInterface.setTurnSelect();
+            userInterface.setView(ViewCard.TURN_SELECT_VIEW);
         }
 
         setupListeners();
@@ -263,7 +264,7 @@ public class Controller {
 
     /** Shows the floor perspective. */
     public void showFloorPerspective() {
-        userInterface.setFloorView();
+        userInterface.setView(ViewCard.FLOOR_VIEW);
     }
 
     /**
@@ -279,7 +280,7 @@ public class Controller {
 
     /** Shows the management options menu. */
     public void showManagementSelection() {
-        userInterface.setManagementSelection();
+        userInterface.setView(ViewCard.MANAGEMENT_SELECT_VIEW);
     }
 
     private void openTurnManagement() {
@@ -288,59 +289,59 @@ public class Controller {
 
     private void openInventoryView() {
         inventoryController.openView();
-        userInterface.setInventoryView();
+        userInterface.setView(ViewCard.INVENTORY_VIEW);
     }
 
     private void openHistoryView() {
         historyController.openView();
-        userInterface.setHistoryView();
+        userInterface.setView(ViewCard.HISTORY_VIEW);
     }
 
     private void openAppOptionsView() {
-        appOptionsController.showOptions();
+        openAppOptionsHub();
     }
 
     private void openAppOptionsHub() {
-        userInterface.setAppOptionsView();
+        userInterface.setView(ViewCard.APP_OPTIONS_VIEW);
     }
 
     private void openPrinterConfig() {
-        userInterface.setPrinterConfigView();
+        userInterface.setView(ViewCard.PRINTER_CONFIG_VIEW);
     }
 
     private void openMotelDataConfig() {
         motelDataConfigController.populateView();
-        userInterface.setMotelDataConfigView();
+        userInterface.setView(ViewCard.MOTEL_DATA_CONFIG_VIEW);
     }
 
     private void openTimeConfig() {
-        userInterface.setTimeConfigView();
+        userInterface.setView(ViewCard.TIME_CONFIG_VIEW);
     }
 
     private void openFloorConfig() {
         floorConfigurationController.populateView();
-        userInterface.setFloorConfigView();
+        userInterface.setView(ViewCard.FLOOR_CONFIG_VIEW);
     }
 
     private void showRoomConfigCard() {
-        userInterface.setRoomConfigView();
+        userInterface.setView(ViewCard.ROOM_CONFIG_VIEW);
     }
 
     private void showFloorConfigCard() {
-        userInterface.setFloorConfigView();
+        userInterface.setView(ViewCard.FLOOR_CONFIG_VIEW);
     }
 
     private void openDataSavingConfig() {
-        userInterface.setDataSavingConfigView();
+        userInterface.setView(ViewCard.DATA_SAVING_CONFIG_VIEW);
     }
 
     private void openExportConfig() {
-        userInterface.setExportConfigView();
+        userInterface.setView(ViewCard.EXPORT_CONFIG_VIEW);
     }
 
     private void openCurrencyConfig() {
         currencyConfigurationController.populateView();
-        userInterface.setCurrencyConfigurationView();
+        userInterface.setView(ViewCard.CURRENCY_CONFIG_VIEW);
     }
 
     // ========== Spending / Extra Changes ==========
@@ -501,7 +502,7 @@ public class Controller {
     /** Kicks off the first-boot configuration wizard with motel data. */
     private void startFirstBootConfiguration() {
         motelDataConfigController.configureForFirstBoot(this::onFirstBootMotelDataDone);
-        userInterface.setMotelDataConfigView();
+        userInterface.setView(ViewCard.MOTEL_DATA_CONFIG_VIEW);
     }
 
     /** Called after motel data is saved. Proceeds to currency configuration. */
@@ -509,7 +510,7 @@ public class Controller {
         DialogHelper.showInfoMessage("Configure la moneda del motel", "CONFIGURACION INICIAL");
         currencyConfigurationController.populateView();
         currencyConfigurationController.configureForFirstBoot(this::onFirstBootCurrencyDone);
-        userInterface.setCurrencyConfigurationView();
+        userInterface.setView(ViewCard.CURRENCY_CONFIG_VIEW);
     }
 
     /** Called after currency is saved. Proceeds to floor/room configuration. */
@@ -517,7 +518,7 @@ public class Controller {
         DialogHelper.showInfoMessage("Configure las habitaciones del motel", "CONFIGURACION INICIAL");
         floorConfigurationController.configureForFirstBoot(this::onFirstBootFloorConfigDone);
         floorConfigurationController.populateView();
-        userInterface.setFloorConfigView();
+        userInterface.setView(ViewCard.FLOOR_CONFIG_VIEW);
     }
 
     /** Called after floor/room configuration is saved. Proceeds to printer selection. */
@@ -529,7 +530,7 @@ public class Controller {
             appOptionsController.confirmPrinter();
             onFirstBootPrinterDone();
         });
-        userInterface.setPrinterConfigView();
+        userInterface.setView(ViewCard.PRINTER_CONFIG_VIEW);
     }
 
     /** Called after printer is confirmed. Completes the first-boot flow. */
@@ -537,6 +538,6 @@ public class Controller {
         DialogHelper.showInfoMessage(
                 "Programa configurado, ahora continue seleccionando turno y usando el programa",
                 "CONFIGURACION COMPLETA");
-        userInterface.setTurnSelect();
+        userInterface.setView(ViewCard.TURN_SELECT_VIEW);
     }
 }

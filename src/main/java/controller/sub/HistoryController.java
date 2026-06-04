@@ -38,7 +38,7 @@ public class HistoryController {
     public void initListeners() {
         historyView.onBackButton(() -> onBack.run());
         historyView.onTurnDetailsButton(() -> turnHistoryDetails());
-        historyView.getTurnDetailsView().onBackButton(() -> closeHistoryDetails());
+        historyView.getTurnDetailsView().onBackButton(() -> historyView.showPopupTurn(false));
 
         // Print checkbox listeners for history turn details
         historyView.getTurnDetailsView().setupPrintCheckboxes();
@@ -80,11 +80,6 @@ public class HistoryController {
         historyView.getTurnDetailsView().setTurnDetailsData(selected);
         historyView.showPopupTurn(true);
         historyView.getTurnDetailsView().setPrintEnabled(false);
-    }
-
-    /** Closes the history details popup. */
-    public void closeHistoryDetails() {
-        historyView.showPopupTurn(false);
     }
 
     /** Prints the selected historical turn report. */

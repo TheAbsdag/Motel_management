@@ -192,90 +192,9 @@ public class UserGUI extends JFrame {
         }
     }
 
-    public void setFloorView() {
-        setCard(ViewCard.FLOOR_VIEW);
+    public void setView(ViewCard card) {
+        setCard(card);
     }
-
-    public void setTurnSelect() {
-        setCard(ViewCard.TURN_SELECT_VIEW);
-    }
-
-    public void setTurnManagerView() {
-        setCard(ViewCard.TURN_MANAGER_VIEW);
-    }
-
-    public void setRoomView() {
-        setCard(ViewCard.ROOM_VIEW);
-    }
-
-    public void setManagementSelection() {
-        setCard(ViewCard.MANAGEMENT_SELECT_VIEW);
-    }
-
-    public void setInventoryView() {
-        setCard(ViewCard.INVENTORY_VIEW);
-    }
-
-    public void setSellingView() {
-        setCard(ViewCard.SELLING_VIEW);
-    }
-
-    public void setHistoryView() {
-        setCard(ViewCard.HISTORY_VIEW);
-    }
-
-    public void setRoomChangeView() {
-        setCard(ViewCard.ROOM_CHANGE_VIEW);
-    }
-
-    public void setAppOptionsView() {
-        setCard(ViewCard.APP_OPTIONS_VIEW);
-    }
-
-    public void setPrinterConfigView() {
-        setCard(ViewCard.PRINTER_CONFIG_VIEW);
-    }
-
-    public void setMotelDataConfigView() {
-        setCard(ViewCard.MOTEL_DATA_CONFIG_VIEW);
-    }
-
-    public void setDataSavingConfigView() {
-        setCard(ViewCard.DATA_SAVING_CONFIG_VIEW);
-    }
-
-    public void setFloorConfigView() {
-        setCard(ViewCard.FLOOR_CONFIG_VIEW);
-    }
-
-    public void setTimeConfigView() {
-        setCard(ViewCard.TIME_CONFIG_VIEW);
-    }
-
-    public void setSpendingRegisterView() {
-        setCard(ViewCard.SPENDING_REGISTER_VIEW);
-    }
-
-    public void setExtraTurnChangesView() {
-        setCard(ViewCard.EXTRA_TURN_CHANGES_VIEW);
-    }
-
-    public void setRoomSummaryView() {
-        setCard(ViewCard.ROOM_SUMMARY_VIEW);
-    }
-
-    public void setExportConfigView() {
-        setCard(ViewCard.EXPORT_CONFIG_VIEW);
-    }
-
-    public void setEmailConfigView() {
-        setCard(ViewCard.EMAIL_CONFIG_VIEW);
-    }
-    public void setEmailProviderView() { setCard(ViewCard.EMAIL_PROVIDER_VIEW); }
-    public void setEmailRoomCaseView() { setCard(ViewCard.EMAIL_ROOM_CASE_VIEW); }
-    public void setEmailItemCaseView() { setCard(ViewCard.EMAIL_ITEM_CASE_VIEW); }
-    public void setEmailTurnCaseView() { setCard(ViewCard.EMAIL_TURN_CASE_VIEW); }
-    public void setEmailGlobalSettingsView() { setCard(ViewCard.EMAIL_GLOBAL_SETTINGS_VIEW); }
 
     private void setCard(ViewCard card) {
         currentCard = card;
@@ -375,10 +294,6 @@ public class UserGUI extends JFrame {
         return roomConfigView;
     }
 
-    public void setRoomConfigView() {
-        setCard(ViewCard.ROOM_CONFIG_VIEW);
-    }
-
     public TimeConfigurationView getTimeConfigView() {
         return timeConfigView;
     }
@@ -416,9 +331,5 @@ public class UserGUI extends JFrame {
     public EmailCaseConfigurationView getEmailTurnCaseView() { return emailTurnCaseView; }
 
     public CurrencyConfigurationView getCurrencyConfigurationView() { return currencyConfigurationView; }
-
-    public void setCurrencyConfigurationView() {
-        setCard(ViewCard.CURRENCY_CONFIG_VIEW);
-    }
 
 }
