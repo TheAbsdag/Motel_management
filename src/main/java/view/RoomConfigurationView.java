@@ -12,11 +12,12 @@ import model.json.CurrencyConfig;
 import net.miginfocom.swing.*;
 import view.helpers.CurrencyFormatter;
 import view.helpers.TextPromptHelper;
+import view.interfaces.DirtyTrackable;
 
 /**
  * @author SECC
  */
-public class RoomConfigurationView extends JPanel {
+public class RoomConfigurationView extends JPanel implements DirtyTrackable {
 
     private int currentTower;
     private int currentFloor;
@@ -430,7 +431,7 @@ public class RoomConfigurationView extends JPanel {
 
     // ========== Dirty Tracking ==========
 
-    private void markDirty() {
+    public void markDirty() {
         hasUnsavedChanges = true;
     }
 

@@ -10,6 +10,7 @@ import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionListener;
 import net.miginfocom.swing.*;
+import view.interfaces.DirtyTrackable;
 
 /**
  * View for configuring towers, floors, and rooms.
@@ -23,7 +24,7 @@ import net.miginfocom.swing.*;
  *
  * @author SECC
  */
-public class FloorConfigurationView extends JPanel {
+public class FloorConfigurationView extends JPanel implements DirtyTrackable {
 
     private CardLayout containerCardLayout;
     private CardLayout floorGridLayout;

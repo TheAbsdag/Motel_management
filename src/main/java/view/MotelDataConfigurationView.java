@@ -10,11 +10,12 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import net.miginfocom.swing.*;
 import view.helpers.TextPromptHelper;
+import view.interfaces.DirtyTrackable;
 
 /**
  * @author SECC
  */
-public class MotelDataConfigurationView extends JPanel {
+public class MotelDataConfigurationView extends JPanel implements DirtyTrackable {
 
     private boolean hasUnsavedChanges;
 
@@ -163,7 +164,7 @@ public class MotelDataConfigurationView extends JPanel {
         addressTextField.getDocument().addDocumentListener(listener);
     }
 
-    private void markDirty() {
+    public void markDirty() {
         hasUnsavedChanges = true;
     }
 

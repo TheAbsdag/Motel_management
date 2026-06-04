@@ -6,8 +6,9 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import model.json.CurrencyConfig;
 import net.miginfocom.swing.MigLayout;
+import view.interfaces.DirtyTrackable;
 
-public class CurrencyConfigurationView extends JPanel {
+public class CurrencyConfigurationView extends JPanel implements DirtyTrackable {
 
     private boolean hasUnsavedChanges;
     private final String[] currencyCodes = {"COP", "USD", "EUR", "JPY", "GBP"};
@@ -183,7 +184,7 @@ public class CurrencyConfigurationView extends JPanel {
 
     // ========== Dirty tracking ==========
 
-    private void markDirty() { hasUnsavedChanges = true; }
+    public void markDirty() { hasUnsavedChanges = true; }
     public void clearDirty() { hasUnsavedChanges = false; }
     public boolean isDirty() { return hasUnsavedChanges; }
 
