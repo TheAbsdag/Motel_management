@@ -1,17 +1,18 @@
 package view.helpers;
 
 import javax.swing.text.*;
+import model.json.CurrencyConfig;
 
 public class NumericDocumentFilter extends DocumentFilter {
 
-    private final boolean allowDecimal;
+    private final CurrencyConfig currencyConfig;
 
     public NumericDocumentFilter() {
-        this(false);
+        this(CurrencyConfig.defaultConfig());
     }
 
-    public NumericDocumentFilter(boolean allowDecimal) {
-        this.allowDecimal = allowDecimal;
+    public NumericDocumentFilter(CurrencyConfig currencyConfig) {
+        this.currencyConfig = currencyConfig != null ? currencyConfig : CurrencyConfig.defaultConfig();
     }
 
     @Override
@@ -37,9 +38,13 @@ public class NumericDocumentFilter extends DocumentFilter {
         super.remove(fb, offset, length);
     }
 
+    private boolean isDecimalAllowed() {
+        return currencyConfig.decimalPlaces() > 0;
+    }
+
     private boolean isValid(String inserted, String fullResult) {
         if (inserted == null || inserted.isEmpty()) return true;
-        if (!allowDecimal) {
+        if (!isDecimalAllowed()) {
             try {
                 Long.parseLong(inserted);
                 return true;

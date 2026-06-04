@@ -69,7 +69,7 @@ public class SpendingRegisterView extends JPanel {
         descriptionChangeText = new JTextField();
         valueLabel = new JLabel();
         valueTextField = new JTextField();
-        ((AbstractDocument) valueTextField.getDocument()).setDocumentFilter(new NumericDocumentFilter());
+        ((AbstractDocument) valueTextField.getDocument()).setDocumentFilter(new NumericDocumentFilter(currencyConfig));
         minusSmallValueButton = new JButton();
         addSmallValueButton = new JButton();
         minusBigValueButton = new JButton();

@@ -120,12 +120,12 @@ public class InventoryManagementView extends JPanel implements TimeLabelInterfac
         nameTextField = new JTextField();
         quantityLabel = new JLabel();
         quantityTextField = new JTextField();
-         ((AbstractDocument) quantityTextField.getDocument()).setDocumentFilter(new NumericDocumentFilter());
+         ((AbstractDocument) quantityTextField.getDocument()).setDocumentFilter(new NumericDocumentFilter(currencyConfig));
         addQuantityButton = new JButton();
         removeQuantityButton = new JButton();
         priceLabel = new JLabel();
         priceTextField = new JTextField();
-         ((AbstractDocument) priceTextField.getDocument()).setDocumentFilter(new NumericDocumentFilter());
+         ((AbstractDocument) priceTextField.getDocument()).setDocumentFilter(new NumericDocumentFilter(currencyConfig));
         upButton = new JButton();
         removeSmallPriceButton = new JButton();
         addSmallPriceButton = new JButton();

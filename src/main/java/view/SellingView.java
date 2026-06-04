@@ -207,7 +207,7 @@ public class SellingView extends JPanel implements TimeLabelInterface {
 	itemListPanel = new JPanel();
 	registerListPanel = new JPanel();
 	quantityTextField = new JTextField();
-	 ((AbstractDocument) quantityTextField.getDocument()).setDocumentFilter(new NumericDocumentFilter());
+	 ((AbstractDocument) quantityTextField.getDocument()).setDocumentFilter(new NumericDocumentFilter(currencyConfig));
 	addQuantityButton = new JButton();
 	removeQuantityButton = new JButton();
 	totalPriceInformativeLabel = new JLabel();

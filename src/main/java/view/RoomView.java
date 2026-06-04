@@ -51,7 +51,7 @@ public class RoomView extends JPanel implements TimeLabelInterface {
 	booking12HoursButton = new JButton();
 	booking24HoursButton = new JButton();
 	priceTextField = new JTextField();
-	 ((AbstractDocument) priceTextField.getDocument()).setDocumentFilter(new NumericDocumentFilter());
+	 ((AbstractDocument) priceTextField.getDocument()).setDocumentFilter(new NumericDocumentFilter(currencyConfig));
 	removeSmallQuantityButton = new JButton();
 	addSmallQuantityButton = new JButton();
 	removeBigQuantity = new JButton();
