@@ -12,6 +12,7 @@ import model.email.config.EmailCaseConfig;
 import model.email.config.EmailSecureData;
 import model.email.config.EmailSmtpConfig;
 import model.email.config.ProviderPreset;
+import model.email.service.MarkdownConverter;
 import model.modelManagers.EmailConfigurationService;
 import view.EmailCaseConfigurationView;
 import view.EmailConfigurationHubView;
@@ -153,6 +154,22 @@ public class EmailController {
         userInterface.getEmailRoomCaseView().onMarkdownHelp(showMarkdownHelp);
         userInterface.getEmailItemCaseView().onMarkdownHelp(showMarkdownHelp);
         userInterface.getEmailTurnCaseView().onMarkdownHelp(showMarkdownHelp);
+
+        // === Preview body (converts markdown → HTML and shows in dialog) ===
+        MarkdownConverter previewConverter = new MarkdownConverter();
+        java.util.function.Consumer<EmailCaseConfigurationView> showPreview = caseView -> {
+            String rawMarkdown = caseView.getBody();
+            String html = previewConverter.toHtml(rawMarkdown);
+            String styledHtml = "<html><body style='font-family:Segoe UI,sans-serif;padding:16px;'>"
+                    + html + "</body></html>";
+            DialogHelper.showInfoMessage(styledHtml, "VISTA PREVIA - CUERPO DEL CORREO");
+        };
+        userInterface.getEmailRoomCaseView().onPreviewBodyButton(
+                () -> showPreview.accept(userInterface.getEmailRoomCaseView()));
+        userInterface.getEmailItemCaseView().onPreviewBodyButton(
+                () -> showPreview.accept(userInterface.getEmailItemCaseView()));
+        userInterface.getEmailTurnCaseView().onPreviewBodyButton(
+                () -> showPreview.accept(userInterface.getEmailTurnCaseView()));
 
         // === Global settings save ===
         EmailGlobalConfigurationView globalView = userInterface.getEmailGlobalSettingsView();

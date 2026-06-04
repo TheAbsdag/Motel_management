@@ -318,6 +318,10 @@ public class EmailCaseConfigurationView extends JPanel implements TimeLabelInter
 	markdownHelpButton.addActionListener(e -> action.run());
     }
 
+    public void onPreviewBodyButton(Runnable action) {
+	previewBodyButton.addActionListener(e -> action.run());
+    }
+
     public boolean isCaseEnabled() {
 	return caseEnabledCheckBox.isSelected();
     }
