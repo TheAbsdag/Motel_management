@@ -19,6 +19,12 @@ public final class TimeFormatter {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter
             .ofPattern("d 'de' MMMM 'de' yyyy", LOCALE_ES);
 
+    private static final DateTimeFormatter EMAIL_DATETIME_FORMATTER = new DateTimeFormatterBuilder()
+            .appendPattern("hh:mm:ss a")
+            .appendLiteral(' ')
+            .appendZoneText(java.time.format.TextStyle.SHORT)
+            .toFormatter(Locale.ENGLISH);
+
     private TimeFormatter() { }
 
     public static String formatTime(ZonedDateTime time) {
@@ -27,6 +33,24 @@ public final class TimeFormatter {
 
     public static String formatDate(ZonedDateTime time) {
         return time.format(DATE_FORMATTER);
+    }
+
+    /**
+     * Formats a timestamp for email placeholders: "12:24:36 PM Bogotá Colombia"
+     * Extracts the city name from the zone ID and appends the country.
+     */
+    public static String formatEmailDatetime(ZonedDateTime time) {
+        String timePart = time.format(EMAIL_DATETIME_FORMATTER);
+        String zoneId = time.getZone().getId();
+        return timePart + " " + friendlyZoneName(zoneId);
+    }
+
+    private static String friendlyZoneName(String zoneId) {
+        if (zoneId == null || !zoneId.contains("/")) return zoneId;
+        String[] parts = zoneId.split("/", 2);
+        String city = parts[1].replace("_", " ");
+        if ("Bogota".equals(city)) city = "Bogotá";
+        return city + " Colombia";
     }
 
     /**

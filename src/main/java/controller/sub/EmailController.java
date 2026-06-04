@@ -78,11 +78,16 @@ public class EmailController {
         CASE_ROOM, new String[]{
             "{motelName}", "{motelAddress}", "{motelID}",
             "{roomString}", "{towerNumber}", "{floorNumber}",
-            "{consecutiveTrans}", "{date}"
+            "{price}", "{serviceDuration}", "{hourService}", "{dateService}",
+            "{consecutiveTrans}", "{date}",
+            "{register}"
         },
         CASE_ITEM, new String[]{
             "{motelName}", "{motelAddress}", "{motelID}",
-            "{totalPrice}", "{consecutiveTrans}", "{date}"
+            "{roomString}", "{totalPrice}",
+            "{hourService}", "{dateService}",
+            "{consecutiveTrans}", "{date}",
+            "{register}"
         },
         CASE_TURN, new String[]{
             "{motelName}", "{motelAddress}", "{motelID}",
@@ -197,14 +202,21 @@ public class EmailController {
         userInterface.getEmailItemCaseView().onMarkdownHelp(showMarkdownHelp);
         userInterface.getEmailTurnCaseView().onMarkdownHelp(showMarkdownHelp);
 
-        // === Preview body (converts markdown → HTML and shows in dialog) ===
+        // === Preview body (converts markdown → HTML and shows in a JLabel that renders HTML) ===
         MarkdownConverter previewConverter = new MarkdownConverter();
         java.util.function.Consumer<EmailCaseConfigurationView> showPreview = caseView -> {
             String rawMarkdown = caseView.getBody();
             String html = previewConverter.toHtml(rawMarkdown);
             String styledHtml = "<html><body style='font-family:Segoe UI,sans-serif;padding:16px;'>"
                     + html + "</body></html>";
-            DialogHelper.showInfoMessage(styledHtml, "VISTA PREVIA - CUERPO DEL CORREO");
+            javax.swing.JLabel label = new javax.swing.JLabel(styledHtml);
+            label.setPreferredSize(new java.awt.Dimension(550, 400));
+            javax.swing.JScrollPane scrollPane = new javax.swing.JScrollPane(label);
+            scrollPane.setPreferredSize(new java.awt.Dimension(570, 420));
+            javax.swing.JOptionPane.showMessageDialog(
+                    javax.swing.SwingUtilities.getWindowAncestor(userInterface.getEmailRoomCaseView()),
+                    scrollPane, "VISTA PREVIA - CUERPO DEL CORREO",
+                    javax.swing.JOptionPane.INFORMATION_MESSAGE);
         };
         userInterface.getEmailRoomCaseView().onPreviewBodyButton(
                 () -> showPreview.accept(userInterface.getEmailRoomCaseView()));
@@ -518,6 +530,11 @@ public class EmailController {
             globalView.clearActiveSelection();
         });
 
+        for (int i = 0; i < CASE_VARIABLES.size(); i++) {
+            EmailCaseConfigurationView caseView = getCaseView(i);
+            caseView.setAvailableVariables(CASE_VARIABLES.getOrDefault(i, new String[0]));
+        }
+
         emailService.loadCaseConfigs().ifPresent(cases -> {
             for (int i = 0; i < cases.size(); i++) {
                 EmailCaseConfig cfg = cases.get(i);
@@ -526,7 +543,6 @@ public class EmailController {
                 caseView.setUseGlobalReceivers(cfg.useGlobalReceivers());
                 caseView.setSubject(cfg.subject());
                 caseView.setBody(cfg.body());
-                caseView.setAvailableVariables(CASE_VARIABLES.getOrDefault(i, new String[0]));
                 DefaultListModel<String> recvModel = caseView.getSpecificReceiversModel();
                 recvModel.clear();
                 for (String r : cfg.specificReceivers()) {

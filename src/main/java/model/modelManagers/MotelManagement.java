@@ -191,6 +191,10 @@ public class MotelManagement implements ISellingService, IHistoryService {
         return roomManager.getRoom(tower, floor, room);
     }
 
+    public Room getRoomForSale() {
+        return roomManager.getRoomForSale();
+    }
+
     public void registerRoomTimeAdded(int tower, int floor, int room, long serviceDuration, long price, boolean print) {
         timeInformationUpdate();
         turnService.addConsecutiveTransaction();

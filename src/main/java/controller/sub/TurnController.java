@@ -9,6 +9,7 @@ import javax.swing.SwingUtilities;
 import model.ProgramConfig;
 import model.dto.TurnActivityData;
 import model.dto.TurnSummaryItemData;
+import model.email.config.EmailSmtpConfig;
 import model.modelManagers.EmailConfigurationService;
 import model.modelManagers.MotelManagement;
 import model.turn.ActivityType;
@@ -150,30 +151,41 @@ public class TurnController {
     }
 
     /**
-     * Ends the current turn: asks for confirmation, ends the turn,
-     * prints based on selected checkbox options, saves history,
-     * clears backups, and attempts email report if configured.
+     * Ends the current turn: validates email connection with loading dialog,
+     * asks for confirmation, ends the turn, prints based on selected checkbox
+     * options, saves history, clears backups, and attempts email report if configured.
      */
     public void endTurn() {
-        // --- Email pre-check (validaci\u00f3n de conexi\u00f3n antes de terminar) ---
         EmailConfigurationService emailSvc = motelManager.getEmailConfigurationService();
         boolean emailConfigured = emailSvc.isEmailEnabled() && emailSvc.validateCaseConfig(2);
         if (emailConfigured) {
             var smtpOpt = emailSvc.loadSmtpConfig();
             var secureOpt = emailSvc.loadSecureData();
             if (smtpOpt.isPresent() && secureOpt.isPresent()) {
-                boolean connOk = emailSvc.verifyConnection(
-                        smtpOpt.get(), secureOpt.get().username(), secureOpt.get().credential());
-                if (!connOk) {
-                    boolean proceed = DialogHelper.confirmDialog(
-                            "Error de conexi\u00f3n de correo.\n\u00bfDesea continuar?",
-                            "CORREO ELECTR\u00d3NICO");
-                    if (!proceed) return;
-                }
+                Window parent = SwingUtilities.getWindowAncestor(turnManagerView);
+                LoadingDialog loading = new LoadingDialog(parent, "Verificando conexi\u00f3n de correo...");
+                EmailSmtpConfig smtp = smtpOpt.get();
+                String username = secureOpt.get().username();
+                String credential = secureOpt.get().credential();
+                loading.showAsync(() -> {
+                    boolean connOk = emailSvc.verifyConnection(smtp, username, credential);
+                    SwingUtilities.invokeLater(() -> {
+                        if (!connOk) {
+                            boolean proceed = DialogHelper.confirmDialog(
+                                    "Error de conexi\u00f3n de correo.\n\u00bfDesea continuar?",
+                                    "CORREO ELECTR\u00d3NICO");
+                            if (!proceed) return;
+                        }
+                        proceedWithTurnEnd(emailSvc, emailConfigured);
+                    });
+                });
+                return;
             }
         }
+        proceedWithTurnEnd(emailSvc, emailConfigured);
+    }
 
-        // --- Normal turn end flow ---
+    private void proceedWithTurnEnd(EmailConfigurationService emailSvc, boolean emailConfigured) {
         boolean turnEndConfirmation = DialogHelper.confirmTurnEnd();
         if (!turnEndConfirmation) {
             return;
@@ -190,7 +202,6 @@ public class TurnController {
             motelManager.turnEndPrint(3);
         }
 
-        // --- Email send attempt with loading dialog ---
         if (emailConfigured) {
             attemptTurnEmailWithLoading();
         }

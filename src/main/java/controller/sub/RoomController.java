@@ -2,6 +2,10 @@ package controller.sub;
 
 import java.awt.Color;
 import java.nio.file.Path;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.swing.JButton;
@@ -9,12 +13,14 @@ import model.ProgramConfig;
 import model.Room;
 import model.RoomStatus;
 import model.RoomTime;
+import model.json.CurrencyConfig;
 import model.modelManagers.EmailConfigurationService;
 import model.modelManagers.MotelManagement;
 import view.FloorView;
 import view.RoomChangeView;
 import view.RoomView;
 import view.UserGUI;
+import view.helpers.CurrencyFormatter;
 import view.helpers.DialogHelper;
 import view.helpers.InputParser;
 import view.helpers.TimeFormatter;
@@ -232,7 +238,7 @@ public class RoomController {
 
     /**
      * Completes a room booking or time extension sale.
-     * Saves the booking, optionally prints a receipt, and returns to floor view.
+     * Saves the booking, optionally prints a receipt, sends email, and returns to floor view.
      */
     public void roomTimeSale() {
         motelManager.timeInformationUpdate();
@@ -250,12 +256,14 @@ public class RoomController {
                 userInterface.setFloorView();
                 saveMainFiles.run();
                 saveBackupFilesRoomSwap.run();
+                attemptRoomEmail(towerNumber, floorNumber, roomNumber, serviceDuration, price);
             }
         } else {
             motelManager.registerRoomTimeAdded(towerNumber, floorNumber, roomNumber, serviceDuration, price, true);
             userInterface.setFloorView();
             saveMainFiles.run();
             saveBackupFilesRoomSwap.run();
+            attemptRoomEmail(towerNumber, floorNumber, roomNumber, serviceDuration, price);
         }
     }
 
@@ -271,28 +279,52 @@ public class RoomController {
         motelManager.registerRoomTimeEnd(towerNumber, floorNumber, roomNumber);
         saveMainFiles.run();
         saveBackupFilesRoomSwap.run();
-        attemptRoomEmail(towerNumber, floorNumber, roomNumber);
         userInterface.setFloorView();
     }
 
-    private void attemptRoomEmail(int tower, int floor, int room) {
+    private void attemptRoomEmail(int tower, int floor, int room, long serviceDuration, long price) {
         EmailConfigurationService emailSvc = motelManager.getEmailConfigurationService();
         if (!emailSvc.isEmailEnabled() || !emailSvc.validateCaseConfig(0)) return;
         Room roomObj = motelManager.getRoom(tower, floor, room);
         if (roomObj == null) return;
         ProgramConfig cfg = motelManager.getProgramConfig();
         int consecutive = motelManager.getTurnService().getConsecutiveTransaction();
-        Map<String, String> placeholders = java.util.Map.of(
-                "{motelName}", cfg.getMotelName(),
-                "{motelAddress}", cfg.getMotelAddress(),
-                "{motelID}", cfg.getMotelID(),
-                "{roomString}", roomObj.getRoomString(),
-                "{towerNumber}", String.valueOf(tower),
-                "{floorNumber}", String.valueOf(floor),
-                "{consecutiveTrans}", String.valueOf(consecutive),
-                "{date}", java.time.LocalDate.now().toString());
+        ZonedDateTime now = ZonedDateTime.now(ZoneId.of("America/Bogota"));
+        String formattedDuration = TimeFormatter.formatDuration(serviceDuration);
+        CurrencyConfig currency = cfg.getCurrencyConfig();
+        String formattedPrice = CurrencyFormatter.format(price, currency);
+
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("{motelName}", cfg.getMotelName());
+        placeholders.put("{motelAddress}", cfg.getMotelAddress());
+        placeholders.put("{motelID}", cfg.getMotelID());
+        placeholders.put("{roomString}", roomObj.getRoomString());
+        placeholders.put("{towerNumber}", String.valueOf(tower));
+        placeholders.put("{floorNumber}", String.valueOf(floor));
+        placeholders.put("{consecutiveTrans}", String.valueOf(consecutive));
+        placeholders.put("{date}", TimeFormatter.formatEmailDatetime(now));
+        placeholders.put("{price}", formattedPrice);
+        placeholders.put("{serviceDuration}", formattedDuration);
+        placeholders.put("{hourService}", now.format(DateTimeFormatter.ofPattern("hh:mm a")));
+        placeholders.put("{dateService}", now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        placeholders.put("{register}", buildRoomRegisterHtml(roomObj.getRoomString(), formattedDuration, formattedPrice, now));
         List<Path> attachments = resolveCaseAttachments(emailSvc, 0, consecutive);
         EmailController.sendEmailAsync(0, placeholders, attachments, emailSvc);
+    }
+
+    private static String buildRoomRegisterHtml(String roomString, String duration, String price, ZonedDateTime now) {
+        String time = now.format(DateTimeFormatter.ofPattern("hh:mm a"));
+        String date = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        return "<table border='1' cellpadding='4' cellspacing='0' style='border-collapse:collapse;font-family:Segoe UI,sans-serif;font-size:12px;'>"
+                + "<tr><th>Habitación</th><th>Servicio</th><th>Valor</th><th>Hora</th><th>Fecha</th></tr>"
+                + "<tr><td>" + escapeHtml(roomString) + "</td><td>" + escapeHtml(duration) + "</td><td>" + price + "</td><td>" + time + "</td><td>" + date + "</td></tr>"
+                + "</table>";
+    }
+
+    private static String escapeHtml(String text) {
+        if (text == null) return "";
+        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+                .replace("\"", "&quot;").replace("'", "&#39;");
     }
 
     private static List<Path> resolveCaseAttachments(EmailConfigurationService emailSvc, int caseIndex, int consecutive) {

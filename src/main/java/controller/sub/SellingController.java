@@ -1,17 +1,25 @@
 package controller.sub;
 
 import java.nio.file.Path;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import model.ProgramConfig;
+import model.Room;
 import model.dto.InventoryItemData;
 import model.dto.SellingItemData;
+import model.json.CurrencyConfig;
 import model.modelManagers.EmailConfigurationService;
 import model.modelManagers.MotelManagement;
 import view.SellingView;
 import view.UserGUI;
+import view.helpers.CurrencyFormatter;
 import view.helpers.DialogHelper;
 import view.helpers.InputParser;
+import view.helpers.TimeFormatter;
 
 /**
  * Controls the item selling flow (room charges and reception sales).
@@ -154,6 +162,11 @@ public class SellingController {
     }
 
     public void finishSale() {
+        Room roomSoldTo = motelManager.getRoomForSale();
+        String roomString = roomSoldTo != null ? roomSoldTo.getRoomString() : "";
+        List<SellingItemData> items = motelManager.getSellingItemDataList();
+        long totalPrice = motelManager.getCurrentTotalPriceSellingList();
+
         boolean print = sellingView.isPrintSelected();
         if (!print) {
             boolean noPrintingConfirmation = DialogHelper.confirmPrinting();
@@ -162,31 +175,62 @@ public class SellingController {
                 userInterface.setFloorView();
                 saveMainFiles.run();
                 saveBackupFilesTransaction.run();
-                attemptSaleEmail();
+                attemptSaleEmail(items, roomString, totalPrice);
             }
         } else {
             motelManager.roomSaleFinished(true);
             userInterface.setFloorView();
             saveMainFiles.run();
             saveBackupFilesTransaction.run();
-            attemptSaleEmail();
+            attemptSaleEmail(items, roomString, totalPrice);
         }
     }
 
-    private void attemptSaleEmail() {
+    private void attemptSaleEmail(List<SellingItemData> items, String roomString, long totalPrice) {
         EmailConfigurationService emailSvc = motelManager.getEmailConfigurationService();
         if (!emailSvc.isEmailEnabled() || !emailSvc.validateCaseConfig(1)) return;
         ProgramConfig cfg = motelManager.getProgramConfig();
         int consecutive = motelManager.getTurnService().getConsecutiveTransaction();
-        Map<String, String> placeholders = Map.of(
-                "{motelName}", cfg.getMotelName(),
-                "{motelAddress}", cfg.getMotelAddress(),
-                "{motelID}", cfg.getMotelID(),
-                "{totalPrice}", String.valueOf(motelManager.getCurrentTotalPriceSellingList()),
-                "{consecutiveTrans}", String.valueOf(consecutive),
-                "{date}", java.time.LocalDate.now().toString());
+        ZonedDateTime now = ZonedDateTime.now(ZoneId.of("America/Bogota"));
+        CurrencyConfig currency = cfg.getCurrencyConfig();
+        String formattedTotal = CurrencyFormatter.format(totalPrice, currency);
+
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("{motelName}", cfg.getMotelName());
+        placeholders.put("{motelAddress}", cfg.getMotelAddress());
+        placeholders.put("{motelID}", cfg.getMotelID());
+        placeholders.put("{totalPrice}", formattedTotal);
+        placeholders.put("{roomString}", roomString);
+        placeholders.put("{consecutiveTrans}", String.valueOf(consecutive));
+        placeholders.put("{date}", TimeFormatter.formatEmailDatetime(now));
+        placeholders.put("{hourService}", now.format(DateTimeFormatter.ofPattern("hh:mm a")));
+        placeholders.put("{dateService}", now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        placeholders.put("{register}", buildSaleRegisterHtml(items, currency, formattedTotal));
         List<Path> attachments = resolveCaseAttachments(emailSvc, 1, consecutive);
         EmailController.sendEmailAsync(1, placeholders, attachments, emailSvc);
+    }
+
+    private static String buildSaleRegisterHtml(List<SellingItemData> items, CurrencyConfig currency, String totalPrice) {
+        if (items == null || items.isEmpty()) return "<p>Sin artículos</p>";
+        StringBuilder table = new StringBuilder();
+        table.append("<table border='1' cellpadding='4' cellspacing='0' style='border-collapse:collapse;font-family:Segoe UI,sans-serif;font-size:12px;'>");
+        table.append("<thead><tr style='background:#f0f0f0;'><th>Cant</th><th>Artículo</th><th>Precio</th></tr></thead><tbody>");
+        for (SellingItemData item : items) {
+            table.append("<tr>");
+            table.append("<td>").append(item.quantity()).append("</td>");
+            table.append("<td>").append(escapeHtml(item.itemName())).append("</td>");
+            table.append("<td>").append(CurrencyFormatter.format(item.price(), currency)).append("</td>");
+            table.append("</tr>");
+        }
+        table.append("</tbody></table>");
+        table.append("<p><strong>Total: ").append(totalPrice).append("</strong></p>");
+        return table.toString();
+    }
+
+    private static String escapeHtml(String text) {
+        if (text == null) return "";
+        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+                .replace("\"", "&quot;").replace("'", "&#39;");
     }
 
     private static List<Path> resolveCaseAttachments(EmailConfigurationService emailSvc, int caseIndex, int consecutive) {

@@ -412,14 +412,9 @@ public class EmailCaseConfigurationView extends JPanel implements TimeLabelInter
 		if (e.getClickCount() == 2) {
 		    int idx = availableVariablesList.locationToIndex(e.getPoint());
 		    if (idx >= 0) {
-			String variable = (String) availableVariablesList.getModel().getElementAt(idx);
+			String variable = availableVariablesList.getModel().getElementAt(idx).toString();
 			JTextComponent target = lastFocusedText != null ? lastFocusedText : bodyTextArea;
-			int pos = target.getCaretPosition();
-			try {
-			    target.getDocument().insertString(pos, variable, null);
-			} catch (Exception ex) {
-			    target.setText(target.getText() + variable);
-			}
+			target.replaceSelection(variable);
 		    }
 		}
 	    }
