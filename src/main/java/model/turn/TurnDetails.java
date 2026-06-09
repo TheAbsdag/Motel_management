@@ -115,118 +115,100 @@ public class TurnDetails {
 
         for (TurnActivity activity : activities) {
             switch (activity) {
-                case RoomBookingActivity r -> {
-                    if (r.isOccupied()) {
-                        long price = r.price();
-                        long serviceKey = r.servicedExtensionDuration() != 0 ? r.servicedExtensionDuration() : r.serviceDuration();
-                        totalSales += price;
-                        totalRooms += price;
-                        totalTurn += price;
-                        totalNet += price;
-                        boolean found = false;
-                        for (int j = 0; j < newSummary.size(); j++) {
-                            TurnSummaryItemData si = newSummary.get(j);
-                            if ("room".equals(si.summaryType()) && si.serviceDuration() == serviceKey) {
-                                newSummary.set(j, new TurnSummaryItemData("room", si.quantity() + 1, si.price() + price, null, serviceKey));
-                                found = true;
-                                break;
-                            }
-                        }
-                        if (!found) {
-                            newSummary.add(new TurnSummaryItemData("room", 1, price, null, serviceKey));
-                        }
-                    }
-                }
-                case SaleActivity s -> {
-                    for (SaleItem item : s.items()) {
-                        long price = item.price();
-                        long qty = item.quantity();
-                        totalSales += price;
-                        totalItems += price;
-                        totalTurn += price;
-                        totalNet += price;
-                        boolean found = false;
-                        for (int j = 0; j < newSummary.size(); j++) {
-                            TurnSummaryItemData si = newSummary.get(j);
-                            if ("item".equals(si.summaryType()) && item.itemName().equals(si.name())) {
-                                newSummary.set(j, new TurnSummaryItemData("item", (int)(si.quantity() + qty), si.price() + price, item.itemName(), 0));
-                                found = true;
-                                break;
-                            }
-                        }
-                        if (!found) {
-                            newSummary.add(new TurnSummaryItemData("item", (int) qty, price, item.itemName(), 0));
-                        }
-                    }
-                }
-                case RefundActivity r -> {
-                    long price = r.price();
-                    totalRefunds += price;
-                    totalTurn += price;
-                    totalNet += price;
-                    if (r.refundType() == RefundType.SALE_REFUND) {
-                        totalItemRefunds += price;
-                        boolean found = false;
-                        for (int j = 0; j < newSummary.size(); j++) {
-                            TurnSummaryItemData si = newSummary.get(j);
-                            if ("itemRefund".equals(si.summaryType()) && r.itemName().equals(si.name())) {
-                                newSummary.set(j, new TurnSummaryItemData("itemRefund", (int)(si.quantity() + r.quantity()), si.price() + price, r.itemName(), 0));
-                                found = true;
-                                break;
-                            }
-                        }
-                        if (!found) {
-                            newSummary.add(new TurnSummaryItemData("itemRefund", (int) r.quantity(), price, r.itemName(), 0));
-                        }
-                    } else {
-                        totalRoomRefunds += price;
-                        long serviceKey = r.refundServiceDuration();
-                        boolean found = false;
-                        for (int j = 0; j < newSummary.size(); j++) {
-                            TurnSummaryItemData si = newSummary.get(j);
-                            if ("roomRefund".equals(si.summaryType()) && si.serviceDuration() == serviceKey) {
-                                newSummary.set(j, new TurnSummaryItemData("roomRefund", si.quantity() + 1, si.price() + price, null, serviceKey));
-                                found = true;
-                                break;
-                            }
-                        }
-                        if (!found) {
-                            newSummary.add(new TurnSummaryItemData("roomRefund", 1, price, null, serviceKey));
-                        }
-                    }
-                }
-                case SpendingActivity s -> {
-                    long value = s.value();
-                    totalSpending += value;
-                    totalTurn += value;
-                    totalNet += value;
-                }
-                case ExtraChangeActivity e -> {
-                    long value = e.value();
-                    if (e.extraType() == ExtraChangeType.BANK_TRANSFER) {
-                        totalBankTransfers += value * -1L;
-                    } else {
-                        totalDeposits += value * -1L;
-                    }
-                    totalNet += value;
-                    boolean found = false;
-                    for (int j = 0; j < newSummary.size(); j++) {
-                        TurnSummaryItemData si = newSummary.get(j);
-                        if ("extraChange".equals(si.summaryType()) && e.extraType().getValue().equals(si.name())) {
-                            newSummary.set(j, new TurnSummaryItemData("extraChange", si.quantity() + 1, si.price() + value, e.extraType().getValue(), 0));
-                            found = true;
-                            break;
-                        }
-                    }
-                    if (!found) {
-                        newSummary.add(new TurnSummaryItemData("extraChange", 1, value, e.extraType().getValue(), 0));
-                    }
-                }
+                case RoomBookingActivity r -> accumulateRoomBooking(r, newSummary);
+                case SaleActivity s -> accumulateSale(s, newSummary);
+                case RefundActivity r -> accumulateRefund(r, newSummary);
+                case SpendingActivity s -> accumulateSpending(s);
+                case ExtraChangeActivity e -> accumulateExtraChange(e, newSummary);
                 default -> { /* roomSwap has no financial impact */ }
             }
         }
         summaryItems = newSummary;
         totalsComputed = true;
+    }
+
+    private void accumulateRoomBooking(RoomBookingActivity r, List<TurnSummaryItemData> summary) {
+        if (!r.isOccupied()) return;
+        long price = r.price();
+        long serviceKey = r.servicedExtensionDuration() != 0 ? r.servicedExtensionDuration() : r.serviceDuration();
+        totalSales += price;
+        totalRooms += price;
+        totalTurn += price;
+        totalNet += price;
+        findOrUpdateSummary(summary,
+                si -> "room".equals(si.summaryType()) && si.serviceDuration() == serviceKey,
+                () -> new TurnSummaryItemData("room", 1, price, null, serviceKey),
+                si -> new TurnSummaryItemData("room", si.quantity() + 1, si.price() + price, null, serviceKey));
+    }
+
+    private void accumulateSale(SaleActivity s, List<TurnSummaryItemData> summary) {
+        for (SaleItem item : s.items()) {
+            long price = item.price();
+            long qty = item.quantity();
+            totalSales += price;
+            totalItems += price;
+            totalTurn += price;
+            totalNet += price;
+            findOrUpdateSummary(summary,
+                    si -> "item".equals(si.summaryType()) && item.itemName().equals(si.name()),
+                    () -> new TurnSummaryItemData("item", (int) qty, price, item.itemName(), 0),
+                    si -> new TurnSummaryItemData("item", (int)(si.quantity() + qty), si.price() + price, item.itemName(), 0));
+        }
+    }
+
+    private void accumulateRefund(RefundActivity r, List<TurnSummaryItemData> summary) {
+        long price = r.price();
+        totalRefunds += price;
+        totalTurn += price;
+        totalNet += price;
+        if (r.refundType() == RefundType.SALE_REFUND) {
+            totalItemRefunds += price;
+            findOrUpdateSummary(summary,
+                    si -> "itemRefund".equals(si.summaryType()) && r.itemName().equals(si.name()),
+                    () -> new TurnSummaryItemData("itemRefund", (int) r.quantity(), price, r.itemName(), 0),
+                    si -> new TurnSummaryItemData("itemRefund", (int)(si.quantity() + r.quantity()), si.price() + price, r.itemName(), 0));
+        } else {
+            totalRoomRefunds += price;
+            long serviceKey = r.refundServiceDuration();
+            findOrUpdateSummary(summary,
+                    si -> "roomRefund".equals(si.summaryType()) && si.serviceDuration() == serviceKey,
+                    () -> new TurnSummaryItemData("roomRefund", 1, price, null, serviceKey),
+                    si -> new TurnSummaryItemData("roomRefund", si.quantity() + 1, si.price() + price, null, serviceKey));
+        }
+    }
+
+    private void accumulateSpending(SpendingActivity s) {
+        long value = s.value();
+        totalSpending += value;
+        totalTurn += value;
+        totalNet += value;
+    }
+
+    private void accumulateExtraChange(ExtraChangeActivity e, List<TurnSummaryItemData> summary) {
+        long value = e.value();
+        if (e.extraType() == ExtraChangeType.BANK_TRANSFER) {
+            totalBankTransfers += value * -1L;
+        } else {
+            totalDeposits += value * -1L;
+        }
+        totalNet += value;
+        findOrUpdateSummary(summary,
+                si -> "extraChange".equals(si.summaryType()) && e.extraType().getValue().equals(si.name()),
+                () -> new TurnSummaryItemData("extraChange", 1, value, e.extraType().getValue(), 0),
+                si -> new TurnSummaryItemData("extraChange", si.quantity() + 1, si.price() + value, e.extraType().getValue(), 0));
+    }
+
+    private void findOrUpdateSummary(List<TurnSummaryItemData> summary,
+                                     java.util.function.Predicate<TurnSummaryItemData> matcher,
+                                     java.util.function.Supplier<TurnSummaryItemData> newItemSupplier,
+                                     java.util.function.Function<TurnSummaryItemData, TurnSummaryItemData> updateMapper) {
+        for (int j = 0; j < summary.size(); j++) {
+            if (matcher.test(summary.get(j))) {
+                summary.set(j, updateMapper.apply(summary.get(j)));
+                return;
+            }
+        }
+        summary.add(newItemSupplier.get());
     }
 
     /**
