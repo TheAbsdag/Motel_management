@@ -77,7 +77,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.13.0</version>
+                <version>3.15.0</version>
                 <configuration>
                     <source>${maven.compiler.source}</source>
                     <target>${maven.compiler.target}</target>
@@ -86,7 +86,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>3.1.0</version>
+                <version>3.5.0</version>
                 <configuration>
                     <archive>
                         <manifest>
@@ -98,7 +98,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.5.2</version>
+                <version>3.6.2</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
@@ -106,66 +106,12 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <createDependencyReducedPom>false</createDependencyReducedPom>
-                            <minimizeJar>true</minimizeJar>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>App</mainClass>
                                 </transformer>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                             </transformers>
-                            <includes>
-                                <include>TheAbsdag:Motel_management</include>
-                                <include>com.fasterxml.jackson.core:jackson-databind</include>
-                                <include>com.fasterxml.jackson.core:jackson-core</include>
-                                <include>com.fasterxml.jackson.core:jackson-annotations</include>
-                                <include>com.fasterxml.jackson.datatype:jackson-datatype-jsr310</include>
-                                <include>com.miglayout:miglayout-swing</include>
-                                <include>com.miglayout:miglayout-core</include>
-                                <include>com.itextpdf:kernel</include>
-                                <include>com.itextpdf:layout</include>
-                                <include>com.itextpdf:io</include>
-                                <include>org.slf4j:slf4j-api</include>
-                                <include>org.apache.poi:poi-ooxml</include>
-                                <include>org.apache.poi:poi</include>
-                                <include>org.apache.poi:poi-ooxml-lite</include>
-                                <include>org.apache.xmlbeans:xmlbeans</include>
-                                <include>org.apache.commons:commons-compress</include>
-                                <include>org.apache.commons:commons-collections4</include>
-                                <include>org.apache.commons:commons-math3</include>
-                                <include>org.apache.commons:commons-lang3</include>
-                                <include>commons-io:commons-io</include>
-                                <include>commons-codec:commons-codec</include>
-                                <include>com.zaxxer:SparseBitSet</include>
-                                <include>com.github.virtuald:curvesapi</include>
-                                <include>org.apache.logging.log4j:log4j-api</include>
-                                <include>org.eclipse.angus:angus-mail</include>
-                                <include>org.eclipse.angus:angus-activation</include>
-                                <include>jakarta.mail:jakarta.mail-api</include>
-                                <include>jakarta.activation:jakarta.activation-api</include>
-                            </includes>
-                            <filters>
-                                <filter>
-                                    <artifact>org.apache.poi:*</artifact>
-                                    <includes>
-                                        <include>**</include>
-                                    </includes>
-                                </filter>
-                                <filter>
-                                    <artifact>org.apache.xmlbeans:*</artifact>
-                                    <includes>
-                                        <include>**</include>
-                                    </includes>
-                                </filter>
-                                <filter>
-                                    <artifact>*:*</artifact>
-                                    <excludes>
-                                        <exclude>META-INF/*.SF</exclude>
-                                        <exclude>META-INF/*.DSA</exclude>
-                                        <exclude>META-INF/*.RSA</exclude>
-                                    </excludes>
-                                </filter>
-                            </filters>
                         </configuration>
                     </execution>
                 </executions>
