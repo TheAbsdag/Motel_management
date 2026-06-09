@@ -190,7 +190,6 @@ public class SellingController {
 
     private void attemptSaleEmail(List<SellingItemData> items, String roomString, long totalPrice) {
         EmailConfigurationService emailSvc = motelManager.getEmailConfigurationService();
-        if (!emailSvc.isEmailEnabled() || !emailSvc.validateCaseConfig(1)) return;
         ProgramConfig cfg = motelManager.getProgramConfig();
         int consecutive = motelManager.getTurnService().getConsecutiveTransaction();
         ZonedDateTime now = ZonedDateTime.now(ZoneId.of("America/Bogota"));
@@ -208,8 +207,7 @@ public class SellingController {
         placeholders.put("{hourService}", now.format(DateTimeFormatter.ofPattern("hh:mm a")));
         placeholders.put("{dateService}", now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
         placeholders.put("{register}", buildSaleRegisterHtml(items, currency, formattedTotal));
-        List<Path> attachments = EmailController.resolveCaseAttachments(emailSvc, 1, consecutive);
-        EmailController.sendEmailAsync(1, placeholders, attachments, emailSvc);
+        EmailController.trySendCaseEmail(1, placeholders, emailSvc, consecutive);
     }
 
     private static String buildSaleRegisterHtml(List<SellingItemData> items, CurrencyConfig currency, String totalPrice) {

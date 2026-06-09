@@ -78,7 +78,7 @@ public class RoomController {
     /** Registers action listeners for room view and room change view buttons. */
     public void initListeners() {
         // Room view buttons — using encapsulated listener registration
-        roomView.onBackButton(this::showFloorPerspective);
+        roomView.onBackButton(() -> userInterface.setView(ViewCard.FLOOR_VIEW));
         roomView.onRoomSellingButton(onRoomSale);
         roomView.onEndTimeButton(this::roomTimeEnd);
         roomView.onAddTimeButton(this::roomTimeSale);
@@ -98,7 +98,7 @@ public class RoomController {
         // Room change view buttons
         roomChangeView.onFloorUp(() -> roomChangeViewFloorChange(1));
         roomChangeView.onFloorDown(() -> roomChangeViewFloorChange(-1));
-        roomChangeView.onBackButton(this::showFloorPerspective);
+        roomChangeView.onBackButton(() -> userInterface.setView(ViewCard.FLOOR_VIEW));
         roomChangeView.onConfirmButton(this::changeRoomTime);
 
         // Cross-domain: room buttons on FloorView → this controller
@@ -285,10 +285,9 @@ public class RoomController {
     }
 
     private void attemptRoomEmail(int tower, int floor, int room, long serviceDuration, long price) {
-        EmailConfigurationService emailSvc = motelManager.getEmailConfigurationService();
-        if (!emailSvc.isEmailEnabled() || !emailSvc.validateCaseConfig(0)) return;
         Room roomObj = motelManager.getRoom(tower, floor, room);
         if (roomObj == null) return;
+        EmailConfigurationService emailSvc = motelManager.getEmailConfigurationService();
         ProgramConfig cfg = motelManager.getProgramConfig();
         int consecutive = motelManager.getTurnService().getConsecutiveTransaction();
         ZonedDateTime now = ZonedDateTime.now(ZoneId.of("America/Bogota"));
@@ -310,8 +309,7 @@ public class RoomController {
         placeholders.put("{hourService}", now.format(DateTimeFormatter.ofPattern("hh:mm a")));
         placeholders.put("{dateService}", now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
         placeholders.put("{register}", buildRoomRegisterHtml(roomObj.getRoomString(), formattedDuration, formattedPrice, now));
-        List<Path> attachments = EmailController.resolveCaseAttachments(emailSvc, 0, consecutive);
-        EmailController.sendEmailAsync(0, placeholders, attachments, emailSvc);
+        EmailController.trySendCaseEmail(0, placeholders, emailSvc, consecutive);
     }
 
     private static String buildRoomRegisterHtml(String roomString, String duration, String price, ZonedDateTime now) {
@@ -426,9 +424,4 @@ public class RoomController {
         }
     }
 
-    // ========== Navigation Helpers ==========
-
-    private void showFloorPerspective() {
-        userInterface.setView(ViewCard.FLOOR_VIEW);
-    }
 }

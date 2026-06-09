@@ -93,15 +93,21 @@ public class Controller {
         this.userInterface = userInterface;
 
         // Create sub-controllers (order matters for callback references)
+        managementController = new ManagementController(userInterface,
+                this::openTurnManagement,
+                this::openInventoryView,
+                this::openHistoryView,
+                this::openAppOptionsView
+        );
         floorController = new FloorController(motelManager, userInterface.getFloorView());
         sellingController = new SellingController(motelManager, userInterface.getSellingView(), userInterface,
                 this::saveMainFiles, () -> saveBackupFiles("transaction"));
         inventoryController = new InventoryController(motelManager, userInterface.getInventoryView(),
-                this::showManagementSelection, this::saveMainFiles, () -> saveBackupFiles("roomSwap"));
+                managementController::showManagementOptions, this::saveMainFiles, () -> saveBackupFiles("roomSwap"));
         appOptionsController = new AppOptionsController(motelManager,
                 userInterface.getAppOptions(),
                 userInterface.getPrinterConfigView(),
-                this::showManagementSelection,
+                managementController::showManagementOptions,
                 this::openPrinterConfig,
                 this::openMotelDataConfig,
                 this::openTimeConfig,
@@ -111,18 +117,12 @@ public class Controller {
                 this::openCurrencyConfig,
                 this::openAppOptionsHub);
         historyController = new HistoryController(motelManager, userInterface.getHistoryView(),
-                this::showManagementSelection);
+                managementController::showManagementOptions);
         turnController = new TurnController(motelManager, userInterface.getTurnManagerView(), userInterface,
-                this::showManagementSelection, this::saveMainFiles, () -> saveBackupFiles("transaction"));
+                managementController::showManagementOptions, this::saveMainFiles, () -> saveBackupFiles("transaction"));
         roomController = new RoomController(motelManager, userInterface.getFloorView(),
                 userInterface.getRoomView(), userInterface.getRoomChangeView(), userInterface,
                 () -> sellingController.roomSale(false), this::saveMainFiles, () -> saveBackupFiles("roomSwap"));
-        managementController = new ManagementController(userInterface,
-                this::openTurnManagement,
-                this::openInventoryView,
-                this::openHistoryView,
-                this::openAppOptionsView
-        );
         floorConfigurationController = new FloorConfigurationController(motelManager,
                 userInterface.getFloorConfigView(),
                 userInterface.getRoomConfigView(),
@@ -254,7 +254,7 @@ public class Controller {
         currencyConfigurationController.initListeners();
 
         // Floor view management button → management menu
-        userInterface.getFloorView().onManagementOptions(this::showManagementSelection);
+        userInterface.getFloorView().onManagementOptions(managementController::showManagementOptions);
 
         // Floor view reception sell button → reception sale
         userInterface.getFloorView().onReceptionSell(() -> sellingController.roomSale(true));
@@ -276,11 +276,6 @@ public class Controller {
         int[][] roomsArray = motelManager.getRoomsArray();
         userInterface.setupFloors(roomsArray);
         roomController.wireRoomGridListeners();
-    }
-
-    /** Shows the management options menu. */
-    public void showManagementSelection() {
-        userInterface.setView(ViewCard.MANAGEMENT_SELECT_VIEW);
     }
 
     private void openTurnManagement() {

@@ -611,6 +611,19 @@ public class EmailController {
         list.setModel(model);
     }
 
+    /**
+     * Convenience method for controllers: validates case config, resolves attachments,
+     * and fires the async email in one call. Returns false if email is disabled or
+     * the case config is invalid.
+     */
+    public static boolean trySendCaseEmail(int caseIndex, Map<String, String> placeholders,
+                                            EmailConfigurationService emailSvc, int consecutive) {
+        if (!emailSvc.isEmailEnabled() || !emailSvc.validateCaseConfig(caseIndex)) return false;
+        List<Path> attachments = resolveCaseAttachments(emailSvc, caseIndex, consecutive);
+        sendEmailAsync(caseIndex, placeholders, attachments, emailSvc);
+        return true;
+    }
+
     public static List<Path> resolveCaseAttachments(EmailConfigurationService emailSvc, int caseIndex, int consecutive) {
         List<String> names = emailSvc.loadCaseConfigs()
                 .filter(cases -> caseIndex < cases.size())
