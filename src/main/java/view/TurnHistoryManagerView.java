@@ -16,6 +16,9 @@ import net.miginfocom.swing.*;
 import model.dto.TurnActivityData;
 import model.dto.TurnHistoryData;
 import model.json.CurrencyConfig;
+import model.turn.ActivityType;
+import model.turn.ExtraChangeType;
+import model.turn.RefundType;
 import view.customListRenderes.CustomCellRenderer;
 import view.customListRenderes.CustomHeaderRenderer;
 import view.helpers.CurrencyFormatter;
@@ -107,48 +110,48 @@ public class TurnHistoryManagerView extends JPanel {
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             TurnActivityData item = filteredTurnDetails.get(rowIndex);
-            String changeType = item.getChangeType();
+            ActivityType changeType = item.getChangeType();
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd - hh:mm a");
             String formattedDate = item.getChangeDate().format(formatter);
 
             return switch (columnIndex) {
                 case 0 -> rowIndex + 1;
                 case 1 -> {
-                    if ("sale".equals(changeType)) yield item.getRoomSoldTo();
-                    else if ("room".equals(changeType)) yield item.getRoomString();
-                    else if ("roomSwap".equals(changeType)) yield item.getOriginalRoom();
-                    else if ("refund".equals(changeType)) yield item.getRoomString();
-                    else if ("spending".equals(changeType)) yield "N/A";
-                    else if ("extraChange".equals(changeType)) yield "N/A";
+                    if (ActivityType.SALE == changeType) yield item.getRoomSoldTo();
+                    else if (ActivityType.ROOM == changeType) yield item.getRoomString();
+                    else if (ActivityType.ROOM_SWAP == changeType) yield item.getOriginalRoom();
+                    else if (ActivityType.REFUND == changeType) yield item.getRoomString();
+                    else if (ActivityType.SPENDING == changeType) yield "N/A";
+                    else if (ActivityType.EXTRA_CHANGE == changeType) yield "N/A";
                     else yield "";
                 }
                 case 2 -> formattedDate;
                 case 3 -> {
-                    if ("sale".equals(changeType)) yield item.getQuantity() + " de " + item.getItemName();
-                    else if ("room".equals(changeType)) yield "Alquiler " + TimeFormatter.formatDuration(item.getEffectiveServiceDuration());
-                    else if ("roomSwap".equals(changeType)) yield "Cambio de habitacion a: " + item.getSwappedRoom();
-                    else if ("refund".equals(changeType)) {
-                        if ("saleRefund".equals(item.getRefundType()))
+                    if (ActivityType.SALE == changeType) yield item.getQuantity() + " de " + item.getItemName();
+                    else if (ActivityType.ROOM == changeType) yield "Alquiler " + TimeFormatter.formatDuration(item.getEffectiveServiceDuration());
+                    else if (ActivityType.ROOM_SWAP == changeType) yield "Cambio de habitacion a: " + item.getSwappedRoom();
+                    else if (ActivityType.REFUND == changeType) {
+                        if (RefundType.SALE_REFUND == item.getRefundType())
                             yield "Reembolso " + item.getQuantity() + " de " + item.getItemName();
-                        else if ("roomRefund".equals(item.getRefundType()))
+                        else if (RefundType.ROOM_REFUND == item.getRefundType())
                             yield "Reembolso habitacion " + item.getRoomString();
                         else yield "Reembolso";
                     }
-                    else if ("spending".equals(changeType)) yield "Gasto: " + item.getDescription();
-                    else if ("extraChange".equals(changeType)) {
-                        if ("bankTransfer".equals(item.getExtraType())) yield "Transferencia: " + item.getDescription();
-                        else if ("safeDeposit".equals(item.getExtraType())) yield "Deposito: " + item.getDescription();
-                        else yield item.getExtraType();
+                    else if (ActivityType.SPENDING == changeType) yield "Gasto: " + item.getDescription();
+                    else if (ActivityType.EXTRA_CHANGE == changeType) {
+                        if (ExtraChangeType.BANK_TRANSFER == item.getExtraType()) yield "Transferencia: " + item.getDescription();
+                        else if (ExtraChangeType.SAFE_DEPOSIT == item.getExtraType()) yield "Deposito: " + item.getDescription();
+                        else yield "";
                     }
                     else yield "";
                 }
                 case 4 -> {
-                    if ("sale".equals(changeType) || "room".equals(changeType)
-                            || "refund".equals(changeType) || "spending".equals(changeType)
-                            || "extraChange".equals(changeType)) yield item.getPrice();
+                    if (ActivityType.SALE == changeType || ActivityType.ROOM == changeType
+                            || ActivityType.REFUND == changeType || ActivityType.SPENDING == changeType
+                            || ActivityType.EXTRA_CHANGE == changeType) yield item.getPrice();
                     else yield "";
                 }
-                case 5 -> ("sale".equals(changeType) || "room".equals(changeType)) && item.isRefunded() ? "Si" : "";
+                case 5 -> (ActivityType.SALE == changeType || ActivityType.ROOM == changeType) && item.isRefunded() ? "Si" : "";
                 default -> null;
             };
         }

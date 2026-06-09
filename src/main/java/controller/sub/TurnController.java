@@ -89,9 +89,9 @@ public class TurnController {
                 if (selectedRow != -1 && !isListAdjusting) {
                     isListAdjusting = true;
                     TurnActivityData selectedItem = turnManagerView.getCurrentSelectedItem(selectedRow);
-                    String changeType = selectedItem.getChangeType();
+                    ActivityType changeType = selectedItem.getChangeType();
                     boolean enabled = false;
-                    if (("sale".equals(changeType) || "room".equals(changeType))
+                    if ((ActivityType.SALE == changeType || ActivityType.ROOM == changeType)
                             && !selectedItem.isRefunded()) {
                         enabled = true;
                     }
@@ -346,15 +346,13 @@ userInterface.setView(ViewCard.FLOOR_VIEW);
         if (row == -1) return;
 
         TurnActivityData selectedItem = turnManagerView.getCurrentSelectedItem(row);
-        String changeType = selectedItem.getChangeType();
-        if (!"sale".equals(changeType) && !"room".equals(changeType)) return;
+        ActivityType changeType = selectedItem.getChangeType();
+        if (changeType != ActivityType.SALE && changeType != ActivityType.ROOM) return;
         if (selectedItem.isRefunded()) return;
+        long itemID = changeType == ActivityType.SALE ? selectedItem.getItemID() : 0;
+        long itemQty = changeType == ActivityType.SALE ? selectedItem.getQuantity() : 0;
 
-        ActivityType actType = ActivityType.fromString(changeType);
-        long itemID = actType == ActivityType.SALE ? selectedItem.getItemID() : 0;
-        long itemQty = actType == ActivityType.SALE ? selectedItem.getQuantity() : 0;
-
-        motelManager.refundItemSale(selectedItem.getConsecutiveTrans(), actType, itemID, itemQty);
+        motelManager.refundItemSale(selectedItem.getConsecutiveTrans(), changeType, itemID, itemQty);
 
         // Refresh the table
         List<TurnActivityData> activities = motelManager.getTurnActivityDataList();

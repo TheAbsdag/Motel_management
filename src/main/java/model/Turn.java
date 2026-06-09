@@ -205,7 +205,6 @@ public class Turn {
                         if (r.isOccupied()) {
                             result.add(TurnActivityData.forRoomBooking(
                                     r.changeDate(), r.roomString(),
-                                    r.roomStatus().getCode(),
                                     r.price(), r.serviceDuration(),
                                     r.servicedExtensionDuration(),
                                     r.consecutiveTrans(),
@@ -223,14 +222,14 @@ public class Turn {
                     case RefundActivity r -> {
                         if (r.refundType() == RefundType.SALE_REFUND) {
                             result.add(TurnActivityData.forRefund(
-                                    r.changeDate(), r.refundType().getValue(),
+                                    r.changeDate(), r.refundType(),
                                     r.refundRoom(), r.price(),
                                     r.itemID(), r.quantity(),
                                     r.itemName(), 0
                             ));
                         } else {
                             result.add(TurnActivityData.forRefund(
-                                    r.changeDate(), r.refundType().getValue(),
+                                    r.changeDate(), r.refundType(),
                                     r.refundRoom(), r.price(),
                                     0, 0, null,
                                     r.refundServiceDuration()
@@ -247,7 +246,7 @@ public class Turn {
                     case ExtraChangeActivity e -> {
                         result.add(TurnActivityData.forExtraChange(
                                 e.changeDate(),
-                                e.extraType().getValue(),
+                                e.extraType(),
                                 e.description(),
                                 e.value()
                         ));

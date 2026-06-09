@@ -16,6 +16,7 @@ import model.dto.TurnActivityData;
 import model.dto.TurnSummaryItemData;
 import model.turn.ActivityType;
 import model.turn.ExtraChangeType;
+import model.turn.RefundType;
 import model.turn.RoomBookingActivity;
 import model.turn.SaleActivity;
 import model.turn.TurnActivity;
@@ -175,7 +176,7 @@ class TurnTest {
         turn.registerRoomChange(room, startTime, 50000, 0, 0);
         List<TurnActivityData> activities = turn.getActivityDataList();
         assertThat(activities).hasSize(1);
-        assertThat(activities.get(0).getChangeType()).isEqualTo("room");
+        assertThat(activities.get(0).getChangeType()).isEqualTo(ActivityType.ROOM);
         assertThat(activities.get(0).getPrice()).isEqualTo(50000);
         assertThat(activities.get(0).getServiceDuration()).isEqualTo(43200L);
         assertThat(activities.get(0).getEffectiveServiceDuration()).isEqualTo(43200L);
@@ -190,7 +191,7 @@ class TurnTest {
         turn.saveTransactionInformation(register, room, startTime, 42);
         List<TurnActivityData> activities = turn.getActivityDataList();
         assertThat(activities).hasSize(1);
-        assertThat(activities.get(0).getChangeType()).isEqualTo("sale");
+        assertThat(activities.get(0).getChangeType()).isEqualTo(ActivityType.SALE);
         assertThat(activities.get(0).getItemName()).isEqualTo("Coca-Cola");
         assertThat(activities.get(0).getQuantity()).isEqualTo(3);
     }
@@ -230,7 +231,7 @@ class TurnTest {
         turn.registerRoomSwap(original, swapped, startTime);
         List<TurnActivityData> activities = turn.getActivityDataList();
         assertThat(activities).hasSize(1);
-        assertThat(activities.get(0).getChangeType()).isEqualTo("roomSwap");
+        assertThat(activities.get(0).getChangeType()).isEqualTo(ActivityType.ROOM_SWAP);
         assertThat(activities.get(0).getOriginalRoom()).isEqualTo("1-101");
         assertThat(activities.get(0).getSwappedRoom()).isEqualTo("1-102");
     }
@@ -270,7 +271,7 @@ class TurnTest {
         turn.registerSpendingTransaction("Compra de insumos", -50000, 1, startTime);
         List<TurnActivityData> activities = turn.getActivityDataList();
         assertThat(activities).hasSize(1);
-        assertThat(activities.get(0).getChangeType()).isEqualTo("spending");
+        assertThat(activities.get(0).getChangeType()).isEqualTo(ActivityType.SPENDING);
         assertThat(activities.get(0).getDescription()).isEqualTo("Compra de insumos");
         assertThat(activities.get(0).getPrice()).isEqualTo(-50000);
     }
@@ -291,8 +292,8 @@ class TurnTest {
         turn.registerExtraChangeTransaction("Transferencia recibida", -100000, ExtraChangeType.BANK_TRANSFER, 1, startTime);
         List<TurnActivityData> activities = turn.getActivityDataList();
         assertThat(activities).hasSize(1);
-        assertThat(activities.get(0).getChangeType()).isEqualTo("extraChange");
-        assertThat(activities.get(0).getExtraType()).isEqualTo("bankTransfer");
+        assertThat(activities.get(0).getChangeType()).isEqualTo(ActivityType.EXTRA_CHANGE);
+        assertThat(activities.get(0).getExtraType()).isEqualTo(ExtraChangeType.BANK_TRANSFER);
     }
 
     @Test
@@ -301,8 +302,8 @@ class TurnTest {
         turn.registerExtraChangeTransaction("Abono efectivo", -50000, ExtraChangeType.SAFE_DEPOSIT, 1, startTime);
         List<TurnActivityData> activities = turn.getActivityDataList();
         assertThat(activities).hasSize(1);
-        assertThat(activities.get(0).getChangeType()).isEqualTo("extraChange");
-        assertThat(activities.get(0).getExtraType()).isEqualTo("safeDeposit");
+        assertThat(activities.get(0).getChangeType()).isEqualTo(ActivityType.EXTRA_CHANGE);
+        assertThat(activities.get(0).getExtraType()).isEqualTo(ExtraChangeType.SAFE_DEPOSIT);
     }
 
     @Test
@@ -340,8 +341,8 @@ class TurnTest {
         List<TurnActivityData> activities = turn.getActivityDataList();
         assertThat(activities).hasSize(2);
         TurnActivityData refund = activities.get(1);
-        assertThat(refund.getChangeType()).isEqualTo("refund");
-        assertThat(refund.getRefundType()).isEqualTo("roomRefund");
+        assertThat(refund.getChangeType()).isEqualTo(ActivityType.REFUND);
+        assertThat(refund.getRefundType()).isEqualTo(RefundType.ROOM_REFUND);
         assertThat(refund.getPrice()).isEqualTo(-30000);
     }
 
@@ -358,8 +359,8 @@ class TurnTest {
         List<TurnActivityData> activities = turn.getActivityDataList();
         assertThat(activities).hasSize(2);
         TurnActivityData refund = activities.get(1);
-        assertThat(refund.getChangeType()).isEqualTo("refund");
-        assertThat(refund.getRefundType()).isEqualTo("saleRefund");
+        assertThat(refund.getChangeType()).isEqualTo(ActivityType.REFUND);
+        assertThat(refund.getRefundType()).isEqualTo(RefundType.SALE_REFUND);
         assertThat(refund.getPrice()).isEqualTo(-7500);
     }
 
@@ -395,7 +396,7 @@ class TurnTest {
         turn.registerSpendingTransaction("Gasto insumos", -30000, 1, startTime);
         List<TurnActivityData> activities = turn.getActivityDataList();
         assertThat(activities).hasSize(1);
-        assertThat(activities.get(0).getChangeType()).isEqualTo("spending");
+        assertThat(activities.get(0).getChangeType()).isEqualTo(ActivityType.SPENDING);
         assertThat(activities.get(0).getDescription()).isEqualTo("Gasto insumos");
         assertThat(activities.get(0).getPrice()).isEqualTo(-30000);
     }
@@ -406,8 +407,8 @@ class TurnTest {
         turn.registerExtraChangeTransaction("Abono", -50000, ExtraChangeType.SAFE_DEPOSIT, 1, startTime);
         List<TurnActivityData> activities = turn.getActivityDataList();
         assertThat(activities).hasSize(1);
-        assertThat(activities.get(0).getChangeType()).isEqualTo("extraChange");
-        assertThat(activities.get(0).getExtraType()).isEqualTo("safeDeposit");
+        assertThat(activities.get(0).getChangeType()).isEqualTo(ActivityType.EXTRA_CHANGE);
+        assertThat(activities.get(0).getExtraType()).isEqualTo(ExtraChangeType.SAFE_DEPOSIT);
         assertThat(activities.get(0).getDescription()).isEqualTo("Abono");
         assertThat(activities.get(0).getPrice()).isEqualTo(-50000);
     }

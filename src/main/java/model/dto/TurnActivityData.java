@@ -1,20 +1,20 @@
 package model.dto;
 
 import java.time.ZonedDateTime;
+import model.turn.ActivityType;
+import model.turn.ExtraChangeType;
+import model.turn.RefundType;
 
 /**
  * Typed data object for a single entry in a turn's activity log.
  * Represents one of several activity types: room booking, item sale, room swap,
  * refund, spending, or extra change (bank transfer / safe deposit).
- * <p>
- * This is a view-facing DTO; the Turn class internally stores the same data as JSON.
  */
 public class TurnActivityData {
 
-    private final String changeType;       // "room", "sale", "roomSwap", "refund", "spending", "extraChange"
+    private final ActivityType changeType;
     private final ZonedDateTime changeDate;
     private final String roomString;
-    private final int roomStatus;
     private final long price;
     private final long serviceDuration;
     private final long servicedExtensionDuration;
@@ -25,85 +25,64 @@ public class TurnActivityData {
     private final String originalRoom;
     private final String swappedRoom;
     private final int consecutiveTrans;
-    private final String refundType;        // "roomRefund" or "saleRefund"
-    private final String extraType;         // "bankTransfer" or "safeDeposit"
-    private final String description;       // spending/extraChange description
-    private final boolean refunded;         // whether the original transaction was already refunded
+    private final RefundType refundType;
+    private final ExtraChangeType extraType;
+    private final String description;
+    private final boolean refunded;
 
-    // --- Factory methods ---
-
-    /**
-     * Creates a TurnActivityData for a room booking event.
-     */
     public static TurnActivityData forRoomBooking(ZonedDateTime changeDate, String roomString,
-                                                   int roomStatus, long price, long serviceDuration,
-                                                   long servicedExtensionDuration, int consecutiveTrans,
-                                                   boolean refunded) {
-        return new TurnActivityData("room", changeDate, roomString, roomStatus,
+                                                    long price, long serviceDuration,
+                                                    long servicedExtensionDuration, int consecutiveTrans,
+                                                    boolean refunded) {
+        return new TurnActivityData(ActivityType.ROOM, changeDate, roomString,
                 price, serviceDuration, servicedExtensionDuration, null, 0, 0, null, null, null,
                 consecutiveTrans, null, null, null, refunded);
     }
 
-    /**
-     * Creates a TurnActivityData for a sale event line item.
-     */
     public static TurnActivityData forSale(ZonedDateTime changeDate, String roomSoldTo,
                                             String itemName, long itemID, long quantity, long price,
                                             int consecutiveTrans, boolean refunded) {
-        return new TurnActivityData("sale", changeDate, null, 0,
+        return new TurnActivityData(ActivityType.SALE, changeDate, null,
                 price, 0, 0, itemName, itemID, quantity, roomSoldTo, null, null,
                 consecutiveTrans, null, null, null, refunded);
     }
 
-    /**
-     * Creates a TurnActivityData for a room swap event.
-     */
     public static TurnActivityData forRoomSwap(ZonedDateTime changeDate, String originalRoom,
                                                 String swappedRoom) {
-        return new TurnActivityData("roomSwap", changeDate, null, 0,
+        return new TurnActivityData(ActivityType.ROOM_SWAP, changeDate, null,
                 0, 0, 0, null, 0, 0, null, originalRoom, swappedRoom,
                 0, null, null, null, false);
     }
 
-    /**
-     * Creates a TurnActivityData for a refund event.
-     */
-    public static TurnActivityData forRefund(ZonedDateTime changeDate, String refundType,
+    public static TurnActivityData forRefund(ZonedDateTime changeDate, RefundType refundType,
                                               String roomRef, long price, long itemID,
                                               long quantity, String itemName, long serviceDuration) {
-        return new TurnActivityData("refund", changeDate, roomRef, 0,
+        return new TurnActivityData(ActivityType.REFUND, changeDate, roomRef,
                 price, serviceDuration, 0, itemName, itemID, quantity, null, null, null,
                 0, refundType, null, null, false);
     }
 
-    /**
-     * Creates a TurnActivityData for a spending (expense) event.
-     */
     public static TurnActivityData forSpending(ZonedDateTime changeDate, String description, long value) {
-        return new TurnActivityData("spending", changeDate, null, 0,
+        return new TurnActivityData(ActivityType.SPENDING, changeDate, null,
                 value, 0, 0, null, 0, 0, null, null, null,
                 0, null, null, description, false);
     }
 
-    /**
-     * Creates a TurnActivityData for an extra change (bank transfer / safe deposit) event.
-     */
-    public static TurnActivityData forExtraChange(ZonedDateTime changeDate, String extraType,
+    public static TurnActivityData forExtraChange(ZonedDateTime changeDate, ExtraChangeType extraType,
                                                    String description, long value) {
-        return new TurnActivityData("extraChange", changeDate, null, 0,
+        return new TurnActivityData(ActivityType.EXTRA_CHANGE, changeDate, null,
                 value, 0, 0, null, 0, 0, null, null, null,
                 0, null, extraType, description, false);
     }
 
-    private TurnActivityData(String changeType, ZonedDateTime changeDate, String roomString,
-                              int roomStatus, long price, long serviceDuration, long servicedExtensionDuration,
+    private TurnActivityData(ActivityType changeType, ZonedDateTime changeDate, String roomString,
+                              long price, long serviceDuration, long servicedExtensionDuration,
                               String itemName, long itemID, long quantity, String roomSoldTo,
                               String originalRoom, String swappedRoom, int consecutiveTrans,
-                              String refundType, String extraType, String description, boolean refunded) {
+                              RefundType refundType, ExtraChangeType extraType, String description, boolean refunded) {
         this.changeType = changeType;
         this.changeDate = changeDate;
         this.roomString = roomString;
-        this.roomStatus = roomStatus;
         this.price = price;
         this.serviceDuration = serviceDuration;
         this.servicedExtensionDuration = servicedExtensionDuration;
@@ -120,25 +99,11 @@ public class TurnActivityData {
         this.refunded = refunded;
     }
 
-    // --- Getters ---
-
-    public String getChangeType() { return changeType; }
+    public ActivityType getChangeType() { return changeType; }
     public ZonedDateTime getChangeDate() { return changeDate; }
     public String getRoomString() { return roomString; }
-    /**
-     * Gets the current activity room status int enum
-     * Currently not used, could be used with history reimplementation
-     * @return the enum of roomstatus
-     */
-    public int getRoomStatus() { return roomStatus; }
     public long getPrice() { return price; }
     public long getServiceDuration() { return serviceDuration; }
-    /**
-     * Gets the current activity room extension
-     * Currently not used, could be used with history reimplementation
-     * Method could be deprecated in aloration of functionality of extension and usage
-     * @return the enum of roomstatus
-     */
     public long getServicedExtensionDuration() { return servicedExtensionDuration; }
     public String getItemName() { return itemName; }
     public long getItemID() { return itemID; }
@@ -147,14 +112,11 @@ public class TurnActivityData {
     public String getOriginalRoom() { return originalRoom; }
     public String getSwappedRoom() { return swappedRoom; }
     public int getConsecutiveTrans() { return consecutiveTrans; }
-    public String getRefundType() { return refundType; }
-    public String getExtraType() { return extraType; }
+    public RefundType getRefundType() { return refundType; }
+    public ExtraChangeType getExtraType() { return extraType; }
     public String getDescription() { return description; }
     public boolean isRefunded() { return refunded; }
 
-    /**
-     * Returns the effective service duration in seconds (uses extension if present).
-     */
     public long getEffectiveServiceDuration() {
         return servicedExtensionDuration != 0 ? servicedExtensionDuration : serviceDuration;
     }
