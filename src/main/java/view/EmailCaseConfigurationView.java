@@ -15,11 +15,30 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.event.DocumentEvent;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.text.Style;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyleContext;
+import javax.swing.text.StyledDocument;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author SECC
  */
 public class EmailCaseConfigurationView extends JPanel {
+    private static final Pattern VARIABLE_PATTERN = Pattern.compile("\\{[^}]+\\}");
+    private static final Pattern NUMBERED_VARIABLE_PATTERN = Pattern.compile("\\{(\\d+)\\}");
+
     private final int caseIndex;
     private DefaultListModel<CheckableItem> attachmentModel;
 
@@ -33,6 +52,9 @@ public class EmailCaseConfigurationView extends JPanel {
 	setupReceiverRadioGroup();
 	trackTextFocus();
 	setupVariableInsertion();
+	setupVariablesTable();
+	wireDocumentListener();
+	addVariableButton.addActionListener(e -> insertNextVariable());
     }
 
     private void initComponents() {
@@ -49,18 +71,22 @@ public class EmailCaseConfigurationView extends JPanel {
 	addAdditionalReceiverButton = new JButton();
 	removeAdditionalReceiverButton = new JButton();
 	subjectInformativeLabel = new JLabel();
-	subjectTextField = new JTextField();
+	subjectScrollPane = new JScrollPane();
+	subjectTextField = new JTextPane();
 	bodyInformativeLabel = new JLabel();
 	previewBodyButton = new JButton();
 	markdownHelpButton = new JButton();
 	availableVariablesInformativeLabel = new JLabel();
+	addVariableButton = new JButton();
 	bodyScrollPane = new JScrollPane();
-	bodyTextArea = new JTextArea();
-	variableListTextPane = new JScrollPane();
-	availableVariablesList = new JList();
+	bodyTextArea = new JTextPane();
+	variablesScrollPane = new JScrollPane();
+	variablesTable = new JTable();
 	attachmentInformativeLabel = new JLabel();
 	attachmentListScrollPane = new JScrollPane();
 	attachmentList = new JList();
+	variableListTextPane = new JScrollPane();
+	availableVariablesList = new JList();
 	backButton = new JButton();
 	saveButton = new JButton();
 
@@ -68,6 +94,7 @@ public class EmailCaseConfigurationView extends JPanel {
 	setLayout(new MigLayout(
 	    "fill,hidemode 3",
 	    // columns
+	    "[fill]" +
 	    "[fill]" +
 	    "[fill]" +
 	    "[fill]",
@@ -80,7 +107,7 @@ public class EmailCaseConfigurationView extends JPanel {
 	    "[]" +
 	    "[]" +
 	    "[]" +
-	    "[grow]" +
+	    "[100:n,grow]" +
 	    "[]" +
 	    "[]" +
 	    "[70]"));
@@ -139,9 +166,14 @@ public class EmailCaseConfigurationView extends JPanel {
 	subjectInformativeLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
 	add(subjectInformativeLabel, "cell 0 5");
 
-	//---- subjectTextField ----
-	subjectTextField.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
-	add(subjectTextField, "cell 0 6 2 1");
+	//======== subjectScrollPane ========
+	{
+
+	    //---- subjectTextField ----
+	    subjectTextField.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
+	    subjectScrollPane.setViewportView(subjectTextField);
+	}
+	add(subjectScrollPane, "cell 0 6 2 1,growy");
 
 	//---- bodyInformativeLabel ----
 	bodyInformativeLabel.setText("CUERPO (Markdown):");
@@ -163,6 +195,11 @@ public class EmailCaseConfigurationView extends JPanel {
 	availableVariablesInformativeLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
 	add(availableVariablesInformativeLabel, "cell 2 7");
 
+	//---- addVariableButton ----
+	addVariableButton.setText("A\u00d1ADIR VARIABLE");
+	addVariableButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
+	add(addVariableButton, "cell 3 7");
+
 	//======== bodyScrollPane ========
 	{
 	    bodyScrollPane.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
@@ -173,15 +210,11 @@ public class EmailCaseConfigurationView extends JPanel {
 	}
 	add(bodyScrollPane, "cell 0 8 2 1,growy");
 
-	//======== variableListTextPane ========
+	//======== variablesScrollPane ========
 	{
-	    variableListTextPane.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
-
-	    //---- availableVariablesList ----
-	    availableVariablesList.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
-	    variableListTextPane.setViewportView(availableVariablesList);
+	    variablesScrollPane.setViewportView(variablesTable);
 	}
-	add(variableListTextPane, "cell 2 8,growy");
+	add(variablesScrollPane, "cell 2 8 2 1");
 
 	//---- attachmentInformativeLabel ----
 	attachmentInformativeLabel.setText("ADJUNTOS DISPONIBLES PARA EL CASO:");
@@ -197,6 +230,16 @@ public class EmailCaseConfigurationView extends JPanel {
 	    attachmentListScrollPane.setViewportView(attachmentList);
 	}
 	add(attachmentListScrollPane, "cell 0 10");
+
+	//======== variableListTextPane ========
+	{
+	    variableListTextPane.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
+
+	    //---- availableVariablesList ----
+	    availableVariablesList.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
+	    variableListTextPane.setViewportView(availableVariablesList);
+	}
+	add(variableListTextPane, "cell 3 10,growy");
 
 	//---- backButton ----
 	backButton.setText("VOLVER");
@@ -223,22 +266,29 @@ public class EmailCaseConfigurationView extends JPanel {
     private JButton addAdditionalReceiverButton;
     private JButton removeAdditionalReceiverButton;
     private JLabel subjectInformativeLabel;
-    private JTextField subjectTextField;
+    private JScrollPane subjectScrollPane;
+    private JTextPane subjectTextField;
     private JLabel bodyInformativeLabel;
     private JButton previewBodyButton;
     private JButton markdownHelpButton;
     private JLabel availableVariablesInformativeLabel;
+    private JButton addVariableButton;
     private JScrollPane bodyScrollPane;
-    private JTextArea bodyTextArea;
-    private JScrollPane variableListTextPane;
-    private JList availableVariablesList;
+    private JTextPane bodyTextArea;
+    private JScrollPane variablesScrollPane;
+    private JTable variablesTable;
     private JLabel attachmentInformativeLabel;
     private JScrollPane attachmentListScrollPane;
     private JList attachmentList;
+    private JScrollPane variableListTextPane;
+    private JList availableVariablesList;
     private JButton backButton;
     private JButton saveButton;
     // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
 
+    private DefaultComboBoxModel<VariableOption> variableComboModel;
+    private VariablesTableModel variablesTableModel;
+    private boolean suppressTableRebuild = false;
 
     public static class CheckableItem {
 	private final String name;
@@ -255,6 +305,58 @@ public class EmailCaseConfigurationView extends JPanel {
 
 	@Override
 	public String toString() { return name; }
+    }
+
+    public record VariableOption(String label, String placeholder) {
+	@Override public String toString() { return label; }
+    }
+
+    private static class VariablesTableModel extends AbstractTableModel {
+	private final List<VariableEntry> rows = new ArrayList<>();
+	private final String[] columnNames = {"Variable", "Vinculado a"};
+
+	record VariableEntry(String variable, VariableOption linkedOption) {}
+
+	void setRows(List<VariableEntry> newRows) {
+	    rows.clear();
+	    rows.addAll(newRows);
+	    fireTableDataChanged();
+	}
+
+	List<VariableEntry> getRows() { return new ArrayList<>(rows); }
+
+	@Override public int getRowCount() { return rows.size(); }
+	@Override public int getColumnCount() { return 2; }
+	@Override public String getColumnName(int col) { return columnNames[col]; }
+
+	@Override
+	public Object getValueAt(int row, int col) {
+	    VariableEntry entry = rows.get(row);
+	    return switch (col) {
+		case 0 -> entry.variable();
+		case 1 -> entry.linkedOption();
+		default -> null;
+	    };
+	}
+
+	@Override
+	public boolean isCellEditable(int row, int col) { return true; }
+
+	@Override
+	public void setValueAt(Object value, int row, int col) {
+	    VariableEntry entry = rows.get(row);
+	    switch (col) {
+		case 0 -> {
+		    String newVar = (String) value;
+		    rows.set(row, new VariableEntry(newVar, entry.linkedOption()));
+		}
+		case 1 -> {
+		    VariableOption opt = (VariableOption) value;
+		    rows.set(row, new VariableEntry(entry.variable(), opt));
+		}
+	    }
+	    fireTableCellUpdated(row, col);
+	}
     }
 
     private void wireAttachmentCheckboxList() {
@@ -383,11 +485,15 @@ public class EmailCaseConfigurationView extends JPanel {
     }
 
     public void setSubject(String subject) {
+	suppressTableRebuild = true;
 	subjectTextField.setText(subject);
+	suppressTableRebuild = false;
     }
 
     public void setBody(String body) {
+	suppressTableRebuild = true;
 	bodyTextArea.setText(body);
+	suppressTableRebuild = false;
     }
 
     private void trackTextFocus() {
@@ -415,5 +521,132 @@ public class EmailCaseConfigurationView extends JPanel {
 		}
 	    }
 	});
+    }
+
+    private void setupVariablesTable() {
+	variablesTableModel = new VariablesTableModel();
+	variableComboModel = new DefaultComboBoxModel<>();
+	JComboBox<VariableOption> comboBox = new JComboBox<>(variableComboModel);
+	comboBox.setFont(new Font("Segoe UI Black", Font.PLAIN, 14));
+
+	variablesTable.setModel(variablesTableModel);
+	variablesTable.setDefaultEditor(VariableOption.class, new DefaultCellEditor(comboBox));
+	variablesTable.setDefaultRenderer(VariableOption.class, new DefaultTableCellRenderer() {
+	    @Override
+	    public Component getTableCellRendererComponent(JTable table, Object value,
+		    boolean isSelected, boolean hasFocus, int row, int col) {
+		super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
+		if (value instanceof VariableOption opt) {
+		    String text = opt.label();
+		    setText(text);
+		    setToolTipText(text);
+		}
+		return this;
+	    }
+	});
+	variablesTable.setFont(new Font("Segoe UI Black", Font.PLAIN, 14));
+	variablesTable.setRowHeight(28);
+    }
+
+    public void rebuildVariablesTable() {
+	if (suppressTableRebuild) return;
+	String subject = subjectTextField.getText();
+	String body = bodyTextArea.getText();
+
+	Map<String, String> labelByPlaceholder = new HashMap<>();
+	for (int i = 0; i < variableComboModel.getSize(); i++) {
+	    VariableOption opt = variableComboModel.getElementAt(i);
+	    labelByPlaceholder.put(opt.placeholder(), opt.label());
+	}
+
+	Pattern pattern = VARIABLE_PATTERN;
+	Set<String> seen = new LinkedHashSet<>();
+
+	Matcher m = pattern.matcher(subject);
+	while (m.find()) seen.add(m.group());
+
+	m = pattern.matcher(body);
+	while (m.find()) seen.add(m.group());
+
+	List<VariablesTableModel.VariableEntry> entries = new ArrayList<>();
+	for (String token : seen) {
+	    String mappedLabel = labelByPlaceholder.get(token);
+	    VariableOption linked = mappedLabel != null
+		    ? new VariableOption(mappedLabel, token) : null;
+	    entries.add(new VariablesTableModel.VariableEntry(token, linked));
+	}
+	variablesTableModel.setRows(entries);
+    }
+
+    private void highlightVariables(JTextPane pane) {
+	StyledDocument doc = pane.getStyledDocument();
+	Style defaultStyle = doc.getStyle(StyleContext.DEFAULT_STYLE);
+	doc.setCharacterAttributes(0, Math.max(0, doc.getLength()), defaultStyle, true);
+
+	Style variableStyle = doc.getStyle("variableHighlight");
+	if (variableStyle == null) {
+	    variableStyle = doc.addStyle("variableHighlight", null);
+	    StyleConstants.setForeground(variableStyle, new Color(0, 100, 200));
+	    StyleConstants.setBold(variableStyle, true);
+	}
+
+	String text = pane.getText();
+	if (text == null || text.isEmpty()) return;
+	Matcher m = VARIABLE_PATTERN.matcher(text);
+	while (m.find()) {
+	    doc.setCharacterAttributes(m.start(), m.end() - m.start(), variableStyle, false);
+	}
+    }
+
+    private void wireDocumentListener() {
+	DocumentListener dl = new DocumentListener() {
+	    @Override public void insertUpdate(DocumentEvent e) {
+		highlightVariables(subjectTextField);
+		highlightVariables(bodyTextArea);
+		rebuildVariablesTable();
+	    }
+	    @Override public void removeUpdate(DocumentEvent e) {
+		highlightVariables(subjectTextField);
+		highlightVariables(bodyTextArea);
+		rebuildVariablesTable();
+	    }
+	    @Override public void changedUpdate(DocumentEvent e) {
+		highlightVariables(subjectTextField);
+		highlightVariables(bodyTextArea);
+		rebuildVariablesTable();
+	    }
+	};
+	subjectTextField.getDocument().addDocumentListener(dl);
+	bodyTextArea.getDocument().addDocumentListener(dl);
+    }
+
+    private void insertNextVariable() {
+	String fullText = subjectTextField.getText() + bodyTextArea.getText();
+	int maxN = 0;
+	Matcher m = NUMBERED_VARIABLE_PATTERN.matcher(fullText);
+	while (m.find()) {
+	    int n = Integer.parseInt(m.group(1));
+	    if (n > maxN) maxN = n;
+	}
+	String nextVar = "{" + (maxN + 1) + "}";
+	JTextComponent target = lastFocusedText != null ? lastFocusedText : bodyTextArea;
+	target.replaceSelection(nextVar);
+    }
+
+    public Map<String, String> getVariableMappings() {
+	Map<String, String> mappings = new HashMap<>();
+	for (var entry : variablesTableModel.getRows()) {
+	    if (entry.linkedOption() != null) {
+		mappings.put(entry.variable(), entry.linkedOption().placeholder());
+	    }
+	}
+	return mappings;
+    }
+
+    public void setVariableOptions(List<VariableOption> options) {
+	variableComboModel.removeAllElements();
+	for (VariableOption opt : options) {
+	    variableComboModel.addElement(opt);
+	}
     }
 }
