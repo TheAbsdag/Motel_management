@@ -2,6 +2,7 @@ package model.modelManagers;
 
 import model.modelManagers.FileManager;
 import java.io.FileOutputStream;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
@@ -56,10 +57,11 @@ public class Printer {
 
     private static final Logger LOGGER = Logger.getLogger(Printer.class.getName());
 
+    private static final ZoneId BOGOTA = ZoneId.of("America/Bogota");
     private static final DateTimeFormatter TURN_DATE_SECTION_FORMATTER
-            = DateTimeFormatter.ofPattern("yyyy/MM/dd - HH:mm:ss");
+            = DateTimeFormatter.ofPattern("yyyy/MM/dd - HH:mm:ss").withZone(BOGOTA);
     private static final DateTimeFormatter DETAILED_TURN_DATE_FORMATTER
-            = DateTimeFormatter.ofPattern("MM/dd-HH:mm");
+            = DateTimeFormatter.ofPattern("MM/dd-HH:mm").withZone(BOGOTA);
 
     private final JTextPane printLayout;
     private String motelName;

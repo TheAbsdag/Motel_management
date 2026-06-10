@@ -240,7 +240,7 @@ public class RoomManager {
         if (startStatus == null) {
             return "N/A";
         }
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d 'de' MMMM yyyy", new Locale("es", "ES"));
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d 'de' MMMM yyyy", new Locale("es", "ES")).withZone(ZoneId.of("America/Bogota"));
         ZonedDateTime start = startStatus.atZone(zoneID);
         return start.format(formatter);
     }

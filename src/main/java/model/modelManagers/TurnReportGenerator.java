@@ -3,6 +3,7 @@ package model.modelManagers;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -51,8 +52,9 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 public class TurnReportGenerator {
 
     private static final String REPORT_PATH = FileManager.PATH + File.separator + "reports";
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy/MM/dd - hh:mm a");
-    private static final DateTimeFormatter DETAIL_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy/MM/dd - HH:mm:ss");
+    private static final ZoneId BOGOTA = ZoneId.of("America/Bogota");
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy/MM/dd - hh:mm a").withZone(BOGOTA);
+    private static final DateTimeFormatter DETAIL_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy/MM/dd - HH:mm:ss").withZone(BOGOTA);
     private static final DateTimeFormatter FILE_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss");
 
     private static final String[] SHEET1_HEADERS = {

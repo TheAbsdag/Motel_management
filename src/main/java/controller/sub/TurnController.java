@@ -2,6 +2,7 @@ package controller.sub;
 
 import java.awt.Window;
 import java.nio.file.Path;
+import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -289,7 +290,7 @@ userInterface.setView(ViewCard.FLOOR_VIEW);
 
         for (model.turn.TurnActivity act : activities) {
             String date = act.changeDate() != null
-                    ? act.changeDate().format(java.time.format.DateTimeFormatter.ofPattern("MM/dd HH:mm"))
+                    ? act.changeDate().format(java.time.format.DateTimeFormatter.ofPattern("MM/dd HH:mm").withZone(ZoneId.of("America/Bogota")))
                     : "";
             String room = "";
             String concept = "";

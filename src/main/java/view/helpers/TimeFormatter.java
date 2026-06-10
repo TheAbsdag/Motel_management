@@ -1,29 +1,36 @@
 package view.helpers;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.TextStyle;
 import java.time.temporal.ChronoField;
 import java.util.Locale;
 import java.util.Map;
 
 public final class TimeFormatter {
 
+    private static final ZoneId BOGOTA = ZoneId.of("America/Bogota");
+
     private static final DateTimeFormatter TIME_FORMATTER = new DateTimeFormatterBuilder()
             .appendPattern("hh:mm:ss").appendLiteral(' ')
             .appendText(ChronoField.AMPM_OF_DAY, Map.of(0L, "AM", 1L, "PM"))
-            .toFormatter();
+            .toFormatter()
+            .withZone(BOGOTA);
 
     private static final Locale LOCALE_ES = new Locale("es", "ES");
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter
-            .ofPattern("d 'de' MMMM 'de' yyyy", LOCALE_ES);
+            .ofPattern("d 'de' MMMM 'de' yyyy", LOCALE_ES)
+            .withZone(BOGOTA);
 
     private static final DateTimeFormatter EMAIL_DATETIME_FORMATTER = new DateTimeFormatterBuilder()
             .appendPattern("hh:mm:ss a")
             .appendLiteral(' ')
-            .appendZoneText(java.time.format.TextStyle.SHORT)
-            .toFormatter(Locale.ENGLISH);
+            .appendZoneText(TextStyle.SHORT)
+            .toFormatter(Locale.ENGLISH)
+            .withZone(BOGOTA);
 
     private TimeFormatter() { }
 

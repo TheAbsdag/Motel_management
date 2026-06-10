@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import java.util.TimeZone;
 
 /**
  * Singleton {@link com.fasterxml.jackson.databind.ObjectMapper} factory
@@ -20,6 +21,7 @@ public final class ObjectMapperFactory {
         INSTANCE.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         INSTANCE.enable(SerializationFeature.INDENT_OUTPUT);
         INSTANCE.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        INSTANCE.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
 
     private ObjectMapperFactory() {}

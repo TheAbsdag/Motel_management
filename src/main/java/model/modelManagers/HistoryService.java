@@ -57,8 +57,8 @@ public class HistoryService {
 
                 ZonedDateTime turnStartZ = ZonedDateTime.parse(currentTurn.get("turnStart").asText());
                 ZonedDateTime turnEndZ = ZonedDateTime.parse(currentTurn.get("turnEnd").asText());
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd - hh:mm a");
-                DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", new Locale("es", "ES"));
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd - hh:mm a").withZone(ZoneId.of("America/Bogota"));
+                DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", new Locale("es", "ES")).withZone(ZoneId.of("America/Bogota"));
                 Duration durationRaw = Duration.between(turnStartZ, turnEndZ);
                 long hours = durationRaw.toHours();
                 long minutes = durationRaw.minusHours(hours).toMinutes();

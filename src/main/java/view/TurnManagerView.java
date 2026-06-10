@@ -5,6 +5,7 @@ package view;
 
 import view.helpers.TouchScrollHandler;
 import java.awt.*;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -140,7 +141,7 @@ public class TurnManagerView extends JPanel implements TimeLabelInterface {
         public Object getValueAt(int rowIndex, int columnIndex) {
             TurnActivityData item = filteredTurnDetails.get(rowIndex);
             ActivityType changeType = item.getChangeType();
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd - hh:mm a");
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd - hh:mm a").withZone(ZoneId.of("America/Bogota"));
             String formattedDate = item.getChangeDate().format(formatter);
 
             return switch (columnIndex) {
