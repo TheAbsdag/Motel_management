@@ -11,6 +11,7 @@ import net.miginfocom.swing.*;
 import view.customListRenderes.CheckboxListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.ButtonGroup;
+import javax.swing.Timer;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.MouseAdapter;
@@ -43,6 +44,7 @@ public class EmailCaseConfigurationView extends JPanel {
     private DefaultListModel<CheckableItem> attachmentModel;
 
     private JTextComponent lastFocusedText;
+    private javax.swing.Timer highlightTimer;
 
     public EmailCaseConfigurationView(int caseIndex) {
 	this.caseIndex = caseIndex;
@@ -54,6 +56,7 @@ public class EmailCaseConfigurationView extends JPanel {
 	setupVariableInsertion();
 	setupVariablesTable();
 	wireDocumentListener();
+	wireHighlightTimer();
 	addVariableButton.addActionListener(e -> insertNextVariable());
     }
 
@@ -580,6 +583,9 @@ public class EmailCaseConfigurationView extends JPanel {
 
     private void highlightVariables(JTextPane pane) {
 	StyledDocument doc = pane.getStyledDocument();
+	String text = pane.getText();
+	if (text == null || text.isEmpty()) return;
+
 	Style defaultStyle = doc.getStyle(StyleContext.DEFAULT_STYLE);
 	doc.setCharacterAttributes(0, Math.max(0, doc.getLength()), defaultStyle, true);
 
@@ -590,30 +596,33 @@ public class EmailCaseConfigurationView extends JPanel {
 	    StyleConstants.setBold(variableStyle, true);
 	}
 
-	String text = pane.getText();
-	if (text == null || text.isEmpty()) return;
 	Matcher m = VARIABLE_PATTERN.matcher(text);
 	while (m.find()) {
 	    doc.setCharacterAttributes(m.start(), m.end() - m.start(), variableStyle, false);
 	}
     }
 
+    private void wireHighlightTimer() {
+	highlightTimer = new javax.swing.Timer(150, e -> {
+	    highlightVariables(subjectTextField);
+	    highlightVariables(bodyTextArea);
+	});
+	highlightTimer.setRepeats(false);
+    }
+
     private void wireDocumentListener() {
 	DocumentListener dl = new DocumentListener() {
 	    @Override public void insertUpdate(DocumentEvent e) {
-		highlightVariables(subjectTextField);
-		highlightVariables(bodyTextArea);
-		rebuildVariablesTable();
+		if (!suppressTableRebuild) rebuildVariablesTable();
+		highlightTimer.restart();
 	    }
 	    @Override public void removeUpdate(DocumentEvent e) {
-		highlightVariables(subjectTextField);
-		highlightVariables(bodyTextArea);
-		rebuildVariablesTable();
+		if (!suppressTableRebuild) rebuildVariablesTable();
+		highlightTimer.restart();
 	    }
 	    @Override public void changedUpdate(DocumentEvent e) {
-		highlightVariables(subjectTextField);
-		highlightVariables(bodyTextArea);
-		rebuildVariablesTable();
+		if (!suppressTableRebuild) rebuildVariablesTable();
+		highlightTimer.restart();
 	    }
 	};
 	subjectTextField.getDocument().addDocumentListener(dl);
