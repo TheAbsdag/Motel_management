@@ -4,7 +4,6 @@ import java.awt.Color;
 import java.nio.file.Path;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -303,21 +302,20 @@ public class RoomController {
         placeholders.put("{towerNumber}", String.valueOf(tower));
         placeholders.put("{floorNumber}", String.valueOf(floor));
         placeholders.put("{consecutiveTrans}", String.valueOf(consecutive));
-        placeholders.put("{date}", TimeFormatter.formatEmailDatetime(now));
+        placeholders.put("{date}", TimeFormatter.formatEmailShortDatetime(now));
         placeholders.put("{price}", formattedPrice);
         placeholders.put("{serviceDuration}", formattedDuration);
-        placeholders.put("{hourService}", now.format(DateTimeFormatter.ofPattern("hh:mm a")));
-        placeholders.put("{dateService}", now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        placeholders.put("{hourService}", TimeFormatter.formatEmailShortDatetime(now));
+        placeholders.put("{dateService}", TimeFormatter.formatEmailShortDatetime(now));
         placeholders.put("{register}", buildRoomRegisterHtml(roomObj.getRoomString(), formattedDuration, formattedPrice, now));
         EmailController.trySendCaseEmail(0, placeholders, emailSvc, consecutive);
     }
 
     private static String buildRoomRegisterHtml(String roomString, String duration, String price, ZonedDateTime now) {
-        String time = now.format(DateTimeFormatter.ofPattern("hh:mm a"));
-        String date = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        String formattedDatetime = TimeFormatter.formatEmailShortDatetime(now);
         return "<table border='1' cellpadding='4' cellspacing='0' style='border-collapse:collapse;font-family:Segoe UI,sans-serif;font-size:12px;'>"
-                + "<tr><th>Habitación</th><th>Servicio</th><th>Valor</th><th>Hora</th><th>Fecha</th></tr>"
-                + "<tr><td>" + FormatHelper.escapeHtml(roomString) + "</td><td>" + FormatHelper.escapeHtml(duration) + "</td><td>" + price + "</td><td>" + time + "</td><td>" + date + "</td></tr>"
+                + "<tr><th>Habitación</th><th>Servicio</th><th>Valor</th><th>Fecha</th></tr>"
+                + "<tr><td>" + FormatHelper.escapeHtml(roomString) + "</td><td>" + FormatHelper.escapeHtml(duration) + "</td><td>" + price + "</td><td>" + formattedDatetime + "</td></tr>"
                 + "</table>";
     }
 

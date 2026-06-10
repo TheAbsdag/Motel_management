@@ -32,6 +32,10 @@ public final class TimeFormatter {
             .toFormatter(Locale.ENGLISH)
             .withZone(BOGOTA);
 
+    private static final DateTimeFormatter EMAIL_SHORT_DATETIME_FORMATTER = DateTimeFormatter
+            .ofPattern("dd/MM/yyyy HH:mm")
+            .withZone(BOGOTA);
+
     private TimeFormatter() { }
 
     public static String formatTime(ZonedDateTime time) {
@@ -50,6 +54,10 @@ public final class TimeFormatter {
         String timePart = time.format(EMAIL_DATETIME_FORMATTER);
         String zoneId = time.getZone().getId();
         return timePart + " " + friendlyZoneName(zoneId);
+    }
+
+    public static String formatEmailShortDatetime(ZonedDateTime time) {
+        return time.format(EMAIL_SHORT_DATETIME_FORMATTER);
     }
 
     private static String friendlyZoneName(String zoneId) {

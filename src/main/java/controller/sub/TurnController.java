@@ -21,6 +21,7 @@ import view.UserGUI;
 import view.ViewCard;
 import view.helpers.DialogHelper;
 import view.helpers.FormatHelper;
+import view.helpers.TimeFormatter;
 
 /**
  * Controls turn management operations: start, view details, print, end, and reversals.
@@ -247,8 +248,8 @@ userInterface.setView(ViewCard.FLOOR_VIEW);
         placeholders.put("{motelAddress}", cfg.getMotelAddress());
         placeholders.put("{motelID}", cfg.getMotelID());
         placeholders.put("{turnNumber}", String.valueOf(details.getTurnNumber()));
-        placeholders.put("{turnStart}", details.getTurnStart() != null ? details.getTurnStart().toString() : "");
-        placeholders.put("{turnEnd}", details.getTurnEnd() != null ? details.getTurnEnd().toString() : "");
+        placeholders.put("{turnStart}", details.getTurnStart() != null ? TimeFormatter.formatEmailShortDatetime(details.getTurnStart()) : "");
+        placeholders.put("{turnEnd}", details.getTurnEnd() != null ? TimeFormatter.formatEmailShortDatetime(details.getTurnEnd()) : "");
         placeholders.put("{turnDuration}", formatDuration(details));
         placeholders.put("{totalRooms}", String.valueOf(details.getTotalRooms()));
         placeholders.put("{totalItems}", String.valueOf(details.getTotalItems()));
@@ -262,7 +263,7 @@ userInterface.setView(ViewCard.FLOOR_VIEW);
         placeholders.put("{totalDeposits}", String.valueOf(details.getTotalDeposits()));
         placeholders.put("{totalNet}", String.valueOf(details.getTotalNet()));
         placeholders.put("{consecutiveTrans}", String.valueOf(motelManager.getTurnService().getConsecutiveTransaction()));
-        placeholders.put("{date}", java.time.LocalDate.now().toString());
+        placeholders.put("{date}", TimeFormatter.formatEmailShortDatetime(java.time.ZonedDateTime.now(java.time.ZoneId.of("America/Bogota"))));
         placeholders.put("{activityTable}", buildActivityTableHtml(details));
         return placeholders;
     }
@@ -290,7 +291,7 @@ userInterface.setView(ViewCard.FLOOR_VIEW);
 
         for (model.turn.TurnActivity act : activities) {
             String date = act.changeDate() != null
-                    ? act.changeDate().format(java.time.format.DateTimeFormatter.ofPattern("MM/dd HH:mm").withZone(ZoneId.of("America/Bogota")))
+                    ? act.changeDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm").withZone(ZoneId.of("America/Bogota")))
                     : "";
             String room = "";
             String concept = "";

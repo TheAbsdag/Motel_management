@@ -277,8 +277,8 @@ public class RoomManager {
                             room.getRoomNumber(),
                             room.getStatus().getCode(),
                             room.getServiceDuration(),
-                            startStatus == null ? "" : startStatus.atZone(zoneID).toString(),
-                            endStatus == null ? "" : endStatus.atZone(zoneID).toString(),
+                            startStatus == null ? "" : startStatus.toString(),
+                            endStatus == null ? "" : endStatus.toString(),
                             room.getExtensionDuration()));
                 }
             }

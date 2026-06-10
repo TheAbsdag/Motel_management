@@ -84,8 +84,10 @@ public class Printer {
         hourFormatter = new DateTimeFormatterBuilder()
                 .appendPattern("hh:mm").appendLiteral(' ')
                 .appendText(ChronoField.AMPM_OF_DAY, Map.of(0L, "AM", 1L, "PM"))
-                .toFormatter();
-        dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd", new Locale("es", "ES"));
+                .toFormatter()
+                .withZone(BOGOTA);
+        dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd", new Locale("es", "ES"))
+                .withZone(BOGOTA);
         initializeStyles();
         File preparePDFRoute = new File(PDF_SAVE_PATH);
         preparePDFRoute.mkdirs();
