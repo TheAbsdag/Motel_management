@@ -451,6 +451,14 @@ public class EmailController {
 
     private void onCaseSave(int caseIndex) {
         EmailCaseConfigurationView view = getCaseView(caseIndex);
+        if (view.hasUnmappedVariables()) {
+            DialogHelper.showErrorMessage(
+                "Hay variables sin asignar en el texto.\n" +
+                "Seleccione una variable del sistema para cada {variable}\n" +
+                "en la tabla antes de guardar.",
+                "VARIABLES SIN ASIGNAR");
+            return;
+        }
         boolean enabled = view.isCaseEnabled();
         boolean useGlobal = view.isUsingGlobalReceivers();
         List<String> specificReceivers = new ArrayList<>();

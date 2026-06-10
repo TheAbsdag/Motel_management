@@ -670,6 +670,16 @@ public class EmailCaseConfigurationView extends JPanel {
 	target.replaceSelection(nextVar);
     }
 
+    public boolean hasUnmappedVariables() {
+	Map<String, String> mappings = getVariableMappings();
+	String fullText = subjectTextField.getText() + bodyTextArea.getText();
+	Matcher m = VARIABLE_PATTERN.matcher(fullText);
+	while (m.find()) {
+	    if (!mappings.containsKey(m.group())) return true;
+	}
+	return false;
+    }
+
     public Map<String, String> getVariableMappings() {
 	Map<String, String> mappings = new HashMap<>();
 	for (var entry : variablesTableModel.getRows()) {
