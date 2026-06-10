@@ -160,7 +160,7 @@ public class EmailProviderConfigurationView extends JPanel  {
 	    //---- informativeAppPasswordButton ----
 	    informativeAppPasswordButton.setText("INFORMACI\u00d3N");
 	    informativeAppPasswordButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 16));
-	    appPasswordPanel.add(informativeAppPasswordButton, "cell 0 0 2 1");
+	    appPasswordPanel.add(informativeAppPasswordButton, "cell 0 0 2 1,growy");
 
 	    //---- appPasswordProviderInformativeLabel ----
 	    appPasswordProviderInformativeLabel.setText("PROOVEDOR:");
