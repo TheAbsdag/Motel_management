@@ -108,7 +108,7 @@ public class EmailCaseConfigurationView extends JPanel {
 	    "[]" +
 	    "[]" +
 	    "[]" +
-	    "[]" +
+	    "[50:n]" +
 	    "[]" +
 	    "[100:n,grow]" +
 	    "[]" +
@@ -560,6 +560,15 @@ public class EmailCaseConfigurationView extends JPanel {
 
     public void rebuildVariablesTable() {
 	if (suppressTableRebuild) return;
+
+	// Save existing user selections before rebuild
+	Map<String, String> existingMappings = new HashMap<>();
+	for (var entry : variablesTableModel.getRows()) {
+	    if (entry.linkedOption() != null) {
+		existingMappings.put(entry.variable(), entry.linkedOption().placeholder());
+	    }
+	}
+
 	String subject = subjectTextField.getText();
 	String body = bodyTextArea.getText();
 
@@ -569,20 +578,32 @@ public class EmailCaseConfigurationView extends JPanel {
 	    labelByPlaceholder.put(opt.placeholder(), opt.label());
 	}
 
-	Pattern pattern = VARIABLE_PATTERN;
 	Set<String> seen = new LinkedHashSet<>();
 
-	Matcher m = pattern.matcher(subject);
+	Matcher m = VARIABLE_PATTERN.matcher(subject);
 	while (m.find()) seen.add(m.group());
 
-	m = pattern.matcher(body);
+	m = VARIABLE_PATTERN.matcher(body);
 	while (m.find()) seen.add(m.group());
 
 	List<VariablesTableModel.VariableEntry> entries = new ArrayList<>();
 	for (String token : seen) {
-	    String mappedLabel = labelByPlaceholder.get(token);
-	    VariableOption linked = mappedLabel != null
-		    ? new VariableOption(mappedLabel, token) : null;
+	    VariableOption linked = null;
+	    // Preserve existing mapping if the token hasn't changed
+	    String existingPlaceholder = existingMappings.get(token);
+	    if (existingPlaceholder != null) {
+		String label = labelByPlaceholder.get(existingPlaceholder);
+		if (label != null) {
+		    linked = new VariableOption(label, existingPlaceholder);
+		}
+	    }
+	    // Auto-link if token exactly matches a system placeholder
+	    if (linked == null) {
+		String mappedLabel = labelByPlaceholder.get(token);
+		if (mappedLabel != null) {
+		    linked = new VariableOption(mappedLabel, token);
+		}
+	    }
 	    entries.add(new VariablesTableModel.VariableEntry(token, linked));
 	}
 	variablesTableModel.setRows(entries);
