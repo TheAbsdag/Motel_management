@@ -182,8 +182,10 @@ public class EmailConfigurationService {
             cc = String.join(",", secureData.cc());
         }
 
-        String subject = resolvePlaceholders(caseCfg.subject(), placeholders);
-        String body = resolvePlaceholders(caseCfg.body(), placeholders);
+        Map<String, String> mappings = caseCfg.variableMappings() != null
+                ? caseCfg.variableMappings() : Map.of();
+        String subject = resolvePlaceholders(caseCfg.subject(), placeholders, mappings);
+        String body = resolvePlaceholders(caseCfg.body(), placeholders, mappings);
 
         MarkdownConverter mdConverter = new MarkdownConverter();
         String htmlBody = mdConverter.toHtml(body);
@@ -245,8 +247,18 @@ public class EmailConfigurationService {
     }
 
     private static String resolvePlaceholders(String text, Map<String, String> placeholders) {
+        return resolvePlaceholders(text, placeholders, null);
+    }
+
+    private static String resolvePlaceholders(String text, Map<String, String> placeholders,
+            Map<String, String> variableMappings) {
         if (text == null || text.isBlank()) return text;
         String result = text;
+        if (variableMappings != null) {
+            for (Map.Entry<String, String> entry : variableMappings.entrySet()) {
+                result = result.replace(entry.getKey(), entry.getValue() != null ? entry.getValue() : "");
+            }
+        }
         for (Map.Entry<String, String> entry : placeholders.entrySet()) {
             result = result.replace(entry.getKey(), entry.getValue() != null ? entry.getValue() : "");
         }
