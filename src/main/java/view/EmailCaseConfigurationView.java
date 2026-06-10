@@ -331,6 +331,9 @@ public class EmailCaseConfigurationView extends JPanel {
 	@Override public int getRowCount() { return rows.size(); }
 	@Override public int getColumnCount() { return 2; }
 	@Override public String getColumnName(int col) { return columnNames[col]; }
+	@Override public Class<?> getColumnClass(int col) {
+	    return col == 1 ? VariableOption.class : String.class;
+	}
 
 	@Override
 	public Object getValueAt(int row, int col) {
@@ -535,12 +538,8 @@ public class EmailCaseConfigurationView extends JPanel {
 	DefaultCellEditor comboEditor = new DefaultCellEditor(comboBox);
 	comboEditor.setClickCountToStart(1);
 
-	DefaultCellEditor textEditor = new DefaultCellEditor(new JTextField());
-	textEditor.setClickCountToStart(1);
-
 	variablesTable.setModel(variablesTableModel);
 	variablesTable.setDefaultEditor(VariableOption.class, comboEditor);
-	variablesTable.setDefaultEditor(String.class, textEditor);
 	variablesTable.setDefaultRenderer(VariableOption.class, new DefaultTableCellRenderer() {
 	    @Override
 	    public Component getTableCellRendererComponent(JTable table, Object value,
