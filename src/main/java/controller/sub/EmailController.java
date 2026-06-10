@@ -17,6 +17,7 @@ import model.email.config.ProviderPreset;
 import model.email.service.MarkdownConverter;
 import model.modelManagers.EmailConfigurationService;
 import view.EmailCaseConfigurationView;
+import view.EmailCaseConfigurationView.VariableOption;
 import view.EmailConfigurationHubView;
 import view.EmailGlobalConfigurationView;
 import view.EmailProviderConfigurationView;
@@ -101,6 +102,59 @@ public class EmailController {
             "{consecutiveTrans}", "{date}",
             "{activityTable}"
         }
+    );
+
+    private static final Map<Integer, List<VariableOption>> CASE_VARIABLE_OPTIONS = Map.of(
+        CASE_ROOM, List.of(
+            new VariableOption("Nombre del Motel", "{motelName}"),
+            new VariableOption("Dirección del Motel", "{motelAddress}"),
+            new VariableOption("ID del Motel", "{motelID}"),
+            new VariableOption("Habitación", "{roomString}"),
+            new VariableOption("Torre", "{towerNumber}"),
+            new VariableOption("Piso", "{floorNumber}"),
+            new VariableOption("Precio", "{price}"),
+            new VariableOption("Duración", "{serviceDuration}"),
+            new VariableOption("Hora de Ingreso", "{hourService}"),
+            new VariableOption("Fecha de Ingreso", "{dateService}"),
+            new VariableOption("Transacción", "{consecutiveTrans}"),
+            new VariableOption("Fecha Actual", "{date}"),
+            new VariableOption("Tabla Registro", "{register}")
+        ),
+        CASE_ITEM, List.of(
+            new VariableOption("Nombre del Motel", "{motelName}"),
+            new VariableOption("Dirección del Motel", "{motelAddress}"),
+            new VariableOption("ID del Motel", "{motelID}"),
+            new VariableOption("Habitación", "{roomString}"),
+            new VariableOption("Precio Total", "{totalPrice}"),
+            new VariableOption("Hora de Ingreso", "{hourService}"),
+            new VariableOption("Fecha de Ingreso", "{dateService}"),
+            new VariableOption("Transacción", "{consecutiveTrans}"),
+            new VariableOption("Fecha Actual", "{date}"),
+            new VariableOption("Tabla Registro", "{register}")
+        ),
+        CASE_TURN, List.of(
+            new VariableOption("Nombre del Motel", "{motelName}"),
+            new VariableOption("Dirección del Motel", "{motelAddress}"),
+            new VariableOption("ID del Motel", "{motelID}"),
+            new VariableOption("Número de Turno", "{turnNumber}"),
+            new VariableOption("Inicio de Turno", "{turnStart}"),
+            new VariableOption("Fin de Turno", "{turnEnd}"),
+            new VariableOption("Duración del Turno", "{turnDuration}"),
+            new VariableOption("Total Habitaciones", "{totalRooms}"),
+            new VariableOption("Total Artículos", "{totalItems}"),
+            new VariableOption("Total Ventas", "{totalSales}"),
+            new VariableOption("Devoluciones Artículos", "{totalItemRefunds}"),
+            new VariableOption("Devoluciones Habitaciones", "{totalRoomRefunds}"),
+            new VariableOption("Total Devoluciones", "{totalRefunds}"),
+            new VariableOption("Total Gastos", "{totalSpending}"),
+            new VariableOption("Total Turno", "{totalTurn}"),
+            new VariableOption("Transferencias Bancarias", "{totalBankTransfers}"),
+            new VariableOption("Depósitos", "{totalDeposits}"),
+            new VariableOption("Neto", "{totalNet}"),
+            new VariableOption("Transacción", "{consecutiveTrans}"),
+            new VariableOption("Fecha Actual", "{date}"),
+            new VariableOption("Tabla de Actividades", "{activityTable}")
+        )
     );
 
     public EmailController(
@@ -419,7 +473,8 @@ public class EmailController {
             cases.add(new EmailCaseConfig(cases.size(), false, true, List.of(), "", "", List.of(), null));
         }
         cases.set(caseIndex, new EmailCaseConfig(caseIndex, enabled, useGlobal,
-                specificReceivers, subject, body, attachments, null));
+                specificReceivers, subject, body, attachments,
+                view.getVariableMappings()));
 
         String senderName = emailService.loadSenderName().orElse("");
         EmailSmtpConfig smtp = emailService.loadSmtpConfig().orElse(null);
@@ -535,6 +590,7 @@ public class EmailController {
         for (int i = 0; i < CASE_VARIABLES.size(); i++) {
             EmailCaseConfigurationView caseView = getCaseView(i);
             caseView.setAvailableVariables(CASE_VARIABLES.getOrDefault(i, new String[0]));
+            caseView.setVariableOptions(CASE_VARIABLE_OPTIONS.getOrDefault(i, List.of()));
         }
 
         emailService.loadCaseConfigs().ifPresent(cases -> {
@@ -545,6 +601,7 @@ public class EmailController {
                 caseView.setUseGlobalReceivers(cfg.useGlobalReceivers());
                 caseView.setSubject(cfg.subject());
                 caseView.setBody(cfg.body());
+                caseView.rebuildVariablesTable();
                 DefaultListModel<String> recvModel = caseView.getSpecificReceiversModel();
                 recvModel.clear();
                 for (String r : cfg.specificReceivers()) {
