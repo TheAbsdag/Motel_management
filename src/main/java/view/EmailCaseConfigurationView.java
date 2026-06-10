@@ -532,8 +532,15 @@ public class EmailCaseConfigurationView extends JPanel {
 	JComboBox<VariableOption> comboBox = new JComboBox<>(variableComboModel);
 	comboBox.setFont(new Font("Segoe UI Black", Font.PLAIN, 14));
 
+	DefaultCellEditor comboEditor = new DefaultCellEditor(comboBox);
+	comboEditor.setClickCountToStart(1);
+
+	DefaultCellEditor textEditor = new DefaultCellEditor(new JTextField());
+	textEditor.setClickCountToStart(1);
+
 	variablesTable.setModel(variablesTableModel);
-	variablesTable.setDefaultEditor(VariableOption.class, new DefaultCellEditor(comboBox));
+	variablesTable.setDefaultEditor(VariableOption.class, comboEditor);
+	variablesTable.setDefaultEditor(String.class, textEditor);
 	variablesTable.setDefaultRenderer(VariableOption.class, new DefaultTableCellRenderer() {
 	    @Override
 	    public Component getTableCellRendererComponent(JTable table, Object value,
@@ -549,6 +556,7 @@ public class EmailCaseConfigurationView extends JPanel {
 	});
 	variablesTable.setFont(new Font("Segoe UI Black", Font.PLAIN, 14));
 	variablesTable.setRowHeight(28);
+	variablesTable.setCellSelectionEnabled(true);
     }
 
     public void rebuildVariablesTable() {
