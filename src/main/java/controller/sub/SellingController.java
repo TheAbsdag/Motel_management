@@ -3,6 +3,7 @@ package controller.sub;
 import java.nio.file.Path;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -203,7 +204,7 @@ public class SellingController {
         placeholders.put("{roomString}", roomString);
         placeholders.put("{consecutiveTrans}", String.valueOf(consecutive));
         placeholders.put("{date}", TimeFormatter.formatEmailShortDatetime(now));
-        placeholders.put("{hourService}", TimeFormatter.formatEmailShortDatetime(now));
+        placeholders.put("{hourService}", now.format(DateTimeFormatter.ofPattern("hh:mm a")));
         placeholders.put("{dateService}", TimeFormatter.formatEmailShortDatetime(now));
         placeholders.put("{register}", buildSaleRegisterHtml(items, currency, formattedTotal));
         EmailController.trySendCaseEmail(1, placeholders, emailSvc, consecutive);

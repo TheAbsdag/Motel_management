@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.nio.file.Path;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -305,7 +306,7 @@ public class RoomController {
         placeholders.put("{date}", TimeFormatter.formatEmailShortDatetime(now));
         placeholders.put("{price}", formattedPrice);
         placeholders.put("{serviceDuration}", formattedDuration);
-        placeholders.put("{hourService}", TimeFormatter.formatEmailShortDatetime(now));
+        placeholders.put("{hourService}", now.format(DateTimeFormatter.ofPattern("hh:mm a")));
         placeholders.put("{dateService}", TimeFormatter.formatEmailShortDatetime(now));
         placeholders.put("{register}", buildRoomRegisterHtml(roomObj.getRoomString(), formattedDuration, formattedPrice, now));
         EmailController.trySendCaseEmail(0, placeholders, emailSvc, consecutive);
