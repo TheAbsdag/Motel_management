@@ -416,10 +416,10 @@ public class EmailController {
 
         List<EmailCaseConfig> cases = new ArrayList<>(emailService.loadCaseConfigs().orElse(List.of()));
         while (cases.size() <= caseIndex) {
-            cases.add(new EmailCaseConfig(cases.size(), false, true, List.of(), "", "", List.of()));
+            cases.add(new EmailCaseConfig(cases.size(), false, true, List.of(), "", "", List.of(), null));
         }
         cases.set(caseIndex, new EmailCaseConfig(caseIndex, enabled, useGlobal,
-                specificReceivers, subject, body, attachments));
+                specificReceivers, subject, body, attachments, null));
 
         String senderName = emailService.loadSenderName().orElse("");
         EmailSmtpConfig smtp = emailService.loadSmtpConfig().orElse(null);
