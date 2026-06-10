@@ -37,7 +37,7 @@ A detailed [sequence diagram](docs/DIAGRAMS/v0.1.3.1.md) covering all 10 defensi
 
 The program targets a **touchscreen** interface, with touchscreen related control for list and Management
 A main Floor view is present showing status of the program, a warning for overtime room booking is also present for multiple tower / floors configurations
-Each room has 3 different selection for time, with a personalized modification for each room present on the configuration
+Each room has 3 different selection for time, with a personalized modification for each room present on the configuration, as well to the price of each one (Currently only in COP)
 
 
 ## Future features / roadmap
@@ -48,21 +48,23 @@ Features to be added, in no particular order of progress, WIP will be marked and
 - [ ] **Localization/Internationalization:** Once the program reaches a mature point, a i18n localization will be implemented (Currently in progress)
 - [ ] **External door interface:** On a separate project it's meant to link external hardware door opening and closing for tracking of each room linked to it (Currently in progress, future github linking to the project will be available)
 - [ ] **Personalization, encryption of history:** To apply encryption and data safety, future implementation for all data to be locally encrypted to the user requirements is being testes (Currently in progress)
-- [ ] **Report exportation:** Currently a local report generation is present, implementation for custom email endpoints, or implementation of API is being evaluated
+- [x] **Report exportation:** Partially implemented for email report, future WhatsApp integration for reporting is in progress (email: v0.1.4)
 - [ ] **Printer page personalization:** For convienence, a fixed calculation for a 90mm thermal priter is the only implementation currently available for printing, a more customizable option is being setup
-- [ ] **Date and time customization:** On the effort to localization, a date and time customization will be managed for data saving and related
+- [ ] **Date and time customization:** On the effort to localization, a date and time customization will be managed for data saving and related (Currently in progress with localization)
 - [ ] **Database integration:** A customizable database integration and base is being considered to not rely heavily on JSON data structures for consulting
 
 ## Known issues
 
-- **Hardcode 25 grid limitation:** Due to some requirements of legibility, there was a limit made on the grid for the floor, a touch friendly floor navigation is currently being developed
-- **Hardcoded long values:** The logic is heavily based upon hardcoded long values for pricing or related, due to the COP nature is working as a whole long, implementation of doubles or floating points are being done for the project scope as a customizable option for currencies that manage decimals
+- [x] PARTIALLY FIXED: Based on screen size, the grid can go past 25, visibility is affected ~~**Hardcode 25 grid limitation:** Due to some requirements of legibility, there was a limit made on the grid for the floor, a touch friendly floor navigation is currently being developed~~
+- [x] **FIXED:** Fixed values to use a similar to BigDecimal approach, but with customazibility for different currencies and even custom values ~~**Hardcoded long values:** The logic is heavily based upon hardcoded long values for pricing or related, due to the COP nature is working as a whole long, implementation of doubles or floating points are being done for the project scope as a customizable option for currencies that manage decimals~~
 - **History review broken:** The in program history review is currently broken.
+- **Java Swing integration:** Development of view related elements started with Java Swing due to simplicity, swap to JavaFX for a touch friendly approach without using broken helpers is currently being tested for implementation
 
-## Versions:
-- **0.1.2:** Up until commits done to september 27th 2025, basic functionality, requires existing applicationProperties to properly function
-- **0.1.3:** Commits done since start of 2026 comprise the current program version, better implementation, separation, and management options prepared, still requires a existing applicationProperties with basic data to function, known conflicts and issues are being actively worked on
+## Versions major changes:
+- **0.1.4:** Added email reporting to specific addresses (meant for motel manager, accounting, or related),
 - **0.1.3.1:** Refactoring and initial setup finished, making the program fully functional for basic details, advanced data output configuration and related will come at a later date
+- **0.1.3:** Commits done since start of 2026 comprise the current program version, better implementation, separation, and management options prepared, still requires a existing applicationProperties with basic data to function, known conflicts and issues are being actively worked on
+- **0.1.2:** Up until commits done to september 27th 2025, basic functionality, requires existing applicationProperties to properly function
 
 ## **DISCLAIMER:**
 This program has used LLM tools such as OpenCode, Claude, Qwen, and related for code development, refinement and optimization (Though test creation was a godsend).
