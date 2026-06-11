@@ -79,6 +79,19 @@ public final class TimeFormatter {
      * @param seconds duration in seconds
      * @return human-readable duration string
      */
+    /**
+     * Formats a duration in seconds as {@code HH:MM:SS}.
+     *
+     * @param seconds duration in seconds
+     * @return string in the form {@code "01:30:45"}
+     */
+    public static String formatDurationAsHHMMSS(long seconds) {
+        long hh = seconds / 3600;
+        long mm = (seconds % 3600) / 60;
+        long ss = seconds % 60;
+        return String.format("%02d:%02d:%02d", hh, mm, ss);
+    }
+
     public static String formatDuration(long seconds) {
         if (seconds >= 3600 && seconds % 3600 == 0) {
             return (seconds / 3600) + "h";

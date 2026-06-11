@@ -369,8 +369,8 @@ public class TurnReportGenerator {
         sheet.setColumnWidth(5, 6500);
         sheet.setColumnWidth(6, 6500);
         sheet.setColumnWidth(7, 5000);
-        sheet.setColumnWidth(8, 3500);
-        sheet.setColumnWidth(9, 3500);
+        sheet.setColumnWidth(8, 4500);
+        sheet.setColumnWidth(9, 4000);
         sheet.setColumnWidth(10, 4000);
         sheet.setColumnWidth(11, 5000);
         sheet.setColumnWidth(12, 4000);
@@ -645,7 +645,7 @@ public class TurnReportGenerator {
         rowIdx++;
 
         String[] headers = {"Fecha", "Tipo Reembolso", "Habitacion", "Precio", "Item ID",
-                "Cantidad", "Item", "Servicio (s)", "Trans. Consecutiva", "Trans. Original"};
+                "Cantidad", "Item", "Servicio (s)", "Servicio (HH:MM:SS)", "Trans. Consecutiva", "Trans. Original"};
         Row headerRow = sheet.createRow(rowIdx++);
         for (int i = 0; i < headers.length; i++) {
             Cell cell = headerRow.createCell(i);
@@ -664,8 +664,9 @@ public class TurnReportGenerator {
             setNumberCell(row, 5, r.quantity(), numberStyle);
             row.createCell(6).setCellValue(r.itemName() != null ? r.itemName() : "");
             setNumberCell(row, 7, r.refundServiceDuration(), numberStyle);
-            setNumberCell(row, 8, r.consecutiveTrans(), numberStyle);
-            setNumberCell(row, 9, r.refundConsecutiveTrans(), numberStyle);
+            row.createCell(8).setCellValue(TimeFormatter.formatDurationAsHHMMSS(r.refundServiceDuration()));
+            setNumberCell(row, 9, r.consecutiveTrans(), numberStyle);
+            setNumberCell(row, 10, r.refundConsecutiveTrans(), numberStyle);
         }
         return rowIdx;
     }

@@ -139,4 +139,13 @@ class TimeFormatterTest {
         assertThat(TimeFormatter.formatDuration(30)).isEqualTo("30s");
         assertThat(TimeFormatter.formatDuration(59)).isEqualTo("59s");
     }
+
+    @Test
+    void shouldFormatDurationAsHHMMSS() {
+        assertThat(TimeFormatter.formatDurationAsHHMMSS(0)).isEqualTo("00:00:00");
+        assertThat(TimeFormatter.formatDurationAsHHMMSS(30)).isEqualTo("00:00:30");
+        assertThat(TimeFormatter.formatDurationAsHHMMSS(3661)).isEqualTo("01:01:01");
+        assertThat(TimeFormatter.formatDurationAsHHMMSS(7322)).isEqualTo("02:02:02");
+        assertThat(TimeFormatter.formatDurationAsHHMMSS(86399)).isEqualTo("23:59:59");
+    }
 }
