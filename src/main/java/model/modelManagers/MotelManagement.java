@@ -124,7 +124,7 @@ public class MotelManagement {
         List<FloorConfig> towerRooms = new ArrayList<>();
         towerRooms.add(new FloorConfig(0, roomsList));
         List<TowerConfig> roomsPerTower = new ArrayList<>();
-        roomsPerTower.add(new TowerConfig(1, 1, towerRooms));
+        roomsPerTower.add(new TowerConfig(0, 1, towerRooms));
         programConfig.setRoomsPerTower(roomsPerTower);
         roomManager.buildRoomGrid(programConfig.getRoomsPerTower());
     }

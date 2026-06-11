@@ -25,6 +25,6 @@ public record AppProperties(
     }
 
     public AppProperties() {
-        this(0, "", "", "", null, 2, new ArrayList<>(), CurrencyConfig.defaultConfig());
+        this(0, "", "", "", null, 3, new ArrayList<>(), CurrencyConfig.defaultConfig());
     }
 }

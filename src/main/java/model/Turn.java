@@ -19,6 +19,7 @@ import model.turn.RoomSwapActivity;
 import model.turn.SaleActivity;
 import model.turn.SaleItem;
 import model.turn.SpendingActivity;
+import model.turn.RoomData;
 import model.turn.TurnActivity;
 import model.turn.TurnDetails;
 
@@ -120,11 +121,18 @@ public class Turn {
         for (CartItem ci : items) {
             saleItems.add(new SaleItem(ci.itemName(), ci.itemID(), ci.quantity(), ci.price(), false));
         }
+        RoomData roomData = new RoomData(
+                roomSoldTo.getTowerNumber(),
+                roomSoldTo.getFloorNumber(),
+                roomSoldTo.getRoomNumber(),
+                roomSoldTo.getRoomString()
+        );
         SaleActivity activity = new SaleActivity(
                 changeDate,
                 roomSoldTo.getRoomString(),
                 saleItems,
-                transactionNumber
+                transactionNumber,
+                roomData
         );
         turnDetails.addActivity(activity);
         return activity;
@@ -306,7 +314,8 @@ public class Turn {
                     r.roomString(),
                     r.price() * -1L,
                     r.serviceDuration(),
-                    0, 0, null
+                    0, 0, null,
+                    r.roomData()
             );
             markActivityRefunded(r, 0);
             turnDetails.addActivity(refundActivity);
@@ -331,7 +340,8 @@ public class Turn {
                             0,
                             targetItem.itemID(),
                             targetItem.quantity(),
-                            targetItem.itemName()
+                            targetItem.itemName(),
+                            s.roomSoldToData()
                     );
                     markActivityRefunded(s, specificItemID);
                     turnDetails.addActivity(refundActivity);
@@ -348,7 +358,8 @@ public class Turn {
                             0,
                             item.itemID(),
                             item.quantity(),
-                            item.itemName()
+                            item.itemName(),
+                            s.roomSoldToData()
                     );
                     turnDetails.addActivity(refundActivity);
                 }
@@ -366,7 +377,7 @@ public class Turn {
                     r.changeDate(), r.roomString(), r.roomNumber(), r.floorNumber(), r.towerNumber(),
                     r.roomStatus(), r.startStatus(), r.endStatus(),
                     r.price(), r.serviceDuration(), r.extensionDuration(), r.servicedExtensionDuration(),
-                    r.consecutiveTrans(), true
+                    r.consecutiveTrans(), true, r.roomData()
             ));
         } else if (activity instanceof SaleActivity s) {
             List<SaleItem> updatedItems = new ArrayList<>();
@@ -378,7 +389,7 @@ public class Turn {
                 }
             }
             turnDetails.getActivities().set(idx, new SaleActivity(
-                    s.changeDate(), s.roomSoldTo(), updatedItems, s.consecutiveTrans()
+                    s.changeDate(), s.roomSoldTo(), updatedItems, s.consecutiveTrans(), s.roomSoldToData()
             ));
         }
     }
@@ -403,7 +414,7 @@ public class Turn {
             turnDetails.getActivities().remove(idx);
         } else {
             turnDetails.getActivities().set(idx, new SaleActivity(
-                    s.changeDate(), s.roomSoldTo(), updatedItems, s.consecutiveTrans()
+                    s.changeDate(), s.roomSoldTo(), updatedItems, s.consecutiveTrans(), s.roomSoldToData()
             ));
         }
     }

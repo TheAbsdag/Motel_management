@@ -3,7 +3,6 @@ package model.turn;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import java.time.ZonedDateTime;
 import model.RoomStatus;
 
@@ -22,8 +21,21 @@ public record RoomBookingActivity(
         @JsonProperty("extensionDuration") long extensionDuration,
         @JsonProperty("servicedExtensionDuration") long servicedExtensionDuration,
         @JsonProperty("consecutiveTrans") int consecutiveTrans,
-        @JsonProperty("refunded") boolean refunded
+        @JsonProperty("refunded") boolean refunded,
+        @JsonProperty("roomData") RoomData roomData
 ) implements TurnActivity {
+
+    public RoomBookingActivity(
+            ZonedDateTime changeDate, String roomString, int roomNumber, int floorNumber, int towerNumber,
+            RoomStatus roomStatus, ZonedDateTime startStatus, ZonedDateTime endStatus,
+            long price, long serviceDuration, long extensionDuration, long servicedExtensionDuration,
+            int consecutiveTrans, boolean refunded) {
+        this(changeDate, roomString, roomNumber, floorNumber, towerNumber,
+                roomStatus, startStatus, endStatus,
+                price, serviceDuration, extensionDuration, servicedExtensionDuration,
+                consecutiveTrans, refunded,
+                new RoomData(towerNumber, floorNumber, roomNumber, roomString));
+    }
 
     public long getEffectiveServiceDuration() {
         return servicedExtensionDuration != 0 ? servicedExtensionDuration : serviceDuration;
@@ -51,7 +63,8 @@ public record RoomBookingActivity(
             @JsonProperty("servicedExtensionDuration") Long servicedExtensionDuration,
             @JsonProperty("servicedExtension") Integer legacyServicedExtension,
             @JsonProperty("consecutiveTrans") Integer consecutiveTrans,
-            @JsonProperty("refunded") Boolean refunded) {
+            @JsonProperty("refunded") Boolean refunded,
+            @JsonProperty("roomData") RoomData roomData) {
         boolean occupied = roomStatusCode == RoomStatus.OCCUPIED.getCode();
         long serviceDur = serviceDuration != null ? serviceDuration
                 : (legacyService != null ? (long) legacyService * 3600L : 0L);
@@ -59,6 +72,9 @@ public record RoomBookingActivity(
                 : (legacyExtension != null ? (long) legacyExtension * 3600L : 0L);
         long servicedExtDur = servicedExtensionDuration != null ? servicedExtensionDuration
                 : (legacyServicedExtension != null ? (long) legacyServicedExtension * 3600L : 0L);
+        if (roomData == null) {
+            roomData = new RoomData(towerNumber, floorNumber, roomNumber, roomString);
+        }
         return new RoomBookingActivity(
                 changeDate, roomString, roomNumber, floorNumber, towerNumber,
                 RoomStatus.fromCode(roomStatusCode),
@@ -67,6 +83,7 @@ public record RoomBookingActivity(
                 occupied ? (price != null ? price : 0L) : 0L,
                 serviceDur, extensionDur, servicedExtDur,
                 consecutiveTrans != null ? consecutiveTrans : 0,
-                refunded != null && refunded);
+                refunded != null && refunded,
+                roomData);
     }
 }

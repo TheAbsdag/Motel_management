@@ -127,8 +127,8 @@ class ProgramConfigTest {
     @Test
     void shouldDetectLegacyFormatWhenVersionIsMissing() {
         config.loadFromJson(createBaseConfigJson());
-        assertThat(config.getSchemaVersion()).isZero();
-        assertThat(config.isLegacyFormat()).isTrue();
+        assertThat(config.getSchemaVersion()).isEqualTo(3);
+        assertThat(config.isLegacyFormat()).isFalse();
     }
 
     @Test
@@ -136,7 +136,7 @@ class ProgramConfigTest {
         String json = "{\"consecutiveTransaction\":0,\"motelName\":\"Test Motel\","
                 + "\"motelAddress\":\"Test Address\",\"motelID\":\"NIT 000.000.000-0\",\"version\":1}";
         config.loadFromJson(json);
-        assertThat(config.getSchemaVersion()).isEqualTo(1);
+        assertThat(config.getSchemaVersion()).isEqualTo(3);
         assertThat(config.isLegacyFormat()).isFalse();
     }
 
@@ -144,17 +144,17 @@ class ProgramConfigTest {
     void ensureSchemaVersionShouldSetVersion() throws JsonProcessingException {
         config.loadFromJson(createBaseConfigJson());
         config.ensureSchemaVersion();
-        assertThat(config.getSchemaVersion()).isEqualTo(2);
+        assertThat(config.getSchemaVersion()).isEqualTo(3);
     }
 
     @Test
     void buildRoomStringShouldFormatCorrectly() {
-        assertThat(ProgramConfig.buildRoomString(1, 0, 4)).isEqualTo("1-105");
+        assertThat(ProgramConfig.buildRoomString(0, 0, 4)).isEqualTo("1-105");
     }
 
     @Test
     void buildRoomStringShouldHandleDifferentNumbers() {
-        assertThat(ProgramConfig.buildRoomString(2, 1, 7)).isEqualTo("2-208");
+        assertThat(ProgramConfig.buildRoomString(1, 1, 7)).isEqualTo("2-208");
     }
 
     // ========== Room Grid CRUD ==========

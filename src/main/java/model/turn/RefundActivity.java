@@ -16,8 +16,17 @@ public record RefundActivity(
         @JsonProperty("refundServiceDuration") long refundServiceDuration,
         @JsonProperty("itemID") long itemID,
         @JsonProperty("quantity") long quantity,
-        @JsonProperty("itemName") String itemName
+        @JsonProperty("itemName") String itemName,
+        @JsonProperty("refundRoomData") RoomData refundRoomData
 ) implements TurnActivity {
+
+    public RefundActivity(
+            ZonedDateTime changeDate, RefundType refundType, int consecutiveTrans,
+            int refundConsecutiveTrans, String refundRoom, long price,
+            long refundServiceDuration, long itemID, long quantity, String itemName) {
+        this(changeDate, refundType, consecutiveTrans, refundConsecutiveTrans, refundRoom,
+                price, refundServiceDuration, itemID, quantity, itemName, null);
+    }
 
     @JsonCreator
     public static RefundActivity createFromJson(
@@ -31,7 +40,8 @@ public record RefundActivity(
             @JsonProperty("refundService") Integer legacyRefundService,
             @JsonProperty("itemID") Long itemID,
             @JsonProperty("quantity") Long quantity,
-            @JsonProperty("itemName") String itemName) {
+            @JsonProperty("itemName") String itemName,
+            @JsonProperty("refundRoomData") RoomData refundRoomData) {
         long refundDur = 0L;
         if (refundType == RefundType.ROOM_REFUND) {
             refundDur = refundServiceDuration != null ? refundServiceDuration
@@ -43,6 +53,7 @@ public record RefundActivity(
                 refundRoom, price, refundDur,
                 refundType == RefundType.SALE_REFUND ? (itemID != null ? itemID : 0L) : 0L,
                 refundType == RefundType.SALE_REFUND ? (quantity != null ? quantity : 0L) : 0L,
-                refundType == RefundType.SALE_REFUND ? itemName : null);
+                refundType == RefundType.SALE_REFUND ? itemName : null,
+                refundRoomData);
     }
 }

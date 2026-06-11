@@ -21,7 +21,7 @@ import model.json.TowerConfig;
  */
 public class ProgramConfig {
 
-    private static final int SCHEMA_VERSION = 2;
+    private static final int SCHEMA_VERSION = 3;
     private static final Logger logger = Logger.getLogger(ProgramConfig.class.getName());
 
     private int consecutiveTransaction;
@@ -51,9 +51,31 @@ public class ProgramConfig {
             this.schemaVersion = props.version();
             this.roomsPerTower = new ArrayList<>(props.roomsPerTower());
             this.currencyConfig = props.currencyConfig() != null ? props.currencyConfig() : CurrencyConfig.defaultConfig();
+            migrateIfNeeded();
         } catch (JsonProcessingException e) {
             logger.log(Level.SEVERE, "Failed to load application properties", e);
         }
+    }
+
+    /**
+     * Migrates persisted data from older schema versions to the current version.
+     * <p>
+     * Schema v2 → v3: TowerConfig.towerNumber changed from 1-based to 0-based.
+     * Each tower number is decremented by 1.
+     */
+    private void migrateIfNeeded() {
+        if (schemaVersion >= SCHEMA_VERSION) return;
+        if (schemaVersion < 3) {
+            List<TowerConfig> migrated = new ArrayList<>();
+            for (TowerConfig tower : roomsPerTower) {
+                migrated.add(new TowerConfig(
+                        tower.towerNumber() - 1,
+                        tower.towerFloors(),
+                        tower.towerRooms()));
+            }
+            roomsPerTower = migrated;
+        }
+        schemaVersion = SCHEMA_VERSION;
     }
 
     public String toJson() {
@@ -315,6 +337,6 @@ public class ProgramConfig {
     }
 
     public static String buildRoomString(int towerNumber, int floorNumber, int roomNumber) {
-        return towerNumber + "-" + (floorNumber + 1) + "0" + (roomNumber + 1);
+        return (towerNumber + 1) + "-" + (floorNumber + 1) + "0" + (roomNumber + 1);
     }
 }

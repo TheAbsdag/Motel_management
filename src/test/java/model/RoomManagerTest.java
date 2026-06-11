@@ -58,7 +58,7 @@ class RoomManagerTest {
         List<TowerConfig> programData = createSingleTowerConfig(1, new int[]{2});
         roomManager.buildRoomGrid(programData);
         Room room0 = roomManager.getRoom(0, 0, 0);
-        assertThat(room0.getTowerNumber()).isEqualTo(1);
+        assertThat(room0.getTowerNumber()).isEqualTo(0);
         assertThat(room0.getFloorNumber()).isEqualTo(0);
         assertThat(room0.getRoomNumber()).isEqualTo(0);
         Room room1 = roomManager.getRoom(0, 0, 1);
@@ -410,7 +410,7 @@ class RoomManagerTest {
             towerRooms.add(new FloorConfig(floor, rooms));
         }
         List<TowerConfig> result = new ArrayList<>();
-        result.add(new TowerConfig(1, numFloors, towerRooms));
+        result.add(new TowerConfig(0, numFloors, towerRooms));
         return result;
     }
 
@@ -418,14 +418,14 @@ class RoomManagerTest {
         List<TowerConfig> result = new ArrayList<>();
 
         List<FloorConfig> tower1Rooms = new ArrayList<>();
-        tower1Rooms.add(createFloorConfig(0, 4, 1));
-        tower1Rooms.add(createFloorConfig(1, 3, 1));
-        result.add(new TowerConfig(1, 2, tower1Rooms));
+        tower1Rooms.add(createFloorConfig(0, 4, 0));
+        tower1Rooms.add(createFloorConfig(1, 3, 0));
+        result.add(new TowerConfig(0, 2, tower1Rooms));
 
         List<FloorConfig> tower2Rooms = new ArrayList<>();
-        tower2Rooms.add(createFloorConfig(0, 2, 2));
-        tower2Rooms.add(createFloorConfig(1, 2, 2));
-        result.add(new TowerConfig(2, 2, tower2Rooms));
+        tower2Rooms.add(createFloorConfig(0, 2, 1));
+        tower2Rooms.add(createFloorConfig(1, 2, 1));
+        result.add(new TowerConfig(1, 2, tower2Rooms));
 
         return result;
     }
@@ -433,7 +433,7 @@ class RoomManagerTest {
     private static FloorConfig createFloorConfig(int floorNumber, int roomCount, int towerNumber) {
         List<RoomConfigData> rooms = new ArrayList<>();
         for (int room = 0; room < roomCount; room++) {
-            String roomString = towerNumber + "-" + (floorNumber + 1) + "0" + (room + 1);
+            String roomString = (towerNumber + 1) + "-" + (floorNumber + 1) + "0" + (room + 1);
             rooms.add(new RoomConfigData(roomString, floorNumber, room, null));
         }
         return new FloorConfig(floorNumber, rooms);

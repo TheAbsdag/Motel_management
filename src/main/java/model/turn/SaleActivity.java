@@ -11,15 +11,22 @@ public record SaleActivity(
         @JsonProperty("changeDate") ZonedDateTime changeDate,
         @JsonProperty("roomSoldTo") String roomSoldTo,
         @JsonProperty("register") List<SaleItem> items,
-        @JsonProperty("consecutiveTrans") int consecutiveTrans
+        @JsonProperty("consecutiveTrans") int consecutiveTrans,
+        @JsonProperty("roomSoldToData") RoomData roomSoldToData
 ) implements TurnActivity {
+
+    public SaleActivity(
+            ZonedDateTime changeDate, String roomSoldTo, List<SaleItem> items, int consecutiveTrans) {
+        this(changeDate, roomSoldTo, items, consecutiveTrans, null);
+    }
 
     @JsonCreator
     public static SaleActivity createFromJson(
             @JsonProperty("changeDate") ZonedDateTime changeDate,
             @JsonProperty("roomSoldTo") String roomSoldTo,
             @JsonProperty("register") List<SaleItem> items,
-            @JsonProperty("consecutiveTrans") int consecutiveTrans) {
-        return new SaleActivity(changeDate, roomSoldTo, items, consecutiveTrans);
+            @JsonProperty("consecutiveTrans") int consecutiveTrans,
+            @JsonProperty("roomSoldToData") RoomData roomSoldToData) {
+        return new SaleActivity(changeDate, roomSoldTo, items, consecutiveTrans, roomSoldToData);
     }
 }

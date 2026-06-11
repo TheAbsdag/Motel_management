@@ -284,7 +284,7 @@ public class RoomManager {
             }
         }
         try {
-            RoomStatesWrapper wrapper = new RoomStatesWrapper(roomList, 2);
+            RoomStatesWrapper wrapper = new RoomStatesWrapper(roomList, 3);
             return ObjectMapperFactory.get().writeValueAsString(wrapper);
         } catch (JsonProcessingException e) {
             logger.log(Level.SEVERE, "Failed to serialize room data", e);

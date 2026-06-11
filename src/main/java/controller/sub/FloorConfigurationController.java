@@ -103,7 +103,7 @@ public class FloorConfigurationController {
         if (roomsPerTower != null && !roomsPerTower.isEmpty()) {
             String[] items = new String[roomsPerTower.size()];
             for (int i = 0; i < roomsPerTower.size(); i++) {
-                items[i] = "Torre " + roomsPerTower.get(i).towerNumber();
+                items[i] = "Torre " + (roomsPerTower.get(i).towerNumber() + 1);
             }
             view.setTowerItems(items);
         }
@@ -254,10 +254,10 @@ public class FloorConfigurationController {
     }
 
     private void addNewTower() {
-        int nextTowerNum = 1;
+        int nextTowerNum = 0;
         List<TowerConfig> roomsPerTower = motelManager.getProgramConfig().getRoomsPerTower();
         if (roomsPerTower != null && !roomsPerTower.isEmpty()) {
-            int maxNum = 0;
+            int maxNum = -1;
             for (int i = 0; i < roomsPerTower.size(); i++) {
                 int num = roomsPerTower.get(i).towerNumber();
                 if (num > maxNum) maxNum = num;

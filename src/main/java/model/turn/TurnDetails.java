@@ -67,7 +67,7 @@ public class TurnDetails {
         this.activities = new ArrayList<>();
         this.summaryItems = new ArrayList<>();
         this.totalsComputed = false;
-        this.version = 2;
+        this.version = 3;
     }
 
     public TurnDetails(long turnNumber, ZonedDateTime turnStart, boolean isTurnActive) {
@@ -239,12 +239,64 @@ public class TurnDetails {
                 details.activities = new ArrayList<>();
             }
             details.summaryItems = new ArrayList<>();
+            details.migrateActivitiesIfNeeded();
             details.computeTotalsAndSummary();
             return details;
         } catch (JsonProcessingException e) {
             logger.log(Level.SEVERE, "Failed to deserialize TurnDetails", e);
             return new TurnDetails();
         }
+    }
+
+    private static final int CURRENT_VERSION = 3;
+
+    /**
+     * Migrates activities from older schema versions.
+     * <p>
+     * v2 → v3: Tower numbers changed from 1-based to 0-based.
+     * RoomBookingActivity.towerNumber and RoomSwapActivity tower fields are decremented by 1.
+     */
+    private void migrateActivitiesIfNeeded() {
+        if (version >= CURRENT_VERSION) return;
+        if (version < 3 && activities != null) {
+            List<TurnActivity> migrated = new ArrayList<>();
+            for (TurnActivity a : activities) {
+                switch (a) {
+                    case RoomBookingActivity r -> {
+                        int newTower = r.towerNumber() - 1;
+                        RoomData rd = r.roomData() != null
+                                ? new RoomData(newTower, r.roomData().floorNumber(),
+                                        r.roomData().roomNumber(), r.roomData().roomString())
+                                : null;
+                        migrated.add(new RoomBookingActivity(
+                                r.changeDate(), r.roomString(), r.roomNumber(), r.floorNumber(), newTower,
+                                r.roomStatus(), r.startStatus(), r.endStatus(),
+                                r.price(), r.serviceDuration(), r.extensionDuration(), r.servicedExtensionDuration(),
+                                r.consecutiveTrans(), r.refunded(), rd));
+                    }
+                    case RoomSwapActivity s -> {
+                        int newOrigTower = s.originalTowerNumber() - 1;
+                        int newSwapTower = s.swappedTowerNumber() - 1;
+                        RoomData origRd = s.originalRoomData() != null
+                                ? new RoomData(newOrigTower, s.originalRoomData().floorNumber(),
+                                        s.originalRoomData().roomNumber(), s.originalRoomData().roomString())
+                                : null;
+                        RoomData swapRd = s.swapRoomData() != null
+                                ? new RoomData(newSwapTower, s.swapRoomData().floorNumber(),
+                                        s.swapRoomData().roomNumber(), s.swapRoomData().roomString())
+                                : null;
+                        migrated.add(new RoomSwapActivity(
+                                s.changeDate(),
+                                s.originalRoom(), s.originalRoomNumber(), s.originalFloorNumber(), newOrigTower,
+                                s.swappedRoom(), s.swappedRoomNumber(), s.swappedFloorNumber(), newSwapTower,
+                                origRd, swapRd));
+                    }
+                    default -> migrated.add(a);
+                }
+            }
+            activities = migrated;
+        }
+        version = CURRENT_VERSION;
     }
 
     // --- Getters / Setters ---

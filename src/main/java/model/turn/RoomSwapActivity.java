@@ -16,8 +16,21 @@ public record RoomSwapActivity(
         @JsonProperty("swappedRoom") @JsonAlias("swapedRoom") String swappedRoom,
         @JsonProperty("swappedRoomNumber") @JsonAlias("swapedRoomNumber") int swappedRoomNumber,
         @JsonProperty("swappedFloorNumber") @JsonAlias("swapedFloorNumber") int swappedFloorNumber,
-        @JsonProperty("swappedTowerNumber") @JsonAlias("swapedTowerNumber") int swappedTowerNumber
+        @JsonProperty("swappedTowerNumber") @JsonAlias("swapedTowerNumber") int swappedTowerNumber,
+        @JsonProperty("originalRoomData") RoomData originalRoomData,
+        @JsonProperty("swapRoomData") RoomData swapRoomData
 ) implements TurnActivity {
+
+    public RoomSwapActivity(
+            ZonedDateTime changeDate, String originalRoom, int originalRoomNumber,
+            int originalFloorNumber, int originalTowerNumber,
+            String swappedRoom, int swappedRoomNumber,
+            int swappedFloorNumber, int swappedTowerNumber) {
+        this(changeDate, originalRoom, originalRoomNumber, originalFloorNumber, originalTowerNumber,
+                swappedRoom, swappedRoomNumber, swappedFloorNumber, swappedTowerNumber,
+                new RoomData(originalTowerNumber, originalFloorNumber, originalRoomNumber, originalRoom),
+                new RoomData(swappedTowerNumber, swappedFloorNumber, swappedRoomNumber, swappedRoom));
+    }
 
     @Override
     public int consecutiveTrans() { return 0; }
@@ -32,8 +45,17 @@ public record RoomSwapActivity(
             @JsonProperty("swappedRoom") @JsonAlias("swapedRoom") String swappedRoom,
             @JsonProperty("swappedRoomNumber") @JsonAlias("swapedRoomNumber") int swappedRoomNumber,
             @JsonProperty("swappedFloorNumber") @JsonAlias("swapedFloorNumber") int swappedFloorNumber,
-            @JsonProperty("swappedTowerNumber") @JsonAlias("swapedTowerNumber") int swappedTowerNumber) {
+            @JsonProperty("swappedTowerNumber") @JsonAlias("swapedTowerNumber") int swappedTowerNumber,
+            @JsonProperty("originalRoomData") RoomData originalRoomData,
+            @JsonProperty("swapRoomData") RoomData swapRoomData) {
+        if (originalRoomData == null) {
+            originalRoomData = new RoomData(originalTowerNumber, originalFloorNumber, originalRoomNumber, originalRoom);
+        }
+        if (swapRoomData == null) {
+            swapRoomData = new RoomData(swappedTowerNumber, swappedFloorNumber, swappedRoomNumber, swappedRoom);
+        }
         return new RoomSwapActivity(changeDate, originalRoom, originalRoomNumber, originalFloorNumber, originalTowerNumber,
-                swappedRoom, swappedRoomNumber, swappedFloorNumber, swappedTowerNumber);
+                swappedRoom, swappedRoomNumber, swappedFloorNumber, swappedTowerNumber,
+                originalRoomData, swapRoomData);
     }
 }
