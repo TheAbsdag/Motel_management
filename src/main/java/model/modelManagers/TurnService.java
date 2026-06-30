@@ -34,6 +34,7 @@ public class TurnService {
 
     public void turnEnded(Instant currentTime) {
         turn.turnEnd(currentTime);
+        files.clearBackupFiles();
     }
 
     public long getTurnNumber() {

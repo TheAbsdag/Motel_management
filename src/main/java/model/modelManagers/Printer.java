@@ -79,7 +79,7 @@ public class Printer {
      * directory, and discovers the default print service.
      */
     public Printer() {
-        System.out.println("Printer initialized");
+        LOGGER.fine("Printer initialized");
         printLayout = new JTextPane();
         hourFormatter = new DateTimeFormatterBuilder()
                 .appendPattern("hh:mm").appendLiteral(' ')

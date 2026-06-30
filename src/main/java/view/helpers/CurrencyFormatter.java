@@ -36,10 +36,23 @@ public final class CurrencyFormatter {
                 .trim();
 
         if (cleaned.isEmpty()) return 0L;
+        boolean negative = cleaned.startsWith("-");
+        String numeric = negative ? cleaned.substring(1) : cleaned;
+
+        String[] parts = numeric.split("\\.", 2);
         try {
-            double parsed = Double.parseDouble(cleaned);
-            long factor = (long) Math.pow(10, cfg.decimalPlaces());
-            return Math.round(parsed * factor);
+            long wholePart = parts[0].isEmpty() ? 0L : Long.parseLong(parts[0]);
+            int dp = cfg.decimalPlaces();
+            long factor = (long) Math.pow(10, dp);
+            long fracPart = 0L;
+            if (parts.length > 1 && dp > 0) {
+                String frac = parts[1];
+                if (frac.length() > dp) frac = frac.substring(0, dp);
+                fracPart = Long.parseLong(frac);
+                for (int i = frac.length(); i < dp; i++) fracPart *= 10;
+            }
+            long result = wholePart * factor + fracPart;
+            return negative ? -result : result;
         } catch (NumberFormatException e) {
             return 0L;
         }

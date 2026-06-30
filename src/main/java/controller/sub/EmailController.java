@@ -627,6 +627,21 @@ public class EmailController {
         });
         emailHubView.setEmailFeatureEnabled(emailService.isEmailEnabled());
         updateHubStatus();
+
+        String decryptionError = emailService.getDecryptionError();
+        if (decryptionError != null) {
+            int choice = JOptionPane.showOptionDialog(
+                    SwingUtilities.getWindowAncestor(userInterface.getEmailProviderView()),
+                    "No se pudieron cargar los datos de correo cifrados.\n" +
+                    "Es posible que el archivo est\u00e9 da\u00f1ado.\n\n" +
+                    "Detalle t\u00e9cnico: " + decryptionError,
+                    "ERROR DE CIFRADO",
+                    JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE,
+                    null, new String[]{"Reconfigurar", "Ignorar"}, "Reconfigurar");
+            if (choice == 0) {
+                userInterface.setView(ViewCard.EMAIL_PROVIDER_VIEW);
+            }
+        }
     }
 
     private void fillSmtpFromPreset(ProviderPreset preset) {

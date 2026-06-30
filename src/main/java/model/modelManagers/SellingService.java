@@ -86,6 +86,7 @@ public class SellingService {
      * @param itemID 
      * @deprecated 
      */
+    @Deprecated
     public void createItemFromJson(String name, int price, int quantity, int itemID) {
         register.createItem(name, price, quantity, itemID);
     }

@@ -14,6 +14,8 @@ import controller.sub.SellingController;
 import controller.sub.TurnController;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import model.modelManagers.MotelManagement;
@@ -46,6 +48,8 @@ import view.helpers.InputParser;
  * @author Santiago
  */
 public class Controller {
+
+    private static final Logger LOGGER = Logger.getLogger(Controller.class.getName());
 
     private static final int CLOCK_UPDATE_INTERVAL_MS = 250;
     private static final int BACKUP_SAVE_INTERVAL_MS = 300_000;      // 5 minutes
@@ -221,10 +225,10 @@ public class Controller {
 
         boolean validTurn = motelManager.prepareTurnRegisterData();
         if (validTurn) {
-            System.out.println("Valid turn found");
+            LOGGER.info("Valid turn found");
             userInterface.setView(ViewCard.FLOOR_VIEW);
         } else {
-            System.out.println("No previous turn found");
+            LOGGER.info("No previous turn found");
             userInterface.setView(ViewCard.TURN_SELECT_VIEW);
         }
 
@@ -472,7 +476,7 @@ public class Controller {
             try {
                 motelManager.saveFilesForMainService();
             } catch (Exception e) {
-                System.err.println("Error saving main files: " + e.getMessage());
+                LOGGER.log(Level.SEVERE, "Error saving main files", e);
             }
         });
     }
@@ -487,7 +491,7 @@ public class Controller {
             try {
                 motelManager.saveFilesForBackup(saveType);
             } catch (Exception e) {
-                System.err.println("Error saving backup files: " + e.getMessage());
+                LOGGER.log(Level.SEVERE, "Error saving backup files", e);
             }
         });
     }

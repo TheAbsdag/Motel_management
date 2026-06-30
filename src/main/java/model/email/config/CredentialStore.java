@@ -4,16 +4,14 @@ import java.io.IOException;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.security.spec.KeySpec;
 import java.util.Base64;
-import java.util.Enumeration;
 import java.util.Optional;
+import java.util.UUID;
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
@@ -24,13 +22,12 @@ import javax.crypto.spec.SecretKeySpec;
 /**
  * Machine-bound credential storage using AES-256-GCM encryption.
  * <p>
- * The encryption key is derived from a fingerprint of the current machine
- * (primary MAC address + OS user + hostname) via PBKDF2WithHmacSHA256.
- * This means the {@code .env} file is useless if copied to another machine
- * or used under a different OS user.
+ * The encryption key is derived from a persisted machine ID (UUID stored in
+ * {@code ~/.motel_management/machine-id}) via PBKDF2WithHmacSHA256.
+ * The ID is created once on first use, so it survives reboots, network
+ * adapter changes, VPN installations, and OS user name changes.
  * <p>
- * The .env file contains only the base64-encoded ciphertext with no
- * comments or metadata.
+ * The encrypted file is useless if copied to another machine.
  */
 public final class CredentialStore {
 
@@ -40,24 +37,17 @@ public final class CredentialStore {
     private static final int AES_KEY_LENGTH = 256;
     private static final int PBKDF2_ITERATIONS = 100_000;
     private static final int SALT_LENGTH = 16;
+    private static final String MACHINE_ID_FILE = System.getProperty("user.home")
+            + "/.motel_management/machine-id";
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+    private static volatile String machineId;
 
     private CredentialStore() {}
 
-    /**
-     * Saves an arbitrary plaintext string (e.g., JSON) encrypted to the given file.
-     * The file will contain only the base64-encoded ciphertext (salt + IV + data).
-     */
     public static void saveEncryptedJson(String plainText, Path filePath) throws Exception {
         saveEncrypted(plainText, filePath);
     }
 
-    /**
-     * Loads and decrypts arbitrary content from the given file.
-     *
-     * @return the decrypted string, or empty if the file does not exist
-     * @throws Exception if decryption fails (wrong machine, corrupted file, etc.)
-     */
     public static Optional<String> loadEncryptedJson(Path filePath) throws Exception {
         return loadEncrypted(filePath);
     }
@@ -109,78 +99,31 @@ public final class CredentialStore {
         return Optional.of(new String(plaintext, StandardCharsets.UTF_8));
     }
 
-    /**
-     * Saves an encrypted credential to the given file path.
-     *
-     * @deprecated use {@link #saveEncryptedJson(String, Path)} instead
-     */
-    @Deprecated
-    public static void saveCredential(String credential, Path filePath) throws Exception {
-        saveEncrypted(credential, filePath);
-    }
-
-    /**
-     * Loads and decrypts a credential from the given file path.
-     *
-     * @return the decrypted credential, or empty if the file does not exist
-     * @throws Exception if decryption fails (wrong machine, corrupted file, etc.)
-     * @deprecated use {@link #loadEncryptedJson(Path)} instead
-     */
-    @Deprecated
-    public static Optional<String> loadCredential(Path filePath) throws Exception {
-        return loadEncrypted(filePath);
-    }
-
-    /**
-     * Deletes the credential file if it exists.
-     */
-    public static void deleteCredential(Path filePath) {
-        try {
-            Files.deleteIfExists(filePath);
-        } catch (IOException e) {
-            LOG.log(Level.WARNING, "Failed to delete credential file: " + filePath, e);
-        }
-    }
-
     private static SecretKey deriveKey(byte[] salt) throws Exception {
-        String fingerprint = buildMachineFingerprint();
+        String hostname = getHostname();
+        String id = getMachineId();
+        String keyPass = hostname + "|" + id;
         SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
-        KeySpec spec = new PBEKeySpec(fingerprint.toCharArray(), salt, PBKDF2_ITERATIONS, AES_KEY_LENGTH);
+        KeySpec spec = new PBEKeySpec(keyPass.toCharArray(), salt, PBKDF2_ITERATIONS, AES_KEY_LENGTH);
         SecretKey tmp = factory.generateSecret(spec);
         return new SecretKeySpec(tmp.getEncoded(), "AES");
     }
 
-    /**
-     * Builds a machine-specific fingerprint used as the key derivation password.
-     * Combines primary MAC address + OS user name + host name.
-     */
-    private static String buildMachineFingerprint() throws Exception {
-        String mac = getPrimaryMacAddress();
-        String user = System.getProperty("user.name", "unknown");
-        String host = getHostName();
-        return mac + "|" + user + "|" + host;
-    }
-
-    private static String getPrimaryMacAddress() throws SocketException {
-        Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
-        while (interfaces.hasMoreElements()) {
-            NetworkInterface iface = interfaces.nextElement();
-            if (iface.isLoopback() || !iface.isUp()) {
-                continue;
-            }
-            byte[] mac = iface.getHardwareAddress();
-            if (mac != null && mac.length > 0) {
-                StringBuilder sb = new StringBuilder();
-                for (byte b : mac) {
-                    sb.append(String.format("%02X", b));
-                }
-                return sb.toString();
-            }
+    private static String getMachineId() throws IOException {
+        if (machineId != null) return machineId;
+        Path idPath = Path.of(MACHINE_ID_FILE);
+        if (Files.exists(idPath)) {
+            machineId = Files.readString(idPath, StandardCharsets.UTF_8).trim();
+        } else {
+            machineId = UUID.randomUUID().toString();
+            Files.createDirectories(idPath.getParent());
+            Files.writeString(idPath, machineId, StandardCharsets.UTF_8);
+            LOG.log(Level.INFO, "Created persistent machine ID at " + MACHINE_ID_FILE);
         }
-        return "00-00-00-00-00-00";
+        return machineId;
     }
 
-    private static String getHostName() {
+    private static String getHostname() {
         try {
             return InetAddress.getLocalHost().getHostName();
         } catch (Exception e) {

@@ -55,7 +55,7 @@ public class FileManager {
         this.stagingDir = dataPath + File.separator + ".staging";
         this.backupPath = basePath + File.separator + "backup";
         this.historyPath = basePath + File.separator + "history";
-        System.out.println("FileManager initialized");
+        Logger.getLogger(FileManager.class.getName()).fine("FileManager initialized");
         prepareFolders();
     }
 
@@ -67,7 +67,7 @@ public class FileManager {
         File prepareHistory = new File(historyPath);
         prepareHistory.mkdirs();
         deleteDirectory(new File(stagingDir));
-        System.out.println("Folders created");
+        Logger.getLogger(FileManager.class.getName()).fine("Folders created");
     }
 
     /**
@@ -80,7 +80,7 @@ public class FileManager {
         String safeName = sanitizeFileName(dataNeeded);
         File file = new File(dataPath + File.separator + safeName);
         if (!file.exists()) {
-            System.out.println("No se ha encontrado archivo de " + dataNeeded);
+            Logger.getLogger(FileManager.class.getName()).log(Level.INFO, "No se ha encontrado archivo de {0}", dataNeeded);
             return null;
         }
         StringBuilder outputString = new StringBuilder();
@@ -191,11 +191,28 @@ public class FileManager {
                 Logger.getLogger(FileManager.class.getName()).log(Level.SEVERE, "Fallback move also failed for backup", ex2);
             }
         }
+        enforceBackupRetention();
     }
 
     public void clearBackupFiles() {
         File backupPathFile = new File(backupPath);
         deleteDirectory(backupPathFile);
+    }
+
+    /**
+     * Keeps only the N most recent backup directories (by timestamp).
+     * Call after each backup save to prevent unbounded disk growth.
+     */
+    private static final int MAX_BACKUPS = 50;
+
+    public void enforceBackupRetention() {
+        File backupDir = new File(backupPath);
+        File[] dirs = backupDir.listFiles(File::isDirectory);
+        if (dirs == null || dirs.length <= MAX_BACKUPS) return;
+        java.util.Arrays.sort(dirs, (a, b) -> a.getName().compareTo(b.getName()));
+        for (int i = 0; i < dirs.length - MAX_BACKUPS; i++) {
+            deleteDirectory(dirs[i]);
+        }
     }
 
     private void deleteDirectory(File file) {
@@ -206,7 +223,7 @@ public class FileManager {
                 deleteDirectory(subfile);
             }
             if (!subfile.delete()) {
-                System.out.println("Could not delete file: " + subfile.getAbsolutePath());
+                Logger.getLogger(FileManager.class.getName()).log(Level.WARNING, "Could not delete file: {0}", subfile.getAbsolutePath());
             }
         }
         file.delete();

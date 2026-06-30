@@ -10,6 +10,8 @@ import jakarta.mail.PasswordAuthentication;
 import jakarta.mail.Session;
 import jakarta.mail.Transport;
 import java.io.IOException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -35,6 +37,7 @@ public class EmailConfigurationService {
 
     private static final String EMAIL_CONFIG_FILE = "emailConfig";
     private static final String ENCRYPTED_FILE = "email-secure.dat";
+    private static final Logger LOG = System.getLogger(EmailConfigurationService.class.getName());
 
     private final FileManager fileManager;
     private final ObjectMapper objectMapper;
@@ -46,6 +49,7 @@ public class EmailConfigurationService {
     private EmailSmtpConfig smtpConfig;
     private List<EmailCaseConfig> caseConfigs;
     private EmailSecureData secureData;
+    private String decryptionError;
 
     public EmailConfigurationService(FileManager fileManager, ObjectMapper objectMapper) {
         this.fileManager = Objects.requireNonNull(fileManager);
@@ -96,6 +100,13 @@ public class EmailConfigurationService {
         return Optional.ofNullable(secureData);
     }
 
+    /**
+     * @return error message from the last decryption attempt, or null if successful
+     */
+    public String getDecryptionError() {
+        return decryptionError;
+    }
+
     // ========== Verify Connection ==========
 
     public boolean verifyConnection(EmailSmtpConfig smtp, String username, String credential) {
@@ -131,7 +142,7 @@ public class EmailConfigurationService {
             transport.connect();
             return true;
         } catch (Exception e) {
-            System.err.println("Email connection verification failed: " + e.getMessage());
+            LOG.log(Level.WARNING, "Email connection verification failed: " + e.getMessage());
             return false;
         }
     }
@@ -154,15 +165,15 @@ public class EmailConfigurationService {
 
     public boolean sendCaseEmail(int caseIndex, Map<String, String> placeholders, List<Path> attachments) {
         if (!validateCaseConfig(caseIndex)) {
-            System.err.println("Email: case " + caseIndex + " not configured for sending");
+            LOG.log(Level.WARNING, "Email: case {0} not configured for sending", caseIndex);
             return false;
         }
         if (secureData == null || secureData.credential() == null || secureData.credential().isBlank()) {
-            System.err.println("Email: no credentials available");
+            LOG.log(Level.WARNING, "Email: no credentials available");
             return false;
         }
         if (smtpConfig == null) {
-            System.err.println("Email: no SMTP config");
+            LOG.log(Level.WARNING, "Email: no SMTP config");
             return false;
         }
 
@@ -172,7 +183,7 @@ public class EmailConfigurationService {
                 ? String.join(",", secureData.receivers())
                 : String.join(",", caseCfg.specificReceivers());
         if (to.isBlank()) {
-            System.err.println("Email: no receivers for case " + caseIndex);
+            LOG.log(Level.WARNING, "Email: no receivers for case {0}", caseIndex);
             return false;
         }
 
@@ -203,10 +214,10 @@ public class EmailConfigurationService {
         try {
             EmailSender sender = new EmailSender(emailConfig);
             sender.send(msg);
-            System.out.println("Email sent successfully for case " + caseIndex);
+            LOG.log(Level.INFO, "Email sent successfully for case {0}", caseIndex);
             return true;
         } catch (EmailSendingException e) {
-            System.err.println("Email send failed: " + e.getMessage());
+            LOG.log(Level.WARNING, "Email send failed: " + e.getMessage());
             return false;
         }
     }
@@ -244,10 +255,6 @@ public class EmailConfigurationService {
         } catch (IOException e) {
             return null;
         }
-    }
-
-    private static String resolvePlaceholders(String text, Map<String, String> placeholders) {
-        return resolvePlaceholders(text, placeholders, null);
     }
 
     private static String resolvePlaceholders(String text, Map<String, String> placeholders,
@@ -332,6 +339,7 @@ public class EmailConfigurationService {
     }
 
     private void loadEncryptedData() {
+        decryptionError = null;
         try {
             Optional<String> decrypted = CredentialStore.loadEncryptedJson(secureDataPath);
             if (decrypted.isPresent()) {
@@ -340,7 +348,8 @@ public class EmailConfigurationService {
                 secureData = null;
             }
         } catch (Exception e) {
-            System.err.println("Failed to load encrypted email data: " + e.getMessage());
+            decryptionError = e.getMessage();
+            LOG.log(Level.WARNING, "Failed to load encrypted email data: " + decryptionError);
             secureData = null;
         }
     }
@@ -351,7 +360,7 @@ public class EmailConfigurationService {
             String json = objectMapper.writeValueAsString(secureData);
             CredentialStore.saveEncryptedJson(json, secureDataPath);
         } catch (Exception e) {
-            System.err.println("Failed to save encrypted email data: " + e.getMessage());
+            LOG.log(Level.WARNING, "Failed to save encrypted email data: " + e.getMessage());
         }
     }
 }
