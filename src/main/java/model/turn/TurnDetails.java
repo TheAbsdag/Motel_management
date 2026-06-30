@@ -319,6 +319,7 @@ public class TurnDetails {
      * @deprecated Currently not in use due to new history management creation
      * @param activities 
      */
+    @Deprecated
     public void setActivities(List<TurnActivity> activities) {
         this.activities = activities;
         totalsComputed = false;

@@ -76,6 +76,7 @@ public class Item {
      * @deprecated Item quantity setup or removed on sale, refund, and item creation, no current external quantity setup,
      * @param quantity new stock quantity
      */
+    @Deprecated
     public void setQuantity(long quantity) {
         this.quantity = quantity;
     }

@@ -22,6 +22,7 @@ public class Register {
      * Not used like the constructor
      * @deprecated 
      */
+    @Deprecated
     private long historyID;
 
     public Register() {
@@ -35,6 +36,7 @@ public class Register {
      * 
      * @deprecated 
      */
+    @Deprecated
     public Register(long historyID) {
         this.historyID = historyID;
         sellingList = new ArrayList<>();
@@ -71,6 +73,7 @@ public class Register {
     *¨Method replaced by @deleteItemById
     * @deprecated
     */
+    @Deprecated
     public void deleteItemInformation(Item item) {
         for (int i = 0; i < inventory.size(); i++) {
             if (inventory.get(i).getItemID() == item.getItemID()) {

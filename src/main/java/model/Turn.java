@@ -439,6 +439,7 @@ public class Turn {
      * Not used, replaced by internal management of turn details
      * @deprecated 
      */
+    @Deprecated
     public List<TurnActivity> getActivities() {
         return turnDetails.getActivities();
     }
@@ -448,6 +449,7 @@ public class Turn {
      * Not used, replaced by internal management of turn details
      * @deprecated 
      */
+    @Deprecated
     public TurnActivity getActivity(int index) {
         return turnDetails.getActivities().get(index);
     }
