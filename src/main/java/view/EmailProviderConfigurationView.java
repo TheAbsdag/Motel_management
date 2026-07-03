@@ -282,6 +282,10 @@ public class EmailProviderConfigurationView extends JPanel  {
 	saveButton.addActionListener(e -> action.run());
     }
 
+    public void onInformativeAppPasswordButton(Runnable action) {
+	informativeAppPasswordButton.addActionListener(e -> action.run());
+    }
+
     public void onVerifyConnection(Runnable action) {
 	verifyEmailConnectionButton.addActionListener(e -> action.run());
     }

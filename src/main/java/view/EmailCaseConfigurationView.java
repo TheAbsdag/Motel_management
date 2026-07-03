@@ -53,7 +53,6 @@ public class EmailCaseConfigurationView extends JPanel {
 	setCaseName(caseIndex);
 	setupReceiverRadioGroup();
 	trackTextFocus();
-	setupVariableInsertion();
 	setupVariablesTable();
 	wireDocumentListener();
 	wireHighlightTimer();
@@ -88,8 +87,6 @@ public class EmailCaseConfigurationView extends JPanel {
 	attachmentInformativeLabel = new JLabel();
 	attachmentListScrollPane = new JScrollPane();
 	attachmentList = new JList();
-	variableListTextPane = new JScrollPane();
-	availableVariablesList = new JList();
 	backButton = new JButton();
 	saveButton = new JButton();
 
@@ -234,16 +231,6 @@ public class EmailCaseConfigurationView extends JPanel {
 	}
 	add(attachmentListScrollPane, "cell 0 10");
 
-	//======== variableListTextPane ========
-	{
-	    variableListTextPane.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
-
-	    //---- availableVariablesList ----
-	    availableVariablesList.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
-	    variableListTextPane.setViewportView(availableVariablesList);
-	}
-	add(variableListTextPane, "cell 3 10,growy");
-
 	//---- backButton ----
 	backButton.setText("VOLVER");
 	backButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
@@ -283,8 +270,6 @@ public class EmailCaseConfigurationView extends JPanel {
     private JLabel attachmentInformativeLabel;
     private JScrollPane attachmentListScrollPane;
     private JList attachmentList;
-    private JScrollPane variableListTextPane;
-    private JList availableVariablesList;
     private JButton backButton;
     private JButton saveButton;
     // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
@@ -371,6 +356,7 @@ public class EmailCaseConfigurationView extends JPanel {
 	    attachmentModel.addElement(new CheckableItem("Resumen PDF", false));
 	    attachmentModel.addElement(new CheckableItem("Detalle PDF", false));
 	    attachmentModel.addElement(new CheckableItem("Reporte XLSX", false));
+	    attachmentModel.addElement(new CheckableItem("Reporte CSV", false));
 	} else {
 	    attachmentModel.addElement(new CheckableItem("Recibo PDF", false));
 	}
@@ -449,14 +435,6 @@ public class EmailCaseConfigurationView extends JPanel {
 	return bodyTextArea.getText();
     }
 
-    public JList getAvailableVariablesList() {
-	return availableVariablesList;
-    }
-
-    public void setAvailableVariables(String[] variables) {
-	availableVariablesList.setListData(variables);
-    }
-
     public DefaultListModel<CheckableItem> getAttachmentModel() {
 	return attachmentModel;
     }
@@ -511,22 +489,6 @@ public class EmailCaseConfigurationView extends JPanel {
 	};
 	subjectTextField.addFocusListener(fl);
 	bodyTextArea.addFocusListener(fl);
-    }
-
-    private void setupVariableInsertion() {
-	availableVariablesList.addMouseListener(new MouseAdapter() {
-	    @Override
-	    public void mouseClicked(MouseEvent e) {
-		if (e.getClickCount() == 2) {
-		    int idx = availableVariablesList.locationToIndex(e.getPoint());
-		    if (idx >= 0) {
-			String variable = availableVariablesList.getModel().getElementAt(idx).toString();
-			JTextComponent target = lastFocusedText != null ? lastFocusedText : bodyTextArea;
-			target.replaceSelection(variable);
-		    }
-		}
-	    }
-	});
     }
 
     private void setupVariablesTable() {

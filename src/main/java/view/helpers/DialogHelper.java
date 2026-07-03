@@ -82,6 +82,11 @@ public final class DialogHelper {
         );
     }
 
+    public static void showHtmlMessage(String html, String title) {
+        JLabel label = new JLabel(html);
+        JOptionPane.showMessageDialog(null, label, title, JOptionPane.INFORMATION_MESSAGE);
+    }
+
     public static void showErrorMessage(String message, String title) {
         JOptionPane.showMessageDialog(
                 null,

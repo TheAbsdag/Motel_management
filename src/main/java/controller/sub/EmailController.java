@@ -77,33 +77,6 @@ public class EmailController {
     private static final int CASE_ITEM = 1;
     private static final int CASE_TURN = 2;
 
-    private static final java.util.Map<Integer, String[]> CASE_VARIABLES = java.util.Map.of(
-        CASE_ROOM, new String[]{
-            "{motelName}", "{motelAddress}", "{motelID}",
-            "{roomString}", "{towerNumber}", "{floorNumber}",
-            "{price}", "{serviceDuration}", "{hourService}", "{dateService}",
-            "{consecutiveTrans}", "{date}",
-            "{register}"
-        },
-        CASE_ITEM, new String[]{
-            "{motelName}", "{motelAddress}", "{motelID}",
-            "{roomString}", "{totalPrice}",
-            "{hourService}", "{dateService}",
-            "{consecutiveTrans}", "{date}",
-            "{register}"
-        },
-        CASE_TURN, new String[]{
-            "{motelName}", "{motelAddress}", "{motelID}",
-            "{turnNumber}", "{turnStart}", "{turnEnd}", "{turnDuration}",
-            "{totalRooms}", "{totalItems}", "{totalSales}",
-            "{totalItemRefunds}", "{totalRoomRefunds}", "{totalRefunds}",
-            "{totalSpending}", "{totalTurn}",
-            "{totalBankTransfers}", "{totalDeposits}", "{totalNet}",
-            "{consecutiveTrans}", "{date}",
-            "{activityTable}"
-        }
-    );
-
     private static final Map<Integer, List<VariableOption>> CASE_VARIABLE_OPTIONS = Map.of(
         CASE_ROOM, List.of(
             new VariableOption("Nombre del Motel", "{motelName}"),
@@ -231,6 +204,10 @@ public class EmailController {
 
         // === Verify connection ===
         providerView.onVerifyConnection(this::onVerifyConnection);
+
+        // === Informative app password button ===
+        providerView.onInformativeAppPasswordButton(() ->
+            DialogHelper.showHtmlMessage(providerView.getAppPasswordHelpHtml(), "CONTRASEÑA DE APLICACIÓN"));
 
         // === Case saves (room, item, turn) ===
         userInterface.getEmailRoomCaseView().onSaveButton(() -> onCaseSave(CASE_ROOM));
@@ -595,9 +572,8 @@ public class EmailController {
             globalView.clearActiveSelection();
         });
 
-        for (int i = 0; i < CASE_VARIABLES.size(); i++) {
+        for (int i = 0; i < CASE_VARIABLE_OPTIONS.size(); i++) {
             EmailCaseConfigurationView caseView = getCaseView(i);
-            caseView.setAvailableVariables(CASE_VARIABLES.getOrDefault(i, new String[0]));
             caseView.setVariableOptions(CASE_VARIABLE_OPTIONS.getOrDefault(i, List.of()));
         }
 

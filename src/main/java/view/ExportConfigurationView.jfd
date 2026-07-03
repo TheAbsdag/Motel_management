@@ -12,18 +12,21 @@ new FormModel {
 			add( new FormComponent( "javax.swing.JLabel" ) {
 				name: "label1"
 				"text": "CONFIGURACION EXPORTACION REPORTES"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 20 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 0 0"
+				"value": "cell 0 0 3 1"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "emailConfigButton"
 				"text": "CORREO"
+				"font": &Font0 new java.awt.Font( "Segoe UI Black", 0, 18 )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 0 2,growy"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "whatsappConfigButton"
 				"text": "WHATSAPP"
+				"font": #Font0
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 1 2,growy"
 			} )

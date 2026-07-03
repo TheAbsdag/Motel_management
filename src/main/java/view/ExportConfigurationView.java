@@ -41,14 +41,17 @@ public class ExportConfigurationView extends JPanel {
 
 	//---- label1 ----
 	label1.setText("CONFIGURACION EXPORTACION REPORTES");
-	add(label1, "cell 0 0");
+	label1.setFont(new Font("Segoe UI Black", Font.PLAIN, 20));
+	add(label1, "cell 0 0 3 1");
 
 	//---- emailConfigButton ----
 	emailConfigButton.setText("CORREO");
+	emailConfigButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
 	add(emailConfigButton, "cell 0 2,growy");
 
 	//---- whatsappConfigButton ----
 	whatsappConfigButton.setText("WHATSAPP");
+	whatsappConfigButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
 	add(whatsappConfigButton, "cell 1 2,growy");
 
 	//---- backButton ----

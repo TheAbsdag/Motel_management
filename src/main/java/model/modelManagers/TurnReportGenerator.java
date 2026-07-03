@@ -22,6 +22,9 @@ import model.turn.SpendingActivity;
 import model.turn.TurnActivity;
 import model.turn.TurnDetails;
 import view.helpers.TimeFormatter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.poi.ss.usermodel.BorderStyle;
@@ -87,10 +90,128 @@ public class TurnReportGenerator {
                 workbook.write(fos);
             }
             logger.log(Level.INFO, "Turn report saved: " + filePath);
+
+            String csvPath = filePath.replace(".xlsx", ".csv");
+            writeCsvReport(turnDetails, csvPath);
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Failed to generate turn report", e);
         }
 
+    }
+
+    /**
+     * Writes a companion .csv file (semicolon-delimited) alongside the .xlsx report.
+     */
+    private static void writeCsvReport(TurnDetails turnDetails, String filePath) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("TURNO;").append(turnDetails.getTurnNumber()).append("\n");
+        sb.append("INICIO;").append(turnDetails.getTurnStart() != null ? turnDetails.getTurnStart().format(DETAIL_DATE_FORMATTER) : "").append("\n");
+        sb.append("FIN;").append(turnDetails.getTurnEnd() != null ? turnDetails.getTurnEnd().format(DETAIL_DATE_FORMATTER) : "").append("\n");
+        sb.append("HABITACIONES;").append(turnDetails.getTotalRooms()).append("\n");
+        sb.append("PRODUCTOS;").append(turnDetails.getTotalItems()).append("\n");
+        sb.append("TOTAL VENTAS;").append(turnDetails.getTotalSales()).append("\n");
+        sb.append("REEMBOLSO;").append(turnDetails.getTotalRefunds()).append("\n");
+        sb.append("GASTOS;").append(turnDetails.getTotalSpending()).append("\n");
+        sb.append("TOTAL TURNO;").append(turnDetails.getTotalTurn()).append("\n");
+        sb.append("TOTAL TRANSFERENCIA;").append(turnDetails.getTotalBankTransfers()).append("\n");
+        sb.append("TOTAL DEPOSITO;").append(turnDetails.getTotalDeposits()).append("\n");
+        sb.append("TOTAL NETO;").append(turnDetails.getTotalNet()).append("\n");
+
+        sb.append("\n");
+
+        sb.append("rooms;fecha;habitacion;torre;piso;num_hab;status;inicio_servicio;fin_servicio;precio;servicio_s;extension_s;efectivo_s;consecutive_trans;refunded\n");
+        for (TurnActivity a : turnDetails.getActivities()) {
+            if (!(a instanceof RoomBookingActivity r)) continue;
+            sb.append(r.changeDate().format(DETAIL_DATE_FORMATTER)).append(";");
+            sb.append(r.roomString()).append(";");
+            sb.append(r.towerNumber() + 1).append(";");
+            sb.append(r.floorNumber() + 1).append(";");
+            sb.append(r.roomNumber() + 1).append(";");
+            sb.append(statusLabel(r.roomStatus())).append(";");
+            sb.append(r.startStatus() != null ? r.startStatus().format(DETAIL_DATE_FORMATTER) : "").append(";");
+            sb.append(r.endStatus() != null ? r.endStatus().format(DETAIL_DATE_FORMATTER) : "").append(";");
+            sb.append(r.price()).append(";");
+            sb.append(r.serviceDuration()).append(";");
+            sb.append(r.extensionDuration()).append(";");
+            sb.append(r.getEffectiveServiceDuration()).append(";");
+            sb.append(r.consecutiveTrans()).append(";");
+            sb.append(r.refunded() ? "TRUE" : "FALSE").append("\n");
+        }
+        sb.append("\n");
+
+        sb.append("sales;fecha;habitacion;item;item_id;cantidad;precio;refunded;consecutive_trans\n");
+        for (TurnActivity a : turnDetails.getActivities()) {
+            if (!(a instanceof SaleActivity s)) continue;
+            for (SaleItem item : s.items()) {
+                sb.append(s.changeDate().format(DETAIL_DATE_FORMATTER)).append(";");
+                sb.append(s.roomSoldTo()).append(";");
+                sb.append(item.itemName()).append(";");
+                sb.append(item.itemID()).append(";");
+                sb.append(item.quantity()).append(";");
+                sb.append(item.price()).append(";");
+                sb.append(item.refunded() ? "TRUE" : "FALSE").append(";");
+                sb.append(s.consecutiveTrans()).append("\n");
+            }
+        }
+        sb.append("\n");
+
+        sb.append("swaps;fecha;habitacion_orig;habitacion_nueva;torre_orig;piso_orig;torre_nueva;piso_nueva\n");
+        for (TurnActivity a : turnDetails.getActivities()) {
+            if (!(a instanceof RoomSwapActivity s)) continue;
+            sb.append(s.changeDate().format(DETAIL_DATE_FORMATTER)).append(";");
+            sb.append(s.originalRoom()).append(";");
+            sb.append(s.swappedRoom()).append(";");
+            sb.append(s.originalTowerNumber() + 1).append(";");
+            sb.append(s.originalFloorNumber() + 1).append(";");
+            sb.append(s.swappedTowerNumber() + 1).append(";");
+            sb.append(s.swappedFloorNumber() + 1).append("\n");
+        }
+        sb.append("\n");
+
+        sb.append("refunds;fecha;tipo_reembolso;habitacion;precio;item_id;cantidad;item;servicio_s;consecutive_trans;original_trans\n");
+        for (TurnActivity a : turnDetails.getActivities()) {
+            if (!(a instanceof RefundActivity r)) continue;
+            sb.append(r.changeDate().format(DETAIL_DATE_FORMATTER)).append(";");
+            sb.append(r.refundType() == RefundType.SALE_REFUND ? "Venta" : "Habitacion").append(";");
+            sb.append(r.refundRoom()).append(";");
+            sb.append(r.price()).append(";");
+            sb.append(r.itemID()).append(";");
+            sb.append(r.quantity()).append(";");
+            sb.append(r.itemName() != null ? r.itemName() : "").append(";");
+            sb.append(r.refundServiceDuration()).append(";");
+            sb.append(r.consecutiveTrans()).append(";");
+            sb.append(r.refundConsecutiveTrans()).append("\n");
+        }
+        sb.append("\n");
+
+        sb.append("spending;fecha;descripcion;valor;consecutive_trans\n");
+        for (TurnActivity a : turnDetails.getActivities()) {
+            if (!(a instanceof SpendingActivity s)) continue;
+            sb.append(s.changeDate().format(DETAIL_DATE_FORMATTER)).append(";");
+            sb.append(s.description()).append(";");
+            sb.append(s.value()).append(";");
+            sb.append(s.consecutiveTrans()).append("\n");
+        }
+        sb.append("\n");
+
+        sb.append("extra_changes;fecha;tipo;descripcion;valor;consecutive_trans\n");
+        for (TurnActivity a : turnDetails.getActivities()) {
+            if (!(a instanceof ExtraChangeActivity e)) continue;
+            sb.append(e.changeDate().format(DETAIL_DATE_FORMATTER)).append(";");
+            sb.append(e.extraType() == ExtraChangeType.BANK_TRANSFER ? "Transferencia" : "Deposito").append(";");
+            sb.append(e.description()).append(";");
+            sb.append(e.value()).append(";");
+            sb.append(e.consecutiveTrans()).append("\n");
+        }
+        sb.append("\n");
+
+        try {
+            Files.writeString(Paths.get(filePath), sb.toString(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            logger.log(Level.INFO, "CSV report saved: " + filePath);
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "Failed to write CSV report", e);
+        }
     }
 
     /**

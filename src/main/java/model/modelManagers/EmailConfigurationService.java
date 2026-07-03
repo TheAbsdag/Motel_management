@@ -238,6 +238,7 @@ public class EmailConfigurationService {
                 case "Resumen PDF" -> findFile(receiptDir, "-No" + consecutiveTrans + "-summarizedTurn", ".pdf");
                 case "Detalle PDF" -> findFile(receiptDir, "-No" + consecutiveTrans + "-detailedTurnTurn", ".pdf");
                 case "Reporte XLSX" -> findFile(reportDir, "Turno_" + consecutiveTrans + "_", ".xlsx");
+                case "Reporte CSV" -> findFile(reportDir, "Turno_" + consecutiveTrans + "_", ".csv");
                 default -> null;
             };
             if (found != null) resolved.add(found);
