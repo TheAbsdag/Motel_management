@@ -22,7 +22,7 @@ import javax.swing.text.StyledDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.Paragraph;
-import com.itextpdf.layout.property.TextAlignment;
+import com.itextpdf.layout.properties.TextAlignment;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import java.io.File;
 import java.awt.print.PageFormat;
