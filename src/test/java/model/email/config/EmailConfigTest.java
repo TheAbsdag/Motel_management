@@ -97,6 +97,6 @@ class EmailConfigTest {
     @Test
     void emailMessage_invalidEmail_shouldThrow() {
         assertThatIllegalArgumentException()
-                .isThrownBy(() -> new model.email.dto.EmailMessage("not-an-email", null, "subj", "body", false, null));
+                .isThrownBy(() -> new model.email.dto.EmailMessage("not-an-email", null, null, "subj", "body", false, null));
     }
 }

@@ -78,13 +78,17 @@ public class EmailSender {
         return Session.getInstance(props, authenticator);
     }
 
-    private MimeMessage buildMimeMessage(Session session, EmailMessage msg) throws MessagingException {
+    MimeMessage buildMimeMessage(Session session, EmailMessage msg) throws MessagingException {
         MimeMessage mimeMsg = new MimeMessage(session);
         mimeMsg.setFrom(new InternetAddress(config.username()));
         mimeMsg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(msg.to(), false));
 
         if (msg.cc() != null && !msg.cc().isBlank()) {
             mimeMsg.setRecipients(Message.RecipientType.CC, InternetAddress.parse(msg.cc(), false));
+        }
+
+        if (msg.bcc() != null && !msg.bcc().isBlank()) {
+            mimeMsg.setRecipients(Message.RecipientType.BCC, InternetAddress.parse(msg.bcc(), false));
         }
 
         mimeMsg.setSubject(msg.subject(), StandardCharsets.UTF_8.name());

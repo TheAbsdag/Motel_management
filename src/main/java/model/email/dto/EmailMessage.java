@@ -12,6 +12,7 @@ import java.util.Objects;
 public record EmailMessage(
         String to,
         String cc,
+        String bcc,
         String subject,
         String body,
         boolean isHtml,
@@ -20,8 +21,9 @@ public record EmailMessage(
     private static final String EMAIL_REGEX = "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$";
 
     /**
-     * @param to          primary recipient email, must be valid
-     * @param cc          carbon-copy recipient, may be null
+     * @param to          primary recipient email(s), comma-separated, each must be valid
+     * @param cc          carbon-copy recipient(s), may be null or blank
+     * @param bcc         blind carbon-copy recipient(s), may be null or blank
      * @param subject     email subject line, non-blank
      * @param body        email body, non-null
      * @param isHtml      whether body contains HTML markup
@@ -29,8 +31,10 @@ public record EmailMessage(
      */
     public EmailMessage {
         Objects.requireNonNull(to, "to cannot be null");
-        if (!to.matches(EMAIL_REGEX)) {
-            throw new IllegalArgumentException("Invalid email address: " + to);
+        for (String address : to.split(",")) {
+            if (address.isBlank() || !address.trim().matches(EMAIL_REGEX)) {
+                throw new IllegalArgumentException("Invalid email address: " + to);
+            }
         }
         Objects.requireNonNull(subject, "subject cannot be null");
         Objects.requireNonNull(body, "body cannot be null");

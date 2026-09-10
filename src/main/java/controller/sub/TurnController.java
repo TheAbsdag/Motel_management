@@ -11,6 +11,7 @@ import model.ProgramConfig;
 import model.dto.TurnActivityData;
 import model.dto.TurnSummaryItemData;
 import model.email.config.EmailSmtpConfig;
+import model.email.dto.EmailMessage;
 import model.modelManagers.EmailConfigurationService;
 import model.modelManagers.MotelManagement;
 import model.turn.ActivityType;
@@ -230,12 +231,17 @@ userInterface.setView(ViewCard.FLOOR_VIEW);
         LoadingDialog loading = new LoadingDialog(parent, "Enviando correo de reporte de turno...");
 
         loading.showAsync(() -> {
-            boolean sent = emailSvc.sendCaseEmail(2, placeholders, attachments);
-            if (!sent) {
-                SwingUtilities.invokeLater(() ->
-                    DialogHelper.showErrorMessage(
-                        "Error al enviar correo de reporte de turno", "CORREO"));
+            EmailMessage msg = emailSvc.buildCaseEmail(2, placeholders, attachments);
+            if (msg != null && EmailController.sendWithPendingQueue(emailSvc, msg)) {
+                return;
             }
+            SwingUtilities.invokeLater(() ->
+                DialogHelper.showErrorMessage(
+                    msg != null
+                        ? "Error al enviar correo de reporte de turno. "
+                            + "Qued\u00f3 pendiente; use REINTENTAR en la configuraci\u00f3n de correo"
+                        : "Error al enviar correo de reporte de turno",
+                    "CORREO"));
         });
     }
 

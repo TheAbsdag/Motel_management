@@ -163,18 +163,25 @@ public class EmailConfigurationService {
         return true;
     }
 
-    public boolean sendCaseEmail(int caseIndex, Map<String, String> placeholders, List<Path> attachments) {
+    /**
+     * Builds the rendered {@link EmailMessage} for a case, resolving placeholders,
+     * receivers and attachments. Returns {@code null} when the case is not configured
+     * for sending or required config (SMTP/credentials/receivers) is missing.
+     *
+     * @throws IllegalArgumentException if any receiver address is invalid
+     */
+    public EmailMessage buildCaseEmail(int caseIndex, Map<String, String> placeholders, List<Path> attachments) {
         if (!validateCaseConfig(caseIndex)) {
             LOG.log(Level.WARNING, "Email: case {0} not configured for sending", caseIndex);
-            return false;
+            return null;
         }
         if (secureData == null || secureData.credential() == null || secureData.credential().isBlank()) {
             LOG.log(Level.WARNING, "Email: no credentials available");
-            return false;
+            return null;
         }
         if (smtpConfig == null) {
             LOG.log(Level.WARNING, "Email: no SMTP config");
-            return false;
+            return null;
         }
 
         EmailCaseConfig caseCfg = caseConfigs.get(caseIndex);
@@ -184,7 +191,7 @@ public class EmailConfigurationService {
                 : String.join(",", caseCfg.specificReceivers());
         if (to.isBlank()) {
             LOG.log(Level.WARNING, "Email: no receivers for case {0}", caseIndex);
-            return false;
+            return null;
         }
 
         String cc = null;
@@ -193,6 +200,10 @@ public class EmailConfigurationService {
             cc = String.join(",", secureData.cc());
         }
 
+        // ponytail: bcc applies in both receiver modes — it is a hidden list, nothing leaks
+        String bcc = secureData.bcc() != null && !secureData.bcc().isEmpty()
+                ? String.join(",", secureData.bcc()) : null;
+
         Map<String, String> mappings = caseCfg.variableMappings() != null
                 ? caseCfg.variableMappings() : Map.of();
         String subject = resolvePlaceholders(caseCfg.subject(), placeholders, mappings);
@@ -200,8 +211,23 @@ public class EmailConfigurationService {
 
         MarkdownConverter mdConverter = new MarkdownConverter();
         String htmlBody = mdConverter.toHtml(body);
-        EmailMessage msg = new EmailMessage(to, cc, subject, htmlBody, true,
+        return new EmailMessage(to, cc, bcc, subject, htmlBody, true,
                 attachments != null ? attachments : List.of());
+    }
+
+    /**
+     * Sends the given message with the current SMTP config and credentials.
+     *
+     * @return {@code true} on success, {@code false} if config/credentials are missing
+     *         or the SMTP delivery failed
+     */
+    public boolean sendEmail(EmailMessage msg) {
+        Objects.requireNonNull(msg, "msg cannot be null");
+        if (smtpConfig == null || secureData == null
+                || secureData.credential() == null || secureData.credential().isBlank()) {
+            LOG.log(Level.WARNING, "Email: no SMTP config or credentials available");
+            return false;
+        }
 
         EmailConfig emailConfig = new EmailConfig(
                 smtpConfig.smtpHost(), smtpConfig.smtpPort(),
@@ -214,7 +240,7 @@ public class EmailConfigurationService {
         try {
             EmailSender sender = new EmailSender(emailConfig);
             sender.send(msg);
-            LOG.log(Level.INFO, "Email sent successfully for case {0}", caseIndex);
+            LOG.log(Level.INFO, "Email sent successfully to {0}", msg.to());
             return true;
         } catch (EmailSendingException e) {
             LOG.log(Level.WARNING, "Email send failed: " + e.getMessage());

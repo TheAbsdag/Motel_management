@@ -138,6 +138,12 @@ public class EmailConfigurationHubView extends JPanel  {
 	turnCaseButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 20));
 	add(turnCaseButton, "cell 2 5,growy");
 
+	//---- retryPendingButton ----
+	retryPendingButton = new JButton();
+	retryPendingButton.setText("REINTENTAR CORREOS PENDIENTES");
+	retryPendingButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 20));
+	add(retryPendingButton, "cell 0 6,growy");
+
 	//---- backButton ----
 	backButton.setText("VOLVER");
 	backButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 20));
@@ -163,6 +169,7 @@ public class EmailConfigurationHubView extends JPanel  {
     private JButton roomSaleCaseButton;
     private JButton saleCaseButton;
     private JButton turnCaseButton;
+    private JButton retryPendingButton;
     private JButton backButton;
     // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
 
@@ -229,6 +236,16 @@ public class EmailConfigurationHubView extends JPanel  {
 
     public void onBackButton(Runnable action) {
 	backButton.addActionListener(e -> action.run());
+    }
+
+    public void onRetryPendingButton(Runnable action) {
+	retryPendingButton.addActionListener(e -> action.run());
+    }
+
+    public void setPendingCount(int count) {
+	retryPendingButton.setText(count > 0
+		? "REINTENTAR CORREOS PENDIENTES (" + count + ")"
+		: "REINTENTAR CORREOS PENDIENTES");
     }
 
     public void setCaseEnabled(int caseIndex, boolean enabled) {

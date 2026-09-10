@@ -1,21 +1,33 @@
 package controller.sub;
 
+import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Window;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import javax.swing.DefaultListModel;
+import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import model.email.config.AuthMode;
 import model.email.config.EmailCaseConfig;
 import model.email.config.EmailSecureData;
 import model.email.config.EmailSmtpConfig;
 import model.email.config.ProviderPreset;
+import model.email.dto.EmailMessage;
+import model.email.service.EmailPendingQueue;
+import model.email.service.EmailPendingQueue.PendingEmail;
 import model.email.service.MarkdownConverter;
 import model.modelManagers.EmailConfigurationService;
+import net.miginfocom.swing.MigLayout;
 import view.EmailCaseConfigurationView;
 import view.EmailCaseConfigurationView.VariableOption;
 import view.EmailConfigurationHubView;
@@ -45,21 +57,71 @@ public class EmailController {
     private static final long ERROR_COOLDOWN_MS = 30_000;
     private static volatile long lastEmailErrorShown = 0;
 
+    /** In-memory queue of emails whose delivery failed; survives only while the app runs. */
+    private static final EmailPendingQueue PENDING_QUEUE = new EmailPendingQueue();
+    private static volatile EmailConfigurationHubView pendingBadgeView;
+    private static final DateTimeFormatter PENDING_TIME_FORMAT =
+            DateTimeFormatter.ofPattern("dd/MM HH:mm");
+
     /**
      * Sends email asynchronously for cases 0 and 1 (fire-and-forget).
-     * On failure, shows at most one error dialog per ERROR_COOLDOWN_MS window.
+     * On failure, the message is kept in the pending queue so it can be retried
+     * from the email configuration screen, and at most one error dialog is shown
+     * per ERROR_COOLDOWN_MS window.
      */
     public static void sendEmailAsync(int caseIndex, java.util.Map<String, String> placeholders,
                                       java.util.List<java.nio.file.Path> attachments,
                                       EmailConfigurationService emailSvc) {
         emailExecutor.submit(() -> {
             try {
-                boolean sent = emailSvc.sendCaseEmail(caseIndex, placeholders, attachments);
-                if (!sent) {
+                EmailMessage msg = emailSvc.buildCaseEmail(caseIndex, placeholders, attachments);
+                if (msg == null) {
                     showErrorOnce("Error al enviar correo");
+                    return;
+                }
+                if (!sendWithPendingQueue(emailSvc, msg)) {
+                    showErrorOnce("Error al enviar correo. El correo qued\u00f3 pendiente; "
+                            + "use REINTENTAR en la configuraci\u00f3n de correo");
                 }
             } catch (Exception e) {
                 showErrorOnce("Error al enviar correo: " + e.getMessage());
+            }
+        });
+    }
+
+    /**
+     * Sends a rendered message with the current SMTP config and keeps it in the pending
+     * queue when delivery fails, so it can be retried later. Removes it from the queue
+     * after a successful retry.
+     *
+     * @return {@code true} if the message was delivered
+     */
+    public static boolean sendWithPendingQueue(EmailConfigurationService emailSvc, EmailMessage msg) {
+        boolean sent = emailSvc.sendEmail(msg);
+        if (sent) {
+            PENDING_QUEUE.remove(msg);
+        } else {
+            PENDING_QUEUE.add(msg, "Fallo al enviar por SMTP");
+            refreshPendingBadge();
+        }
+        return sent;
+    }
+
+    /** @return snapshot of the emails waiting to be retried */
+    public static List<PendingEmail> pendingEmails() {
+        return PENDING_QUEUE.snapshot();
+    }
+
+    /** @return number of emails waiting to be retried */
+    public static int pendingEmailCount() {
+        return PENDING_QUEUE.size();
+    }
+
+    private static void refreshPendingBadge() {
+        SwingUtilities.invokeLater(() -> {
+            EmailConfigurationHubView view = pendingBadgeView;
+            if (view != null) {
+                view.setPendingCount(PENDING_QUEUE.size());
             }
         });
     }
@@ -141,6 +203,7 @@ public class EmailController {
         this.userInterface = userInterface;
         this.onBackToExport = onBackToExport;
         this.emailService = emailService;
+        pendingBadgeView = emailHubView;
     }
 
     public void initListeners() {
@@ -157,6 +220,7 @@ public class EmailController {
         emailHubView.onSaleCaseButton(() -> userInterface.setView(ViewCard.EMAIL_ITEM_CASE_VIEW));
         emailHubView.onTurnCaseButton(() -> userInterface.setView(ViewCard.EMAIL_TURN_CASE_VIEW));
         emailHubView.onBackButton(onBackToExport);
+        emailHubView.onRetryPendingButton(this::showPendingDialog);
 
         // === Email enable/disable toggle with confirmation ===
         emailHubView.onEmailFeatureEnableCheckBox(enabled -> {
@@ -631,11 +695,106 @@ public class EmailController {
         boolean masterEnabled = emailService.isEmailEnabled();
         emailHubView.setEmailFeatureEnabled(masterEnabled);
         emailHubView.setEmailStatus(masterEnabled ? "HABILITADO" : "DESHABILITADO");
+        emailHubView.setPendingCount(PENDING_QUEUE.size());
         emailService.loadCaseConfigs().ifPresent(cases -> {
             for (int i = 0; i < cases.size(); i++) {
                 emailHubView.setCaseEnabled(i, cases.get(i).enabled());
             }
         });
+    }
+
+    // ========== Pending Email Retry ==========
+
+    /** Shows the pending-emails dialog with retry/delete actions. */
+    private void showPendingDialog() {
+        List<PendingEmail> pending = PENDING_QUEUE.snapshot();
+        if (pending.isEmpty()) {
+            DialogHelper.showInfoMessage("No hay correos pendientes de env\u00edo", "CORREOS PENDIENTES");
+            return;
+        }
+
+        DefaultListModel<String> model = new DefaultListModel<>();
+        pending.forEach(p -> model.addElement(formatPending(p)));
+        JList<String> list = new JList<>(model);
+        list.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        list.setFixedCellHeight(30);
+        JScrollPane scrollPane = new JScrollPane(list);
+        scrollPane.setPreferredSize(new Dimension(680, 260));
+
+        JPanel panel = new JPanel(new MigLayout("fillx,wrap 1", "[grow]", "[]10[]"));
+        panel.add(new JLabel("Los correos no se enviaron. Puede reintentarlos "
+                + "despu\u00e9s de revisar la configuraci\u00f3n."), "growx");
+        panel.add(scrollPane, "growx");
+
+        String[] options = {"REINTENTAR SELECCIONADO", "REINTENTAR TODOS", "ELIMINAR", "CERRAR"};
+        int choice = JOptionPane.showOptionDialog(
+                SwingUtilities.getWindowAncestor(emailHubView),
+                panel, "CORREOS PENDIENTES (" + pending.size() + ")",
+                JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE,
+                null, options, options[0]);
+
+        int selected = list.getSelectedIndex();
+        if (choice == 0) {
+            if (selected < 0) {
+                DialogHelper.showInfoMessage("Seleccione un correo de la lista", "CORREOS PENDIENTES");
+                showPendingDialog();
+                return;
+            }
+            retryPending(List.of(pending.get(selected).message()));
+        } else if (choice == 1) {
+            retryPending(pending.stream().map(PendingEmail::message).toList());
+        } else if (choice == 2) {
+            if (selected >= 0) {
+                PENDING_QUEUE.remove(pending.get(selected).message());
+                refreshPendingBadge();
+            }
+            showPendingDialog();
+        }
+    }
+
+    /** Retries the given messages with the current SMTP config; keeps failures pending. */
+    private void retryPending(List<EmailMessage> messages) {
+        LoadingDialog loading = new LoadingDialog(
+                SwingUtilities.getWindowAncestor(emailHubView), "Enviando correos pendientes...");
+        loading.showAsync(() -> {
+            int ok = 0;
+            int fail = 0;
+            for (EmailMessage msg : messages) {
+                if (emailService.sendEmail(msg)) {
+                    PENDING_QUEUE.remove(msg);
+                    ok++;
+                } else {
+                    fail++;
+                }
+            }
+            refreshPendingBadge();
+            final int sentCount = ok;
+            final int failedCount = fail;
+            SwingUtilities.invokeLater(() -> {
+                if (failedCount > 0) {
+                    DialogHelper.showErrorMessage(
+                            sentCount > 0
+                                    ? sentCount + " correo(s) enviados, " + failedCount + " siguen pendientes"
+                                    : "Ning\u00fan correo se envi\u00f3. Revise la configuraci\u00f3n",
+                            "CORREOS PENDIENTES");
+                } else {
+                    DialogHelper.showInfoMessage("Correos pendientes enviados: " + sentCount, "CORREO");
+                }
+                if (PENDING_QUEUE.size() > 0) {
+                    showPendingDialog();
+                }
+            });
+        });
+    }
+
+    private static String formatPending(PendingEmail pending) {
+        EmailMessage msg = pending.message();
+        String time = PENDING_TIME_FORMAT.format(LocalDateTime.ofInstant(
+                pending.createdAt(), ZoneId.systemDefault()));
+        return (msg.subject() == null || msg.subject().isBlank() ? "(sin asunto)" : msg.subject())
+                + " \u2192 " + msg.to()
+                + " (" + time + ")"
+                + (pending.failureReason() != null ? " \u2014 " + pending.failureReason() : "");
     }
 
     // ========== Helpers ==========
