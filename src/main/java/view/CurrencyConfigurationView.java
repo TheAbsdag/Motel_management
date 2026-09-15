@@ -1,3 +1,7 @@
+/*
+ * Created by JFormDesigner on Tue Sep 15 12:09:26 GMT-05:00 2026
+ */
+
 package view;
 
 import java.awt.Font;
@@ -6,18 +10,139 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import model.json.CurrencyConfig;
 import net.miginfocom.swing.MigLayout;
+import view.helpers.CurrencyFormatter;
 import view.interfaces.DirtyTrackable;
 
+/**
+ * @author SECC
+ */
 public class CurrencyConfigurationView extends JPanel implements DirtyTrackable {
 
     private boolean hasUnsavedChanges;
+    private ButtonGroup positionButtonGroup;
     private final String[] currencyCodes = {"COP", "USD", "EUR", "JPY", "GBP"};
     private final String[] currencySymbols = {"$", "$", "\u20AC", "\u00A5", "\u00A3"};
     private final int[] currencyDecimals = {0, 2, 2, 0, 2};
 
+    public CurrencyConfigurationView() {
+        initCustomComponents();
+        initComponents();
+    }
+
+    private void initCustomComponents() {
+        hasUnsavedChanges = false;
+        positionButtonGroup = new ButtonGroup();
+    }
+
+    private void initComponents() {
+	// JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents  @formatter:off
+	// Generated using JFormDesigner Educational license - Santiago Esteban Castelblanco (SANTIAGO CASTELBLANCO)
+	titleLabel = new JLabel();
+	codeLabel = new JLabel();
+	codeComboBox = new JComboBox();
+	symbolLabel = new JLabel();
+	symbolTextField = new JTextField();
+	decimalsLabel = new JLabel();
+	decimalsTextField = new JTextField();
+	positionLabel = new JLabel();
+	beforeRadio = new JRadioButton();
+	afterRadio = new JRadioButton();
+	previewLabel = new JLabel();
+	backButton = new JButton();
+	saveButton = new JButton();
+
+	//======== this ========
+	setLayout(new MigLayout(
+	    "fill,hidemode 3",
+	    // columns
+	    "[fill]" +
+	    "[grow,fill]" +
+	    "[fill]",
+	    // rows
+	    "[]" +
+	    "[]" +
+	    "[]" +
+	    "[]" +
+	    "[]" +
+	    "[]" +
+	    "[]"));
+
+	//---- titleLabel ----
+	titleLabel.setText("CONFIGURACION MONEDA");
+	titleLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
+	add(titleLabel, "cell 0 0 2 1");
+
+	//---- codeLabel ----
+	codeLabel.setText("CODIGO:");
+	codeLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
+	add(codeLabel, "cell 0 1");
+
+	//---- codeComboBox ----
+	codeComboBox.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
+	add(codeComboBox, "cell 1 1,growy");
+
+	//---- symbolLabel ----
+	symbolLabel.setText("SIMBOLO:");
+	symbolLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
+	add(symbolLabel, "cell 0 2");
+
+	//---- symbolTextField ----
+	symbolTextField.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
+	add(symbolTextField, "cell 1 2,growy");
+
+	//---- decimalsLabel ----
+	decimalsLabel.setText("DECIMALES:");
+	decimalsLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
+	add(decimalsLabel, "cell 0 3");
+
+	//---- decimalsTextField ----
+	decimalsTextField.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
+	add(decimalsTextField, "cell 1 3,growy");
+
+	//---- positionLabel ----
+	positionLabel.setText("POSICION SIMBOLO:");
+	positionLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
+	add(positionLabel, "cell 0 4");
+
+	//---- beforeRadio ----
+	beforeRadio.setText("Antes ($100)");
+	beforeRadio.setFont(new Font("Segoe UI Black", Font.PLAIN, 16));
+	add(beforeRadio, "cell 1 4");
+
+	//---- afterRadio ----
+	afterRadio.setText("Despues (100$)");
+	afterRadio.setFont(new Font("Segoe UI Black", Font.PLAIN, 16));
+	add(afterRadio, "cell 2 4");
+
+	//---- previewLabel ----
+	previewLabel.setText("Vista previa: $40,000");
+	previewLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 24));
+	add(previewLabel, "cell 0 5 2 1,alignx center");
+
+	//---- backButton ----
+	backButton.setText("VOLVER");
+	backButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
+	add(backButton, "cell 0 6,growy");
+
+	//---- saveButton ----
+	saveButton.setText("GUARDAR");
+	saveButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
+	add(saveButton, "cell 2 6,growy");
+	// JFormDesigner - End of component initialization  //GEN-END:initComponents  @formatter:on
+
+        codeComboBox.setModel(new DefaultComboBoxModel<>(currencyCodes));
+        positionButtonGroup.add(beforeRadio);
+        positionButtonGroup.add(afterRadio);
+        beforeRadio.setSelected(true);
+
+        wireListeners();
+    }
+
+    // JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables  @formatter:off
+    // Generated using JFormDesigner Educational license - Santiago Esteban Castelblanco (SANTIAGO CASTELBLANCO)
     private JLabel titleLabel;
     private JLabel codeLabel;
-    private JComboBox<String> codeComboBox;
+    private JComboBox codeComboBox;
     private JLabel symbolLabel;
     private JTextField symbolTextField;
     private JLabel decimalsLabel;
@@ -28,87 +153,7 @@ public class CurrencyConfigurationView extends JPanel implements DirtyTrackable 
     private JLabel previewLabel;
     private JButton backButton;
     private JButton saveButton;
-
-    public CurrencyConfigurationView() {
-        hasUnsavedChanges = false;
-        initComponents();
-        wireListeners();
-    }
-
-    private void initComponents() {
-        titleLabel = new JLabel("CONFIGURACION MONEDA");
-        titleLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
-
-        codeLabel = new JLabel("CODIGO:");
-        codeLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
-
-        codeComboBox = new JComboBox<>(currencyCodes);
-        codeComboBox.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
-
-        symbolLabel = new JLabel("SIMBOLO:");
-        symbolLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
-
-        symbolTextField = new JTextField();
-        symbolTextField.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
-
-        decimalsLabel = new JLabel("DECIMALES:");
-        decimalsLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
-
-        decimalsTextField = new JTextField();
-        decimalsTextField.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
-
-        positionLabel = new JLabel("POSICION SIMBOLO:");
-        positionLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
-
-        beforeRadio = new JRadioButton("Antes ($100)");
-        beforeRadio.setFont(new Font("Segoe UI Black", Font.PLAIN, 16));
-        afterRadio = new JRadioButton("Despues (100$)");
-        afterRadio.setFont(new Font("Segoe UI Black", Font.PLAIN, 16));
-        ButtonGroup positionGroup = new ButtonGroup();
-        positionGroup.add(beforeRadio);
-        positionGroup.add(afterRadio);
-        beforeRadio.setSelected(true);
-
-        previewLabel = new JLabel("Vista previa: $40,000");
-        previewLabel.setFont(new Font("Segoe UI Black", Font.PLAIN, 24));
-
-        backButton = new JButton("VOLVER");
-        backButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
-
-        saveButton = new JButton("GUARDAR");
-        saveButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
-
-        setLayout(new MigLayout(
-            "fill,hidemode 3",
-            "[fill][grow,fill][fill]",
-            "[]" +
-            "[]" +
-            "[]" +
-            "[]" +
-            "[]" +
-            "[]" +
-            "[]"));
-
-        add(titleLabel, "cell 0 0 2 1");
-
-        add(codeLabel, "cell 0 1");
-        add(codeComboBox, "cell 1 1,growy");
-
-        add(symbolLabel, "cell 0 2");
-        add(symbolTextField, "cell 1 2,growy");
-
-        add(decimalsLabel, "cell 0 3");
-        add(decimalsTextField, "cell 1 3,growy");
-
-        add(positionLabel, "cell 0 4");
-        add(beforeRadio, "cell 1 4");
-        add(afterRadio, "cell 2 4");
-
-        add(previewLabel, "cell 0 5 2 1,alignx center");
-
-        add(backButton, "cell 0 6,growy");
-        add(saveButton, "cell 2 6,growy");
-    }
+    // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
 
     private void wireListeners() {
         DocumentListener docListener = new DocumentListener() {
@@ -170,7 +215,7 @@ public class CurrencyConfigurationView extends JPanel implements DirtyTrackable 
 
     private void updatePreview() {
         CurrencyConfig cfg = toConfig();
-        String formatted = view.helpers.CurrencyFormatter.format(40000L, cfg);
+        String formatted = CurrencyFormatter.format(40000L, cfg);
         previewLabel.setText("Vista previa: " + formatted);
     }
 

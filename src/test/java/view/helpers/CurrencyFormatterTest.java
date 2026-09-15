@@ -1,5 +1,6 @@
 package view.helpers;
 
+import java.util.Locale;
 import model.json.CurrencyConfig;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -89,5 +90,26 @@ class CurrencyFormatterTest {
     @Test
     void largeValueUSD() {
         Assertions.assertThat(CurrencyFormatter.format(12345678901L, usd)).isEqualTo("$ 123,456,789.01");
+    }
+
+    /**
+     * Verifies that formatting does not depend on the JVM default FORMAT locale.
+     * {@code String.format} without an explicit locale uses
+     * {@code Locale.getDefault(Locale.Category.FORMAT)}, which on Windows follows the
+     * regional settings: with {@code es-CO} the grouping separator is {@code "."}, so
+     * the output would silently become {@code "$ 40.000"}.
+     * Expected: identical US-style output regardless of the default FORMAT locale.
+     */
+    @Test
+    void formatIsIndependentOfDefaultFormatLocale() {
+        Locale original = Locale.getDefault(Locale.Category.FORMAT);
+        try {
+            Locale.setDefault(Locale.Category.FORMAT, Locale.forLanguageTag("es-CO"));
+            Assertions.assertThat(CurrencyFormatter.format(40000L, cop)).isEqualTo("$ 40,000");
+            Assertions.assertThat(CurrencyFormatter.format(15000L, jpy)).isEqualTo("\u00A5 15,000");
+            Assertions.assertThat(CurrencyFormatter.format(12345678901L, usd)).isEqualTo("$ 123,456,789.01");
+        } finally {
+            Locale.setDefault(Locale.Category.FORMAT, original);
+        }
     }
 }

@@ -1,8 +1,20 @@
 package view.helpers;
 
+import java.util.Locale;
 import model.json.CurrencyConfig;
 
 public final class CurrencyFormatter {
+
+    /**
+     * Locale used for grouping separators and digits. It must never be left implicit:
+     * {@code String.format} without a locale uses
+     * {@code Locale.getDefault(Locale.Category.FORMAT)}, which on Windows follows the
+     * regional settings. On a machine set to Colombia that formats {@code 40000} as
+     * {@code "40.000"}, while the decimal separator below is hardcoded to {@code "."},
+     * producing the ambiguous {@code "$ 123.456.789.01"}. Swap this for a configurable
+     * locale when internationalization lands.
+     */
+    private static final Locale MONEY_LOCALE = Locale.US;
 
     private CurrencyFormatter() { }
 
@@ -14,8 +26,8 @@ public final class CurrencyFormatter {
         long fracPart = absValue % (long) Math.pow(10, dp);
 
         String sign = valueInSmallestUnit < 0 ? "-" : "";
-        String whole = String.format("%,d", wholePart);
-        String frac = dp > 0 ? String.format(".%0" + dp + "d", fracPart) : "";
+        String whole = String.format(MONEY_LOCALE, "%,d", wholePart);
+        String frac = dp > 0 ? String.format(MONEY_LOCALE, ".%0" + dp + "d", fracPart) : "";
 
         String body = sign + whole + frac;
         if (cfg.symbolBefore()) {
