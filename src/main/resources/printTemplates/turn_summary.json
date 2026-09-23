@@ -1,0 +1,51 @@
+{
+  "templateType": "TURN_SUMMARY",
+  "bands": [
+    {
+      "name": "HEADER",
+      "lines": [
+        { "segments": [{ "type": "FIELD", "text": "motelName", "style": "LargeStyle", "bold": false }], "centered": false, "spacerAfter": 0 },
+        { "segments": [{ "type": "TEXT", "text": "   ", "style": "FooterStyleBold", "bold": true }, { "type": "FIELD", "text": "motelAddress", "style": "FooterStyleBold", "bold": true }], "centered": false, "spacerAfter": 0 },
+        { "segments": [{ "type": "TEXT", "text": "   ", "style": "FooterStyleBold", "bold": true }, { "type": "FIELD", "text": "motelID", "style": "FooterStyleBold", "bold": true }], "centered": false, "spacerAfter": 0 },
+        { "segments": [{ "type": "FIELD", "text": "legalText", "style": "SecondLastStyleBold", "bold": true }], "centered": false, "spacerAfter": 0 },
+        { "segments": [{ "type": "TEXT", "text": " RESUMEN VENTAS TURNO No. ", "style": "FooterStyleBold", "bold": true }, { "type": "FIELD", "text": "turnNumber", "style": "FooterStyleBold", "bold": true }], "centered": false, "spacerAfter": 1 }
+      ]
+    },
+    {
+      "name": "BODY",
+      "lines": [
+        { "segments": [{ "type": "TEXT", "text": "Inicio turno: ", "style": "SecondLastStyleBold", "bold": true }], "centered": true, "spacerAfter": 0 },
+        { "segments": [{ "type": "FIELD", "text": "turnStart", "style": "DefaultStyleBold", "bold": true }], "centered": true, "spacerAfter": 0 },
+        { "segments": [{ "type": "TEXT", "text": "Fin turno: ", "style": "SecondLastStyleBold", "bold": true }], "centered": true, "spacerAfter": 0 },
+        { "segments": [{ "type": "FIELD", "text": "turnEnd", "style": "DefaultStyleBold", "bold": true }], "centered": true, "spacerAfter": 0 },
+        { "segments": [{ "type": "TEXT", "text": "___________________________________", "style": "SecondLastStyleBold", "bold": true }], "centered": false, "spacerAfter": 0 },
+        { "segments": [{ "type": "TEXT", "text": "Cant\tConcepto\tPrecio", "style": "TransactionStyle", "bold": false }], "centered": false, "spacerAfter": 0 },
+        { "segments": [{ "type": "TEXT", "text": "___________________________________", "style": "SecondLastStyleBold", "bold": true }], "centered": false, "spacerAfter": 1 },
+        { "segments": [{ "type": "FIELD", "text": "summaryList", "style": "TransactionStyle", "bold": false }], "centered": false, "spacerAfter": 1 },
+        { "segments": [{ "type": "TEXT", "text": "  Habitaciones: ", "style": "DefaultStyle", "bold": false }, { "type": "FIELD", "text": "totalRooms", "style": "DefaultStyleBold", "bold": true }], "centered": false, "spacerAfter": 2 },
+        { "segments": [{ "type": "TEXT", "text": "    Productos: ", "style": "DefaultStyle", "bold": false }, { "type": "FIELD", "text": "totalItems", "style": "DefaultStyleBold", "bold": true }], "centered": false, "spacerAfter": 1 },
+        { "segments": [{ "type": "TEXT", "text": "Total Venta: ", "style": "DefaultStyle", "bold": false }, { "type": "FIELD", "text": "totalSales", "style": "DefaultStyleBold", "bold": true }], "centered": false, "spacerAfter": 1 },
+        { "segments": [{ "type": "TEXT", "text": "___________________________________", "style": "SecondLastStyleBold", "bold": true }], "centered": false, "spacerAfter": 0 },
+        { "segments": [{ "type": "TEXT", "text": "REEMBOLSOS", "style": "FooterStyleBold", "bold": true }], "centered": false, "spacerAfter": 0 },
+        { "segments": [{ "type": "TEXT", "text": "___________________________________", "style": "SecondLastStyleBold", "bold": true }], "centered": false, "spacerAfter": 0 },
+        { "segments": [{ "type": "TEXT", "text": "Cant\tConcepto\tPrecio", "style": "TransactionStyle", "bold": false }], "centered": false, "spacerAfter": 0 },
+        { "segments": [{ "type": "TEXT", "text": "___________________________________", "style": "SecondLastStyleBold", "bold": true }], "centered": false, "spacerAfter": 1 },
+        { "segments": [{ "type": "FIELD", "text": "refundList", "style": "TransactionStyle", "bold": false }], "centered": false, "spacerAfter": 1 },
+        { "segments": [{ "type": "TEXT", "text": "  Reembolsos Habitaciones: ", "style": "DefaultStyle", "bold": false }, { "type": "FIELD", "text": "totalRoomRefunds", "style": "DefaultStyleBold", "bold": true }], "centered": false, "spacerAfter": 2 },
+        { "segments": [{ "type": "TEXT", "text": "    Reembolsos Productos: ", "style": "DefaultStyle", "bold": false }, { "type": "FIELD", "text": "totalItemRefunds", "style": "DefaultStyleBold", "bold": true }], "centered": false, "spacerAfter": 1 },
+        { "segments": [{ "type": "TEXT", "text": "Total Reembolsos: ", "style": "DefaultStyle", "bold": false }, { "type": "FIELD", "text": "totalRefunds", "style": "DefaultStyleBold", "bold": true }], "centered": false, "spacerAfter": 0 },
+        { "segments": [{ "type": "TEXT", "text": "___________________________________", "style": "SecondLastStyleBold", "bold": true }], "centered": false, "spacerAfter": 1 },
+        { "segments": [{ "type": "TEXT", "text": "  Gastos: ", "style": "DefaultStyle", "bold": false }, { "type": "FIELD", "text": "totalSpending", "style": "DefaultStyleBold", "bold": true }], "centered": false, "spacerAfter": 1 },
+        { "segments": [{ "type": "TEXT", "text": "Total Turno: ", "style": "DefaultStyle", "bold": false }, { "type": "FIELD", "text": "totalTurn", "style": "DefaultStyleBold", "bold": true }], "centered": false, "spacerAfter": 0 },
+        { "segments": [{ "type": "TEXT", "text": "___________________________________", "style": "SecondLastStyleBold", "bold": true }], "centered": false, "spacerAfter": 1 },
+        { "segments": [{ "type": "TEXT", "text": "  Transferencias: ", "style": "DefaultStyle", "bold": false }, { "type": "FIELD", "text": "totalBankTransfers", "style": "DefaultStyleBold", "bold": true }], "centered": false, "spacerAfter": 2 },
+        { "segments": [{ "type": "TEXT", "text": "  Depósitos: ", "style": "DefaultStyle", "bold": false }, { "type": "FIELD", "text": "totalDeposits", "style": "DefaultStyleBold", "bold": true }], "centered": false, "spacerAfter": 1 },
+        { "segments": [{ "type": "TEXT", "text": "Total Neto: ", "style": "DefaultStyle", "bold": false }, { "type": "FIELD", "text": "totalNet", "style": "DefaultStyleBold", "bold": true }], "centered": false, "spacerAfter": 3 }
+      ]
+    },
+    {
+      "name": "FOOTER",
+      "lines": []
+    }
+  ]
+}

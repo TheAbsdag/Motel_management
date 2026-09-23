@@ -1,0 +1,31 @@
+{
+  "templateType": "SALE_RECEIPT",
+  "bands": [
+    {
+      "name": "HEADER",
+      "lines": [
+        { "segments": [{ "type": "FIELD", "text": "motelName", "style": "LargeStyle", "bold": false }], "centered": false, "spacerAfter": 0 },
+        { "segments": [{ "type": "TEXT", "text": "   ", "style": "FooterStyleBold", "bold": true }, { "type": "FIELD", "text": "motelAddress", "style": "FooterStyleBold", "bold": true }], "centered": false, "spacerAfter": 0 },
+        { "segments": [{ "type": "TEXT", "text": "   ", "style": "FooterStyleBold", "bold": true }, { "type": "FIELD", "text": "motelID", "style": "FooterStyleBold", "bold": true }], "centered": false, "spacerAfter": 0 },
+        { "segments": [{ "type": "FIELD", "text": "legalText", "style": "SecondLastStyleBold", "bold": true }], "centered": false, "spacerAfter": 0 }
+      ]
+    },
+    {
+      "name": "BODY",
+      "lines": [
+        { "segments": [{ "type": "TEXT", "text": "  VENTA A LA HABITACIÓN: ", "style": "DefaultStyle", "bold": false }, { "type": "FIELD", "text": "roomSoldTo", "style": "TransactionStyleBold", "bold": true }], "centered": false, "spacerAfter": 1 },
+        { "segments": [{ "type": "TEXT", "text": "  FACTURA DE VENTA No. ", "style": "DefaultStyle", "bold": false }, { "type": "FIELD", "text": "consecutive", "style": "DefaultStyleBold", "bold": true }], "centered": false, "spacerAfter": 1 },
+        { "segments": [{ "type": "TEXT", "text": "   HORA VENTA: ", "style": "DefaultStyle", "bold": false }, { "type": "FIELD", "text": "saleTime", "style": "DefaultStyle", "bold": false }], "centered": false, "spacerAfter": 2 },
+        { "segments": [{ "type": "FIELD", "text": "items", "style": "TransactionStyle", "bold": false }], "centered": false, "spacerAfter": 1 },
+        { "segments": [{ "type": "TEXT", "text": "    Pago Total:\t", "style": "TransactionStyle", "bold": false }, { "type": "FIELD", "text": "totalPrice", "style": "TransactionStyleBold", "bold": true }], "centered": false, "spacerAfter": 1 },
+        { "segments": [{ "type": "TEXT", "text": "      ", "style": "FooterStyleBold", "bold": true }, { "type": "FIELD", "text": "motelAddress", "style": "FooterStyleBold", "bold": true }], "centered": false, "spacerAfter": 0 },
+        { "segments": [{ "type": "TEXT", "text": "___________________________________", "style": "SecondLastStyleBold", "bold": true }], "centered": false, "spacerAfter": 0 },
+        { "segments": [{ "type": "TEXT", "text": "          ", "style": "SecondLastStyle", "bold": false }, { "type": "FIELD", "text": "date", "style": "SecondLastStyle", "bold": false }], "centered": false, "spacerAfter": 3 }
+      ]
+    },
+    {
+      "name": "FOOTER",
+      "lines": []
+    }
+  ]
+}

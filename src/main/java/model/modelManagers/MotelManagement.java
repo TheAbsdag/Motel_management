@@ -25,6 +25,7 @@ import model.dto.TurnActivityData;
 import model.dto.TurnHistoryData;
 import model.dto.TurnSummaryItemData;
 import model.json.ObjectMapperFactory;
+import model.print.PrintTemplate;
 import model.turn.ActivityType;
 import model.turn.ExtraChangeType;
 import model.turn.RoomBookingActivity;
@@ -398,6 +399,27 @@ public class MotelManagement {
     public void savePrinterConfiguration(String printerName) {
         programConfig.savePrinterConfiguration(printerName);
         files.saveJsonMainDataPath(programConfig.toJson(), "applicationProperties");
+    }
+
+    /**
+     * Returns the paper size of the configured printer, for previewing a template at the
+     * width it will actually be laid out to.
+     *
+     * @return the declared paper size, or the 80 mm roll default when the printer declares none
+     */
+    public Printer.PaperInfo getPrinterPaperInfo() {
+        return printer.paperInfo();
+    }
+
+    /**
+     * Prints a test copy of a template with sample data. Shared with the real print path, so
+     * the test reflects what will be printed; no transaction or stored data is touched.
+     *
+     * @param template the template to print, typically the unsaved copy from the editor
+     * @return {@code false} when there is no printer configured
+     */
+    public boolean printTestTemplate(PrintTemplate template) {
+        return printer.printTestTemplate(template);
     }
 
     // ========== File Persistence ==========

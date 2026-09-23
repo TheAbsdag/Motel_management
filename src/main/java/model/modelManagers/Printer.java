@@ -2,22 +2,17 @@ package model.modelManagers;
 
 import model.modelManagers.FileManager;
 import java.io.FileOutputStream;
-import java.time.ZoneId;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
-import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.print.PrintService;
 import javax.swing.JTextPane;
 import javax.swing.text.BadLocationException;
-import javax.swing.text.Style;
-import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
@@ -31,6 +26,12 @@ import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 import model.dto.TurnSummaryItemData;
 import model.json.CurrencyConfig;
+import model.print.PrintDataBuilder;
+import model.print.PrintFieldRegistry;
+import model.print.PrintTemplate;
+import model.print.PrintTemplateStore;
+import model.print.PrintTemplateType;
+import model.print.TemplateRenderer;
 import model.turn.ExtraChangeActivity;
 import model.turn.ExtraChangeType;
 import model.turn.RefundActivity;
@@ -57,21 +58,21 @@ public class Printer {
 
     private static final Logger LOGGER = Logger.getLogger(Printer.class.getName());
 
-    private static final ZoneId BOGOTA = ZoneId.of("America/Bogota");
-    private static final DateTimeFormatter TURN_DATE_SECTION_FORMATTER
-            = DateTimeFormatter.ofPattern("yyyy/MM/dd - HH:mm:ss").withZone(BOGOTA);
-    private static final DateTimeFormatter DETAILED_TURN_DATE_FORMATTER
-            = DateTimeFormatter.ofPattern("MM/dd-HH:mm").withZone(BOGOTA);
+    /** Paper used when the printer declares no size: a standard 80 mm thermal roll. */
+    private static final int DEFAULT_PAPER_WIDTH_MM = 80;
+    private static final int DEFAULT_PAPER_HEIGHT_MM = 297;
+    /** Widest paper still considered a thermal roll; above this the declaration is a sheet. */
+    private static final int MAX_ROLL_WIDTH_MM = 120;
+    private static final double POINTS_PER_MM = 72.0 / 25.4;
 
     private final JTextPane printLayout;
     private String motelName;
     private String motelAddress;
     private String motelID;
-    private final DateTimeFormatter hourFormatter;
-    private final DateTimeFormatter dateFormatter;
     private CurrencyConfig currencyConfig = CurrencyConfig.defaultConfig();
     private StyledDocument document;
     private final String PDF_SAVE_PATH = FileManager.PATH + File.separator + "receiptPrints";
+    private final PrintTemplateStore templateStore = new PrintTemplateStore(Path.of(FileManager.PATH));
     private PrintService printerService;
 
     /**
@@ -81,13 +82,6 @@ public class Printer {
     public Printer() {
         LOGGER.fine("Printer initialized");
         printLayout = new JTextPane();
-        hourFormatter = new DateTimeFormatterBuilder()
-                .appendPattern("hh:mm").appendLiteral(' ')
-                .appendText(ChronoField.AMPM_OF_DAY, Map.of(0L, "AM", 1L, "PM"))
-                .toFormatter()
-                .withZone(BOGOTA);
-        dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd", new Locale("es", "ES"))
-                .withZone(BOGOTA);
         initializeStyles();
         File preparePDFRoute = new File(PDF_SAVE_PATH);
         preparePDFRoute.mkdirs();
@@ -173,35 +167,7 @@ public class Printer {
 
     private void initializeStyles() {
         document = printLayout.getStyledDocument();
-        String fontFamily = "Calibri";
-
-        addStyle("HeaderStyle", 10, false, fontFamily);
-        addStyle("LargeStyle", 19, false, fontFamily);
-        addStyle("DefaultStyle", 10, false, fontFamily);
-        addStyle("TransactionStyle", 9, false, fontFamily);
-        addStyle("FooterStyle", 8, false, fontFamily);
-        addStyle("SecondLastStyle", 7, false, fontFamily);
-
-        addStyle("HeaderStyleBold", 10, true, fontFamily);
-        addStyle("LargeStyleBold", 19, true, fontFamily);
-        addStyle("DefaultStyleBold", 10, true, fontFamily);
-        addStyle("TransactionStyleBold", 9, true, fontFamily);
-        addStyle("FooterStyleBold", 8, true, fontFamily);
-        addStyle("SecondLastStyleBold", 7, true, fontFamily);
-
-        addStyle("FillerStyle", 1, false, fontFamily);
-
-        Style centeredStyle = document.addStyle("CenteredStyle", null);
-        StyleConstants.setAlignment(centeredStyle, StyleConstants.ALIGN_CENTER);
-    }
-
-    private void addStyle(String name, int fontSize, boolean bold, String fontFamily) {
-        Style style = document.addStyle(name, null);
-        StyleConstants.setFontSize(style, fontSize);
-        StyleConstants.setFontFamily(style, fontFamily);
-        if (bold) {
-            StyleConstants.setBold(style, true);
-        }
+        TemplateRenderer.applyReceiptStyles(document);
     }
 
     private void resetDocument() {
@@ -294,6 +260,12 @@ public class Printer {
      * @param justPDF                if {@code true} only saves the PDF without physical printing
      */
     public void printRoomTimeSell(RoomBookingActivity activity, int consecutiveTransaction, boolean justPDF) {
+        if (printWithTemplate(PrintTemplateType.ROOM_RECEIPT,
+                PrintDataBuilder.roomReceipt(activity, consecutiveTransaction, printContext()),
+                "roomBooked", activity.startStatus(), consecutiveTransaction, justPDF)) {
+            return;
+        }
+
         resetDocument();
 
         String roomString = activity.roomString();
@@ -301,8 +273,8 @@ public class Printer {
         long serviceDuration = activity.getEffectiveServiceDuration();
 
         ZonedDateTime fullDateHourService = activity.startStatus();
-        String hourService = fullDateHourService.format(hourFormatter);
-        String dateService = fullDateHourService.format(dateFormatter);
+        String hourService = fullDateHourService.format(PrintDataBuilder.HOUR_FORMATTER);
+        String dateService = fullDateHourService.format(PrintDataBuilder.DATE_FORMATTER);
 
         try {
             printHeader();
@@ -344,12 +316,18 @@ public class Printer {
      * @param justPDF                if {@code true} only saves the PDF without physical printing
      */
     public void printItemSold(SaleActivity activity, int consecutiveTransaction, boolean justPDF) {
+        if (printWithTemplate(PrintTemplateType.SALE_RECEIPT,
+                PrintDataBuilder.saleReceipt(activity, consecutiveTransaction, printContext()),
+                "Sale", activity.changeDate(), consecutiveTransaction, justPDF)) {
+            return;
+        }
+
         resetDocument();
 
         String roomString = activity.roomSoldTo();
         ZonedDateTime fullDateHourService = activity.changeDate();
-        String hourService = fullDateHourService.format(hourFormatter);
-        String dateService = fullDateHourService.format(dateFormatter);
+        String hourService = fullDateHourService.format(PrintDataBuilder.HOUR_FORMATTER);
+        String dateService = fullDateHourService.format(PrintDataBuilder.DATE_FORMATTER);
         List<SaleItem> items = activity.items();
         long totalPrice = 0;
 
@@ -412,6 +390,12 @@ public class Printer {
     }
 
     private void printSummarizedTurnInternal(TurnDetails turnDetails, boolean isCurrent, boolean justPDF) {
+        if (printWithTemplate(PrintTemplateType.TURN_SUMMARY,
+                PrintDataBuilder.turnSummary(turnDetails, isCurrent, printContext()),
+                "summarizedTurn", turnDetails.getTurnStart(), (int) turnDetails.getTurnNumber(), justPDF)) {
+            return;
+        }
+
         resetDocument();
 
         ZonedDateTime fullDateTurnStart = turnDetails.getTurnStart();
@@ -422,7 +406,7 @@ public class Printer {
             printTurnReportSubtitle("RESUMEN VENTAS TURNO");
             printFillerLines(1);
 
-            String startDate = fullDateTurnStart.format(TURN_DATE_SECTION_FORMATTER);
+            String startDate = fullDateTurnStart.format(PrintDataBuilder.TURN_DATE_FORMATTER);
             document.insertString(document.getLength(), "Inicio turno: \n", document.getStyle("SecondLastStyleBold"));
             document.setParagraphAttributes(document.getLength() - 1, 1, document.getStyle("CenteredStyle"), false);
             document.insertString(document.getLength(), startDate + "\n", document.getStyle("DefaultStyleBold"));
@@ -433,7 +417,7 @@ public class Printer {
                 document.insertString(document.getLength(), "No finalizado\n", document.getStyle("DefaultStyleBold"));
             } else {
                 ZonedDateTime fullDateTurnEnd = turnDetails.getTurnEnd();
-                String endDate = fullDateTurnEnd.format(TURN_DATE_SECTION_FORMATTER);
+                String endDate = fullDateTurnEnd.format(PrintDataBuilder.TURN_DATE_FORMATTER);
                 document.insertString(document.getLength(), endDate + "\n", document.getStyle("DefaultStyleBold"));
             }
             document.setParagraphAttributes(document.getLength() - 1, 1, document.getStyle("CenteredStyle"), false);
@@ -529,6 +513,12 @@ public class Printer {
     }
 
     private void printDetailedTurnInternal(TurnDetails turnDetails, boolean isCurrent, boolean justPDF) {
+        if (printWithTemplate(PrintTemplateType.TURN_DETAIL,
+                PrintDataBuilder.turnDetail(turnDetails, isCurrent, printContext()),
+                "detailedTurnTurn", turnDetails.getTurnStart(), (int) turnDetails.getTurnNumber(), justPDF)) {
+            return;
+        }
+
         resetDocument();
 
         ZonedDateTime fullDateTurnStart = turnDetails.getTurnStart();
@@ -539,7 +529,7 @@ public class Printer {
             printTurnReportSubtitle("DETALLE VENTAS TURNO");
             printFillerLines(1);
 
-            String startDate = fullDateTurnStart.format(TURN_DATE_SECTION_FORMATTER);
+            String startDate = fullDateTurnStart.format(PrintDataBuilder.TURN_DATE_FORMATTER);
             document.insertString(document.getLength(), "Inicio turno: \n", document.getStyle("SecondLastStyleBold"));
             document.setParagraphAttributes(document.getLength() - 1, 1, document.getStyle("CenteredStyle"), false);
             document.insertString(document.getLength(), startDate + "\n", document.getStyle("DefaultStyleBold"));
@@ -550,7 +540,7 @@ public class Printer {
                 document.insertString(document.getLength(), "No finalizado\n", document.getStyle("DefaultStyleBold"));
             } else {
                 ZonedDateTime fullDateTurnEnd = turnDetails.getTurnEnd();
-                String endDate = fullDateTurnEnd.format(TURN_DATE_SECTION_FORMATTER);
+                String endDate = fullDateTurnEnd.format(PrintDataBuilder.TURN_DATE_FORMATTER);
                 document.insertString(document.getLength(), endDate + "\n", document.getStyle("DefaultStyleBold"));
             }
             document.setParagraphAttributes(document.getLength() - 1, 1, document.getStyle("CenteredStyle"), false);
@@ -561,7 +551,7 @@ public class Printer {
             List<TurnActivity> activities = turnDetails.getActivities();
             for (TurnActivity activity : activities) {
                 ZonedDateTime changeDate = activity.changeDate();
-                String formattedDate = changeDate.format(DETAILED_TURN_DATE_FORMATTER);
+                String formattedDate = changeDate.format(PrintDataBuilder.DETAIL_DATE_FORMATTER);
 
                 switch (activity) {
                     case SaleActivity s -> {
@@ -662,6 +652,41 @@ public class Printer {
         document.insertString(document.getLength(), CurrencyFormatter.format(turnDetails.getTotalNet(), currencyConfig) + "\n", document.getStyle("DefaultStyleBold"));
     }
 
+    // ========== Template-Based Printing ==========
+
+    /**
+     * Prints a document with the customized template the user saved for the given type.
+     *
+     * @param type    the template type
+     * @param data    the field values to resolve, as built by {@link PrintDataBuilder}
+     * @param pdfType PDF file name discriminator
+     * @param date    timestamp used in the PDF file name
+     * @param id      transaction identifier used in the PDF file name
+     * @param justPDF if {@code true} only the PDF is saved, without physical printing
+     * @return {@code true} when the template was used; {@code false} means the caller must
+     *         fall back to the built-in layout
+     */
+    private boolean printWithTemplate(PrintTemplateType type, Map<String, String> data, String pdfType,
+                                      ZonedDateTime date, int id, boolean justPDF) {
+        PrintTemplate template = templateStore.load(type);
+        if (template == null) {
+            return false;
+        }
+        try {
+            resetDocument();
+            TemplateRenderer.render(template, data, document);
+            completePrinting(pdfType, date, id, justPDF);
+            return true;
+        } catch (BadLocationException e) {
+            LOGGER.log(Level.SEVERE, "Fallo al imprimir la plantilla " + type, e);
+            return false;
+        }
+    }
+
+    private PrintDataBuilder.PrintContext printContext() {
+        return new PrintDataBuilder.PrintContext(motelName, motelAddress, motelID, currencyConfig);
+    }
+
     // ========== PDF & Print ==========
 
     private void saveAsPDF(String type, ZonedDateTime date, int consecutive) {
@@ -679,17 +704,123 @@ public class Printer {
     }
 
     private void printWithService() {
+        PageFormat format = pageFormat();
+        if (format == null) {
+            return;
+        }
         try {
             PrinterJob job = PrinterJob.getPrinterJob();
             job.setPrintService(printerService);
-            PageFormat pf = job.defaultPage();
-            Paper paper = pf.getPaper();
-            paper.setImageableArea(0, 0, paper.getWidth(), paper.getHeight());
-            pf.setPaper(paper);
-            job.setPrintable(printLayout.getPrintable(null, null), pf);
+            job.setPrintable(printLayout.getPrintable(null, null), format);
             job.print();
         } catch (PrinterException ex) {
             LOGGER.log(Level.SEVERE, null, ex);
         }
+    }
+
+    // ========== Paper Size ==========
+
+    /**
+     * Returns the page format the print job lays out to: the printer's declared page with
+     * its imageable area stretched over the whole paper. Both the real print and the paper
+     * size reported to the editor come from here, so the preview cannot drift from the print.
+     *
+     * @return the page format, or {@code null} when no print service is selected or it
+     *         rejects the job
+     */
+    private PageFormat pageFormat() {
+        if (printerService == null) {
+            return null;
+        }
+        try {
+            PrinterJob job = PrinterJob.getPrinterJob();
+            job.setPrintService(printerService);
+            PageFormat format = job.defaultPage();
+            Paper paper = format.getPaper();
+            paper.setImageableArea(0, 0, paper.getWidth(), paper.getHeight());
+            format.setPaper(paper);
+            return format;
+        } catch (PrinterException ex) {
+            LOGGER.log(Level.WARNING, "No se pudo consultar el tamaño de papel de la impresora", ex);
+            return null;
+        }
+    }
+
+    /**
+     * Returns the paper size the configured printer declares, in points.
+     *
+     * <p>Drivers without a usable declaration (or no printer at all) report the default
+     * 80 mm roll, flagged with {@code declared == false}.
+     *
+     * @return the paper size the editor preview must use
+     */
+    public PaperInfo paperInfo() {
+        PageFormat format = pageFormat();
+        if (format == null) {
+            return defaultPaperInfo();
+        }
+        Paper paper = format.getPaper();
+        return new PaperInfo(paper.getWidth(), paper.getHeight(), true, getCurrentPrinterName());
+    }
+
+    private static PaperInfo defaultPaperInfo() {
+        double width = DEFAULT_PAPER_WIDTH_MM * POINTS_PER_MM;
+        double height = DEFAULT_PAPER_HEIGHT_MM * POINTS_PER_MM;
+        return new PaperInfo(width, height, false, null);
+    }
+
+    /**
+     * Paper size used to lay out a document.
+     *
+     * @param widthPoints  paper width in points (1/72 inch)
+     * @param heightPoints paper height in points
+     * @param declared     whether the printer declared the size; {@code false} means the
+     *                     80 mm roll default was used
+     * @param printerName  name of the printer that declared it, or {@code null}
+     */
+    public record PaperInfo(double widthPoints, double heightPoints, boolean declared, String printerName) {
+
+        /** @return the width in millimetres, rounded */
+        public int widthMm() {
+            return (int) Math.round(widthPoints / POINTS_PER_MM);
+        }
+
+        /** @return the height in millimetres, rounded */
+        public int heightMm() {
+            return (int) Math.round(heightPoints / POINTS_PER_MM);
+        }
+
+        /** @return whether the declared width looks like a thermal roll rather than a sheet */
+        public boolean looksLikeRoll() {
+            return widthPoints <= MAX_ROLL_WIDTH_MM * POINTS_PER_MM;
+        }
+    }
+
+    // ========== Test Printing ==========
+
+    /**
+     * Prints a test copy of the given template with sample data.
+     *
+     * <p>Shares the rendering and the print job with real receipts, so what comes out of the
+     * printer is what the template will produce. Nothing else is touched: no PDF is written,
+     * no transaction, counter or room is read or modified, and the sample values come from
+     * {@link PrintFieldRegistry}.
+     *
+     * @param template the template to print, typically the unsaved copy being edited
+     * @return {@code false} when there is no printer to print on or the layout fails
+     */
+    public boolean printTestTemplate(PrintTemplate template) {
+        if (printerService == null || template == null) {
+            return false;
+        }
+        try {
+            resetDocument();
+            TemplateRenderer.render(template, PrintFieldRegistry.sampleData(template.templateType()), document);
+        } catch (BadLocationException ex) {
+            LOGGER.log(Level.SEVERE, "Fallo al preparar la impresión de prueba", ex);
+            return false;
+        }
+        printWithService();
+        return true;
     }
 }
