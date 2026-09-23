@@ -34,3 +34,19 @@ hs_err_pid*
 **/email-credentials.env
 /logs
 /docs/superpowers
+
+# Agent / local tooling files (not part of the program)
+/AGENTS.md
+/CLAUDE.md
+/PROJECT_ANALYSIS.md
+/skills-lock.json
+/PROMPT_BAILEYS_WHATSAPP.md
+
+# Local report generation scripts and side experiments
+/MonthlyReport.gs
+/monthly_report.py
+/__pycache__/
+
+# Generated / local data dumps
+/data.zip
+/dependency-reduced-pom.xml
