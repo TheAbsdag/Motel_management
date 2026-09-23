@@ -16,7 +16,8 @@ This document is a version index for the project's JSON persistence schema. Each
 |---------|-------------|--------|------|-------------|
 | [V0.1.2](V0.1.2.md) | 0.1.2 | `b73fbaf` | 2025 - May 2026 | Initial stable schema after recovering a lost version. No version field, durations in hours, `swaped` typo. |
 | [V0.1.3](V0.1.3.md) | 0.1.3 | `4b57cd48a4d6` | May 2026 | Standardised V2. All files carry `"version": 2`, durations in seconds, `swapped` typo fix, refund breakdown, sealed activity hierarchy. |
-| [V0.1.4.1](V0.1.4.1.md) | 0.1.4.1 | `aa1b232` (HEAD) | July 2026 | CSV export format + JSON v3. Tower numbers 0-based, `RoomData` records, automated v2→v3 migration. |
+| [V0.1.4.1](V0.1.4.1.md) | 0.1.4.1 | `aa1b232` | July 2026 | CSV export format + JSON v3. Tower numbers 0-based, `RoomData` records, automated v2→v3 migration. |
+| [V0.1.5](V0.1.5.md) | 0.1.5 | `72c2b41` | September 2026 | Schema unchanged (v3). Adds the optional `data/printTemplates/` custom print layouts. |
 
 ---
 
@@ -40,7 +41,7 @@ This document is a version index for the project's JSON persistence schema. Each
 
 ## File inventory
 
-All versions use the same 5 persistence file types:
+Every version shares the same 5 persistence file types; the directories below them were added later:
 
 | Directory | Contents | Since |
 |-----------|----------|-------|
@@ -50,6 +51,7 @@ All versions use the same 5 persistence file types:
 | `data/inventory` | Item catalog: prices, stock | V0.1.2 |
 | `history/{turn}-{timestamp}` | Completed turn archives (same schema as `data/turn`) | V0.1.2 |
 | `reports/` | XLSX + CSV turn report exports (not JSON) | V0.1.4 |
+| `data/printTemplates/` | Custom print layouts: one optional `<type>.json` per printable document (not turn data) | V0.1.5 |
 
 ---
 
@@ -57,5 +59,6 @@ All versions use the same 5 persistence file types:
 
 - **Timezone**: `America/Bogota` — all timestamps use `ZonedDateTime` with this zone.
 - **Version field**: Always at the top level. Read via `optInt("version", 0)` — no automated migration; field-level fallbacks only.
+- **Current schema**: `"version": 3`, introduced by V0.1.4.1 and unchanged by V0.1.5.
 - **Monetary values**: All amounts in COP (Colombian pesos), stored as `long`.
 - **Data directories**: All gitignored.

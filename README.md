@@ -9,7 +9,7 @@ Built on Netbeans as a educational project for a specific usecase present on the
 
 ## Tech Stack
 
-- **Java 21** with records, sealed interfaces, pattern matching
+- **Java 25** with records, sealed interfaces, pattern matching
 - **Swing** UI with MigLayout, custom renders/helpers
 - **Maven** wrapper (no system Maven required)
 - **JSON** persistence (no database)
@@ -27,9 +27,9 @@ Built on Netbeans as a educational project for a specific usecase present on the
 
 ## Architecture
 
-MVC with manual dependency injection wired in `App.java`. A `MotelManagement` facade delegates to service objects (`RoomManager`, `SellingService`, `TurnService`, `HistoryService`, `EmailConfigurationService`, `ProgramConfig`, `Register`, `Printer`, `FileManager`). A single `Controller` orchestrates 12 sub-controllers and 4 timers (clock, backup, floor rotation, overtime warning).
+MVC with manual dependency injection wired in `App.java`. A `MotelManagement` facade delegates to service objects (`RoomManager`, `SellingService`, `TurnService`, `HistoryService`, `EmailConfigurationService`, `ProgramConfig`, `Register`, `Printer`, `FileManager`). A single `Controller` orchestrates 13 sub-controllers and 4 timers (clock, backup, floor rotation, overtime warning).
 
-**Packages:** `controller`, `controller.sub`, `model`, `model.modelManagers`, `model.dto`, `model.email.config`, `model.email.dto`, `model.email.exception`, `model.email.service`, `model.json`, `model.turn`, `view`, `view.helpers`, `view.customListRenderes`, `view.interfaces`
+**Packages:** `controller`, `controller.sub`, `model`, `model.modelManagers`, `model.dto`, `model.email.config`, `model.email.dto`, `model.email.exception`, `model.email.service`, `model.json`, `model.print`, `model.turn`, `view`, `view.helpers`, `view.customListRenderes`, `view.interfaces`
 
 A detailed [sequence diagram](docs/DIAGRAMS/v0.1.3.1.md) covering all 10 defensive validation layers across the MVC stack is available in the [diagrams index](docs/DIAGRAMS/DIAGRAMS.md).
 
@@ -38,6 +38,10 @@ A detailed [sequence diagram](docs/DIAGRAMS/v0.1.3.1.md) covering all 10 defensi
 The program targets a **touchscreen** interface, with touchscreen related control for list and Management
 A main Floor view is present showing status of the program, a warning for overtime room booking is also present for multiple tower / floors configurations
 Each room has 3 different selection for time, with a personalized modification for each room present on the configuration, as well to the price of each one (Currently only in COP)
+
+### Printing
+
+The four printed documents (room receipt, sale receipt, turn summary, turn detail) are laid out from JSON templates. A type without a customized template prints with the layout built into the program, so a fresh installation needs nothing configured; layouts are edited, previewed at the paper width of the configured printer and test-printed from *Options → Printer configuration → CONFIGURAR IMPRESION*. Format, field keys and styles: [print templates](docs/PRINT_TEMPLATES.md).
 
 
 ## Future features / roadmap
@@ -49,7 +53,7 @@ Features to be added, in no particular order of progress, WIP will be marked and
 - [ ] **External door interface:** On a separate project it's meant to link external hardware door opening and closing for tracking of each room linked to it (Currently in progress, future github linking to the project will be available)
 - [ ] **Personalization, encryption of history:** To apply encryption and data safety, future implementation for all data to be locally encrypted to the user requirements is being testes (Currently in progress)
 - [x] **Report exportation:** Partially implemented for email report, future WhatsApp integration for reporting is in progress (email initial release: v0.1.4)
-- [ ] **Printer page personalization:** For convenience, a fixed calculation for a 90mm thermal printer is the only implementation currently available for printing, a more customizable option is being setup
+- [x] **Printer page personalization:** Receipts and turn reports are laid out from editable JSON templates (defaults tuned for a thermal printer). The template editor is reachable from *Options → Printer configuration → CONFIGURAR IMPRESION*; a type without a custom template keeps using the built-in layout. The editor previews each line on a sheet as wide as the paper the configured printer declares (so a line that wraps on paper wraps in the preview), with zoom, a paper selector for comparison and a page counter; **IMPRIMIR PRUEBA** prints the unsaved template with sample data through the same print job receipts use, without touching the turn or any stored data
 - [ ] **Date and time customization:** On the effort to localization, a date and time customization will be managed for data saving and related (Currently in progress with localization)
 - [ ] **Database integration:** A customizable database integration and base is being considered to not rely heavily on JSON data structures for consulting
 
