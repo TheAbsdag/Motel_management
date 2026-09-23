@@ -21,6 +21,7 @@ public enum ViewCard {
     EXTRA_TURN_CHANGES_VIEW("extraTurnChangesView"),
     ROOM_SUMMARY_VIEW("roomSummaryView"),
     PRINTER_CONFIG_VIEW("printerConfigView"),
+    PRINT_TEMPLATE_EDITOR_VIEW("printTemplateEditorView"),
     MOTEL_DATA_CONFIG_VIEW("motelDataConfigView"),
     DATA_SAVING_CONFIG_VIEW("dataSavingConfigView"),
     FLOOR_CONFIG_VIEW("floorConfigView"),

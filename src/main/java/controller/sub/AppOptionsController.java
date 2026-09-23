@@ -23,6 +23,7 @@ public class AppOptionsController {
     private final PrinterConfigurationView printerView;
     private final Runnable onBack;
     private final Runnable onShowPrinter;
+    private final Runnable onShowPrintTemplates;
     private final Runnable onShowMotelData;
     private final Runnable onShowTimeConfig;
     private final Runnable onShowFloorConfig;
@@ -37,6 +38,7 @@ public class AppOptionsController {
      * @param printerView     the printer configuration view panel
      * @param onBack          callback to return to management options view
      * @param onShowPrinter   callback to navigate to printer config view
+     * @param onShowPrintTemplates callback to navigate to the print template editor
      * @param onShowMotelData callback to navigate to motel data config view
      * @param onShowTimeConfig callback to navigate to time config view
      * @param onShowFloorConfig callback to navigate to floor config view
@@ -50,6 +52,7 @@ public class AppOptionsController {
                                 PrinterConfigurationView printerView,
                                 Runnable onBack,
                                 Runnable onShowPrinter,
+                                Runnable onShowPrintTemplates,
                                 Runnable onShowMotelData,
                                 Runnable onShowTimeConfig,
                                 Runnable onShowFloorConfig,
@@ -62,6 +65,7 @@ public class AppOptionsController {
         this.printerView = printerView;
         this.onBack = onBack;
         this.onShowPrinter = onShowPrinter;
+        this.onShowPrintTemplates = onShowPrintTemplates;
         this.onShowMotelData = onShowMotelData;
         this.onShowTimeConfig = onShowTimeConfig;
         this.onShowFloorConfig = onShowFloorConfig;
@@ -91,6 +95,8 @@ public class AppOptionsController {
 
         // Printer selection
         printerView.onConfirmPrinterButton(() -> confirmPrinter());
+        printerView.onSetupPrintingPageButton(() -> onShowPrintTemplates.run());
+
         printerView.onPrinterListSelection(event -> {
             if (!event.getValueIsAdjusting()) {
                 int selectedIndex = printerView.getSelectedPrinterIndex();

@@ -28,6 +28,7 @@ public class UserGUI extends JFrame {
     private RoomChangeView roomChangeView;
     private AppOptionsView appOptions;
     private PrinterConfigurationView printerConfigView;
+    private TemplateEditorView templateEditorView;
     private MotelDataConfigurationView motelDataConfigView;
     private DataSavingConfigurationView dataSavingConfigView;
     private FloorConfigurationView floorConfigView;
@@ -94,6 +95,9 @@ public class UserGUI extends JFrame {
 
         printerConfigView = new PrinterConfigurationView();
         addView(printerConfigView, ViewCard.PRINTER_CONFIG_VIEW);
+
+        templateEditorView = new TemplateEditorView();
+        addView(templateEditorView, ViewCard.PRINT_TEMPLATE_EDITOR_VIEW);
 
         motelDataConfigView = new MotelDataConfigurationView();
         addView(motelDataConfigView, ViewCard.MOTEL_DATA_CONFIG_VIEW);
@@ -276,6 +280,10 @@ public class UserGUI extends JFrame {
 
     public PrinterConfigurationView getPrinterConfigView() {
         return printerConfigView;
+    }
+
+    public TemplateEditorView getTemplateEditorView() {
+        return templateEditorView;
     }
 
     public MotelDataConfigurationView getMotelDataConfigView() {

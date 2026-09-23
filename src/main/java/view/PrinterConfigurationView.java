@@ -35,6 +35,8 @@ public class PrinterConfigurationView extends JPanel {
     public void onBackButton(Runnable action) { backButton.addActionListener(e -> action.run()); }
     /** Enables or disables the back button. */
     public void setBackEnabled(boolean enabled) { backButton.setVisible(enabled); backButton.setEnabled(enabled); }
+    /** Registers a listener for the setup printing page button. */
+    public void onSetupPrintingPageButton(Runnable action) { setupPrintingPageButton.addActionListener(e -> action.run()); }
     /**
      * Re-wires the confirm and back buttons for first-boot flow.
      * Removes existing listeners, disables back, and calls the provided

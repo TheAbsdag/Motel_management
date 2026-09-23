@@ -9,16 +9,20 @@ import controller.sub.HistoryController;
 import controller.sub.InventoryController;
 import controller.sub.ManagementController;
 import controller.sub.MotelDataConfigurationController;
+import controller.sub.PrintTemplateController;
 import controller.sub.RoomController;
 import controller.sub.SellingController;
 import controller.sub.TurnController;
+import java.nio.file.Path;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
+import model.modelManagers.FileManager;
 import model.modelManagers.MotelManagement;
+import model.print.PrintTemplateStore;
 import model.RoomStatus;
 import model.turn.ExtraChangeType;
 import view.UserGUI;
@@ -78,6 +82,7 @@ public class Controller {
     private final FloorConfigurationController floorConfigurationController;
     private final MotelDataConfigurationController motelDataConfigController;
     private final EmailController emailController;
+    private final PrintTemplateController printTemplateController;
     private CurrencyConfigurationController currencyConfigurationController;
 
     // Timers
@@ -108,11 +113,18 @@ public class Controller {
                 this::saveMainFiles, () -> saveBackupFiles("transaction"));
         inventoryController = new InventoryController(motelManager, userInterface.getInventoryView(),
                 managementController::showManagementOptions, this::saveMainFiles, () -> saveBackupFiles("roomSwap"));
+        printTemplateController = new PrintTemplateController(
+                new PrintTemplateStore(Path.of(FileManager.PATH)),
+                motelManager,
+                userInterface.getTemplateEditorView(),
+                this::openPrinterConfig);
+
         appOptionsController = new AppOptionsController(motelManager,
                 userInterface.getAppOptions(),
                 userInterface.getPrinterConfigView(),
                 managementController::showManagementOptions,
                 this::openPrinterConfig,
+                this::openPrintTemplateEditor,
                 this::openMotelDataConfig,
                 this::openTimeConfig,
                 this::openFloorConfig,
@@ -252,6 +264,7 @@ public class Controller {
         inventoryController.initListeners();
         managementController.initListeners();
         appOptionsController.initListeners();
+        printTemplateController.initListeners();
         floorConfigurationController.initListeners();
         motelDataConfigController.initListeners();
         emailController.initListeners();
@@ -306,6 +319,11 @@ public class Controller {
 
     private void openPrinterConfig() {
         userInterface.setView(ViewCard.PRINTER_CONFIG_VIEW);
+    }
+
+    private void openPrintTemplateEditor() {
+        printTemplateController.showEditor();
+        userInterface.setView(ViewCard.PRINT_TEMPLATE_EDITOR_VIEW);
     }
 
     private void openMotelDataConfig() {
