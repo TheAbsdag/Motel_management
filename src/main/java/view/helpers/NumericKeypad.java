@@ -40,7 +40,9 @@ public class NumericKeypad extends JPanel {
     private JTextField target;
 
     public NumericKeypad() {
-        super(new MigLayout("insets 4", "[grow,fill][grow,fill][grow,fill]"));
+        // wrap 3 lays the keys out as the 3x4 pad a numeric keypad is expected to be;
+        // without it MigLayout keeps all twelve in a single row.
+        super(new MigLayout("insets 4, wrap 3", "[grow,fill][grow,fill][grow,fill]"));
         for (String key : KEYS) {
             JButton keyButton = new JButton(key);
             keyButton.setFont(KEY_FONT);

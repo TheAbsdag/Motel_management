@@ -1,8 +1,11 @@
 package view.helpers;
 
 import java.awt.Component;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import javax.swing.JButton;
 import javax.swing.JPopupMenu;
 import javax.swing.JTextField;
@@ -12,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 /**
  * Covers the on-screen keypad and the fields it is attached to. The keys are pressed
@@ -36,6 +40,29 @@ class NumericKeypadTest {
     }
 
     // --- the keypad itself ---
+
+    /**
+     * Verifies that the twelve keys are laid out as a 3x4 pad: three columns and four rows,
+     * the shape a numeric keypad is expected to have.
+     * Expected: 3 distinct x positions and 4 distinct y positions among the keys.
+     * Failure: the keys end up in a single long row (MigLayout without a wrap), which is
+     *          hard to hit on a touchscreen.
+     */
+    @Test
+    void shouldLayTheKeysOutAsAThreeByFourPad() {
+        keypad.setSize(240, 260);
+        keypad.doLayout();
+
+        Set<Integer> columns = new HashSet<>();
+        Set<Integer> rows = new HashSet<>();
+        for (Component component : keypad.getComponents()) {
+            columns.add(component.getX());
+            rows.add(component.getY());
+        }
+
+        assertThat(columns).hasSize(3);
+        assertThat(rows).hasSize(4);
+    }
 
     /**
      * Verifies that the digits land in the bound field through its document, so the filter
@@ -189,7 +216,31 @@ class NumericKeypadTest {
         assertThat(NumericKeypadPopup.isEnabled()).isTrue();
     }
 
+    /**
+     * Verifies that tapping an attached field does nothing while the keypad is switched off,
+     * which is what an installation with a keyboard needs: the field is left to the keyboard
+     * and no popup covers the screen.
+     * Expected: the tap neither opens the popup nor throws.
+     * Failure: the setting is ignored and the pad opens anyway.
+     */
+    @Test
+    void shouldNotOpenTheKeypadWhenSwitchedOff() {
+        NumericKeypadPopup.setEnabled(false);
+        NumericKeypadPopup.attach(field);
+
+        assertThatCode(this::tapOnField).doesNotThrowAnyException();
+        assertThat(field.getText()).isEmpty();
+    }
+
     // --- helpers ---
+
+    /** Sends the tap the popup listens for to the first mouse listener of the field. */
+    private void tapOnField() {
+        for (java.awt.event.MouseListener listener : field.getMouseListeners()) {
+            listener.mousePressed(new MouseEvent(field, MouseEvent.MOUSE_PRESSED,
+                    System.currentTimeMillis(), 0, 5, 5, 1, false, MouseEvent.BUTTON1));
+        }
+    }
 
     private static void pressKey(NumericKeypad keypad, String label) {
         for (Component component : keypad.getComponents()) {
