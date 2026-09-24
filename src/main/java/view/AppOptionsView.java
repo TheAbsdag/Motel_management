@@ -32,6 +32,7 @@ public class AppOptionsView extends JPanel implements TimeLabelInterface{
 	saveConfigurationButton = new JButton();
 	exportConfigurationButton = new JButton();
 	currencyConfigButton = new JButton();
+	keypadCheckBox = new JCheckBox();
 	backButton = new JButton();
 
 	//======== this ========
@@ -111,6 +112,12 @@ public class AppOptionsView extends JPanel implements TimeLabelInterface{
 	currencyConfigButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 20));
 	add(currencyConfigButton, "cell 2 6,growy");
 
+	//---- keypadCheckBox ----
+	keypadCheckBox.setText("USAR TECLADO EN PANTALLA");
+	keypadCheckBox.setFont(new Font("Segoe UI Black", Font.PLAIN, 20));
+	keypadCheckBox.setSelected(true);
+	add(keypadCheckBox, "cell 1 4");
+
 	//---- backButton ----
 	backButton.setText("VOLVER");
 	backButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 24));
@@ -132,6 +139,7 @@ public class AppOptionsView extends JPanel implements TimeLabelInterface{
     private JButton saveConfigurationButton;
     private JButton exportConfigurationButton;
     private JButton currencyConfigButton;
+    private JCheckBox keypadCheckBox;
     private JButton backButton;
     // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
 
@@ -178,8 +186,29 @@ public class AppOptionsView extends JPanel implements TimeLabelInterface{
         currencyConfigButton.addActionListener(e -> action.run());
     }
 
+    /** Registers a listener for the on-screen keypad switch. */
+    public void onKeypadChange(Runnable action) {
+        keypadCheckBox.addActionListener(e -> action.run());
+    }
+
     /** Registers a listener for the back/return button. */
     public void onBackButton(Runnable action) {
         backButton.addActionListener(e -> action.run());
+    }
+
+    // ========== On-screen keypad switch ==========
+
+    /** @return true when the on-screen keypad is switched on for this installation */
+    public boolean isKeypadSelected() {
+        return keypadCheckBox.isSelected();
+    }
+
+    /**
+     * Shows the stored keypad setting on the switch.
+     *
+     * @param selected true when the keypad is enabled
+     */
+    public void setKeypadSelected(boolean selected) {
+        keypadCheckBox.setSelected(selected);
     }
 }

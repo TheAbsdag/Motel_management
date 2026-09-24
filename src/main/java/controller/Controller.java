@@ -318,6 +318,7 @@ public class Controller {
     }
 
     private void openAppOptionsHub() {
+        userInterface.getAppOptions().setKeypadSelected(motelManager.getProgramConfig().isKeypadEnabled());
         userInterface.setView(ViewCard.APP_OPTIONS_VIEW);
     }
 

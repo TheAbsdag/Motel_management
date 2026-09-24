@@ -93,6 +93,14 @@ new FormModel {
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 2 6,growy"
 			} )
+			add( new FormComponent( "javax.swing.JCheckBox" ) {
+				name: "keypadCheckBox"
+				"text": "USAR TECLADO EN PANTALLA"
+				"font": #Font1
+				"selected": true
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 1 4"
+			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "backButton"
 				"text": "VOLVER"

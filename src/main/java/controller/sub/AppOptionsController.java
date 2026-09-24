@@ -5,6 +5,7 @@ import javax.swing.DefaultListModel;
 import model.modelManagers.MotelManagement;
 import view.AppOptionsView;
 import view.PrinterConfigurationView;
+import view.helpers.NumericKeypadPopup;
 
 /**
  * Controls the application options hub view and printer configuration.
@@ -89,6 +90,7 @@ public class AppOptionsController {
         appOptionsView.onSaveConfiguration(() -> onShowDataSaving.run());
         appOptionsView.onExportConfiguration(() -> onShowExportConfig.run());
         appOptionsView.onCurrencyConfiguration(() -> onShowCurrencyConfig.run());
+        appOptionsView.onKeypadChange(this::updateKeypadSetting);
 
         // Sub-config view back buttons → return to options hub
         printerView.onBackButton(() -> onShowOptions.run());
@@ -109,9 +111,18 @@ public class AppOptionsController {
         });
     }
 
+    /**
+     * Stores the on-screen keypad switch and applies it at once, so the change is effective
+     * without a restart.
+     */
+    private void updateKeypadSetting() {
+        boolean enabled = appOptionsView.isKeypadSelected();
+        motelManager.saveKeypadConfiguration(enabled);
+        NumericKeypadPopup.setEnabled(enabled);
+    }
+
     /** Populates the printer configuration view with current printer data. */
-    public void showPrinterOptions() {
-        printerView.setConfirmPrinterEnabled(false);
+    public void showPrinterOptions() {        printerView.setConfirmPrinterEnabled(false);
         printerView.setPrinterUsedText(motelManager.getCurrentPrinterName());
         List<String> printerNames = motelManager.getPrinterLists();
         DefaultListModel<String> model = new DefaultListModel<>();

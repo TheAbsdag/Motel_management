@@ -502,6 +502,17 @@ public class MotelManagement {
         files.saveJsonMainDataPath(programConfig.toJson(), "applicationProperties");
     }
 
+    /**
+     * Stores the on-screen keypad setting of this installation and writes the application
+     * properties. Called when the switch in the options hub is toggled.
+     *
+     * @param enabled true to open the keypad on numeric fields
+     */
+    public void saveKeypadConfiguration(boolean enabled) {
+        programConfig.setKeypadEnabled(enabled);
+        files.saveJsonMainDataPath(programConfig.toJson(), "applicationProperties");
+    }
+
     public void revertToSavedConfig() {
         String rawConfig = files.getJsonData("applicationProperties");
         programConfig.loadFromJson(rawConfig);

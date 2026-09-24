@@ -107,6 +107,41 @@ class AppOptionsViewTest {
         view.updateTimeDisplay("12:00 PM", "23 de mayo");
     }
 
+    // --- on-screen keypad switch ---
+
+    /**
+     * Verifies that toggling the switch fires the callback registered via
+     * {@link AppOptionsView#onKeypadChange(Runnable)}.
+     * Expected: The AtomicBoolean is set to true after the switch is clicked.
+     * Failure: The switch is not wired, so the setting can never be stored.
+     */
+    @Test
+    void shouldInvokeCallbackWhenKeypadSwitchToggled() throws Exception {
+        AtomicBoolean invoked = new AtomicBoolean(false);
+        view.onKeypadChange(() -> invoked.set(true));
+
+        clickButton(view, "keypadCheckBox");
+
+        assertThat(invoked).isTrue();
+    }
+
+    /**
+     * Verifies that the switch starts on, which is what a touchscreen installation needs,
+     * and that the stored setting can be shown on it.
+     * Expected: selected by default, false after setKeypadSelected(false), true after (true).
+     * Failure: the switch does not reflect what is stored.
+     */
+    @Test
+    void shouldShowTheStoredKeypadSetting() {
+        assertThat(view.isKeypadSelected()).isTrue();
+
+        view.setKeypadSelected(false);
+        assertThat(view.isKeypadSelected()).isFalse();
+
+        view.setKeypadSelected(true);
+        assertThat(view.isKeypadSelected()).isTrue();
+    }
+
     private static void clickButton(Component parent, String fieldName) throws Exception {
         Field field = parent.getClass().getDeclaredField(fieldName);
         field.setAccessible(true);
