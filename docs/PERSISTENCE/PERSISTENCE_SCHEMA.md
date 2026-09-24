@@ -18,6 +18,7 @@ This document is a version index for the project's JSON persistence schema. Each
 | [V0.1.3](V0.1.3.md) | 0.1.3 | `4b57cd48a4d6` | May 2026 | Standardised V2. All files carry `"version": 2`, durations in seconds, `swapped` typo fix, refund breakdown, sealed activity hierarchy. |
 | [V0.1.4.1](V0.1.4.1.md) | 0.1.4.1 | `aa1b232` | July 2026 | CSV export format + JSON v3. Tower numbers 0-based, `RoomData` records, automated v2→v3 migration. |
 | [V0.1.5](V0.1.5.md) | 0.1.5 | `72c2b41` | September 2026 | Schema unchanged (v3). Adds the optional `data/printTemplates/` custom print layouts. |
+| [V0.1.5.1](V0.1.5.1.md) | 0.1.5.1 | `61d3b2a` | September 2026 | Schema unchanged (v3). Fixes the read path of 0.1.2 files: hour-based room durations and the tower migration of a turn without a `version` field. |
 
 ---
 
@@ -58,7 +59,7 @@ Every version shares the same 5 persistence file types; the directories below th
 ## Conventions
 
 - **Timezone**: `America/Bogota` — all timestamps use `ZonedDateTime` with this zone.
-- **Version field**: Always at the top level. Read via `optInt("version", 0)` — no automated migration; field-level fallbacks only.
-- **Current schema**: `"version": 3`, introduced by V0.1.4.1 and unchanged by V0.1.5.
+- **Version field**: Always at the top level. A file that omits it is read as V0.1.2 (`0`), so the automated migrations run (hours → seconds on read, 1-based → 0-based towers); field-level fallbacks cover the rest.
+- **Current schema**: `"version": 3`, introduced by V0.1.4.1 and unchanged by V0.1.5 and V0.1.5.1.
 - **Monetary values**: All amounts in COP (Colombian pesos), stored as `long`.
 - **Data directories**: All gitignored.
