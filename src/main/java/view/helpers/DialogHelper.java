@@ -1,5 +1,6 @@
 package view.helpers;
 
+import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -163,71 +164,142 @@ public final class DialogHelper {
     /**
      * Asks for the duration and the price of the 3 room time slots, prefilled with the
      * values given. Used by the floor configuration screen to price a whole tower and to
-     * set what its new rooms start from. Invalid input is reported and asked again
-     * instead of being dropped.
+     * set what its new rooms start from. Each value has quick adjustment buttons, and
+     * input that cannot be used is reported and asked again instead of being dropped.
      *
      * @param towerName tower the values are entered for, shown in the dialog
      * @param current   the tower's current time slots, or null for the built-in defaults
      * @return the 3 time slots entered, or null when the dialog is cancelled
      */
     public static RoomTime[] showTowerPricingDialog(String towerName, RoomTime[] current) {
+        TowerPricingFields fields = createTowerPricingFields(towerName, current);
+        while (true) {
+            int result = JOptionPane.showConfirmDialog(null, fields.panel, "TIEMPOS Y PRECIOS",
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+            if (result != JOptionPane.OK_OPTION) {
+                return null;
+            }
+            RoomTime[] slots = fields.readSlots();
+            if (slots != null) {
+                return slots;
+            }
+            showErrorMessage("La duracion y el valor de cada tiempo deben ser mayores a cero.",
+                    "DATOS INVALIDOS");
+        }
+    }
+
+    /**
+     * Builds the content of the tower pricing dialog. Package-private so the prefill of the
+     * fields and the adjustment buttons can be checked without opening a modal dialog.
+     *
+     * @param towerName tower the values are entered for, shown in the header
+     * @param current   the values to start from, or null for the built-in defaults
+     * @return the panel with the 3 slots of the dialog
+     */
+    static TowerPricingFields createTowerPricingFields(String towerName, RoomTime[] current) {
         RoomTime[] prefill = current != null && current.length == 3 ? current : RoomTime.getDefaultTimeSlots();
 
         JPanel panel = new JPanel(new BorderLayout(15, 20));
         panel.add(styledMessage("TIEMPOS Y PRECIOS DE " + towerName
                 + "\nSe aplican a todas sus habitaciones y a las habitaciones nuevas."), BorderLayout.NORTH);
 
-        JPanel grid = new JPanel(new MigLayout("insets 0, fillx", "[][grow,fill][][grow,fill]"));
+        JPanel grid = new JPanel(new MigLayout("insets 0, fillx", "[][grow,fill][][grow,fill][]"));
         grid.add(fieldLabel("DURACION"), "cell 1 0");
         grid.add(fieldLabel("UNIDAD"), "cell 2 0");
         grid.add(fieldLabel("VALOR"), "cell 3 0");
+        grid.add(fieldLabel("AJUSTAR VALOR"), "cell 4 0");
 
-        List<JTextField> durationFields = new ArrayList<>();
-        List<JComboBox<String>> unitBoxes = new ArrayList<>();
-        List<JTextField> priceFields = new ArrayList<>();
-        for (int i = 0; i < 3; i++) {
-            JTextField durationField = numericField(prefill[i].getTimeSeconds());
+        TowerPricingFields fields = new TowerPricingFields(panel);
+        for (int i = 0; i < prefill.length; i++) {
+            fields.addSlot(i, prefill[i], grid);
+        }
+        panel.add(grid, BorderLayout.CENTER);
+        return fields;
+    }
+
+    /**
+     * The panel of the tower pricing dialog and its inputs, one entry per room time slot.
+     */
+    static final class TowerPricingFields {
+
+        /** Price steps of the adjustment buttons, as on the room configuration screen. */
+        private static final long[] PRICE_STEPS = {-1000L, -100L, 100L, 1000L};
+
+        private final JPanel panel;
+        private final List<JTextField> durationFields = new ArrayList<>();
+        private final List<JComboBox<String>> unitBoxes = new ArrayList<>();
+        private final List<JTextField> priceFields = new ArrayList<>();
+        private final List<JButton[]> stepButtons = new ArrayList<>();
+
+        private TowerPricingFields(JPanel panel) {
+            this.panel = panel;
+        }
+
+        private void addSlot(int index, RoomTime slot, JPanel grid) {
+            // The duration is shown in the unit it is stored in, so what the dialog opens
+            // with is what the tower already has: 10.800 seconds read as 3 HORAS.
+            int unitIndex = unitIndexFor(slot.getTimeSeconds());
+            JTextField durationField = numericField(
+                    UNIT_VALUES[unitIndex].convert(slot.getTimeSeconds(), TimeUnit.SECONDS));
             JComboBox<String> unitBox = new JComboBox<>(UNIT_NAMES);
             unitBox.setFont(MESSAGE_FONT);
-            unitBox.setSelectedIndex(unitIndexFor(prefill[i].getTimeSeconds()));
-            JTextField priceField = numericField(prefill[i].getPrice());
+            unitBox.setSelectedIndex(unitIndex);
+            JTextField priceField = numericField(slot.getPrice());
 
-            int row = i + 1;
-            grid.add(fieldLabel("TIEMPO " + (i + 1)), "cell 0 " + row);
+            JPanel steps = new JPanel(new MigLayout("insets 0", "[][][][]"));
+            JButton[] stepButtonArray = new JButton[PRICE_STEPS.length];
+            for (int s = 0; s < PRICE_STEPS.length; s++) {
+                long step = PRICE_STEPS[s];
+                JButton stepButton = new JButton(step > 0 ? "+" + step : String.valueOf(step));
+                stepButton.setFont(MESSAGE_FONT);
+                stepButton.addActionListener(e -> PriceAdjustmentHelper.adjust(priceField, step));
+                steps.add(stepButton, "growx");
+                stepButtonArray[s] = stepButton;
+            }
+
+            int row = index + 1;
+            grid.add(fieldLabel("TIEMPO " + (index + 1)), "cell 0 " + row);
             grid.add(durationField, "cell 1 " + row);
             grid.add(unitBox, "cell 2 " + row);
             grid.add(priceField, "cell 3 " + row);
+            grid.add(steps, "cell 4 " + row);
 
             durationFields.add(durationField);
             unitBoxes.add(unitBox);
             priceFields.add(priceField);
+            stepButtons.add(stepButtonArray);
         }
-        panel.add(grid, BorderLayout.CENTER);
 
-        while (true) {
-            int result = JOptionPane.showConfirmDialog(null, panel, "TIEMPOS Y PRECIOS",
-                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-            if (result != JOptionPane.OK_OPTION) {
-                return null;
-            }
-
-            RoomTime[] slots = new RoomTime[3];
-            boolean valid = true;
-            for (int i = 0; i < 3; i++) {
+        /**
+         * @return the 3 slots as entered, or null when a duration or a price is unusable
+         */
+        RoomTime[] readSlots() {
+            RoomTime[] slots = new RoomTime[durationFields.size()];
+            for (int i = 0; i < slots.length; i++) {
                 TimeUnit unit = UNIT_VALUES[unitBoxes.get(i).getSelectedIndex()];
                 long seconds = InputParser.parseDurationSeconds(durationFields.get(i).getText(), unit);
                 long price = InputParser.parseLongSafe(priceFields.get(i).getText());
                 if (seconds <= 0 || price <= 0) {
-                    valid = false;
-                    break;
+                    return null;
                 }
                 slots[i] = new RoomTime(price, seconds);
             }
-            if (valid) {
-                return slots;
-            }
-            showErrorMessage("La duracion y el valor de cada tiempo deben ser mayores a cero.",
-                    "DATOS INVALIDOS");
+            return slots;
+        }
+
+        /** @return the duration field of a slot, in the unit its combo box selects */
+        JTextField durationField(int index) {
+            return durationFields.get(index);
+        }
+
+        /** @return the value field of a slot */
+        JTextField priceField(int index) {
+            return priceFields.get(index);
+        }
+
+        /** @return the adjustment buttons of a slot, in {@link #PRICE_STEPS} order */
+        JButton[] priceStepButtons(int index) {
+            return stepButtons.get(index);
         }
     }
 

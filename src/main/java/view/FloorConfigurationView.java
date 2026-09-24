@@ -60,7 +60,7 @@ public class FloorConfigurationView extends JPanel implements DirtyTrackable {
 
     private void initComponents() {
 	// JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents  @formatter:off
-	// Generated using JFormDesigner Educational license - Santiago Esteban Castelblanco Castiblanco (saecastelblancoc)
+	// Generated using JFormDesigner Educational license - Santiago Esteban Castelblanco (SANTIAGO CASTELBLANCO)
 	floorConfigurationTitleLabel = new JLabel();
 	towerSelectedInformativeLabel = new JLabel();
 	towerSelectedLabel = new JLabel();
@@ -211,12 +211,12 @@ public class FloorConfigurationView extends JPanel implements DirtyTrackable {
 	//---- towerPricesButton ----
 	towerPricesButton.setText("<HTML><CENTER>PRECIOS<br>TORRE</CENTER></HTML>");
 	towerPricesButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 16));
-	add(towerPricesButton, "cell 4 10,growy");
+	add(towerPricesButton, "cell 4 10 2 1,grow");
 
 	//---- saveButton ----
 	saveButton.setText("GUARDAR");
 	saveButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 16));
-	add(saveButton, "cell 5 10,growy");
+	add(saveButton, "cell 4 10 2 1,growy");
 	// JFormDesigner - End of component initialization  //GEN-END:initComponents  @formatter:on
 
         setupInternalComponents();
@@ -536,7 +536,7 @@ public class FloorConfigurationView extends JPanel implements DirtyTrackable {
     }
 
     // JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables  @formatter:off
-    // Generated using JFormDesigner Educational license - Santiago Esteban Castelblanco Castiblanco (saecastelblancoc)
+    // Generated using JFormDesigner Educational license - Santiago Esteban Castelblanco (SANTIAGO CASTELBLANCO)
     private JLabel floorConfigurationTitleLabel;
     private JLabel towerSelectedInformativeLabel;
     private JLabel towerSelectedLabel;

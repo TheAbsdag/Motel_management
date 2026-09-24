@@ -1,4 +1,4 @@
-JFDML JFormDesigner: "8.2.2.0.382" Java: "25.0.2" encoding: "UTF-8"
+JFDML JFormDesigner: "9.0" encoding: "UTF-8"
 
 new FormModel {
 	contentType: "form/swing"
@@ -157,14 +157,14 @@ new FormModel {
 				"text": "<HTML><CENTER>PRECIOS<br>TORRE</CENTER></HTML>"
 				"font": #Font3
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 4 10,growy"
+				"value": "cell 4 10 2 1,grow"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "saveButton"
 				"text": "GUARDAR"
 				"font": #Font3
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 5 10,growy"
+				"value": "cell 4 10 2 1,growy"
 			} )
 		}, new FormLayoutConstraints( null ) {
 			"location": new java.awt.Point( 0, 0 )
