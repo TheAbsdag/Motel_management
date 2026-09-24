@@ -1,5 +1,6 @@
 package view.helpers;
 
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -166,5 +167,34 @@ class InputParserTest {
     void shouldReturnDefaultForOverflowValue() {
         String overflow = Long.MAX_VALUE + "0";
         assertThat(InputParser.parseLongSafe(overflow, 99L)).isEqualTo(99L);
+    }
+
+    // --- durations ---
+
+    /**
+     * Verifies that {@link InputParser#parseDurationSeconds(String, java.util.concurrent.TimeUnit)}
+     * converts the value with its unit into seconds.
+     * Expected: 3 h is 10.800 s, 90 min is 5.400 s and 45 s stays 45.
+     * Failure: A duration is stored in the unit it was typed in, so a room is booked for
+     *          minutes instead of hours.
+     */
+    @Test
+    void shouldParseDurationsIntoSeconds() {
+        assertThat(InputParser.parseDurationSeconds("3", TimeUnit.HOURS)).isEqualTo(10800L);
+        assertThat(InputParser.parseDurationSeconds("90", TimeUnit.MINUTES)).isEqualTo(5400L);
+        assertThat(InputParser.parseDurationSeconds("45", TimeUnit.SECONDS)).isEqualTo(45L);
+    }
+
+    /**
+     * Verifies that an empty or non-numeric duration yields 0 seconds, which callers
+     * reject as unusable, instead of throwing.
+     * Expected: 0 for an empty, blank and non-numeric value.
+     * Failure: A malformed duration throws or is stored as a valid value.
+     */
+    @Test
+    void shouldReturnZeroForUnusableDuration() {
+        assertThat(InputParser.parseDurationSeconds("", TimeUnit.HOURS)).isZero();
+        assertThat(InputParser.parseDurationSeconds("  ", TimeUnit.MINUTES)).isZero();
+        assertThat(InputParser.parseDurationSeconds("abc", TimeUnit.SECONDS)).isZero();
     }
 }

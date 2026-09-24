@@ -5,6 +5,7 @@ import java.lang.reflect.Field;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.AbstractButton;
 import javax.swing.JLabel;
+import javax.swing.JTextField;
 import model.Room;
 import model.RoomTime;
 import org.junit.jupiter.api.BeforeEach;
@@ -174,6 +175,116 @@ class RoomConfigurationViewTest {
         assertThat(view.getCurrentRoom()).isEqualTo(0);
     }
 
+    // --- dirty tracking / edited slots ---
+
+    /**
+     * Verifies that the times and prices of all 3 slots survive when they are edited one
+     * after the other without saving in between.
+     * Expected: getModifiedTimeSlots() returns the 3 edited slots.
+     * Failure: Switching slots reloads the fields from the stored values, so every slot but
+     *          the last one edited is lost.
+     */
+    @Test
+    void shouldKeepAllThreeSlotsEditedWithoutSavingInBetween() throws Exception {
+        view.loadRoom(0, 0, 0, new Room("T1-101", 0, 0, 0));
+
+        setFieldText(view, "priceTextField", "41000");
+        clickButton(view, "secondTimeConfiguration");
+        setFieldText(view, "priceTextField", "46000");
+        clickButton(view, "thirdTimeConfiguration");
+        setFieldText(view, "priceTextField", "89000");
+
+        RoomTime[] slots = view.getModifiedTimeSlots();
+
+        assertThat(slots[0].getPrice()).isEqualTo(41000L);
+        assertThat(slots[1].getPrice()).isEqualTo(46000L);
+        assertThat(slots[2].getPrice()).isEqualTo(89000L);
+    }
+
+    /**
+     * Verifies that edited durations survive switching slots as well.
+     * Expected: The durations of the 3 slots are 5 h, 13 h and 25 h in seconds.
+     * Failure: The duration entered for a slot is dropped when another slot is opened.
+     */
+    @Test
+    void shouldKeepEditedDurationsOfEverySlot() throws Exception {
+        view.loadRoom(0, 0, 0, new Room("T1-101", 0, 0, 0));
+
+        setFieldText(view, "timeDurationTextField", "5");
+        clickButton(view, "secondTimeConfiguration");
+        setFieldText(view, "timeDurationTextField", "13");
+        clickButton(view, "thirdTimeConfiguration");
+        setFieldText(view, "timeDurationTextField", "25");
+
+        RoomTime[] slots = view.getModifiedTimeSlots();
+
+        assertThat(slots[0].getTimeSeconds()).isEqualTo(5 * 3600L);
+        assertThat(slots[1].getTimeSeconds()).isEqualTo(13 * 3600L);
+        assertThat(slots[2].getTimeSeconds()).isEqualTo(25 * 3600L);
+    }
+
+    /**
+     * Verifies that an edited slot keeps its value when another slot is opened and the
+     * edited one is opened again.
+     * Expected: The slot holds the edited price.
+     * Failure: The value of a slot is reverted to the stored one by a round trip.
+     */
+    @Test
+    void shouldKeepAnEditedSlotAfterVisitingAnotherSlot() throws Exception {
+        view.loadRoom(0, 0, 0, new Room("T1-101", 0, 0, 0));
+
+        setFieldText(view, "priceTextField", "41000");
+        clickButton(view, "secondTimeConfiguration");
+        clickButton(view, "firstTimeConfiguration");
+
+        assertThat(view.getModifiedTimeSlots()[0].getPrice()).isEqualTo(41000L);
+    }
+
+    /**
+     * Verifies that an unusable value is reported as it was typed instead of being
+     * silently replaced by the stored one; the controller rejects the save.
+     * Expected: The slot holds a price of 0.
+     * Failure: The previous price is kept without telling the user.
+     */
+    @Test
+    void shouldNotSilentlyIgnoreAnUnusablePrice() throws Exception {
+        view.loadRoom(0, 0, 0, new Room("T1-101", 0, 0, 0));
+
+        setFieldText(view, "priceTextField", "0");
+
+        assertThat(view.getModifiedTimeSlots()[0].getPrice()).isZero();
+    }
+
+    /**
+     * Verifies that opening the other time slots is not reported as an unsaved change.
+     * Expected: isDirty() is false after visiting all 3 slots without editing.
+     * Failure: The screen always claims unsaved changes and asks to confirm on exit.
+     */
+    @Test
+    void shouldNotBecomeDirtyWhenOnlySwitchingSlots() throws Exception {
+        view.loadRoom(0, 0, 0, new Room("T1-101", 0, 0, 0));
+
+        clickButton(view, "secondTimeConfiguration");
+        clickButton(view, "thirdTimeConfiguration");
+        clickButton(view, "firstTimeConfiguration");
+
+        assertThat(view.isDirty()).isFalse();
+    }
+
+    /**
+     * Verifies that an edit is still reported as an unsaved change.
+     * Expected: isDirty() is true after changing a price.
+     * Failure: Real edits are ignored by the dirty flag, so they can be lost on exit.
+     */
+    @Test
+    void shouldBecomeDirtyAfterAnEdit() throws Exception {
+        view.loadRoom(0, 0, 0, new Room("T1-101", 0, 0, 0));
+
+        setFieldText(view, "priceTextField", "41000");
+
+        assertThat(view.isDirty()).isTrue();
+    }
+
     // --- helpers ---
 
     private static void clickButton(Component parent, String fieldName) throws Exception {
@@ -181,5 +292,11 @@ class RoomConfigurationViewTest {
         field.setAccessible(true);
         AbstractButton button = (AbstractButton) field.get(parent);
         button.doClick();
+    }
+
+    private static void setFieldText(Component parent, String fieldName, String text) throws Exception {
+        Field field = parent.getClass().getDeclaredField(fieldName);
+        field.setAccessible(true);
+        ((JTextField) field.get(parent)).setText(text);
     }
 }

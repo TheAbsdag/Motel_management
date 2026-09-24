@@ -82,6 +82,7 @@ public class FloorConfigurationView extends JPanel implements DirtyTrackable {
 	floorListDownButton = new JButton();
 	backButton = new JButton();
 	newRoomButton = new JButton();
+	towerPricesButton = new JButton();
 	saveButton = new JButton();
 
 	//======== this ========
@@ -206,6 +207,11 @@ public class FloorConfigurationView extends JPanel implements DirtyTrackable {
 	newRoomButton.setText("NUEVA HABITACION");
 	newRoomButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 16));
 	add(newRoomButton, "cell 3 10,growy");
+
+	//---- towerPricesButton ----
+	towerPricesButton.setText("<HTML><CENTER>PRECIOS<br>TORRE</CENTER></HTML>");
+	towerPricesButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 16));
+	add(towerPricesButton, "cell 4 10,growy");
 
 	//---- saveButton ----
 	saveButton.setText("GUARDAR");
@@ -428,6 +434,10 @@ public class FloorConfigurationView extends JPanel implements DirtyTrackable {
         newRoomButton.addActionListener(e -> action.run());
     }
 
+    public void onTowerPricesButton(Runnable action) {
+        towerPricesButton.addActionListener(e -> action.run());
+    }
+
     public void onTowerListLeft(Runnable action) {
         towerListLeftButton.addActionListener(e -> action.run());
     }
@@ -548,6 +558,7 @@ public class FloorConfigurationView extends JPanel implements DirtyTrackable {
     private JButton floorListDownButton;
     private JButton backButton;
     private JButton newRoomButton;
+    private JButton towerPricesButton;
     private JButton saveButton;
     // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
 }

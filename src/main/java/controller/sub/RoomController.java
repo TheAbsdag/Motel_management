@@ -8,6 +8,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import javax.swing.JButton;
 import model.ProgramConfig;
 import model.Room;
@@ -48,23 +49,24 @@ public class RoomController {
     private final UserGUI userInterface;
     private final Runnable onRoomSale;
     private final Runnable saveMainFiles;
-    private final Runnable saveBackupFilesRoomSwap;
+    private final Consumer<String> saveBackupFiles;
     private boolean isListAdjusting = false;
 
     /**
-     * @param motelManager              the model
-     * @param floorView                 the floor view (for room button listener setup)
-     * @param roomView                  the room detail view
-     * @param roomChangeView            the room change view
-     * @param userInterface             the main window for view switching
-     * @param onRoomSale                callback to start a room charge sale
-     * @param saveMainFiles             callback to save main data files
-     * @param saveBackupFilesRoomSwap   callback to save backup files as room operation
+     * @param motelManager     the model
+     * @param floorView        the floor view (for room button listener setup)
+     * @param roomView         the room detail view
+     * @param roomChangeView   the room change view
+     * @param userInterface    the main window for view switching
+     * @param onRoomSale       callback to start a room charge sale
+     * @param saveMainFiles    callback to save main data files
+     * @param saveBackupFiles  callback to save a backup record, labelled with the
+     *                         operation that caused it
      */
     public RoomController(MotelManagement motelManager, FloorView floorView,
                           RoomView roomView, RoomChangeView roomChangeView,
                           UserGUI userInterface, Runnable onRoomSale,
-                          Runnable saveMainFiles, Runnable saveBackupFilesRoomSwap) {
+                          Runnable saveMainFiles, Consumer<String> saveBackupFiles) {
         this.motelManager = motelManager;
         this.floorView = floorView;
         this.roomView = roomView;
@@ -72,7 +74,7 @@ public class RoomController {
         this.userInterface = userInterface;
         this.onRoomSale = onRoomSale;
         this.saveMainFiles = saveMainFiles;
-        this.saveBackupFilesRoomSwap = saveBackupFilesRoomSwap;
+        this.saveBackupFiles = saveBackupFiles;
     }
 
     /** Registers action listeners for room view and room change view buttons. */
@@ -257,14 +259,14 @@ public class RoomController {
                 motelManager.registerRoomTimeAdded(towerNumber, floorNumber, roomNumber, serviceDuration, price, false);
                 userInterface.setView(ViewCard.FLOOR_VIEW);
                 saveMainFiles.run();
-                saveBackupFilesRoomSwap.run();
+                saveBackupFiles.accept("roomSale");
                 attemptRoomEmail(towerNumber, floorNumber, roomNumber, serviceDuration, price);
             }
         } else {
             motelManager.registerRoomTimeAdded(towerNumber, floorNumber, roomNumber, serviceDuration, price, true);
             userInterface.setView(ViewCard.FLOOR_VIEW);
             saveMainFiles.run();
-            saveBackupFilesRoomSwap.run();
+            saveBackupFiles.accept("roomSale");
             attemptRoomEmail(towerNumber, floorNumber, roomNumber, serviceDuration, price);
         }
     }
@@ -280,7 +282,7 @@ public class RoomController {
         int floorNumber = motelManager.getCurrentFloorViewed();
         motelManager.registerRoomTimeEnd(towerNumber, floorNumber, roomNumber);
         saveMainFiles.run();
-        saveBackupFilesRoomSwap.run();
+        saveBackupFiles.accept("roomCheckout");
         userInterface.setView(ViewCard.FLOOR_VIEW);
     }
 
@@ -353,7 +355,7 @@ public class RoomController {
         boolean validReturn = motelManager.changeRoomTimeToAnother();
         if (validReturn) {
             saveMainFiles.run();
-            saveBackupFilesRoomSwap.run();
+            saveBackupFiles.accept("roomSwap");
             userInterface.setView(ViewCard.FLOOR_VIEW);
         }
     }

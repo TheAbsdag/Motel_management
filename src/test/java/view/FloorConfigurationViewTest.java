@@ -249,6 +249,22 @@ class FloorConfigurationViewTest {
 
     // --- helpers ---
 
+    /**
+     * Verifies that clicking the towerPricesButton fires the callback registered via
+     * {@link FloorConfigurationView#onTowerPricesButton(Runnable)}.
+     * Expected: The AtomicBoolean is set to true after the button click.
+     * Failure: The per-tower pricing button of the form is not reachable from the controller.
+     */
+    @Test
+    void shouldInvokeCallbackWhenTowerPricesClicked() throws Exception {
+        AtomicBoolean invoked = new AtomicBoolean(false);
+        view.onTowerPricesButton(() -> invoked.set(true));
+        clickButton(view, "towerPricesButton");
+        assertThat(invoked).isTrue();
+    }
+
+    // --- helpers ---
+
     private static void clickButton(Component parent, String fieldName) throws Exception {
         Field field = parent.getClass().getDeclaredField(fieldName);
         field.setAccessible(true);

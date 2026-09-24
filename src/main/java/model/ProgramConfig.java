@@ -71,7 +71,8 @@ public class ProgramConfig {
                 migrated.add(new TowerConfig(
                         tower.towerNumber() - 1,
                         tower.towerFloors(),
-                        tower.towerRooms()));
+                        tower.towerRooms(),
+                        tower.defaultTimeData()));
             }
             roomsPerTower = migrated;
         }
@@ -212,16 +213,18 @@ public class ProgramConfig {
         int towerFloors = tower.towerFloors() + 1;
         List<FloorConfig> towerRooms = new ArrayList<>(tower.towerRooms());
 
+        List<TimeSlotConfig> towerDefault = towerDefaultTimeData(towerIndex);
         List<RoomConfigData> rooms = new ArrayList<>();
         for (int i = 0; i < roomCount; i++) {
             rooms.add(new RoomConfigData(
                     buildRoomString(towerNumberFromIndex(towerIndex), floorNumber, i),
-                    floorNumber, i, defaultTimeData()));
+                    floorNumber, i, towerDefault));
         }
         FloorConfig floorData = new FloorConfig(floorNumber, rooms);
         towerRooms.add(floorData);
 
-        roomsPerTower.set(towerIndex, new TowerConfig(tower.towerNumber(), towerFloors, towerRooms));
+        roomsPerTower.set(towerIndex, new TowerConfig(
+                tower.towerNumber(), towerFloors, towerRooms, tower.defaultTimeData()));
     }
 
     /**
@@ -235,7 +238,8 @@ public class ProgramConfig {
         List<FloorConfig> towerRooms = new ArrayList<>(tower.towerRooms());
         if (floorDataIndex >= 0 && floorDataIndex < towerRooms.size()) {
             towerRooms.remove(floorDataIndex);
-            roomsPerTower.set(towerIndex, new TowerConfig(tower.towerNumber(), tower.towerFloors() - 1, towerRooms));
+            roomsPerTower.set(towerIndex, new TowerConfig(
+                    tower.towerNumber(), tower.towerFloors() - 1, towerRooms, tower.defaultTimeData()));
         }
     }
 
@@ -255,10 +259,10 @@ public class ProgramConfig {
 
         FloorConfig floorData = towerRooms.get(floorDataIndex);
         List<RoomConfigData> rooms = new ArrayList<>(floorData.rooms());
-        rooms.add(new RoomConfigData(roomString, floorNumber, roomNumber, defaultTimeData()));
+        rooms.add(new RoomConfigData(roomString, floorNumber, roomNumber, towerDefaultTimeData(towerIndex)));
 
         towerRooms.set(floorDataIndex, new FloorConfig(floorData.floor(), rooms));
-        roomsPerTower.set(towerIndex, new TowerConfig(tower.towerNumber(), tower.towerFloors(), towerRooms));
+        roomsPerTower.set(towerIndex, tower.withTowerRooms(towerRooms));
     }
 
     /**
@@ -278,7 +282,7 @@ public class ProgramConfig {
         if (roomIndex >= 0 && roomIndex < rooms.size()) {
             rooms.remove(roomIndex);
             towerRooms.set(floorDataIndex, new FloorConfig(floorData.floor(), rooms));
-            roomsPerTower.set(towerIndex, new TowerConfig(tower.towerNumber(), tower.towerFloors(), towerRooms));
+            roomsPerTower.set(towerIndex, tower.withTowerRooms(towerRooms));
         }
     }
 
@@ -301,7 +305,7 @@ public class ProgramConfig {
             RoomConfigData old = rooms.get(roomIndex);
             rooms.set(roomIndex, new RoomConfigData(newRoomString, old.roomFloor(), old.roomNumber(), old.customTimeData()));
             towerRooms.set(floorDataIndex, new FloorConfig(floorData.floor(), rooms));
-            roomsPerTower.set(towerIndex, new TowerConfig(tower.towerNumber(), tower.towerFloors(), towerRooms));
+            roomsPerTower.set(towerIndex, tower.withTowerRooms(towerRooms));
         }
     }
 
@@ -312,13 +316,112 @@ public class ProgramConfig {
         return towerIndex + 1;
     }
 
-    public List<TimeSlotConfig> defaultTimeData() {
-        RoomTime[] defaults = RoomTime.getDefaultTimeSlots();
+    // ========== Room Time Data ==========
+
+    /**
+     * The built-in time and price slots a room starts from when nothing else is configured.
+     *
+     * @return 3 time slots (3 h / 12 h / 24 h)
+     */
+    public static List<TimeSlotConfig> defaultTimeData() {
+        return toTimeSlotConfigs(RoomTime.getDefaultTimeSlots());
+    }
+
+    /**
+     * Converts runtime time slots into their persisted form.
+     *
+     * @param slots room time slots, possibly null
+     * @return the same values as config records
+     */
+    public static List<TimeSlotConfig> toTimeSlotConfigs(RoomTime[] slots) {
         List<TimeSlotConfig> list = new ArrayList<>();
-        for (RoomTime rt : defaults) {
-            list.add(new TimeSlotConfig(rt.getPrice(), rt.getTimeSeconds()));
+        if (slots == null) return list;
+        for (RoomTime slot : slots) {
+            list.add(new TimeSlotConfig(slot.getPrice(), slot.getTimeSeconds()));
         }
         return list;
+    }
+
+    /**
+     * Converts persisted time slots into runtime objects.
+     *
+     * @param slots config records, possibly null or empty
+     * @return the same values as room time slots
+     */
+    public static RoomTime[] toRoomTimes(List<TimeSlotConfig> slots) {
+        if (slots == null || slots.isEmpty()) return new RoomTime[0];
+        RoomTime[] times = new RoomTime[slots.size()];
+        for (int i = 0; i < slots.size(); i++) {
+            times[i] = new RoomTime(slots.get(i).price(), slots.get(i).timeSeconds());
+        }
+        return times;
+    }
+
+    /**
+     * Time and price a new room on this tower starts from: the per-tower default set in
+     * the floor configuration, or the built-in defaults when the tower has none.
+     *
+     * @param towerIndex index within {@link #getRoomsPerTower()}
+     * @return 3 time slots
+     */
+    public List<TimeSlotConfig> towerDefaultTimeData(int towerIndex) {
+        if (towerIndex >= 0 && towerIndex < roomsPerTower.size()) {
+            List<TimeSlotConfig> stored = roomsPerTower.get(towerIndex).defaultTimeData();
+            if (stored != null && !stored.isEmpty()) {
+                return stored;
+            }
+        }
+        return defaultTimeData();
+    }
+
+    /**
+     * Stores the time and price a new room on this tower starts from.
+     *
+     * @param towerIndex index within {@link #getRoomsPerTower()}
+     * @param timeData   3 time slots
+     */
+    public void setTowerDefaultTimeData(int towerIndex, List<TimeSlotConfig> timeData) {
+        if (towerIndex < 0 || towerIndex >= roomsPerTower.size()) return;
+        roomsPerTower.set(towerIndex, roomsPerTower.get(towerIndex).withDefaultTimeData(timeData));
+    }
+
+    /**
+     * Copies every room's runtime time pricing into the room configuration, which is what
+     * a save writes. The runtime grid is the source of truth, so a price edited in the
+     * room configuration screen replaces the value stored when the room was created
+     * instead of being dropped on the next save.
+     *
+     * @param runtimeRooms rooms by tower, floor and room, as held by the room grid
+     */
+    public void syncRoomTimeData(ArrayList<ArrayList<ArrayList<Room>>> runtimeRooms) {
+        for (int t = 0; t < roomsPerTower.size() && t < runtimeRooms.size(); t++) {
+            TowerConfig tower = roomsPerTower.get(t);
+            List<FloorConfig> towerRooms = new ArrayList<>(tower.towerRooms());
+            for (int fd = 0; fd < towerRooms.size(); fd++) {
+                FloorConfig floorData = towerRooms.get(fd);
+                int floorNumber = floorData.floor();
+                if (floorNumber >= runtimeRooms.get(t).size()) continue;
+
+                List<RoomConfigData> configRooms = new ArrayList<>(floorData.rooms());
+                ArrayList<Room> runtimeFloorRooms = runtimeRooms.get(t).get(floorNumber);
+                for (int r = 0; r < configRooms.size() && r < runtimeFloorRooms.size(); r++) {
+                    RoomConfigData roomJson = configRooms.get(r);
+                    configRooms.set(r, new RoomConfigData(
+                            roomJson.roomString(), roomJson.roomFloor(), roomJson.roomNumber(),
+                            toTimeSlotConfigs(runtimeFloorRooms.get(r).getCustomRoomTimeData())));
+                }
+                towerRooms.set(fd, new FloorConfig(floorNumber, configRooms));
+            }
+            roomsPerTower.set(t, tower.withTowerRooms(towerRooms));
+        }
+    }
+
+    // ========== Currency Configuration ==========
+
+    public CurrencyConfig getCurrencyConfig() { return currencyConfig; }
+
+    public void setCurrencyConfig(CurrencyConfig currencyConfig) {
+        this.currencyConfig = currencyConfig;
     }
 
     /**
@@ -328,14 +431,6 @@ public class ProgramConfig {
      * @param roomNumber  zero-based room number
      * @return formatted string like "1-105"
      */
-    // ========== Currency Configuration ==========
-
-    public CurrencyConfig getCurrencyConfig() { return currencyConfig; }
-
-    public void setCurrencyConfig(CurrencyConfig currencyConfig) {
-        this.currencyConfig = currencyConfig;
-    }
-
     public static String buildRoomString(int towerNumber, int floorNumber, int roomNumber) {
         return (towerNumber + 1) + "-" + (floorNumber + 1) + "0" + (roomNumber + 1);
     }

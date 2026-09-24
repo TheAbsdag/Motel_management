@@ -116,16 +116,13 @@ public class MotelManagement {
     }
 
     public void initializeDefaultConfiguration() {
-        List<TimeSlotConfig> timeData = new ArrayList<>();
-        for (RoomTime rt : RoomTime.getDefaultTimeSlots()) {
-            timeData.add(new TimeSlotConfig(rt.getPrice(), rt.getTimeSeconds()));
-        }
+        List<TimeSlotConfig> timeData = ProgramConfig.defaultTimeData();
         List<RoomConfigData> roomsList = new ArrayList<>();
         roomsList.add(new RoomConfigData("1-101", 0, 0, timeData));
         List<FloorConfig> towerRooms = new ArrayList<>();
         towerRooms.add(new FloorConfig(0, roomsList));
         List<TowerConfig> roomsPerTower = new ArrayList<>();
-        roomsPerTower.add(new TowerConfig(0, 1, towerRooms));
+        roomsPerTower.add(new TowerConfig(0, 1, towerRooms, timeData));
         programConfig.setRoomsPerTower(roomsPerTower);
         roomManager.buildRoomGrid(programConfig.getRoomsPerTower());
     }
@@ -426,7 +423,7 @@ public class MotelManagement {
 
     public void saveFilesForMainService() {
         programConfig.ensureSchemaVersion();
-        populateConfigTimeData();
+        programConfig.syncRoomTimeData(roomManager.getRooms());
 
         Map<String, String> dataMap = new LinkedHashMap<>();
         dataMap.put("turn", turnService.getDetailedTurnInformationAsJson());
@@ -497,40 +494,6 @@ public class MotelManagement {
         programConfig.setMotelID(id);
         printer.setPrinterVariables(name, address, id);
         files.saveJsonMainDataPath(programConfig.toJson(), "applicationProperties");
-    }
-
-    private void populateConfigTimeData() {
-        List<TowerConfig> roomsPerTower = programConfig.getRoomsPerTower();
-        if (roomsPerTower == null) return;
-
-        ArrayList<ArrayList<ArrayList<Room>>> rooms = roomManager.getRooms();
-        for (int t = 0; t < roomsPerTower.size() && t < rooms.size(); t++) {
-            TowerConfig tower = roomsPerTower.get(t);
-            List<FloorConfig> towerRooms = new ArrayList<>(tower.towerRooms());
-            for (int fd = 0; fd < towerRooms.size(); fd++) {
-                FloorConfig floorData = towerRooms.get(fd);
-                int floorNum = floorData.floor();
-                if (floorNum >= rooms.get(t).size()) continue;
-                List<RoomConfigData> configRooms = new ArrayList<>(floorData.rooms());
-                ArrayList<Room> runtimeRooms = rooms.get(t).get(floorNum);
-                boolean modified = false;
-                for (int r = 0; r < configRooms.size() && r < runtimeRooms.size(); r++) {
-                    RoomConfigData roomJson = configRooms.get(r);
-                    if (roomJson.customTimeData() != null && !roomJson.customTimeData().isEmpty()) continue;
-                    RoomTime[] timeData = runtimeRooms.get(r).getCustomRoomTimeData();
-                    List<TimeSlotConfig> arr = new ArrayList<>();
-                    for (RoomTime rt : timeData) {
-                        arr.add(new TimeSlotConfig(rt.getPrice(), rt.getTimeSeconds()));
-                    }
-                    configRooms.set(r, new RoomConfigData(roomJson.roomString(), roomJson.roomFloor(), roomJson.roomNumber(), arr));
-                    modified = true;
-                }
-                if (modified) {
-                    towerRooms.set(fd, new FloorConfig(floorData.floor(), configRooms));
-                }
-            }
-            roomsPerTower.set(t, new TowerConfig(tower.towerNumber(), tower.towerFloors(), towerRooms));
-        }
     }
 
     public void saveCurrencyConfiguration(CurrencyConfig config) {

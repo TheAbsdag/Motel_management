@@ -397,6 +397,48 @@ class RoomManagerTest {
         assertThat(roomManager.getTotalFloors(5)).isZero();
     }
 
+    // ========== Per-tower pricing ==========
+
+    /**
+     * Verifies that applying time and price to a tower reaches every room of every floor
+     * of that tower and leaves the other towers alone.
+     * Expected: All 7 rooms of tower 0 hold the new price, tower 1 keeps the built-in one.
+     * Failure: Only the visible floor is updated, or the wrong tower is touched.
+     */
+    @Test
+    void applyTimeDataToTowerShouldUpdateEveryRoomOfThatTower() {
+        roomManager.buildRoomGrid(createTwoTowerConfig());
+        RoomTime[] slots = {new RoomTime(50000L, 3600L)};
+
+        roomManager.applyTimeDataToTower(0, slots);
+
+        for (int floor = 0; floor < roomManager.getTotalFloors(0); floor++) {
+            for (Room room : roomManager.getRooms().get(0).get(floor)) {
+                assertThat(room.getCustomRoomTimeData()[0].getPrice()).isEqualTo(50000L);
+                assertThat(room.getCustomRoomTimeData()[0].getTimeSeconds()).isEqualTo(3600L);
+            }
+        }
+        assertThat(roomManager.getRoom(1, 0, 0).getCustomRoomTimeData()[0].getPrice()).isEqualTo(40000L);
+    }
+
+    /**
+     * Verifies that a room added to the grid starts from the pricing the tower gives new
+     * rooms.
+     * Expected: The new room holds the given slots.
+     * Failure: The new room falls back to the built-in 3 h / 12 h / 24 h values.
+     */
+    @Test
+    void addRoomToGridShouldSeedTheTowerDefault() {
+        roomManager.buildRoomGrid(createSingleTowerConfig(1, new int[]{1}));
+
+        roomManager.addRoomToGrid(0, 0, 0, 1, "1-102", 0, new RoomTime[]{new RoomTime(33000L, 7200L)});
+
+        Room added = roomManager.getRoom(0, 0, 1);
+        assertThat(added.getRoomString()).isEqualTo("1-102");
+        assertThat(added.getCustomRoomTimeData()[0].getPrice()).isEqualTo(33000L);
+        assertThat(added.getCustomRoomTimeData()[0].getTimeSeconds()).isEqualTo(7200L);
+    }
+
     // ========== Helpers ==========
 
     private static List<TowerConfig> createSingleTowerConfig(int numFloors, int[] roomsPerFloor) {

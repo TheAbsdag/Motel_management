@@ -5,10 +5,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import model.json.FloorConfig;
 import model.json.ObjectMapperFactory;
 import model.json.RoomConfigData;
+import model.json.TimeSlotConfig;
 import model.json.TowerConfig;
+import model.modelManagers.RoomManager;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -222,7 +225,137 @@ class ProgramConfigTest {
         assertThat(name).isEqualTo("VIP-1");
     }
 
+    // ========== Per-tower pricing ==========
+
+    /**
+     * Verifies that a room added to a tower is created with the time and price of the
+     * tower default instead of the built-in values.
+     * Expected: The stored custom time data of the new room is the tower default.
+     * Failure: New rooms keep using the built-in 3 h / 12 h / 24 h pricing.
+     */
+    @Test
+    void towerDefaultShouldBeUsedByNewRooms() {
+        config.loadFromJson(createBaseConfigJson());
+        addTowerWithOneEmptyFloor();
+        List<TimeSlotConfig> towerDefault = List.of(new TimeSlotConfig(99000L, 7200L));
+        config.setTowerDefaultTimeData(0, towerDefault);
+
+        config.addRoomToFloor(0, 0, "1-101", 0, 0);
+
+        List<TimeSlotConfig> stored = config.getTower(0).towerRooms().get(0).rooms().get(0).customTimeData();
+        assertThat(stored).hasSize(1);
+        assertThat(stored.get(0).price()).isEqualTo(99000L);
+        assertThat(stored.get(0).timeSeconds()).isEqualTo(7200L);
+    }
+
+    /**
+     * Verifies that the tower default is not lost when rooms and floors of that tower are
+     * added or renamed, since the tower record is rebuilt on each of those operations.
+     * Expected: The tower default is still the stored one after the changes.
+     * Failure: Rebuilding the tower drops its default and new rooms fall back to the built-in values.
+     */
+    @Test
+    void towerDefaultShouldSurviveRoomAndFloorChanges() {
+        config.loadFromJson(createBaseConfigJson());
+        addTowerWithOneEmptyFloor();
+        config.setTowerDefaultTimeData(0, List.of(new TimeSlotConfig(99000L, 7200L)));
+
+        config.addRoomToFloor(0, 0, "1-101", 0, 0);
+        config.setRoomString(0, 0, 0, "VIP-1");
+        config.addFloorToTower(0, 1, 1);
+        config.removeFloorFromTower(0, 1);
+
+        assertThat(config.getTower(0).defaultTimeData()).hasSize(1);
+        assertThat(config.towerDefaultTimeData(0).get(0).price()).isEqualTo(99000L);
+    }
+
+    /**
+     * Verifies that a tower without a stored default prices its rooms with the built-in
+     * 3 h / 12 h / 24 h values, which is the state of every tower saved before 0.1.5.2.
+     * Expected: 3 slots, the first one 40.000 for 3 h.
+     * Failure: A tower without a default returns no time data at all.
+     */
+    @Test
+    void towerDefaultShouldFallBackToTheBuiltInValues() {
+        config.loadFromJson(createBaseConfigJson());
+        addTowerWithOneEmptyFloor();
+
+        List<TimeSlotConfig> towerDefault = config.towerDefaultTimeData(0);
+
+        assertThat(towerDefault).hasSize(3);
+        assertThat(towerDefault.get(0).price()).isEqualTo(40000L);
+        assertThat(towerDefault.get(0).timeSeconds()).isEqualTo(10800L);
+    }
+
+    /**
+     * Verifies that the tower default is written to the JSON and read back.
+     * Expected: The reloaded configuration returns the same default.
+     * Failure: The field is not serialized, so the default is lost on the next start.
+     */
+    @Test
+    void towerDefaultShouldSurviveAJsonRoundTrip() throws JsonProcessingException {
+        config.loadFromJson(createBaseConfigJson());
+        addTowerWithOneEmptyFloor();
+        config.setTowerDefaultTimeData(0, List.of(new TimeSlotConfig(77000L, 3600L)));
+
+        ProgramConfig reloaded = new ProgramConfig();
+        reloaded.loadFromJson(config.toJson());
+
+        assertThat(reloaded.getTower(0).defaultTimeData()).hasSize(1);
+        assertThat(reloaded.towerDefaultTimeData(0).get(0).price()).isEqualTo(77000L);
+        assertThat(reloaded.towerDefaultTimeData(0).get(0).timeSeconds()).isEqualTo(3600L);
+    }
+
+    /**
+     * Verifies that an {@code applicationProperties} file written before the per-tower
+     * default existed loads unchanged.
+     * Expected: The tower has no stored default (null) and still reports the built-in values.
+     * Failure: The missing field breaks loading or yields an empty default.
+     */
+    @Test
+    void towerWithoutAPricingDefaultShouldStillLoad() {
+        String json = "{\"consecutiveTransaction\":0,\"version\":3,\"roomsPerTower\":["
+                + "{\"towerNumber\":0,\"towerFloors\":1,\"towerRooms\":[{\"floor\":0,\"rooms\":[]}]}]}";
+
+        config.loadFromJson(json);
+
+        assertThat(config.getTower(0).defaultTimeData()).isNull();
+        assertThat(config.towerDefaultTimeData(0)).hasSize(3);
+    }
+
+    /**
+     * Verifies that saving copies the runtime price of a room over the value stored when
+     * the room was created. Regression: rooms whose stored data was not empty were skipped,
+     * so a price changed in the room configuration screen was dropped by the next save.
+     * Expected: The stored time data is the one held by the room grid.
+     * Failure: The edited price is not persisted and the room reloads with the old value.
+     */
+    @Test
+    void syncingRoomTimeDataShouldReplaceTheStoredPricing() {
+        config.loadFromJson(createBaseConfigJson());
+        addTowerWithOneEmptyFloor();
+        config.addRoomToFloor(0, 0, "1-101", 0, 0);
+
+        RoomManager roomManager = new RoomManager(ZoneId.of("America/Bogota"));
+        roomManager.buildRoomGrid(config.getRoomsPerTower());
+        roomManager.setRoomCustomTimeData(0, 0, 0, new RoomTime[]{new RoomTime(55555L, 3600L)});
+
+        config.syncRoomTimeData(roomManager.getRooms());
+
+        RoomConfigData stored = config.getTower(0).towerRooms().get(0).rooms().get(0);
+        assertThat(stored.roomString()).isEqualTo("1-101");
+        assertThat(stored.customTimeData()).hasSize(1);
+        assertThat(stored.customTimeData().get(0).price()).isEqualTo(55555L);
+        assertThat(stored.customTimeData().get(0).timeSeconds()).isEqualTo(3600L);
+    }
+
     // ========== Helper ==========
+
+    private void addTowerWithOneEmptyFloor() {
+        List<FloorConfig> towerRooms = new ArrayList<>();
+        towerRooms.add(new FloorConfig(0, new ArrayList<>()));
+        config.addTower(1, 1, towerRooms);
+    }
 
     private String createBaseConfigJson() {
         return "{\"consecutiveTransaction\":0,\"motelName\":\"Test Motel\","

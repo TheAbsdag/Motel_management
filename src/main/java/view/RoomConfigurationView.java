@@ -11,6 +11,7 @@ import model.RoomTime;
 import model.json.CurrencyConfig;
 import net.miginfocom.swing.*;
 import view.helpers.CurrencyFormatter;
+import view.helpers.InputParser;
 import view.helpers.TextPromptHelper;
 import view.interfaces.DirtyTrackable;
 
@@ -25,6 +26,7 @@ public class RoomConfigurationView extends JPanel implements DirtyTrackable {
     private int selectedTimeSlot;
     private RoomTime[] timeSlots;
     private boolean hasUnsavedChanges;
+    private boolean loadingFields;
     private ButtonGroup unitButtonGroup;
 
     private CurrencyConfig currencyConfig = CurrencyConfig.defaultConfig();
@@ -43,6 +45,7 @@ public class RoomConfigurationView extends JPanel implements DirtyTrackable {
         selectedTimeSlot = 0;
         timeSlots = RoomTime.getDefaultTimeSlots();
         hasUnsavedChanges = false;
+        loadingFields = false;
         unitButtonGroup = new ButtonGroup();
     }
 
@@ -289,6 +292,7 @@ public class RoomConfigurationView extends JPanel implements DirtyTrackable {
     // ========== Data Loading ==========
 
     public void loadRoom(int tower, int floor, int room, Room roomData) {
+        loadingFields = true;
         currentTower = tower;
         currentFloor = floor;
         currentRoom = room;
@@ -306,10 +310,12 @@ public class RoomConfigurationView extends JPanel implements DirtyTrackable {
 
         updateTimeSlotButtonLabels();
         selectTimeSlot(0);
+        loadingFields = false;
         clearDirty();
     }
 
     public void resetView() {
+        loadingFields = true;
         currentTower = 0;
         currentFloor = 0;
         currentRoom = 0;
@@ -322,18 +328,32 @@ public class RoomConfigurationView extends JPanel implements DirtyTrackable {
         priceTextField.setText("");
         timeReadableLabel.setText("X  SEGUNDOS, X MINUTOS, X HORAS");
         updateTimeSlotButtonLabels();
+        loadingFields = false;
         clearDirty();
     }
 
     // ========== Time Slot Selection ==========
 
+    /**
+     * Selects one of the 3 time slots for editing. The slot being left is committed from
+     * the fields first, so the times and prices of all 3 slots can be changed in one visit
+     * and saved together.
+     *
+     * @param index slot to edit
+     */
     private void selectTimeSlot(int index) {
         if (index < 0 || index >= timeSlots.length) {
             return;
         }
+        if (!loadingFields && index != selectedTimeSlot) {
+            applyCurrentFieldsToSlot();
+            updateTimeSlotButtonLabels();
+        }
         selectedTimeSlot = index;
         updateSlotButtonHighlights();
+        loadingFields = true;
         loadTimeSlotIntoFields(timeSlots[index]);
+        loadingFields = false;
     }
 
     private void loadTimeSlotIntoFields(RoomTime slot) {
@@ -431,8 +451,14 @@ public class RoomConfigurationView extends JPanel implements DirtyTrackable {
 
     // ========== Dirty Tracking ==========
 
+    /**
+     * Marks the room as modified. Ignored while the fields are being filled from room or
+     * slot data, so browsing the 3 time slots is not reported as an unsaved change.
+     */
     public void markDirty() {
-        hasUnsavedChanges = true;
+        if (!loadingFields) {
+            hasUnsavedChanges = true;
+        }
     }
 
     public void clearDirty() {
@@ -443,17 +469,15 @@ public class RoomConfigurationView extends JPanel implements DirtyTrackable {
         return hasUnsavedChanges;
     }
 
+    /**
+     * Stores what the duration and value fields currently show into the selected time
+     * slot. Values are taken as they are: a save that would store an unusable slot is
+     * rejected by the controller, never silently replaced by the previous value.
+     */
     public void applyCurrentFieldsToSlot() {
         long seconds = getCurrentDurationSeconds();
-        long price;
-        try {
-            price = Long.parseLong(priceTextField.getText().trim());
-        } catch (NumberFormatException e) {
-            price = 0;
-        }
-        if (seconds > 0 && price > 0) {
-            timeSlots[selectedTimeSlot] = new RoomTime(price, seconds);
-        }
+        long price = InputParser.parseLongSafe(priceTextField.getText());
+        timeSlots[selectedTimeSlot] = new RoomTime(price, seconds);
     }
 
     // ========== Getters for Modified Data ==========

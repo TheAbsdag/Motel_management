@@ -112,7 +112,7 @@ public class Controller {
         sellingController = new SellingController(motelManager, userInterface.getSellingView(), userInterface,
                 this::saveMainFiles, () -> saveBackupFiles("transaction"));
         inventoryController = new InventoryController(motelManager, userInterface.getInventoryView(),
-                managementController::showManagementOptions, this::saveMainFiles, () -> saveBackupFiles("roomSwap"));
+                managementController::showManagementOptions, this::saveMainFiles, () -> saveBackupFiles("inventory"));
         printTemplateController = new PrintTemplateController(
                 new PrintTemplateStore(Path.of(FileManager.PATH)),
                 motelManager,
@@ -138,11 +138,13 @@ public class Controller {
                 managementController::showManagementOptions, this::saveMainFiles, () -> saveBackupFiles("transaction"));
         roomController = new RoomController(motelManager, userInterface.getFloorView(),
                 userInterface.getRoomView(), userInterface.getRoomChangeView(), userInterface,
-                () -> sellingController.roomSale(false), this::saveMainFiles, () -> saveBackupFiles("roomSwap"));
+                () -> sellingController.roomSale(false), this::saveMainFiles,
+                this::saveBackupFiles);
         floorConfigurationController = new FloorConfigurationController(motelManager,
                 userInterface.getFloorConfigView(),
                 userInterface.getRoomConfigView(),
                 this::saveMainFiles,
+                () -> saveBackupFiles("floorConfig"),
                 this::rebuildFloorView,
                 this::openAppOptionsHub,
                 this::showRoomConfigCard,

@@ -1,5 +1,6 @@
 package view.helpers;
 
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -14,6 +15,11 @@ import javax.swing.text.DocumentFilter;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import model.RoomTime;
+import net.miginfocom.swing.MigLayout;
 
 /**
  * Shared dialog utilities for confirmations and information messages.
@@ -23,6 +29,11 @@ public final class DialogHelper {
 
     private static final Font MESSAGE_FONT = new Font("Segoe UI Black", Font.PLAIN, 22);
     private static final Font BUTTON_FONT  = new Font("Segoe UI Black", Font.PLAIN, 28);
+    private static final Font FIELD_FONT   = new Font("Segoe UI Black", Font.PLAIN, 28);
+
+    /** Duration units offered by {@link #showTowerPricingDialog}, in combo box order. */
+    private static final String[] UNIT_NAMES = {"SEGUNDOS", "MINUTOS", "HORAS"};
+    private static final TimeUnit[] UNIT_VALUES = {TimeUnit.SECONDS, TimeUnit.MINUTES, TimeUnit.HOURS};
 
     static {
         UIManager.put("OptionPane.yesButtonText",    "SI");
@@ -147,5 +158,97 @@ public final class DialogHelper {
             }
         }
         return null;
+    }
+
+    /**
+     * Asks for the duration and the price of the 3 room time slots, prefilled with the
+     * values given. Used by the floor configuration screen to price a whole tower and to
+     * set what its new rooms start from. Invalid input is reported and asked again
+     * instead of being dropped.
+     *
+     * @param towerName tower the values are entered for, shown in the dialog
+     * @param current   the tower's current time slots, or null for the built-in defaults
+     * @return the 3 time slots entered, or null when the dialog is cancelled
+     */
+    public static RoomTime[] showTowerPricingDialog(String towerName, RoomTime[] current) {
+        RoomTime[] prefill = current != null && current.length == 3 ? current : RoomTime.getDefaultTimeSlots();
+
+        JPanel panel = new JPanel(new BorderLayout(15, 20));
+        panel.add(styledMessage("TIEMPOS Y PRECIOS DE " + towerName
+                + "\nSe aplican a todas sus habitaciones y a las habitaciones nuevas."), BorderLayout.NORTH);
+
+        JPanel grid = new JPanel(new MigLayout("insets 0, fillx", "[][grow,fill][][grow,fill]"));
+        grid.add(fieldLabel("DURACION"), "cell 1 0");
+        grid.add(fieldLabel("UNIDAD"), "cell 2 0");
+        grid.add(fieldLabel("VALOR"), "cell 3 0");
+
+        List<JTextField> durationFields = new ArrayList<>();
+        List<JComboBox<String>> unitBoxes = new ArrayList<>();
+        List<JTextField> priceFields = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            JTextField durationField = numericField(prefill[i].getTimeSeconds());
+            JComboBox<String> unitBox = new JComboBox<>(UNIT_NAMES);
+            unitBox.setFont(MESSAGE_FONT);
+            unitBox.setSelectedIndex(unitIndexFor(prefill[i].getTimeSeconds()));
+            JTextField priceField = numericField(prefill[i].getPrice());
+
+            int row = i + 1;
+            grid.add(fieldLabel("TIEMPO " + (i + 1)), "cell 0 " + row);
+            grid.add(durationField, "cell 1 " + row);
+            grid.add(unitBox, "cell 2 " + row);
+            grid.add(priceField, "cell 3 " + row);
+
+            durationFields.add(durationField);
+            unitBoxes.add(unitBox);
+            priceFields.add(priceField);
+        }
+        panel.add(grid, BorderLayout.CENTER);
+
+        while (true) {
+            int result = JOptionPane.showConfirmDialog(null, panel, "TIEMPOS Y PRECIOS",
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+            if (result != JOptionPane.OK_OPTION) {
+                return null;
+            }
+
+            RoomTime[] slots = new RoomTime[3];
+            boolean valid = true;
+            for (int i = 0; i < 3; i++) {
+                TimeUnit unit = UNIT_VALUES[unitBoxes.get(i).getSelectedIndex()];
+                long seconds = InputParser.parseDurationSeconds(durationFields.get(i).getText(), unit);
+                long price = InputParser.parseLongSafe(priceFields.get(i).getText());
+                if (seconds <= 0 || price <= 0) {
+                    valid = false;
+                    break;
+                }
+                slots[i] = new RoomTime(price, seconds);
+            }
+            if (valid) {
+                return slots;
+            }
+            showErrorMessage("La duracion y el valor de cada tiempo deben ser mayores a cero.",
+                    "DATOS INVALIDOS");
+        }
+    }
+
+    /** Digits-only field showing a duration or a price. */
+    private static JTextField numericField(long value) {
+        JTextField field = new JTextField(String.valueOf(value), 7);
+        field.setFont(FIELD_FONT);
+        ((AbstractDocument) field.getDocument()).setDocumentFilter(new NumericDocumentFilter());
+        return field;
+    }
+
+    private static JLabel fieldLabel(String text) {
+        JLabel label = new JLabel(text);
+        label.setFont(MESSAGE_FONT);
+        return label;
+    }
+
+    /** Combo box index matching a duration: hours when exact, minutes when exact, seconds otherwise. */
+    private static int unitIndexFor(long seconds) {
+        if (seconds >= 3600 && seconds % 3600 == 0) return 2;
+        if (seconds >= 60 && seconds % 60 == 0) return 1;
+        return 0;
     }
 }

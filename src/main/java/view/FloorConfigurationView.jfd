@@ -153,6 +153,13 @@ new FormModel {
 				"value": "cell 3 10,growy"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "towerPricesButton"
+				"text": "<HTML><CENTER>PRECIOS<br>TORRE</CENTER></HTML>"
+				"font": #Font3
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 4 10,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "saveButton"
 				"text": "GUARDAR"
 				"font": #Font3

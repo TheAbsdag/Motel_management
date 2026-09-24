@@ -1,5 +1,6 @@
 package view.helpers;
 
+import java.util.concurrent.TimeUnit;
 import javax.swing.JTextField;
 import model.json.CurrencyConfig;
 
@@ -50,6 +51,18 @@ public final class InputParser {
      */
     public static long parseLongSafe(String text) {
         return parseLongSafe(text, 0L);
+    }
+
+    /**
+     * Parses a duration entered in the given unit into seconds.
+     *
+     * @param text duration value; null, empty or non-numeric yields 0
+     * @param unit unit the value is expressed in
+     * @return the duration in seconds
+     */
+    public static long parseDurationSeconds(String text, TimeUnit unit) {
+        if (unit == null) return 0L;
+        return unit.toSeconds(parseLongSafe(text));
     }
 
     /**

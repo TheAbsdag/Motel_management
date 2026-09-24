@@ -31,6 +31,7 @@ public class FloorConfigurationController {
     private final FloorConfigurationView view;
     private final RoomConfigurationView roomConfigView;
     private final Runnable saveMainFiles;
+    private final Runnable saveBackupFiles;
     private final Runnable rebuildFloorView;
     private final Runnable onBack;
     private final Runnable showRoomConfigCard;
@@ -42,6 +43,7 @@ public class FloorConfigurationController {
                                         FloorConfigurationView view,
                                         RoomConfigurationView roomConfigView,
                                         Runnable saveMainFiles,
+                                        Runnable saveBackupFiles,
                                         Runnable rebuildFloorView,
                                         Runnable onBack,
                                         Runnable showRoomConfigCard,
@@ -50,6 +52,7 @@ public class FloorConfigurationController {
         this.view = view;
         this.roomConfigView = roomConfigView;
         this.saveMainFiles = saveMainFiles;
+        this.saveBackupFiles = saveBackupFiles;
         this.rebuildFloorView = rebuildFloorView;
         this.onBack = onBack;
         this.showRoomConfigCard = showRoomConfigCard;
@@ -71,6 +74,7 @@ public class FloorConfigurationController {
         view.onDeleteFloor(this::deleteFloor);
         view.onNewRoomButton(this::addNewRoom);
         view.onNewFloor(this::addNewFloor);
+        view.onTowerPricesButton(this::applyTowerPricing);
 
         view.onBackButton(this::onBackPressed);
         view.onSaveButton(this::onSavePressed);
@@ -199,6 +203,16 @@ public class FloorConfigurationController {
     }
 
     private void onRoomConfigSave() {
+        RoomTime[] modifiedSlots = roomConfigView.getModifiedTimeSlots();
+        for (RoomTime slot : modifiedSlots) {
+            if (slot.getTimeSeconds() <= 0 || slot.getPrice() <= 0) {
+                DialogHelper.showErrorMessage(
+                        "La duracion y el valor de cada tiempo deben ser mayores a cero.",
+                        "DATOS INVALIDOS");
+                return;
+            }
+        }
+
         boolean confirm = DialogHelper.confirmDialog(
                 "Guardar cambios de configuracion para habitacion "
                         + roomConfigView.getModifiedRoomString() + "?",
@@ -210,7 +224,7 @@ public class FloorConfigurationController {
         int room = roomConfigView.getCurrentRoom();
 
         motelManager.getRoomManager().setRoomCustomTimeData(
-                tower, floor, room, roomConfigView.getModifiedTimeSlots());
+                tower, floor, room, modifiedSlots);
 
         String newName = roomConfigView.getModifiedRoomString();
         motelManager.getProgramConfig().setRoomString(
@@ -396,7 +410,8 @@ public class FloorConfigurationController {
         motelManager.getProgramConfig().addRoomToFloor(towerIndex, floorListIndex,
                 defaultName, floorNumber, newRoomNumber);
         motelManager.getRoomManager().addRoomToGrid(towerIndex, floorListIndex, floorNumber,
-                newRoomNumber, defaultName, towerNum);
+                newRoomNumber, defaultName, towerNum,
+                ProgramConfig.toRoomTimes(motelManager.getProgramConfig().towerDefaultTimeData(towerIndex)));
         view.markDirty();
 
         int[][] roomsArray = motelManager.getRoomsArray();
@@ -453,20 +468,86 @@ public class FloorConfigurationController {
         return timeStr + " = " + FormatHelper.formatPrice(slot.getPrice(), motelManager.getProgramConfig().getCurrencyConfig());
     }
 
+    // ========== Tower Pricing ==========
+
+    /**
+     * Sets the time and price of every room of the displayed tower and the values its new
+     * rooms start from, both entered in one dialog.
+     */
+    private void applyTowerPricing() {
+        ProgramConfig config = motelManager.getProgramConfig();
+        List<TowerConfig> roomsPerTower = config.getRoomsPerTower();
+        int towerIndex = view.getCurrentTowerIndex();
+        if (roomsPerTower == null || towerIndex < 0 || towerIndex >= roomsPerTower.size()) {
+            DialogHelper.showInfoMessage("No hay torres configuradas", "ERROR");
+            return;
+        }
+
+        int roomCount = countRooms(towerIndex);
+        if (roomCount == 0) {
+            DialogHelper.showInfoMessage("La torre seleccionada no tiene habitaciones", "ERROR");
+            return;
+        }
+
+        TowerConfig tower = roomsPerTower.get(towerIndex);
+        int towerNumber = tower.towerNumber() + 1;
+        RoomTime[] edited = DialogHelper.showTowerPricingDialog(
+                "TORRE " + towerNumber,
+                ProgramConfig.toRoomTimes(config.towerDefaultTimeData(towerIndex)));
+        if (edited == null) return;
+
+        boolean confirm = DialogHelper.confirmDialog(
+                "Aplicar estos tiempos y precios a las " + roomCount + " habitaciones de la torre "
+                        + towerNumber + "? Seran ademas el valor predeterminado de las habitaciones nuevas.",
+                "CONFIRMAR PRECIOS");
+        if (!confirm) return;
+
+        motelManager.getRoomManager().applyTimeDataToTower(towerIndex, edited);
+        config.setTowerDefaultTimeData(towerIndex, ProgramConfig.toTimeSlotConfigs(edited));
+        view.markDirty();
+        updateRoomButtonLabels();
+
+        DialogHelper.showInfoMessage(
+                "Precios aplicados a la torre " + towerNumber
+                        + ". Guarde la configuracion para conservarlos.",
+                "PRECIOS ACTUALIZADOS");
+    }
+
+    private int countRooms(int towerIndex) {
+        int[][] roomsArray = motelManager.getRoomsArray();
+        if (towerIndex < 0 || towerIndex >= roomsArray.length) return 0;
+        int count = 0;
+        for (int roomsPerFloor : roomsArray[towerIndex]) {
+            count += roomsPerFloor;
+        }
+        return count;
+    }
+
     // ========== Save / Back ==========
 
-    private void onSavePressed() {
+    /**
+     * Saves the whole configuration after confirmation: the main files first, then a
+     * backup record of the state that was just saved.
+     *
+     * @return true when the user confirmed and the configuration was saved
+     */
+    private boolean confirmAndSave() {
         boolean confirm = DialogHelper.confirmDialog(
                 "Guardar todos los cambios de configuracion?",
                 "CONFIRMAR GUARDAR");
-        if (!confirm) return;
+        if (!confirm) return false;
 
         motelManager.getProgramConfig().ensureSchemaVersion();
         saveMainFiles.run();
+        saveBackupFiles.run();
         view.clearDirty();
         roomConfigView.clearDirty();
         rebuildFloorView.run();
+        return true;
+    }
 
+    private void onSavePressed() {
+        if (!confirmAndSave()) return;
         DialogHelper.showInfoMessage("Configuracion guardada exitosamente", "GUARDADO");
     }
 
@@ -499,16 +580,7 @@ public class FloorConfigurationController {
 
         view.removeSaveListeners();
         view.onSaveButton(() -> {
-            boolean confirm = DialogHelper.confirmDialog(
-                    "Guardar todos los cambios de configuracion?",
-                    "CONFIRMAR GUARDAR");
-            if (!confirm) return;
-
-            motelManager.getProgramConfig().ensureSchemaVersion();
-            saveMainFiles.run();
-            view.clearDirty();
-            roomConfigView.clearDirty();
-            rebuildFloorView.run();
+            if (!confirmAndSave()) return;
             DialogHelper.showInfoMessage("Configuracion guardada exitosamente", "GUARDADO");
             onCompleted.run();
         });

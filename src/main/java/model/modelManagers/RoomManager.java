@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import model.ProgramConfig;
 import model.Room;
 import model.RoomStatus;
 import model.RoomTime;
@@ -76,12 +77,8 @@ public class RoomManager {
                     Room currentRoom = new Room(roomString, roomFloor, roomNumber, towerNumber);
 
                     List<TimeSlotConfig> customTimeArr = roomJson.customTimeData();
-                    if (customTimeArr != null && !customTimeArr.isEmpty()) {
-                        RoomTime[] timeData = new RoomTime[customTimeArr.size()];
-                        for (int t = 0; t < customTimeArr.size(); t++) {
-                            TimeSlotConfig td = customTimeArr.get(t);
-                            timeData[t] = new RoomTime(td.price(), td.timeSeconds());
-                        }
+                    RoomTime[] timeData = ProgramConfig.toRoomTimes(customTimeArr);
+                    if (timeData.length > 0) {
                         currentRoom.setCustomRoomTimeData(timeData);
                     }
 
@@ -311,6 +308,23 @@ public class RoomManager {
         }
     }
 
+    /**
+     * Applies the same time and price slots to every room of a tower, which is how the
+     * floor configuration screen changes the pricing of a whole tower at once.
+     *
+     * @param towerIndex tower index in the grid
+     * @param timeData   time slots to store in each room of the tower
+     */
+    public void applyTimeDataToTower(int towerIndex, RoomTime[] timeData) {
+        if (timeData == null || timeData.length == 0) return;
+        if (towerIndex < 0 || towerIndex >= rooms.size()) return;
+        for (ArrayList<Room> floor : rooms.get(towerIndex)) {
+            for (Room room : floor) {
+                room.setCustomRoomTimeData(timeData.clone());
+            }
+        }
+    }
+
     public int getTotalTowers() {
         return rooms.size();
     }
@@ -347,11 +361,26 @@ public class RoomManager {
         }
     }
 
+    /**
+     * Adds a room to the grid, seeded with the pricing the tower gives new rooms.
+     *
+     * @param towerIndex      tower index in the grid
+     * @param floorIndex      floor index in the grid
+     * @param floorNumber     floor number of the room
+     * @param roomNumber      room number within the floor
+     * @param roomString      display identifier (e.g. "1-105")
+     * @param towerNumber     tower number of the room
+     * @param defaultTimeData time slots the new room starts from, or null for the built-in defaults
+     */
     public void addRoomToGrid(int towerIndex, int floorIndex, int floorNumber,
-                              int roomNumber, String roomString, int towerNumber) {
+                              int roomNumber, String roomString, int towerNumber,
+                              RoomTime[] defaultTimeData) {
         if (towerIndex < 0 || towerIndex >= rooms.size()) return;
         if (floorIndex < 0 || floorIndex >= rooms.get(towerIndex).size()) return;
         Room room = new Room(roomString, floorNumber, roomNumber, towerNumber);
+        if (defaultTimeData != null && defaultTimeData.length > 0) {
+            room.setCustomRoomTimeData(defaultTimeData.clone());
+        }
         rooms.get(towerIndex).get(floorIndex).add(room);
     }
 
