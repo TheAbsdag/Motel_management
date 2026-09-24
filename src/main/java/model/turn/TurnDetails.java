@@ -67,7 +67,8 @@ public class TurnDetails {
         this.activities = new ArrayList<>();
         this.summaryItems = new ArrayList<>();
         this.totalsComputed = false;
-        this.version = 3;
+        // version stays 0 until the file declares it: 0 means the file predates
+        // versioning, so migration must run. toJson() stamps the current version.
     }
 
     public TurnDetails(long turnNumber, ZonedDateTime turnStart, boolean isTurnActive) {
@@ -218,6 +219,7 @@ public class TurnDetails {
      */
     public String toJson() {
         computeTotalsAndSummary();
+        version = CURRENT_VERSION;
         try {
             return ObjectMapperFactory.get().writeValueAsString(this);
         } catch (JsonProcessingException e) {
