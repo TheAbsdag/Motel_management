@@ -2,6 +2,7 @@ package view;
 
 import view.helpers.NumericDocumentFilter;
 import view.helpers.FocusHighlighter;
+import view.helpers.NumericKeypadPopup;
 import view.helpers.PriceAdjustmentHelper;
 import view.helpers.TextPromptHelper;
 import view.helpers.TableScroller;
@@ -38,6 +39,8 @@ public class InventoryManagementView extends JPanel implements TimeLabelInterfac
         initCustomTable();
         FocusHighlighter.applyToAll(this);
         TextPromptHelper.install(nameTextField, "Ingrese el nombre del producto");
+        NumericKeypadPopup.attach(quantityTextField);
+        NumericKeypadPopup.attach(priceTextField);
     }
 
     private JTable inventoryTable;

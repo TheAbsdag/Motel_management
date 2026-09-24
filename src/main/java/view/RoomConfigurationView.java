@@ -6,12 +6,15 @@ package view;
 
 import java.awt.*;
 import javax.swing.*;
+import javax.swing.text.AbstractDocument;
 import model.Room;
 import model.RoomTime;
 import model.json.CurrencyConfig;
 import net.miginfocom.swing.*;
 import view.helpers.CurrencyFormatter;
 import view.helpers.InputParser;
+import view.helpers.NumericDocumentFilter;
+import view.helpers.NumericKeypadPopup;
 import view.helpers.TextPromptHelper;
 import view.interfaces.DirtyTrackable;
 
@@ -39,6 +42,19 @@ public class RoomConfigurationView extends JPanel implements DirtyTrackable {
         initCustomComponents();
         initComponents();
         TextPromptHelper.install(roomStringLabel, "Nombre de la habitacion");
+        applyNumericInput();
+    }
+
+    /**
+     * Keeps the duration and value fields to digits, and lets them be filled from the
+     * on-screen keypad. Both are wired here, outside the generated {@code initComponents()},
+     * so regenerating the form does not lose them.
+     */
+    private void applyNumericInput() {
+        ((AbstractDocument) timeDurationTextField.getDocument()).setDocumentFilter(new NumericDocumentFilter());
+        ((AbstractDocument) priceTextField.getDocument()).setDocumentFilter(new NumericDocumentFilter());
+        NumericKeypadPopup.attach(timeDurationTextField);
+        NumericKeypadPopup.attach(priceTextField);
     }
 
     private void initCustomComponents() {

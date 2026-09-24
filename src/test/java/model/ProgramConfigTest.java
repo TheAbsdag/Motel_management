@@ -349,6 +349,37 @@ class ProgramConfigTest {
         assertThat(stored.customTimeData().get(0).timeSeconds()).isEqualTo(3600L);
     }
 
+    // ========== On-screen keypad ==========
+
+    /**
+     * Verifies that an installation whose data file predates the setting keeps the
+     * on-screen keypad on, which is what a touchscreen without a keyboard needs.
+     * Expected: the keypad is enabled.
+     * Failure: a kiosk loses the keypad after updating.
+     */
+    @Test
+    void keypadShouldDefaultToEnabledWhenTheFileHasNoSetting() {
+        config.loadFromJson(createBaseConfigJson());
+
+        assertThat(config.isKeypadEnabled()).isTrue();
+    }
+
+    /**
+     * Verifies that turning the keypad off is written to the data file and read back.
+     * Expected: the reloaded configuration reports the keypad disabled.
+     * Failure: the setting is lost on restart and the keypad keeps opening.
+     */
+    @Test
+    void keypadSettingShouldSurviveAJsonRoundTrip() {
+        config.loadFromJson(createBaseConfigJson());
+        config.setKeypadEnabled(false);
+
+        ProgramConfig reloaded = new ProgramConfig();
+        reloaded.loadFromJson(config.toJson());
+
+        assertThat(reloaded.isKeypadEnabled()).isFalse();
+    }
+
     // ========== Helper ==========
 
     private void addTowerWithOneEmptyFloor() {

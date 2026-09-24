@@ -123,6 +123,7 @@ public final class DialogHelper {
         JTextField textField = new JTextField(10);
         textField.setFont(new Font("Segoe UI Black", Font.PLAIN, 28));
         textField.setText(defaultValue != null ? defaultValue : "");
+        NumericKeypadPopup.attach(textField);
         ((AbstractDocument) textField.getDocument()).setDocumentFilter(new DocumentFilter() {
             @Override
             public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr)
@@ -303,11 +304,12 @@ public final class DialogHelper {
         }
     }
 
-    /** Digits-only field showing a duration or a price. */
+    /** Digits-only field showing a duration or a price, filled from the keypad on a tap. */
     private static JTextField numericField(long value) {
         JTextField field = new JTextField(String.valueOf(value), 7);
         field.setFont(FIELD_FONT);
         ((AbstractDocument) field.getDocument()).setDocumentFilter(new NumericDocumentFilter());
+        NumericKeypadPopup.attach(field);
         return field;
     }
 

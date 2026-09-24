@@ -6,6 +6,7 @@ package view;
 
 import view.helpers.NumericDocumentFilter;
 import view.helpers.FocusHighlighter;
+import view.helpers.NumericKeypadPopup;
 import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.*;
@@ -28,6 +29,7 @@ public class RoomView extends JPanel implements TimeLabelInterface {
     public RoomView() {
 	initComponents();
         FocusHighlighter.applyToAll(this);
+        NumericKeypadPopup.attach(priceTextField);
     }
 
     private void initComponents() {

@@ -2,6 +2,7 @@ package view;
 
 import view.helpers.NumericDocumentFilter;
 import view.helpers.FocusHighlighter;
+import view.helpers.NumericKeypadPopup;
 import view.helpers.PriceAdjustmentHelper;
 import view.helpers.TextPromptHelper;
 import java.awt.Font;
@@ -30,6 +31,7 @@ public class SpendingRegisterView extends JPanel {
         prepareInternalListeners();
         FocusHighlighter.applyToAll(this);
         TextPromptHelper.install(descriptionChangeText, "Escriba descripcion del cambio aqui( Ej: Compra de mercancia)");
+        NumericKeypadPopup.attach(valueTextField);
     }
 
     private void prepareInternalListeners() {

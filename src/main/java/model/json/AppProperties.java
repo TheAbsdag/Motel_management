@@ -17,7 +17,8 @@ public record AppProperties(
         @JsonProperty("printerName") String printerName,
         @JsonProperty("version") int version,
         @JsonProperty("roomsPerTower") List<TowerConfig> roomsPerTower,
-        @JsonProperty("currencyConfig") CurrencyConfig currencyConfig
+        @JsonProperty("currencyConfig") CurrencyConfig currencyConfig,
+        @JsonProperty("keypadEnabled") Boolean keypadEnabled
 ) {
     public AppProperties {
         if (roomsPerTower == null) roomsPerTower = new ArrayList<>();
@@ -25,6 +26,6 @@ public record AppProperties(
     }
 
     public AppProperties() {
-        this(0, "", "", "", null, 3, new ArrayList<>(), CurrencyConfig.defaultConfig());
+        this(0, "", "", "", null, 3, new ArrayList<>(), CurrencyConfig.defaultConfig(), true);
     }
 }

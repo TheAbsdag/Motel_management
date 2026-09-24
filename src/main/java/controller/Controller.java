@@ -29,6 +29,7 @@ import view.UserGUI;
 import view.ViewCard;
 import view.helpers.DialogHelper;
 import view.helpers.InputParser;
+import view.helpers.NumericKeypadPopup;
 
 /**
  * Main application controller — thin orchestrator that creates sub-controllers,
@@ -198,6 +199,7 @@ public class Controller {
      */
     public void start() {
         motelManager.prepareProgramData();
+        NumericKeypadPopup.setEnabled(motelManager.getProgramConfig().isKeypadEnabled());
 
         if (motelManager.isFirstBoot()) {
             boolean accept = DialogHelper.confirmDialog(

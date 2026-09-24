@@ -32,12 +32,14 @@ public class ProgramConfig {
     private int schemaVersion;
     private CurrencyConfig currencyConfig;
     private List<TowerConfig> roomsPerTower;
+    private boolean keypadEnabled;
 
     public ProgramConfig() {
         this.consecutiveTransaction = 0;
         this.schemaVersion = SCHEMA_VERSION;
         this.currencyConfig = CurrencyConfig.defaultConfig();
         this.roomsPerTower = new ArrayList<>();
+        this.keypadEnabled = true;
     }
 
     public void loadFromJson(String json) {
@@ -51,6 +53,7 @@ public class ProgramConfig {
             this.schemaVersion = props.version();
             this.roomsPerTower = new ArrayList<>(props.roomsPerTower());
             this.currencyConfig = props.currencyConfig() != null ? props.currencyConfig() : CurrencyConfig.defaultConfig();
+            this.keypadEnabled = props.keypadEnabled() == null || props.keypadEnabled();
             migrateIfNeeded();
         } catch (JsonProcessingException e) {
             logger.log(Level.SEVERE, "Failed to load application properties", e);
@@ -83,7 +86,7 @@ public class ProgramConfig {
         try {
             AppProperties props = new AppProperties(
                     consecutiveTransaction, motelName, motelAddress, motelID,
-                    configuredPrinterName, schemaVersion, roomsPerTower, currencyConfig);
+                    configuredPrinterName, schemaVersion, roomsPerTower, currencyConfig, keypadEnabled);
             return ObjectMapperFactory.get().writeValueAsString(props);
         } catch (JsonProcessingException e) {
             logger.log(Level.SEVERE, "Failed to serialize application properties", e);
@@ -423,6 +426,23 @@ public class ProgramConfig {
     public void setCurrencyConfig(CurrencyConfig currencyConfig) {
         this.currencyConfig = currencyConfig;
     }
+
+    // ========== On-screen keypad ==========
+
+    /**
+     * Whether tapping a numeric field opens the on-screen keypad. Installations that have a
+     * keyboard turn it off.
+     *
+     * @return the stored setting, enabled when the data file has none
+     */
+    public boolean isKeypadEnabled() { return keypadEnabled; }
+
+    /**
+     * Stores the on-screen keypad setting.
+     *
+     * @param keypadEnabled true to use the keypad on numeric fields
+     */
+    public void setKeypadEnabled(boolean keypadEnabled) { this.keypadEnabled = keypadEnabled; }
 
     /**
      * Builds a standard room identifier string from tower, floor, and room numbers.

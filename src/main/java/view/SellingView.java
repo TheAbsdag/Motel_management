@@ -5,6 +5,7 @@ package view;
 
 import view.helpers.NumericDocumentFilter;
 import view.helpers.FocusHighlighter;
+import view.helpers.NumericKeypadPopup;
 import view.helpers.TableScroller;
 import view.helpers.TouchScrollHandler;
 import java.awt.*;
@@ -44,6 +45,7 @@ public class SellingView extends JPanel implements TimeLabelInterface {
         initComponents();
         initCustomTable();
         FocusHighlighter.applyToAll(this);
+        NumericKeypadPopup.attach(quantityTextField);
     }
 
     private void initCustomTable() {

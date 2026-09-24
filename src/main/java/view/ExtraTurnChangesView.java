@@ -2,6 +2,7 @@ package view;
 
 import view.helpers.NumericDocumentFilter;
 import view.helpers.FocusHighlighter;
+import view.helpers.NumericKeypadPopup;
 import view.helpers.PriceAdjustmentHelper;
 import view.helpers.TextPromptHelper;
 import java.awt.Font;
@@ -32,6 +33,7 @@ public class ExtraTurnChangesView extends JPanel {
         prepareInternalListeners();
         FocusHighlighter.applyToAll(this);
         TextPromptHelper.install(descriptionText, "Ingrese descripcion del cambio (Ej: Abono 202)");
+        NumericKeypadPopup.attach(valueTextField);
     }
 
     private void prepareInternalListeners() {
