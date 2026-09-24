@@ -20,6 +20,7 @@ This document is a version index for the project's JSON persistence schema. Each
 | [V0.1.5](V0.1.5.md) | 0.1.5 | `72c2b41` | September 2026 | Schema unchanged (v3). Adds the optional `data/printTemplates/` custom print layouts. |
 | [V0.1.5.1](V0.1.5.1.md) | 0.1.5.1 | `61d3b2a` | September 2026 | Schema unchanged (v3). Fixes the read path of 0.1.2 files: hour-based room durations and the tower migration of a turn without a `version` field. |
 | [V0.1.5.2](V0.1.5.2.md) | 0.1.5.2 | `287b98b` | September 2026 | Schema unchanged (v3). Optional `defaultTimeData` per tower, and a save now writes the room pricing held by the room grid. |
+| [V0.1.5.3](V0.1.5.3.md) | 0.1.5.3 | `0b9521e` | September 2026 | Schema unchanged (v3). Optional `keypadEnabled` for the on-screen keypad, enabled when absent. |
 
 ---
 
@@ -61,6 +62,6 @@ Every version shares the same 5 persistence file types; the directories below th
 
 - **Timezone**: `America/Bogota` — all timestamps use `ZonedDateTime` with this zone.
 - **Version field**: Always at the top level. A file that omits it is read as V0.1.2 (`0`), so the automated migrations run (hours → seconds on read, 1-based → 0-based towers); field-level fallbacks cover the rest.
-- **Current schema**: `"version": 3`, introduced by V0.1.4.1 and unchanged by V0.1.5, V0.1.5.1 and V0.1.5.2.
+- **Current schema**: `"version": 3`, introduced by V0.1.4.1 and unchanged by V0.1.5, V0.1.5.1, V0.1.5.2 and V0.1.5.3.
 - **Monetary values**: All amounts in COP (Colombian pesos), stored as `long`.
 - **Data directories**: All gitignored.

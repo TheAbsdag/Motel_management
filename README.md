@@ -23,7 +23,7 @@ Built on Netbeans as a educational project for a specific usecase present on the
 | `.\mvnw.cmd clean compile` | Compile |
 | `.\mvnw.cmd test` | Run all tests |
 | `.\mvnw.cmd clean package` | Build fat JAR |
-| `java -jar target/Motel_management-0.1.5.2.jar` | Run app |
+| `java -jar target/Motel_management-0.1.5.3.jar` | Run app |
 
 ## Architecture
 
@@ -39,6 +39,7 @@ The program targets a **touchscreen** interface, with touchscreen related contro
 A main Floor view is present showing status of the program, a warning for overtime room booking is also present for multiple tower / floors configurations
 Each room has 3 different selection for time, with a personalized modification for each room present on the configuration, as well to the price of each one (Currently only in COP)
 A whole tower can be priced in one step from the room configuration: *PRECIOS TORRE* sets the 3 times and prices of every room of the selected tower, and the same values are what its new rooms start from
+Numeric values can be entered without a keyboard: tapping a price, quantity, duration or tower-number field opens an on-screen keypad. Installations that have a keyboard turn it off with *Opciones programa → USAR TECLADO EN PANTALLA*
 
 ### Printing
 
@@ -66,6 +67,7 @@ Features to be added, in no particular order of progress, WIP will be marked and
 - **Java Swing integration:** Development of view related elements started with Java Swing due to simplicity, swap to JavaFX for a touch friendly approach without using broken helpers is currently being tested for implementation
 
 ## Versions major changes:
+- **0.1.5.3:** Adds an on-screen keypad for numeric values (price, quantity, duration, tower number), switched off from *Opciones programa* for installations that have a keyboard. Fixes the per-tower pricing dialog, which opened with the durations in seconds while the unit said hours and would have stored them multiplied by 3600, and gives its values the same quick adjustment buttons as the room screen.
 - **0.1.5.2:** Prices a whole tower at once from the room configuration and keeps those values as the default for its new rooms. Fixes two ways of losing edits: a room price changed on the configuration screen was not written to `applicationProperties` and came back after a restart, and changing the 3 times or prices of a room without saving in between kept only the last one. Saving the floor configuration now also leaves a backup record, and backups are named after the operation that caused them instead of every room operation being recorded as a room swap.
 - **0.1.5.1:** Makes data written by 0.1.2 installations (no `version` field, durations in hours) load as it is: `roomsInformation` no longer loses the duration of occupied rooms, and a turn from that version gets its tower numbers migrated instead of being read as already current.
 - **0.1.5:** Receipts and turn reports are laid out from editable JSON templates, with a template editor, a preview at the paper size the printer declares and a test print. Customizing is optional: a type without a saved layout keeps using the built-in one, and no data or schema change is involved. Requires Java 25.
