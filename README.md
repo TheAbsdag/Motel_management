@@ -23,7 +23,7 @@ Built on Netbeans as a educational project for a specific usecase present on the
 | `.\mvnw.cmd clean compile` | Compile |
 | `.\mvnw.cmd test` | Run all tests |
 | `.\mvnw.cmd clean package` | Build fat JAR |
-| `java -jar target/Motel_management-0.1.5.jar` | Run app |
+| `java -jar target/Motel_management-0.1.5.1.jar` | Run app |
 
 ## Architecture
 
@@ -65,6 +65,7 @@ Features to be added, in no particular order of progress, WIP will be marked and
 - **Java Swing integration:** Development of view related elements started with Java Swing due to simplicity, swap to JavaFX for a touch friendly approach without using broken helpers is currently being tested for implementation
 
 ## Versions major changes:
+- **0.1.5.1:** Makes data written by 0.1.2 installations (no `version` field, durations in hours) load as it is: `roomsInformation` no longer loses the duration of occupied rooms, and a turn from that version gets its tower numbers migrated instead of being read as already current.
 - **0.1.5:** Receipts and turn reports are laid out from editable JSON templates, with a template editor, a preview at the paper size the printer declares and a test print. Customizing is optional: a type without a saved layout keeps using the built-in one, and no data or schema change is involved. Requires Java 25.
 - **0.1.4.1:** Modified encryption type for potential sensitive data on e-mail to use UUID linked to the machine itself. Added a .csv for better static analysis on exportation options.
 - **0.1.4:** Added email reporting to specific addresses (meant for motel manager, accounting, or related),
