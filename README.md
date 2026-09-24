@@ -23,7 +23,7 @@ Built on Netbeans as a educational project for a specific usecase present on the
 | `.\mvnw.cmd clean compile` | Compile |
 | `.\mvnw.cmd test` | Run all tests |
 | `.\mvnw.cmd clean package` | Build fat JAR |
-| `java -jar target/Motel_management-0.1.5.3.jar` | Run app |
+| `java -jar target/Motel_management-0.1.5.4.jar` | Run app |
 
 ## Architecture
 
@@ -67,6 +67,7 @@ Features to be added, in no particular order of progress, WIP will be marked and
 - **Java Swing integration:** Development of view related elements started with Java Swing due to simplicity, swap to JavaFX for a touch friendly approach without using broken helpers is currently being tested for implementation
 
 ## Versions major changes:
+- **0.1.5.4:** Fixes the layout of the on-screen keypad added in 0.1.5.3: its keys are a 3x4 pad instead of a single long row. Everything else is 0.1.5.3.
 - **0.1.5.3:** Adds an on-screen keypad for numeric values (price, quantity, duration, tower number), switched off from *Opciones programa* for installations that have a keyboard. Fixes the per-tower pricing dialog, which opened with the durations in seconds while the unit said hours and would have stored them multiplied by 3600, and gives its values the same quick adjustment buttons as the room screen.
 - **0.1.5.2:** Prices a whole tower at once from the room configuration and keeps those values as the default for its new rooms. Fixes two ways of losing edits: a room price changed on the configuration screen was not written to `applicationProperties` and came back after a restart, and changing the 3 times or prices of a room without saving in between kept only the last one. Saving the floor configuration now also leaves a backup record, and backups are named after the operation that caused them instead of every room operation being recorded as a room swap.
 - **0.1.5.1:** Makes data written by 0.1.2 installations (no `version` field, durations in hours) load as it is: `roomsInformation` no longer loses the duration of occupied rooms, and a turn from that version gets its tower numbers migrated instead of being read as already current.
