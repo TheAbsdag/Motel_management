@@ -16,6 +16,12 @@ import java.util.List;
 
 public class TurnService {
 
+    /**
+     * Valid print options: {@code 1} = no print, {@code 2} = summarized, {@code 3} = detailed.
+     */
+    private static final int MIN_PRINT_OPTION = 1;
+    private static final int MAX_PRINT_OPTION = 3;
+
     private final Turn turn;
     private final ProgramConfig programConfig;
     private final Printer printer;
@@ -54,6 +60,7 @@ public class TurnService {
     }
 
     public void turnPrintNoEnd(int option) {
+        requireValidPrintOption(option);
         TurnDetails details = turn.getDetailedTurnInformation();
         switch (option) {
             case 2 -> printer.printSummarizedCurrentTurn(details);
@@ -63,6 +70,7 @@ public class TurnService {
     }
 
     public void turnEndPrint(int option, ZonedDateTime localizedTime) {
+        requireValidPrintOption(option);
         TurnDetails details = turn.getDetailedTurnInformation();
         files.saveHistoryData(details.toJson(), "turn", localizedTime);
         TurnReportGenerator.generateReport(details);
@@ -70,17 +78,29 @@ public class TurnService {
             case 1 -> { printer.printSummarizedTurn(details, true);  printer.printDetailedTurn(details, true); }
             case 2 -> { printer.printSummarizedTurn(details, false); printer.printDetailedTurn(details, true); }
             case 3 -> { printer.printSummarizedTurn(details, true);  printer.printDetailedTurn(details, false); }
-            default -> { /* no printing */ }
         }
         files.clearBackupFiles();
     }
 
     public void turnHistoryPrint(int option, TurnDetails details) {
+        requireValidPrintOption(option);
         switch (option) {
             case 1 -> { printer.printSummarizedTurn(details, true);  printer.printDetailedTurn(details, true); }
             case 2 -> { printer.printSummarizedTurn(details, false); printer.printDetailedTurn(details, true); }
             case 3 -> { printer.printSummarizedTurn(details, true);  printer.printDetailedTurn(details, false); }
-            default -> { /* no printing */ }
+        }
+    }
+
+    /**
+     * Rejects an out-of-range print option instead of silently printing nothing.
+     *
+     * @param option the print option received from the controller
+     * @throws IllegalArgumentException if the option is not 1, 2 or 3
+     */
+    static void requireValidPrintOption(int option) {
+        if (option < MIN_PRINT_OPTION || option > MAX_PRINT_OPTION) {
+            throw new IllegalArgumentException("Invalid print option: " + option
+                    + ". Expected 1 (no print), 2 (summarized) or 3 (detailed)");
         }
     }
 

@@ -214,6 +214,34 @@ class TurnManagerViewTest {
         assertThat(view.isDetailedPrintSelected()).isTrue();
     }
 
+    /**
+     * Verifies that unchecking the only selected print option disables both
+     * "IMPRIMIR PARCIAL" and "FIN TURNO", so the turn cannot be printed or closed
+     * without a valid print option.
+     * Expected: Both buttons are enabled after selecting an option and disabled again
+     *           after the user clears it.
+     * Failure: The buttons stay enabled with no option selected, and the turn ends
+     *          without printing the report.
+     */
+    @Test
+    void shouldDisablePrintAndEndTurnWhenNoOptionSelected() throws Exception {
+        view.setupPrintCheckboxes();
+        JCheckBox summarized = (JCheckBox) getField(view, "summarizedPrintCheckBox");
+        AbstractButton printButton = (AbstractButton) getField(view, "printButton");
+        AbstractButton endTurnButton = (AbstractButton) getField(view, "endTurnButton");
+
+        printButton.setEnabled(false);
+        endTurnButton.setEnabled(false);
+
+        summarized.setSelected(true);
+        assertThat(printButton.isEnabled()).isTrue();
+        assertThat(endTurnButton.isEnabled()).isTrue();
+
+        summarized.setSelected(false);
+        assertThat(printButton.isEnabled()).isFalse();
+        assertThat(endTurnButton.isEnabled()).isFalse();
+    }
+
     // --- state ---
 
     /**
