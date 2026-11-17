@@ -191,6 +191,29 @@ class PrintDataBuilderTest {
     }
 
     @Test
+    void shouldIncludeSaleRefundOfTheFirstProduct() {
+        TurnDetails details = new TurnDetails(7L, START, true);
+        details.addActivity(new RefundActivity(START.plusMinutes(10), RefundType.SALE_REFUND, 89, 88,
+                "Habitacion 3", -3_000L, 0L, 0L, 1L, "Nectar 1/4"));
+        details.setOpeningInventory(List.of(
+                new InventorySnapshotItem(0L, "Nectar 1/4", 4, 2),
+                new InventorySnapshotItem(1L, "Ron 1/4", 1, 3),
+                new InventorySnapshotItem(2L, "Agua", 10, 2)));
+        details.setClosingInventory(List.of(
+                new InventorySnapshotItem(0L, "Nectar 1/4", 4, 2),
+                new InventorySnapshotItem(1L, "Ron 1/4", 1, 3),
+                new InventorySnapshotItem(2L, "Agua", 10, 2)));
+
+        String block = PrintDataBuilder.inventoryMovementsBlock(details, CONTEXT);
+        String state = PrintDataBuilder.inventoryStateBlock(details);
+
+        assertThat(block).contains("+1 Nectar 1/4 (Devolución)")
+                .contains("Devuelto: 1 uds");
+        assertThat(state.indexOf("Nectar 1/4")).isLessThan(state.indexOf("Ron 1/4"))
+                .isLessThan(state.indexOf("Agua"));
+    }
+
+    @Test
     void shouldLeaveInventoryBlocksEmptyWithoutSnapshots() {
         TurnDetails details = new TurnDetails(1L, START, true);
 

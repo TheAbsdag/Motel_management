@@ -223,7 +223,7 @@ public final class PrintDataBuilder {
                     rows.add(new DatedRow(sale.changeDate(), saleRow(sale, item, context)));
                 }
             } else if (activity instanceof RefundActivity refund
-                    && refund.refundType() == RefundType.SALE_REFUND && refund.itemID() > 0) {
+                    && refund.refundType() == RefundType.SALE_REFUND) {
                 rows.add(new DatedRow(refund.changeDate(), refundRow(refund, context)));
             }
         }
@@ -253,7 +253,7 @@ public final class PrintDataBuilder {
                     vendidoMoney += item.price();
                 }
             } else if (activity instanceof RefundActivity refund
-                    && refund.refundType() == RefundType.SALE_REFUND && refund.itemID() > 0) {
+                    && refund.refundType() == RefundType.SALE_REFUND) {
                 devueltoUnits += refund.quantity();
             }
         }
@@ -300,7 +300,7 @@ public final class PrintDataBuilder {
                     changed.add(item.itemID());
                 }
             } else if (activity instanceof RefundActivity refund
-                    && refund.refundType() == RefundType.SALE_REFUND && refund.itemID() > 0) {
+                    && refund.refundType() == RefundType.SALE_REFUND) {
                 changed.add(refund.itemID());
             }
         }
