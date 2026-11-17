@@ -212,3 +212,19 @@ The editor is the only safe way to change a template, but the files are plain JS
 - Saving from the editor writes the file atomically (a `.tmp` file followed by a move), so a crash mid-save does not leave a half-written template.
 
 The template files are not part of the turn data: they are never read back into the turn, the register or the history, and the JSON persistence schema is unchanged by them (see [Persistence Schema](PERSISTENCE/PERSISTENCE_SCHEMA.md)).
+
+## Inventory fields (V0.1.5.5)
+
+`TURN_SUMMARY` and `TURN_DETAIL` add two list fields:
+
+| Key | Content | Example |
+|---|---|---|
+| `inventoryMovements` | Manual movements, sales, courtesy sales and sale refunds in chronological order, plus the totals | ` 11/17-20:30  +6 Cerveza (COMPRA)\t$30.000` |
+| `inventoryState` | One line per product; the ones touched during the turn first, then the low/out ones, then the rest | `    6 Cerveza  (recibido 4)` |
+
+The totals are `Surtido` (units and cost of increases), `Vendido` (units and value of
+sales), `Consumido` (manual consumptions) and `Devuelto` (sale refunds). A product at or
+below its minimum prints `[BAJO]`; zero or negative prints `[AGOTADO]`.
+
+The built-in layout of `Printer` prints the same section, so a fresh installation sees
+it without saving a template.
