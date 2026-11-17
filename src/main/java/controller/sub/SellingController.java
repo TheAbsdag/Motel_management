@@ -117,6 +117,7 @@ public class SellingController {
             quantity = 1L;
             sellingView.setQuantityText("1");
         }
+        warnIfLowOrOut(itemSelected, quantity);
         long itemID = itemSelected.itemID();
         sellingView.setFinishSaleEnabled(true);
         motelManager.addItemToSelling(itemID, quantity, false);
@@ -152,6 +153,7 @@ public class SellingController {
             quantity = 1L;
             sellingView.setQuantityText("1");
         }
+        warnIfLowOrOut(itemSelected, quantity);
         long itemID = itemSelected.itemID();
         sellingView.setFinishSaleEnabled(true);
         motelManager.addItemToSelling(itemID, quantity, true);
@@ -161,6 +163,19 @@ public class SellingController {
         sellingView.clearItemTableSelection();
         sellingView.clearSellingTableSelection();
         sellingView.setAddItemEnabled(false);
+    }
+
+    private void warnIfLowOrOut(InventoryItemData item, long quantity) {
+        if (item.isOut()) {
+            DialogHelper.showInfoMessage("El producto " + item.name()
+                    + " está AGOTADO. Se agregará igual; el inventario quedará negativo.", "INVENTARIO");
+        } else if (quantity > item.quantity()) {
+            DialogHelper.showInfoMessage("La existencia de " + item.name() + " es " + item.quantity()
+                    + "; se venderán " + quantity + ".", "INVENTARIO");
+        } else if (item.isLow()) {
+            DialogHelper.showInfoMessage("El producto " + item.name() + " está BAJO (quedan "
+                    + item.quantity() + ").", "INVENTARIO");
+        }
     }
 
     public void finishSale() {

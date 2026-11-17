@@ -53,7 +53,7 @@ public class SellingView extends JPanel implements TimeLabelInterface {
         itemTable = new JTable(itemTableModel);
         TableColumnModel columnModel = itemTable.getColumnModel();
         for (int i = 0; i < columnModel.getColumnCount(); i++) {
-            columnModel.getColumn(i).setCellRenderer(new CustomCellRenderer(cellFont));
+            columnModel.getColumn(i).setCellRenderer(new StockItemCellRenderer(cellFont));
             columnModel.getColumn(i).setHeaderRenderer(new CustomHeaderRenderer(cellFont));
         }
         itemTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -150,7 +150,7 @@ public class SellingView extends JPanel implements TimeLabelInterface {
     //Custom tableModel class for showing items
     private class ItemTableModel extends AbstractTableModel {
 
-        private final String[] columnNames = {"Nombre", "Precio"};
+        private final String[] columnNames = {"Nombre", "Existencia", "Precio"};
         private List<InventoryItemData> inventoryItems;
 
         public ItemTableModel() {
@@ -178,7 +178,10 @@ public class SellingView extends JPanel implements TimeLabelInterface {
             InventoryItemData item = inventoryItems.get(rowIndex);
             return switch (columnIndex) {
                 case 0 -> item.name();
-                case 1 -> item.price();
+                case 1 -> item.isOut() ? item.quantity() + " (AGOTADO)"
+                        : item.isLow() ? item.quantity() + " (BAJO)"
+                        : String.valueOf(item.quantity());
+                case 2 -> item.price();
                 default -> null;
             };
         }
@@ -192,9 +195,34 @@ public class SellingView extends JPanel implements TimeLabelInterface {
         public Class<?> getColumnClass(int columnIndex) {
             return switch (columnIndex) {
                 case 0 -> String.class;
-                case 1 -> Long.class;
+                case 1 -> String.class;
+                case 2 -> Long.class;
                 default -> super.getColumnClass(columnIndex);
             };
+        }
+    }
+
+    private class StockItemCellRenderer extends CustomCellRenderer {
+
+        StockItemCellRenderer(Font font) {
+            super(font);
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+                                                       boolean hasFocus, int row, int column) {
+            Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            if (!isSelected && row >= 0 && row < itemTableModel.inventoryItems.size()) {
+                InventoryItemData item = itemTableModel.inventoryItems.get(row);
+                if (item.isOut()) {
+                    setBackground(new Color(255, 205, 205));
+                } else if (item.isLow()) {
+                    setBackground(new Color(255, 235, 190));
+                } else {
+                    setBackground(table.getBackground());
+                }
+            }
+            return component;
         }
     }
 

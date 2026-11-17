@@ -270,4 +270,23 @@ class SellingViewTest {
             throw new RuntimeException(e);
         }
     }
+
+    /**
+     * Verifies the sale item table shows the existence column with stock marks.
+     * Expected: 3 columns; the existence cell reads "0 (AGOTADO)", "3 (BAJO)" and "50".
+     * Failure: the seller cannot see the stock before adding an item.
+     */
+    @Test
+    void shouldShowExistenceColumnWithStockMarks() {
+        view.updateItemListed(List.of(
+                new InventoryItemData(1, "Coca-Cola", 2500, 0),
+                new InventoryItemData(2, "Agua", 1000, 3, 5),
+                new InventoryItemData(3, "Ron", 20000, 50)));
+
+        JTable table = viewGetItemTable();
+        assertThat(table.getColumnCount()).isEqualTo(3);
+        assertThat(table.getValueAt(0, 1)).isEqualTo("0 (AGOTADO)");
+        assertThat(table.getValueAt(1, 1)).isEqualTo("3 (BAJO)");
+        assertThat(table.getValueAt(2, 1)).isEqualTo("50");
+    }
 }
