@@ -3,6 +3,7 @@ package model;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import model.json.ObjectMapperFactory;
+import model.turn.InventorySnapshotItem;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 
@@ -159,5 +160,43 @@ class RegisterTest {
         register.createNewItem("Test", 500, 3);
         Register.InventoryData data = register.getInventoryData();
         assertThat(data.inventoryItems()).hasSize(1);
+    }
+
+    @Test
+    void shouldStoreMinimumWhenCreatingItem() {
+        register.createNewItem("Cerveza", 8000, 4, 2);
+
+        assertThat(register.getItemFromItemID(0).getMinimum()).isEqualTo(2);
+        assertThat(register.getInventoryItemDataList().get(0).minimum()).isEqualTo(2);
+    }
+
+    @Test
+    void shouldWriteInventoryVersion3WithMinimum() throws JsonProcessingException {
+        register.createNewItem("Cerveza", 8000, 4, 2);
+
+        Register.InventoryData data = register.getInventoryData();
+        String json = ObjectMapperFactory.get().writeValueAsString(data);
+
+        assertThat(data.version()).isEqualTo(3);
+        assertThat(data.inventoryItems().get(0).minimum()).isEqualTo(2);
+        assertThat(json).contains("\"minimum\" : 2");
+    }
+
+    @Test
+    void shouldDefaultMissingMinimumToZeroWhenReadingLegacyInventory() throws JsonProcessingException {
+        String legacy = """
+                {"inventoryItems":[{"itemID":0,"price":8000,"itemName":"Cerveza","quantity":4}],"version":2}""";
+
+        Register.InventoryData data = ObjectMapperFactory.get().readValue(legacy, Register.InventoryData.class);
+
+        assertThat(data.inventoryItems().get(0).minimum()).isZero();
+    }
+
+    @Test
+    void shouldSnapshotInventoryWithMinimum() {
+        register.createNewItem("Cerveza", 8000, 4, 2);
+
+        assertThat(register.getInventorySnapshot())
+                .containsExactly(new InventorySnapshotItem(0, "Cerveza", 4, 2));
     }
 }

@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import model.dto.InventoryItemData;
 import model.dto.SellingItemData;
+import model.turn.InventorySnapshotItem;
 
 /**
  * Manages the motel inventory and the active selling cart list.
@@ -44,6 +45,10 @@ public class Register {
     }
 
     public void createItem(String name, long value, long quantity, long itemIDInput) {
+        createItem(name, value, quantity, itemIDInput, 0L);
+    }
+
+    public void createItem(String name, long value, long quantity, long itemIDInput, long minimum) {
         long itemID = itemIDInput;
         HashSet<Long> usedIds = new HashSet<>();
         for (Item item : inventory) {
@@ -52,11 +57,14 @@ public class Register {
         while (usedIds.contains(itemID)) {
             itemID++;
         }
-        Item newItem = new Item(name, value, quantity, itemID);
-        inventory.add(newItem);
+        inventory.add(new Item(name, value, quantity, itemID, minimum));
     }
 
-    public void createNewItem(String name, long value, long quantity) {
+    public Item createNewItem(String name, long value, long quantity) {
+        return createNewItem(name, value, quantity, 0L);
+    }
+
+    public Item createNewItem(String name, long value, long quantity, long minimum) {
         long itemID = 0;
         HashSet<Long> usedIds = new HashSet<>();
         for (Item item : inventory) {
@@ -65,8 +73,9 @@ public class Register {
         while (usedIds.contains(itemID)) {
             itemID++;
         }
-        Item newItem = new Item(name, value, quantity, itemID);
+        Item newItem = new Item(name, value, quantity, itemID, minimum);
         inventory.add(newItem);
+        return newItem;
     }
 
     /**
@@ -153,9 +162,10 @@ public class Register {
                     inventory.get(i).getItemID(),
                     inventory.get(i).getPrice(),
                     inventory.get(i).getName(),
-                    inventory.get(i).getQuantity()));
+                    inventory.get(i).getQuantity(),
+                    inventory.get(i).getMinimum()));
         }
-        return new InventoryData(items, 2);
+        return new InventoryData(items, 3);
     }
 
     public Item getItemFromItemID(long itemID) {
@@ -176,9 +186,24 @@ public class Register {
     public List<InventoryItemData> getInventoryItemDataList() {
         List<InventoryItemData> result = new ArrayList<>();
         for (Item item : inventory) {
-            result.add(new InventoryItemData(item.getItemID(), item.getName(), item.getPrice(), item.getQuantity()));
+            result.add(new InventoryItemData(item.getItemID(), item.getName(), item.getPrice(),
+                    item.getQuantity(), item.getMinimum()));
         }
         return result;
+    }
+
+    /**
+     * Returns the current stock of every product, for the turn opening/closing snapshots.
+     *
+     * @return one entry per inventory item
+     */
+    public List<InventorySnapshotItem> getInventorySnapshot() {
+        List<InventorySnapshotItem> snapshot = new ArrayList<>();
+        for (Item item : inventory) {
+            snapshot.add(new InventorySnapshotItem(item.getItemID(), item.getName(),
+                    item.getQuantity(), item.getMinimum()));
+        }
+        return snapshot;
     }
 
     public List<SellingItemData> getSellingItemDataList() {
@@ -218,6 +243,7 @@ public class Register {
             @JsonProperty("itemID") long itemID,
             @JsonProperty("price") long price,
             @JsonProperty("itemName") String itemName,
-            @JsonProperty("quantity") long quantity
+            @JsonProperty("quantity") long quantity,
+            @JsonProperty("minimum") long minimum
     ) {}
 }
