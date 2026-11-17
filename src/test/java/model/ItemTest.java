@@ -56,4 +56,10 @@ class ItemTest {
 
         assertThat(item.getQuantity()).isEqualTo(20);
     }
+
+    @Test
+    void shouldDefaultMinimumToZeroAndKeepConfiguredMinimum() {
+        assertThat(new Item("Cerveza", 8000, 4, 0).getMinimum()).isZero();
+        assertThat(new Item("Cerveza", 8000, 4, 0, 2).getMinimum()).isEqualTo(2);
+    }
 }

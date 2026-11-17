@@ -10,6 +10,7 @@ public class Item {
     private long price;
     private long quantity;
     private long itemID;
+    private long minimum;
     
     /**
      * Creates an inventory item.
@@ -19,11 +20,25 @@ public class Item {
      * @param quantity initial stock quantity
      * @param itemID   unique identifier
      */
-    public Item(String name, long value, long quantity, long itemID){
+    public Item(String name, long value, long quantity, long itemID) {
+        this(name, value, quantity, itemID, 0L);
+    }
+
+    /**
+     * Creates an inventory item with a per-product low-stock minimum.
+     *
+     * @param name     display name of the item
+     * @param value    unit price
+     * @param quantity initial stock quantity
+     * @param itemID   unique identifier
+     * @param minimum  quantity at or below which the product is reported as low
+     */
+    public Item(String name, long value, long quantity, long itemID, long minimum) {
         this.itemID = itemID;
         this.name = name;
         this.price = value;
         this.quantity = quantity;
+        this.minimum = minimum;
     }
     
     /**
@@ -88,6 +103,15 @@ public class Item {
      */
     public long getItemID() {
         return itemID;
+    }
+
+    /**
+     * Returns the low-stock minimum configured for this product.
+     *
+     * @return the minimum, zero when none is configured
+     */
+    public long getMinimum() {
+        return minimum;
     }
 
 }
