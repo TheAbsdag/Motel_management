@@ -28,6 +28,7 @@ import model.json.ObjectMapperFactory;
 import model.print.PrintTemplate;
 import model.turn.ActivityType;
 import model.turn.ExtraChangeType;
+import model.turn.InventoryMovement;
 import model.turn.RoomBookingActivity;
 import model.turn.SaleActivity;
 import model.turn.TurnActivity;
@@ -130,35 +131,47 @@ public class MotelManagement {
     public boolean prepareTurnRegisterData() {
         String turnData = files.getJsonData("turn");
         String inventoryData = files.getJsonData("inventory");
+
+        loadInventoryData(inventoryData);
+
         boolean validPreviousTurn = false;
         if (turnData != null && !turnData.isEmpty()) {
             validPreviousTurn = turn.setPreviousTurnJSON(turnData);
             if (!validPreviousTurn) {
                 logger.log(Level.INFO, "Found previous turn, but it's no longer active, backing up");
                 this.timeInformationUpdate();
+                turn.setClosingInventory(sellingService.inventorySnapshot());
                 turn.turnEnd(currentTime);
-                files.saveHistoryData(turn.getDetailedTurnInformationAsJson(), "turnClosedImproperly", localizedTime);
+                files.saveHistoryData(turn.getDetailedTurnInformationAsJson(),
+                        "turnClosedImproperly", localizedTime);
                 TurnReportGenerator.generateReport(turn.getDetailedTurnInformation());
             }
         }
-        if (inventoryData != null && !inventoryData.isEmpty()) {
-            try {
-                JsonNode root = ObjectMapperFactory.get().readTree(inventoryData);
-                JsonNode itemArray = root.get("inventoryItems");
-                if (itemArray != null && itemArray.isArray()) {
-                    for (JsonNode currentItem : itemArray) {
-                        register.createItem(
-                                currentItem.get("itemName").asText(),
-                                currentItem.get("price").asLong(),
-                                currentItem.get("quantity").asLong(),
-                                currentItem.get("itemID").asLong());
-                    }
-                }
-            } catch (JsonProcessingException e) {
-                logger.log(Level.SEVERE, "Failed to parse inventory data", e);
-            }
-        }
         return validPreviousTurn;
+    }
+
+    private void loadInventoryData(String inventoryData) {
+        if (inventoryData == null || inventoryData.isEmpty()) {
+            return;
+        }
+        try {
+            JsonNode root = ObjectMapperFactory.get().readTree(inventoryData);
+            JsonNode itemArray = root.get("inventoryItems");
+            if (itemArray == null || !itemArray.isArray()) {
+                return;
+            }
+            for (JsonNode currentItem : itemArray) {
+                JsonNode minimumNode = currentItem.get("minimum");
+                register.createItem(
+                        currentItem.get("itemName").asText(),
+                        currentItem.get("price").asLong(),
+                        currentItem.get("quantity").asLong(),
+                        currentItem.get("itemID").asLong(),
+                        minimumNode != null ? minimumNode.asLong() : 0L);
+            }
+        } catch (JsonProcessingException e) {
+            logger.log(Level.SEVERE, "Failed to parse inventory data", e);
+        }
     }
 
     // ========== Time Management ==========
@@ -247,7 +260,7 @@ public class MotelManagement {
     // ========== Turn Operations ==========
 
     public void setNewTurn(int turnNumber) {
-        turnService.setNewTurn(turnNumber, currentTime);
+        turnService.setNewTurn(turnNumber, currentTime, sellingService.inventorySnapshot());
     }
 
     public void turnEnded() {
@@ -255,10 +268,12 @@ public class MotelManagement {
     }
 
     public void turnPrintNoEnd(int option) {
+        turnService.captureClosingInventory(sellingService.inventorySnapshot());
         turnService.turnPrintNoEnd(option);
     }
 
     public void turnEndPrint(int option) {
+        turnService.captureClosingInventory(sellingService.inventorySnapshot());
         turnService.turnEndPrint(option, localizedTime);
     }
 
@@ -280,12 +295,48 @@ public class MotelManagement {
         return sellingService.saveItemInformation(item);
     }
 
+    /**
+     * Saves an inventory item and records the movement of a quantity change.
+     *
+     * @param updated complete item with its new values
+     * @param concept movement concept; required when the quantity changes
+     * @param cost    total cost of an increase
+     * @return false when the item no longer exists
+     */
+    public boolean saveInventoryItem(InventoryItemData updated, String concept, long cost) {
+        timeInformationUpdate();
+        if (sellingService.getItemFromItemID(updated.itemID()) == null) {
+            return false;
+        }
+        InventoryMovement movement = sellingService.applyInventoryChange(updated, concept, cost, localizedTime);
+        recordInventoryMovementIfActive(movement);
+        return true;
+    }
+
+    public void newItemCreated(String name, long price, long quantity, long minimum) {
+        timeInformationUpdate();
+        recordInventoryMovementIfActive(
+                sellingService.newItemCreated(name, price, quantity, minimum, localizedTime));
+    }
+
     public void newItemCreated(String name, long price, long quantity) {
-        sellingService.newItemCreated(name, price, quantity);
+        newItemCreated(name, price, quantity, 0L);
     }
 
     public void deleteItemFromInventory(long itemID) {
-        sellingService.deleteItemFromInventory(itemID);
+        timeInformationUpdate();
+        recordInventoryMovementIfActive(sellingService.deleteItemWithMovement(itemID, localizedTime));
+    }
+
+    private void recordInventoryMovementIfActive(InventoryMovement movement) {
+        if (movement == null) {
+            return;
+        }
+        if (turn.isActive()) {
+            turnService.recordInventoryMovement(movement);
+        } else {
+            logger.log(Level.INFO, "Inventory movement not recorded: no active turn");
+        }
     }
 
     public void addItemToSelling(long itemID, long quantity, boolean courtesySale) {

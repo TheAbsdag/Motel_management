@@ -8,6 +8,8 @@ import model.dto.TurnActivityData;
 import model.dto.TurnSummaryItemData;
 import model.turn.ActivityType;
 import model.turn.ExtraChangeType;
+import model.turn.InventoryMovement;
+import model.turn.InventorySnapshotItem;
 import model.turn.SaleActivity;
 import model.turn.TurnDetails;
 import java.time.Instant;
@@ -36,6 +38,28 @@ public class TurnService {
 
     public void setNewTurn(int turnNumber, Instant currentTime) {
         turn.setNewTurn(turnNumber, currentTime);
+    }
+
+    public void setNewTurn(int turnNumber, Instant currentTime, List<InventorySnapshotItem> openingInventory) {
+        turn.setNewTurn(turnNumber, currentTime, openingInventory);
+    }
+
+    /**
+     * Refreshes the close snapshot used by the next print or by the history save.
+     *
+     * @param closing stock snapshot of every product
+     */
+    public void captureClosingInventory(List<InventorySnapshotItem> closing) {
+        turn.setClosingInventory(closing);
+    }
+
+    /**
+     * Records a manual inventory movement in the turn.
+     *
+     * @param movement movement to append
+     */
+    public void recordInventoryMovement(InventoryMovement movement) {
+        turn.registerInventoryMovement(movement);
     }
 
     public void turnEnded(Instant currentTime) {
