@@ -146,7 +146,7 @@ public class InventoryController {
             inventoryView.setEditInfoText("SELECCIONE O CREE OBJETO");
             inventoryView.setNameText("");
             inventoryView.setQuantityText("0");
-            inventoryView.setMinimumText("0");
+            inventoryView.setMinimumText("");
             inventoryView.setPriceText("0");
             updateViewData();
         }

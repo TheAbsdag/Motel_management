@@ -117,6 +117,7 @@ public class TurnController {
     public void startTurn(int turnNumber) {
         motelManager.timeInformationUpdate();
         motelManager.setNewTurn(turnNumber);
+        saveMainFiles.run();
 userInterface.setView(ViewCard.FLOOR_VIEW);
     }
 

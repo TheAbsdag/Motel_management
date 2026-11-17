@@ -220,7 +220,7 @@ The template files are not part of the turn data: they are never read back into 
 | Key | Content | Example |
 |---|---|---|
 | `inventoryMovements` | Manual movements, sales, courtesy sales and sale refunds in chronological order, plus the totals | ` 11/17-20:30  +6 Cerveza (COMPRA)\t$30.000` |
-| `inventoryState` | One line per product; the ones touched during the turn first, then the low/out ones, then the rest | `    6 Cerveza  (recibido 4)` |
+| `inventoryState` | One line per product; the ones touched during the turn first, then the low/out ones, then the rest | `   6 Cerveza  (recibido 4)` |
 
 The totals are `Surtido` (units and cost of increases), `Vendido` (units and value of
 sales), `Consumido` (manual consumptions) and `Devuelto` (sale refunds). A product at or
