@@ -443,10 +443,12 @@ public class Printer {
 
             if (isCurrent) {
                 printSummarizedTurnExtras(turnDetails);
+                printInventorySection(turnDetails);
                 printFillerLines(3);
                 saveAsPDF("summarizedTurn", fullDateTurnStart, turnNumber);
                 printWithService();
             } else {
+                printInventorySection(turnDetails);
                 printFillerLines(3);
                 completePrinting("summarizedTurn", fullDateTurnStart, turnNumber, justPDF);
             }
@@ -616,10 +618,12 @@ public class Printer {
 
             if (isCurrent) {
                 printDetailedTurnExtras(turnDetails);
+                printInventorySection(turnDetails);
                 printFillerLines(3);
                 saveAsPDF("detailedTurnTurn", fullDateTurnStart, turnNumber);
                 printWithService();
             } else {
+                printInventorySection(turnDetails);
                 printFillerLines(3);
                 completePrinting("detailedTurnTurn", fullDateTurnStart, turnNumber, justPDF);
             }
@@ -650,6 +654,31 @@ public class Printer {
         printFillerLines(1);
         document.insertString(document.getLength(), "Total Neto: ", document.getStyle("DefaultStyle"));
         document.insertString(document.getLength(), CurrencyFormatter.format(turnDetails.getTotalNet(), currencyConfig) + "\n", document.getStyle("DefaultStyleBold"));
+    }
+
+    /**
+     * Prints the inventory section (movements + current state) using the same text the
+     * templates resolve, so the built-in layout and a customized one cannot diverge.
+     *
+     * @param details the turn data
+     * @throws BadLocationException when the document rejects an insertion
+     */
+    private void printInventorySection(TurnDetails details) throws BadLocationException {
+        String movements = PrintDataBuilder.inventoryMovementsBlock(details, printContext());
+        String state = PrintDataBuilder.inventoryStateBlock(details);
+        if (movements.isEmpty() && state.isEmpty()) {
+            return;
+        }
+        printSeparator();
+        printFillerLines(1);
+        if (!movements.isEmpty()) {
+            document.insertString(document.getLength(), "INVENTARIO\n", document.getStyle("FooterStyleBold"));
+            document.insertString(document.getLength(), movements + "\n", document.getStyle("TransactionStyle"));
+        }
+        if (!state.isEmpty()) {
+            document.insertString(document.getLength(), "ESTADO ACTUAL\n", document.getStyle("SecondLastStyleBold"));
+            document.insertString(document.getLength(), state + "\n", document.getStyle("TransactionStyle"));
+        }
     }
 
     // ========== Template-Based Printing ==========
