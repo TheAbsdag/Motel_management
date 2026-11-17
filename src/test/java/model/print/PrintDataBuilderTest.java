@@ -6,6 +6,11 @@ import java.util.List;
 import java.util.Map;
 import model.RoomStatus;
 import model.json.CurrencyConfig;
+import model.turn.InventoryMovement;
+import model.turn.InventorySnapshotItem;
+import model.turn.MovementType;
+import model.turn.RefundActivity;
+import model.turn.RefundType;
 import model.turn.RoomBookingActivity;
 import model.turn.SaleActivity;
 import model.turn.SaleItem;
@@ -157,6 +162,61 @@ class PrintDataBuilderTest {
         assertThat(data.get("motelAddress")).isEmpty();
         assertThat(data.get("motelID")).isEmpty();
         assertThat(data.get("totalPrice")).isNotEmpty();
+    }
+
+    @Test
+    void shouldBuildInventoryMovementRowsAndTotals() {
+        String block = PrintDataBuilder.inventoryMovementsBlock(inventoryTurn(), CONTEXT);
+
+        assertThat(block).contains("+6 Cerveza (COMPRA)")
+                .contains("-2 Cerveza (Venta Habitacion 3)")
+                .contains("+2 Cerveza (Devolución)")
+                .contains("-2 Cerveza (MERMA)");
+        assertThat(block.indexOf("Venta")).isLessThan(block.indexOf("COMPRA"));
+        assertThat(block.indexOf("COMPRA")).isLessThan(block.indexOf("Devolución"));
+        assertThat(block).contains("Surtido: 6 uds / " + CurrencyFormatter.format(30_000L, CURRENCY));
+        assertThat(block).contains("Vendido: 2 uds / " + CurrencyFormatter.format(8_000L, CURRENCY));
+        assertThat(block).contains("Consumido: 2 uds");
+        assertThat(block).contains("Devuelto: 2 uds");
+    }
+
+    @Test
+    void shouldOrderInventoryStateWithChangesFirstThenLowThenTheRest() {
+        String state = PrintDataBuilder.inventoryStateBlock(inventoryTurn());
+
+        assertThat(state).contains("8 Cerveza  (recibido 4)");
+        assertThat(state).contains("1 Ron  [BAJO]");
+        assertThat(state.indexOf("Cerveza")).isLessThan(state.indexOf("Ron"));
+        assertThat(state.indexOf("Ron")).isLessThan(state.indexOf("Agua"));
+    }
+
+    @Test
+    void shouldLeaveInventoryBlocksEmptyWithoutSnapshots() {
+        TurnDetails details = new TurnDetails(1L, START, true);
+
+        assertThat(PrintDataBuilder.inventoryMovementsBlock(details, CONTEXT)).isEmpty();
+        assertThat(PrintDataBuilder.inventoryStateBlock(details)).isEmpty();
+    }
+
+    private static TurnDetails inventoryTurn() {
+        TurnDetails details = new TurnDetails(42L, START, true);
+        details.addActivity(new SaleActivity(START, "Habitacion 3",
+                List.of(new SaleItem("Cerveza", 1L, 2L, 8_000L, false)), 88));
+        details.addActivity(new RefundActivity(START.plusMinutes(10), RefundType.SALE_REFUND, 89, 88,
+                "Habitacion 3", -8_000L, 0L, 1L, 2L, "Cerveza"));
+        details.addInventoryMovement(new InventoryMovement(START.plusMinutes(5), 1L, "Cerveza",
+                MovementType.INCREASE, 6, "COMPRA", 30_000L));
+        details.addInventoryMovement(new InventoryMovement(START.plusMinutes(20), 1L, "Cerveza",
+                MovementType.CONSUMPTION, 2, "MERMA", 0L));
+        details.setOpeningInventory(List.of(
+                new InventorySnapshotItem(1L, "Cerveza", 4, 2),
+                new InventorySnapshotItem(2L, "Ron", 1, 3),
+                new InventorySnapshotItem(3L, "Agua", 10, 2)));
+        details.setClosingInventory(List.of(
+                new InventorySnapshotItem(1L, "Cerveza", 8, 2),
+                new InventorySnapshotItem(2L, "Ron", 1, 3),
+                new InventorySnapshotItem(3L, "Agua", 10, 2)));
+        return details;
     }
 
     private static Map<String, String> buildFor(PrintTemplateType type) {

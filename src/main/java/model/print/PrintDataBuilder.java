@@ -5,14 +5,23 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import model.StockRules;
 import model.dto.TurnSummaryItemData;
 import model.json.CurrencyConfig;
 import model.turn.ExtraChangeActivity;
 import model.turn.ExtraChangeType;
+import model.turn.InventoryMovement;
+import model.turn.InventorySnapshotItem;
+import model.turn.MovementType;
 import model.turn.RefundActivity;
 import model.turn.RefundType;
 import model.turn.RoomBookingActivity;
@@ -186,8 +195,184 @@ public final class PrintDataBuilder {
         data.put("totalBankTransfers", money(details.getTotalBankTransfers(), context));
         data.put("totalDeposits", money(details.getTotalDeposits(), context));
         data.put("totalNet", money(details.getTotalNet(), context));
+        data.put("inventoryMovements", inventoryMovementsBlock(details, context));
+        data.put("inventoryState", inventoryStateBlock(details));
         return data;
     }
+
+    /**
+     * Builds the inventory movement block of a turn report: manual increases and
+     * consumptions, sales, courtesy sales and sale refunds, in chronological order,
+     * followed by the totals.
+     *
+     * @param details the turn data
+     * @param context motel and currency data
+     * @return the printed block, or an empty string when the turn has no inventory data
+     */
+    public static String inventoryMovementsBlock(TurnDetails details, PrintContext context) {
+        if (details.getOpeningInventory().isEmpty() && details.getClosingInventory().isEmpty()) {
+            return "";
+        }
+        List<DatedRow> rows = new ArrayList<>();
+        for (InventoryMovement movement : details.getInventoryMovements()) {
+            rows.add(new DatedRow(movement.changeDate(), movementRow(movement, context)));
+        }
+        for (var activity : details.getActivities()) {
+            if (activity instanceof SaleActivity sale) {
+                for (SaleItem item : sale.items()) {
+                    rows.add(new DatedRow(sale.changeDate(), saleRow(sale, item, context)));
+                }
+            } else if (activity instanceof RefundActivity refund
+                    && refund.refundType() == RefundType.SALE_REFUND && refund.itemID() > 0) {
+                rows.add(new DatedRow(refund.changeDate(), refundRow(refund, context)));
+            }
+        }
+        if (rows.isEmpty()) {
+            return "";
+        }
+        rows.sort(Comparator.comparing(DatedRow::date, Comparator.nullsLast(Comparator.naturalOrder())));
+
+        long surtidoUnits = 0;
+        long surtidoCost = 0;
+        long consumidoUnits = 0;
+        for (InventoryMovement movement : details.getInventoryMovements()) {
+            if (movement.movementType() == MovementType.INCREASE) {
+                surtidoUnits += movement.quantity();
+                surtidoCost += movement.cost();
+            } else {
+                consumidoUnits += movement.quantity();
+            }
+        }
+        long vendidoUnits = 0;
+        long vendidoMoney = 0;
+        long devueltoUnits = 0;
+        for (var activity : details.getActivities()) {
+            if (activity instanceof SaleActivity sale) {
+                for (SaleItem item : sale.items()) {
+                    vendidoUnits += item.quantity();
+                    vendidoMoney += item.price();
+                }
+            } else if (activity instanceof RefundActivity refund
+                    && refund.refundType() == RefundType.SALE_REFUND && refund.itemID() > 0) {
+                devueltoUnits += refund.quantity();
+            }
+        }
+
+        StringBuilder block = new StringBuilder();
+        for (DatedRow row : rows) {
+            if (!block.isEmpty()) {
+                block.append('\n');
+            }
+            block.append(row.text());
+        }
+        block.append("\nSurtido: ").append(surtidoUnits).append(" uds / ").append(money(surtidoCost, context));
+        block.append("\nVendido: ").append(vendidoUnits).append(" uds / ").append(money(vendidoMoney, context));
+        block.append("\nConsumido: ").append(consumidoUnits).append(" uds");
+        block.append("\nDevuelto: ").append(devueltoUnits).append(" uds");
+        return block.toString();
+    }
+
+    /**
+     * Builds the current inventory block: one line per product, the ones touched during
+     * the turn first, then the low/out untouched ones, then the rest alphabetically.
+     *
+     * @param details the turn data; its closing snapshot is the source
+     * @return the printed block, or an empty string when the turn has no snapshot
+     */
+    public static String inventoryStateBlock(TurnDetails details) {
+        List<InventorySnapshotItem> closing = details.getClosingInventory();
+        if (closing.isEmpty()) {
+            return "";
+        }
+        List<InventorySnapshotItem> opening = details.getOpeningInventory();
+        boolean hasOpening = !opening.isEmpty();
+        Map<Long, Long> openingQuantities = new HashMap<>();
+        for (InventorySnapshotItem item : opening) {
+            openingQuantities.put(item.itemID(), item.quantity());
+        }
+        Set<Long> changed = new HashSet<>();
+        for (InventoryMovement movement : details.getInventoryMovements()) {
+            changed.add(movement.itemID());
+        }
+        for (var activity : details.getActivities()) {
+            if (activity instanceof SaleActivity sale) {
+                for (SaleItem item : sale.items()) {
+                    changed.add(item.itemID());
+                }
+            } else if (activity instanceof RefundActivity refund
+                    && refund.refundType() == RefundType.SALE_REFUND && refund.itemID() > 0) {
+                changed.add(refund.itemID());
+            }
+        }
+        if (hasOpening) {
+            for (InventorySnapshotItem item : closing) {
+                Long before = openingQuantities.get(item.itemID());
+                if (before == null || before != item.quantity()) {
+                    changed.add(item.itemID());
+                }
+            }
+        }
+
+        List<InventorySnapshotItem> sorted = new ArrayList<>(closing);
+        sorted.sort(Comparator
+                .comparingInt((InventorySnapshotItem item) -> priority(item, changed))
+                .thenComparing(item -> item.itemName() == null ? "" : item.itemName().toLowerCase(Locale.ROOT)));
+
+        StringBuilder block = new StringBuilder();
+        for (InventorySnapshotItem item : sorted) {
+            if (!block.isEmpty()) {
+                block.append('\n');
+            }
+            block.append("   ").append(item.quantity()).append(" ").append(orEmpty(item.itemName()));
+            if (hasOpening && changed.contains(item.itemID())) {
+                Long before = openingQuantities.get(item.itemID());
+                if (before == null) {
+                    block.append("  (nuevo)");
+                } else if (before != item.quantity()) {
+                    block.append("  (recibido ").append(before).append(")");
+                }
+            }
+            if (StockRules.isOut(item.quantity())) {
+                block.append("  [AGOTADO]");
+            } else if (StockRules.isLow(item.quantity(), item.minimum())) {
+                block.append("  [BAJO]");
+            }
+        }
+        return block.toString();
+    }
+
+    private static int priority(InventorySnapshotItem item, Set<Long> changed) {
+        if (changed.contains(item.itemID())) return 0;
+        if (StockRules.isOut(item.quantity()) || StockRules.isLow(item.quantity(), item.minimum())) return 1;
+        return 2;
+    }
+
+    private static String movementRow(InventoryMovement movement, PrintContext context) {
+        String sign = movement.movementType() == MovementType.INCREASE ? "+" : "-";
+        String amount = movement.movementType() == MovementType.INCREASE
+                ? money(movement.cost(), context) : "—";
+        return " " + movementDate(movement.changeDate()) + "  " + sign + movement.quantity() + " "
+                + orEmpty(movement.itemName()) + " (" + orEmpty(movement.concept()) + ")\t" + amount;
+    }
+
+    private static String saleRow(SaleActivity sale, SaleItem item, PrintContext context) {
+        String concept = item.price() == 0
+                ? "Cortesía " + orEmpty(sale.roomSoldTo())
+                : "Venta " + orEmpty(sale.roomSoldTo());
+        return " " + movementDate(sale.changeDate()) + "  -" + item.quantity() + " "
+                + orEmpty(item.itemName()) + " (" + concept.trim() + ")\t" + money(item.price(), context);
+    }
+
+    private static String refundRow(RefundActivity refund, PrintContext context) {
+        return " " + movementDate(refund.changeDate()) + "  +" + refund.quantity() + " "
+                + orEmpty(refund.itemName()) + " (Devolución)\t" + money(Math.abs(refund.price()), context);
+    }
+
+    private static String movementDate(ZonedDateTime date) {
+        return date != null ? date.format(DETAIL_DATE_FORMATTER) : "";
+    }
+
+    private record DatedRow(ZonedDateTime date, String text) { }
 
     /**
      * Builds the concept table of a turn, either the sold concepts or the refunded ones.

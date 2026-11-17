@@ -77,13 +77,23 @@ public final class PrintFieldRegistry {
             new FieldDef("refundList", "Conceptos reembolsados (lista)", "   1 Alquiler 3h\t$40.000");
     private static final FieldDef ACTIVITY_LIST =
             new FieldDef("activityList", "Actividades (lista)", " 09/15-08:30 PM|Habitación 3|Alquiler 3h|$40.000");
+    private static final FieldDef INVENTORY_MOVEMENTS =
+            new FieldDef("inventoryMovements", "Movimientos de inventario (lista)",
+                    " 11/17-20:30  +6 Nectar 1/4 (COMPRA)\t$30.000\n"
+                            + "Surtido: 6 uds / $30.000\nVendido: 0 uds / $0\n"
+                            + "Consumido: 0 uds\nDevuelto: 0 uds");
+    private static final FieldDef INVENTORY_STATE =
+            new FieldDef("inventoryState", "Estado del inventario (lista)",
+                    "    6 Nectar 1/4  (recibido 4)\n    0 Ron 1/4  [AGOTADO]");
 
     private static final List<FieldDef> ROOM_RECEIPT_FIELDS = merge(MOTEL_FIELDS, ROOM_FIELDS);
     private static final List<FieldDef> SALE_RECEIPT_FIELDS = merge(MOTEL_FIELDS, SALE_FIELDS);
     private static final List<FieldDef> TURN_SUMMARY_FIELDS =
-            merge(MOTEL_FIELDS, TURN_FIELDS, List.of(SUMMARY_LIST, REFUND_LIST));
+            merge(MOTEL_FIELDS, TURN_FIELDS,
+                    List.of(SUMMARY_LIST, REFUND_LIST, INVENTORY_MOVEMENTS, INVENTORY_STATE));
     private static final List<FieldDef> TURN_DETAIL_FIELDS =
-            merge(MOTEL_FIELDS, TURN_FIELDS, List.of(ACTIVITY_LIST));
+            merge(MOTEL_FIELDS, TURN_FIELDS,
+                    List.of(ACTIVITY_LIST, INVENTORY_MOVEMENTS, INVENTORY_STATE));
 
     /**
      * Returns the fields available to a template type.
