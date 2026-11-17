@@ -39,6 +39,8 @@ public class InventoryManagementView extends JPanel implements TimeLabelInterfac
         initCustomTable();
         FocusHighlighter.applyToAll(this);
         TextPromptHelper.install(nameTextField, "Ingrese el nombre del producto");
+        TextPromptHelper.install(minimumTextField, "MÍNIMO");
+        NumericKeypadPopup.attach(minimumTextField);
         NumericKeypadPopup.attach(quantityTextField);
         NumericKeypadPopup.attach(priceTextField);
     }
@@ -60,7 +62,7 @@ public class InventoryManagementView extends JPanel implements TimeLabelInterfac
         inventoryTable = new JTable(tableModel);
         TableColumnModel columnModel = inventoryTable.getColumnModel();
         for (int i = 0; i < columnModel.getColumnCount(); i++) {
-            columnModel.getColumn(i).setCellRenderer(new CustomCellRenderer(cellFont));
+            columnModel.getColumn(i).setCellRenderer(new InventoryCellRenderer(cellFont));
             columnModel.getColumn(i).setHeaderRenderer(new CustomHeaderRenderer(cellFont));
         }
         inventoryTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -78,7 +80,7 @@ public class InventoryManagementView extends JPanel implements TimeLabelInterfac
     }
 
     private class InventoryTableModel extends AbstractTableModel {
-        private final String[] columnNames = {"Nombre", "Cantidad", "Precio"};
+        private final String[] columnNames = {"Nombre", "Cantidad", "Mínimo", "Precio"};
         private List<InventoryItemData> items;
 
         InventoryTableModel() {
@@ -101,14 +103,41 @@ public class InventoryManagementView extends JPanel implements TimeLabelInterfac
             InventoryItemData item = items.get(rowIndex);
             return switch (columnIndex) {
                 case 0 -> item.name();
-                case 1 -> item.quantity();
-                case 2 -> item.price();
+                case 1 -> item.isOut() ? item.quantity() + " (AGOTADO)"
+                        : item.isLow() ? item.quantity() + " (BAJO)"
+                        : String.valueOf(item.quantity());
+                case 2 -> item.minimum();
+                case 3 -> item.price();
                 default -> null;
             };
         }
 
         @Override
         public String getColumnName(int column) { return columnNames[column]; }
+    }
+
+    private class InventoryCellRenderer extends CustomCellRenderer {
+
+        InventoryCellRenderer(Font font) {
+            super(font);
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+                                                       boolean hasFocus, int row, int column) {
+            Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            if (!isSelected && row >= 0 && row < tableModel.getRowCount()) {
+                InventoryItemData item = tableModel.items.get(row);
+                if (item.isOut()) {
+                    setBackground(new Color(255, 205, 205));
+                } else if (item.isLow()) {
+                    setBackground(new Color(255, 235, 190));
+                } else {
+                    setBackground(table.getBackground());
+                }
+            }
+            return component;
+        }
     }
 
     // ===== JFormDesigner generated code (unchanged) =====
@@ -129,6 +158,9 @@ public class InventoryManagementView extends JPanel implements TimeLabelInterfac
         priceLabel = new JLabel();
         priceTextField = new JTextField();
          ((AbstractDocument) priceTextField.getDocument()).setDocumentFilter(new NumericDocumentFilter(currencyConfig));
+        minimumTextField = new JTextField();
+        minimumTextField.setFont(new Font("Segoe UI Black", Font.PLAIN, 18));
+         ((AbstractDocument) minimumTextField.getDocument()).setDocumentFilter(new NumericDocumentFilter(currencyConfig));
         upButton = new JButton();
         removeSmallPriceButton = new JButton();
         addSmallPriceButton = new JButton();
@@ -206,6 +238,9 @@ public class InventoryManagementView extends JPanel implements TimeLabelInterfac
         priceTextField.setFont(new Font("Segoe UI Black", Font.PLAIN, 26));
         add(priceTextField, "cell 6 3 2 1,growy");
 
+        //---- minimumTextField ----
+        add(minimumTextField, "cell 8 3,growy");
+
         //---- upButton ----
         upButton.setIcon(new ImageIcon(getClass().getResource("/images/up.png")));
         add(upButton, "cell 5 4,growy");
@@ -271,6 +306,7 @@ public class InventoryManagementView extends JPanel implements TimeLabelInterfac
     private JButton removeQuantityButton;
     private JLabel priceLabel;
     private JTextField priceTextField;
+    private JTextField minimumTextField;
     private JButton upButton;
     private JButton removeSmallPriceButton;
     private JButton addSmallPriceButton;
@@ -329,6 +365,9 @@ public class InventoryManagementView extends JPanel implements TimeLabelInterfac
     public String getPriceText() { return priceTextField.getText(); }
     public void setPriceText(String text) { priceTextField.setText(text); }
     public void setPriceEnabled(boolean e) { priceTextField.setEnabled(e); }
+    public String getMinimumText() { return minimumTextField.getText(); }
+    public void setMinimumText(String text) { minimumTextField.setText(text); }
+    public void setMinimumEnabled(boolean enabled) { minimumTextField.setEnabled(enabled); }
 
     // -- Labels --
     public void setEditInfoText(String text) { informativeEditLabel.setText(text); }

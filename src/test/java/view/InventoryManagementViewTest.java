@@ -246,6 +246,38 @@ class InventoryManagementViewTest {
         assertThat(table.getRowCount()).isEqualTo(1);
     }
 
+    /**
+     * Verifies the minimum field roundtrips its value.
+     * Expected: getMinimumText() returns "4" after setMinimumText("4").
+     * Failure: the new field is not wired or the API reads another component.
+     */
+    @Test
+    void shouldRoundtripMinimumText() {
+        view.setMinimumText("4");
+        assertThat(view.getMinimumText()).isEqualTo("4");
+    }
+
+    /**
+     * Verifies the table shows the minimum column and marks low/out products.
+     * Expected: 4 columns; quantity cells read "50", "3 (BAJO)" and "0 (AGOTADO)";
+     * the minimum column holds 5 for the low product.
+     * Failure: the minimum is not displayed or the stock marks are missing.
+     */
+    @Test
+    void shouldShowMinimumAndStockMarks() {
+        view.updateInventory(List.of(
+                new InventoryItemData(1, "Coca-Cola", 2500, 50, 5),
+                new InventoryItemData(2, "Agua", 1000, 3, 5),
+                new InventoryItemData(3, "Ron", 20000, 0, 0)));
+
+        JTable table = viewGetTable();
+        assertThat(table.getColumnCount()).isEqualTo(4);
+        assertThat(table.getValueAt(0, 1)).isEqualTo("50");
+        assertThat(table.getValueAt(1, 1)).isEqualTo("3 (BAJO)");
+        assertThat(table.getValueAt(2, 1)).isEqualTo("0 (AGOTADO)");
+        assertThat(table.getValueAt(1, 2)).isEqualTo(5L);
+    }
+
     // --- helpers ---
 
     private JTable viewGetTable() {

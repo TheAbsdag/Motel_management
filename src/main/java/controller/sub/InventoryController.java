@@ -6,6 +6,7 @@ import javax.swing.event.DocumentListener;
 import model.dto.InventoryItemData;
 import model.modelManagers.MotelManagement;
 import view.InventoryManagementView;
+import view.helpers.DialogHelper;
 import view.helpers.InputParser;
 
 /**
@@ -65,16 +66,20 @@ public class InventoryController {
                 int selectedRow = inventoryView.getSelectedInventoryRow();
                 if (selectedRow != -1 && !isListAdjusting) {
                     isListAdjusting = true;
-                    InventoryItemData selectedItem = inventoryView.getCurrentSelectedItem(selectedRow);
-                    inventoryView.setEditInfoText("MODIFICANDO");
-                    inventoryView.setNameText(selectedItem.name());
-                    inventoryView.setQuantityText(String.valueOf(selectedItem.quantity()));
-                    inventoryView.setPriceText(String.valueOf(selectedItem.price()));
+                    loadSelectedItem(inventoryView.getCurrentSelectedItem(selectedRow));
                     setModificators(true);
                     isListAdjusting = false;
                 }
             }
         });
+    }
+
+    private void loadSelectedItem(InventoryItemData selectedItem) {
+        inventoryView.setEditInfoText("MODIFICANDO");
+        inventoryView.setNameText(selectedItem.name());
+        inventoryView.setQuantityText(String.valueOf(selectedItem.quantity()));
+        inventoryView.setMinimumText(String.valueOf(selectedItem.minimum()));
+        inventoryView.setPriceText(String.valueOf(selectedItem.price()));
     }
 
     /** Prepares the view for creating a new inventory item. */
@@ -91,6 +96,12 @@ public class InventoryController {
         int rowSelected = inventoryView.getSelectedInventoryRow();
         if (rowSelected != -1) {
             InventoryItemData selectedItem = inventoryView.getCurrentSelectedItem(rowSelected);
+            if (selectedItem.quantity() != 0 && !DialogHelper.confirmDialog(
+                    "El producto " + selectedItem.name() + " tiene " + selectedItem.quantity()
+                            + " unidades. Se registrará una baja de inventario. ¿Eliminarlo?",
+                    "ELIMINAR PRODUCTO")) {
+                return;
+            }
             motelManager.deleteItemFromInventory(selectedItem.itemID());
         }
         updateViewData();
@@ -102,14 +113,27 @@ public class InventoryController {
         String newName = inventoryView.getNameText();
         long newQuantity = InputParser.parseLongSafe(inventoryView.getQuantityText());
         long newPrice = InputParser.parseLongSafe(inventoryView.getPriceText());
+        long newMinimum = InputParser.parseLongSafe(inventoryView.getMinimumText());
 
         if (rowSelected != -1) {
             InventoryItemData selectedItem = inventoryView.getCurrentSelectedItem(rowSelected);
+            String concept = null;
+            long cost = 0L;
+            if (newQuantity != selectedItem.quantity()) {
+                DialogHelper.InventoryMovementInput input = DialogHelper.showInventoryMovementDialog(
+                        selectedItem.name(), selectedItem.quantity(), newQuantity);
+                if (input == null) {
+                    loadSelectedItem(selectedItem);
+                    return;
+                }
+                concept = input.concept();
+                cost = input.cost();
+            }
             InventoryItemData updatedItem = new InventoryItemData(
-                    selectedItem.itemID(), newName, newPrice, newQuantity);
-            motelManager.saveItemInformation(updatedItem);
+                    selectedItem.itemID(), newName, newPrice, newQuantity, newMinimum);
+            motelManager.saveInventoryItem(updatedItem, concept, cost);
         } else {
-            motelManager.newItemCreated(newName, newPrice, newQuantity);
+            motelManager.newItemCreated(newName, newPrice, newQuantity, newMinimum);
         }
         setModificators(false);
         inventoryView.clearInventorySelection();
@@ -122,6 +146,7 @@ public class InventoryController {
             inventoryView.setEditInfoText("SELECCIONE O CREE OBJETO");
             inventoryView.setNameText("");
             inventoryView.setQuantityText("0");
+            inventoryView.setMinimumText("0");
             inventoryView.setPriceText("0");
             updateViewData();
         }
@@ -136,6 +161,7 @@ public class InventoryController {
         inventoryView.setNameEnabled(enable);
         inventoryView.setPriceEnabled(enable);
         inventoryView.setQuantityEnabled(enable);
+        inventoryView.setMinimumEnabled(enable);
     }
 
     private void updateSaveButtonState() {

@@ -100,6 +100,15 @@ new FormModel {
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 6 3 2 1,growy"
 			} )
+			add( new FormComponent( "javax.swing.JTextField" ) {
+				name: "minimumTextField"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 18 )
+				auxiliary() {
+					"JavaCodeGenerator.postCreateCode": " ((AbstractDocument) minimumTextField.getDocument()).setDocumentFilter(new NumericDocumentFilter(currencyConfig));"
+				}
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 8 3,growy"
+			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "upButton"
 				"icon": new com.jformdesigner.model.SwingIcon( 0, "/images/up.png" )

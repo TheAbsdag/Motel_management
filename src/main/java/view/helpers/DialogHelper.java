@@ -163,6 +163,66 @@ public final class DialogHelper {
     }
 
     /**
+     * Values entered in the inventory movement dialog.
+     *
+     * @param concept reason of the movement (never empty)
+     * @param cost    total cost of an increase; zero for a consumption
+     */
+    public record InventoryMovementInput(String concept, long cost) { }
+
+    /**
+     * Asks for the concept (and, when the stock grows, the total cost) of an inventory
+     * adjustment. The dialog stays open until the concept is entered or the user cancels.
+     *
+     * @param itemName         product being adjusted
+     * @param previousQuantity stock before the change
+     * @param newQuantity      stock after the change
+     * @return the entered values, or null when the user cancels
+     */
+    public static InventoryMovementInput showInventoryMovementDialog(
+            String itemName, long previousQuantity, long newQuantity) {
+        boolean increase = newQuantity > previousQuantity;
+        long delta = Math.abs(newQuantity - previousQuantity);
+
+        JComboBox<String> conceptBox = new JComboBox<>(increase
+                ? new String[]{"COMPRA", "REPOSICIÓN", "PRÉSTAMO", "DEVOLUCIÓN"}
+                : new String[]{"MERMA", "DAÑO", "USO INTERNO", "VENCIMIENTO"});
+        conceptBox.setEditable(true);
+        conceptBox.setFont(MESSAGE_FONT);
+        conceptBox.setSelectedItem("");
+        JTextField costField = numericField(0);
+
+        JPanel panel = new JPanel(new BorderLayout(15, 20));
+        panel.add(styledMessage(itemName + ": " + previousQuantity + " → " + newQuantity
+                + " (" + (increase ? "+" : "-") + delta + ")"), BorderLayout.NORTH);
+        JPanel grid = new JPanel(new MigLayout("insets 0, fillx", "[][grow,fill]"));
+        grid.add(fieldLabel("CONCEPTO"), "cell 0 0");
+        grid.add(conceptBox, "cell 1 0");
+        if (increase) {
+            grid.add(fieldLabel("COSTO TOTAL"), "cell 0 1");
+            grid.add(costField, "cell 1 1");
+        }
+        panel.add(grid, BorderLayout.CENTER);
+
+        while (true) {
+            int result = JOptionPane.showConfirmDialog(null, panel,
+                    increase ? "AUMENTO DE INVENTARIO" : "CONSUMO DE INVENTARIO",
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+            if (result != JOptionPane.OK_OPTION) {
+                return null;
+            }
+            Object editorItem = conceptBox.getEditor().getItem();
+            String concept = editorItem != null ? editorItem.toString().trim() : "";
+            long cost = increase ? InputParser.parseLongSafe(costField.getText()) : 0L;
+            if (concept.isEmpty()) {
+                showErrorMessage("Escriba el concepto del movimiento.", "DATOS INVALIDOS");
+                continue;
+            }
+            return new InventoryMovementInput(concept, cost);
+        }
+    }
+
+    /**
      * Asks for the duration and the price of the 3 room time slots, prefilled with the
      * values given. Used by the floor configuration screen to price a whole tower and to
      * set what its new rooms start from. Each value has quick adjustment buttons, and
