@@ -32,6 +32,12 @@ public class TurnDetails {
     private boolean isTurnActive;
     @JsonProperty("turnActivity")
     private List<TurnActivity> activities;
+    @JsonProperty("inventoryMovements")
+    private List<InventoryMovement> inventoryMovements;
+    @JsonProperty("openingInventory")
+    private List<InventorySnapshotItem> openingInventory;
+    @JsonProperty("closingInventory")
+    private List<InventorySnapshotItem> closingInventory;
 
     @JsonProperty("totalItems")
     private long totalItems;
@@ -65,6 +71,9 @@ public class TurnDetails {
 
     public TurnDetails() {
         this.activities = new ArrayList<>();
+        this.inventoryMovements = new ArrayList<>();
+        this.openingInventory = new ArrayList<>();
+        this.closingInventory = new ArrayList<>();
         this.summaryItems = new ArrayList<>();
         this.totalsComputed = false;
         // version stays 0 until the file declares it: 0 means the file predates
@@ -85,6 +94,9 @@ public class TurnDetails {
 
     public void clear() {
         activities.clear();
+        inventoryMovements.clear();
+        openingInventory.clear();
+        closingInventory.clear();
         summaryItems.clear();
         turnNumber = 0;
         turnStart = null;
@@ -240,6 +252,9 @@ public class TurnDetails {
             if (details.activities == null) {
                 details.activities = new ArrayList<>();
             }
+            if (details.inventoryMovements == null) details.inventoryMovements = new ArrayList<>();
+            if (details.openingInventory == null) details.openingInventory = new ArrayList<>();
+            if (details.closingInventory == null) details.closingInventory = new ArrayList<>();
             details.summaryItems = new ArrayList<>();
             details.migrateActivitiesIfNeeded();
             details.computeTotalsAndSummary();
@@ -250,7 +265,7 @@ public class TurnDetails {
         }
     }
 
-    private static final int CURRENT_VERSION = 3;
+    private static final int CURRENT_VERSION = 4;
 
     /**
      * Migrates activities from older schema versions.
@@ -299,6 +314,35 @@ public class TurnDetails {
             activities = migrated;
         }
         version = CURRENT_VERSION;
+    }
+
+    /**
+     * Records a manual inventory movement.
+     *
+     * @param movement movement to append; null is ignored
+     */
+    public void addInventoryMovement(InventoryMovement movement) {
+        if (movement != null) {
+            inventoryMovements.add(movement);
+        }
+    }
+
+    public List<InventoryMovement> getInventoryMovements() { return inventoryMovements; }
+
+    public void setInventoryMovements(List<InventoryMovement> movements) {
+        this.inventoryMovements = movements != null ? new ArrayList<>(movements) : new ArrayList<>();
+    }
+
+    public List<InventorySnapshotItem> getOpeningInventory() { return openingInventory; }
+
+    public void setOpeningInventory(List<InventorySnapshotItem> opening) {
+        this.openingInventory = opening != null ? new ArrayList<>(opening) : new ArrayList<>();
+    }
+
+    public List<InventorySnapshotItem> getClosingInventory() { return closingInventory; }
+
+    public void setClosingInventory(List<InventorySnapshotItem> closing) {
+        this.closingInventory = closing != null ? new ArrayList<>(closing) : new ArrayList<>();
     }
 
     // --- Getters / Setters ---

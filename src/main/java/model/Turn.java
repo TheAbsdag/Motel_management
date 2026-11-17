@@ -12,6 +12,8 @@ import model.dto.TurnSummaryItemData;
 import model.turn.ActivityType;
 import model.turn.ExtraChangeActivity;
 import model.turn.ExtraChangeType;
+import model.turn.InventoryMovement;
+import model.turn.InventorySnapshotItem;
 import model.turn.RefundActivity;
 import model.turn.RefundType;
 import model.turn.RoomBookingActivity;
@@ -139,15 +141,27 @@ public class Turn {
     }
 
     /**
+     * @return true while the turn is running
+     */
+    public boolean isActive() {
+        return isTurnActive;
+    }
+
+    /**
      * Initialises a new turn with the given ID and start time.
      */
     public void setNewTurn(long turnID, Instant start) {
+        setNewTurn(turnID, start, List.of());
+    }
+
+    public void setNewTurn(long turnID, Instant start, List<InventorySnapshotItem> openingInventory) {
         this.turnNumber = turnID;
         this.start = start;
         ZonedDateTime localizedStart = start.atZone(zoneID);
         turnDetails.clear();
         turnDetails.setTurnNumber(turnNumber);
         turnDetails.setTurnStart(localizedStart);
+        turnDetails.setOpeningInventory(openingInventory);
         isTurnActive = true;
         turnDetails.setTurnActive(true);
     }
@@ -160,6 +174,24 @@ public class Turn {
         turnDetails.setTurnEnd(end.atZone(zoneID));
         isTurnActive = false;
         turnDetails.setTurnActive(false);
+    }
+
+    /**
+     * Stores the stock snapshot taken when the turn is closed (or printed mid-turn).
+     *
+     * @param closing snapshot of every product
+     */
+    public void setClosingInventory(List<InventorySnapshotItem> closing) {
+        turnDetails.setClosingInventory(closing);
+    }
+
+    /**
+     * Records a manual inventory movement in the turn.
+     *
+     * @param movement movement to append
+     */
+    public void registerInventoryMovement(InventoryMovement movement) {
+        turnDetails.addInventoryMovement(movement);
     }
 
     /**
