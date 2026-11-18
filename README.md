@@ -23,7 +23,7 @@ Built on Netbeans as a educational project for a specific usecase present on the
 | `.\mvnw.cmd clean compile` | Compile |
 | `.\mvnw.cmd test` | Run all tests |
 | `.\mvnw.cmd clean package` | Build fat JAR |
-| `java -jar target/Motel_management-0.1.5.5.jar` | Run app |
+| `java -jar target/Motel_management-0.1.6.0.jar` | Run app |
 
 ## Architecture
 
