@@ -95,9 +95,9 @@ public final class PrintDataBuilder {
 
         data.put("consecutive", String.valueOf(consecutive));
         data.put("roomString", orEmpty(activity.roomString()));
-        data.put("roomNumber", String.valueOf(activity.roomNumber()));
-        data.put("floorNumber", String.valueOf(activity.floorNumber()));
-        data.put("towerNumber", String.valueOf(activity.towerNumber()));
+        data.put("roomNumber", String.valueOf(activity.roomNumber() + 1));
+        data.put("floorNumber", String.valueOf(activity.floorNumber() + 1));
+        data.put("towerNumber", String.valueOf(activity.towerNumber() + 1));
         data.put("entryTime", date.format(HOUR_FORMATTER));
         data.put("date", date.format(DATE_FORMATTER));
         data.put("serviceDuration", TimeFormatter.formatDuration(activity.getEffectiveServiceDuration()));

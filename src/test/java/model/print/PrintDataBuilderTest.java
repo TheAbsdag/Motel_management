@@ -68,6 +68,21 @@ class PrintDataBuilderTest {
     }
 
     /**
+     * Verifies the numeric room fields of a receipt are the numbers the operator sees,
+     * not the zero-based indexes the model stores.
+     * Expected: tower 2 / floor 1 / room 3 print as 3 / 2 / 4.
+     * Failure: a custom receipt prints "0" for the first room of the first tower.
+     */
+    @Test
+    void shouldPrintHumanNumbersInRoomReceipt() {
+        Map<String, String> data = PrintDataBuilder.roomReceipt(roomBooking(), 77, CONTEXT);
+
+        assertThat(data.get("towerNumber")).isEqualTo("3");
+        assertThat(data.get("floorNumber")).isEqualTo("2");
+        assertThat(data.get("roomNumber")).isEqualTo("4");
+    }
+
+    /**
      * Verifies that a room without extension leaves the extension field empty so the
      * template line is skipped instead of printing a zero.
      * Expected: extensionDuration is an empty string.
