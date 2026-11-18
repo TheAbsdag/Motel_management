@@ -302,8 +302,8 @@ public class RoomController {
         placeholders.put("{motelAddress}", cfg.getMotelAddress());
         placeholders.put("{motelID}", cfg.getMotelID());
         placeholders.put("{roomString}", roomObj.getRoomString());
-        placeholders.put("{towerNumber}", String.valueOf(tower));
-        placeholders.put("{floorNumber}", String.valueOf(floor));
+        placeholders.put("{towerNumber}", String.valueOf(tower + 1));
+        placeholders.put("{floorNumber}", String.valueOf(floor + 1));
         placeholders.put("{consecutiveTrans}", String.valueOf(consecutive));
         placeholders.put("{date}", TimeFormatter.formatEmailShortDatetime(now));
         placeholders.put("{price}", formattedPrice);
