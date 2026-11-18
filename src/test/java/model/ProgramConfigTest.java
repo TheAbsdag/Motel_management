@@ -489,6 +489,28 @@ class ProgramConfigTest {
                 .isEqualTo("2-101");
     }
 
+    /**
+     * Verifies that loading a stored configuration whose numbers no longer match their
+     * positions repairs it, which is the upgrade path for a file saved after a deletion.
+     * Expected: the second tower loads as tower 1 with its room renamed 2-101.
+     * Failure: the load hook is removed and the app keeps the hole that used to crash.
+     */
+    @Test
+    void loadFromJsonShouldRepairAStoredGap() {
+        config.loadFromJson(createBaseConfigJson());
+        config.setRoomsPerTower(new ArrayList<>(List.of(
+                towerConfig(0, floorConfig(0, room("1-101", 0, 0))),
+                towerConfig(2, floorConfig(0, room("3-101", 0, 0))))));
+        config.ensureSchemaVersion();
+
+        ProgramConfig reloaded = new ProgramConfig();
+        reloaded.loadFromJson(config.toJson());
+
+        assertThat(reloaded.getTower(1).towerNumber()).isEqualTo(1);
+        assertThat(reloaded.getTower(1).towerRooms().get(0).rooms().get(0).roomString())
+                .isEqualTo("2-101");
+    }
+
     // ========== Helper ==========
 
     private void addTowerWithOneEmptyFloor() {

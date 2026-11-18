@@ -362,13 +362,35 @@ class RoomManagerTest {
     void rebuildRoomGridShouldPreserveRoomState() {
         roomManager.buildRoomGrid(createSingleTowerConfig(1, new int[]{2}));
         roomManager.registerRoomTimeAdded(0, 0, 0, 10800L, now);
+        String states = roomManager.getRoomDataForSaving();
         List<TowerConfig> newConfig = createSingleTowerConfig(2, new int[]{1, 1});
-        roomManager.rebuildRoomGrid(newConfig);
+        roomManager.rebuildRoomGrid(newConfig, states);
         int[][] roomsArray = roomManager.getRoomsArray();
         assertThat(roomsArray).hasDimensions(1, 2);
         assertThat(roomsArray[0][0]).isEqualTo(1);
         assertThat(roomsArray[0][1]).isEqualTo(1);
         assertThat(roomManager.getRoom(0, 0, 0).getStatus()).isEqualTo(RoomStatus.OCCUPIED);
+    }
+
+    /**
+     * Verifies that reverting to a saved configuration restores the states of THAT
+     * configuration, not the ones the live grid carries after an edit renumbered it.
+     * Expected: the occupied room of the saved floor 3 is occupied again and the
+     * recreated floor 2 stays free.
+     * Failure: discarding a deletion moves the booking to the wrong room.
+     */
+    @Test
+    void rebuildRoomGridShouldRestoreTheGivenStatesNotTheLiveOnes() {
+        roomManager.buildRoomGrid(createSingleTowerConfig(3, new int[]{1, 1, 1}));
+        roomManager.getRoom(0, 2, 0).setRoomStatus(RoomStatus.OCCUPIED, now, 3600);
+        String savedStates = roomManager.getRoomDataForSaving();
+
+        roomManager.removeFloorFromGrid(0, 1);
+
+        roomManager.rebuildRoomGrid(createSingleTowerConfig(3, new int[]{1, 1, 1}), savedStates);
+
+        assertThat(roomManager.getRoom(0, 2, 0).getStatus()).isEqualTo(RoomStatus.OCCUPIED);
+        assertThat(roomManager.getRoom(0, 1, 0).getStatus()).isEqualTo(RoomStatus.FREE);
     }
 
     @Test

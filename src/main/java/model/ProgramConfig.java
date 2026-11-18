@@ -436,10 +436,10 @@ public class ProgramConfig {
             for (int fd = 0; fd < towerRooms.size(); fd++) {
                 FloorConfig floorData = towerRooms.get(fd);
                 int floorNumber = floorData.floor();
-                if (floorNumber >= runtimeRooms.get(t).size()) continue;
+                if (fd >= runtimeRooms.get(t).size()) continue;
 
                 List<RoomConfigData> configRooms = new ArrayList<>(floorData.rooms());
-                ArrayList<Room> runtimeFloorRooms = runtimeRooms.get(t).get(floorNumber);
+                ArrayList<Room> runtimeFloorRooms = runtimeRooms.get(t).get(fd);
                 for (int r = 0; r < configRooms.size() && r < runtimeFloorRooms.size(); r++) {
                     RoomConfigData roomJson = configRooms.get(r);
                     configRooms.set(r, new RoomConfigData(

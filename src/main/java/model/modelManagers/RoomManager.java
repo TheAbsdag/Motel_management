@@ -62,7 +62,6 @@ public class RoomManager {
             List<FloorConfig> towerRooms = tower.towerRooms();
             for (int floorDataIndex = 0; floorDataIndex < towerRooms.size(); floorDataIndex++) {
                 FloorConfig floorData = towerRooms.get(floorDataIndex);
-                int floorNumber = floorData.floor();
                 List<RoomConfigData> roomsArray = floorData.rooms();
 
                 for (int roomIndex = 0; roomIndex < roomsArray.size(); roomIndex++) {
@@ -336,8 +335,15 @@ public class RoomManager {
 
     // ========== Room Grid Rebuilding ==========
 
-    public void rebuildRoomGrid(List<TowerConfig> roomsPerTower) {
-        String savedStates = getRoomDataForSaving();
+    /**
+     * Rebuilds the grid from a configuration, restoring the room states of that
+     * configuration. The saved states are used, not the live ones: a revert discards the
+     * edits, and after a deletion the live grid carries the renumbered positions.
+     *
+     * @param roomsPerTower configuration to build
+     * @param savedStates   room states JSON to restore, or null/empty for none
+     */
+    public void rebuildRoomGrid(List<TowerConfig> roomsPerTower, String savedStates) {
         rooms.clear();
         buildRoomGrid(roomsPerTower);
         restoreRoomStates(savedStates);

@@ -566,7 +566,8 @@ public class MotelManagement {
 
     public void revertToSavedConfig() {
         String rawConfig = files.getJsonData("applicationProperties");
+        String savedStates = files.getJsonData("roomsInformation");
         programConfig.loadFromJson(rawConfig);
-        roomManager.rebuildRoomGrid(programConfig.getRoomsPerTower());
+        roomManager.rebuildRoomGrid(programConfig.getRoomsPerTower(), savedStates);
     }
 }
