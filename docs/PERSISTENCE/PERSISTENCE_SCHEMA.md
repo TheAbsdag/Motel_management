@@ -21,7 +21,7 @@ This document is a version index for the project's JSON persistence schema. Each
 | [V0.1.5.1](V0.1.5.1.md) | 0.1.5.1 | `61d3b2a` | September 2026 | Schema unchanged (v3). Fixes the read path of 0.1.2 files: hour-based room durations and the tower migration of a turn without a `version` field. |
 | [V0.1.5.2](V0.1.5.2.md) | 0.1.5.2 | `287b98b` | September 2026 | Schema unchanged (v3). Optional `defaultTimeData` per tower, and a save now writes the room pricing held by the room grid. |
 | [V0.1.5.3](V0.1.5.3.md) | 0.1.5.3 | `0b9521e` | September 2026 | Schema unchanged (v3). Optional `keypadEnabled` for the on-screen keypad, enabled when absent. |
-| [V0.1.5.5](V0.1.5.5.md) | 0.1.5.5 | `71d192c` | November 2026 | Inventory v3 gains the optional `minimum`; turn and history go to v4 with the three inventory lists. |
+| [V0.1.6.0](V0.1.6.0.md) | 0.1.6.0 | `f243a07` | November 2026 | Inventory v3 gains the optional `minimum`; turn and history go to v4 with the three inventory lists. |
 
 ---
 
@@ -63,6 +63,6 @@ Every version shares the same 5 persistence file types; the directories below th
 
 - **Timezone**: `America/Bogota` — all timestamps use `ZonedDateTime` with this zone.
 - **Version field**: Always at the top level. A file that omits it is read as V0.1.2 (`0`), so the automated migrations run (hours → seconds on read, 1-based → 0-based towers); field-level fallbacks cover the rest.
-- **Current schema**: `data/turn` and the archives in `history/` use `"version": 4` with the inventory lists, introduced by V0.1.5.5; `data/inventory` stays at `"version": 3` and gained the optional `minimum` in V0.1.5.5; every other file stays at `"version": 3` since V0.1.4.1.
+- **Current schema**: `data/turn` and the archives in `history/` use `"version": 4` with the inventory lists, introduced by V0.1.6.0; `data/inventory` stays at `"version": 3` and gained the optional `minimum` in V0.1.6.0; every other file stays at `"version": 3` since V0.1.4.1.
 - **Monetary values**: All amounts in COP (Colombian pesos), stored as `long`.
 - **Data directories**: All gitignored.

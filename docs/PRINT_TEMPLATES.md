@@ -213,7 +213,7 @@ The editor is the only safe way to change a template, but the files are plain JS
 
 The template files are not part of the turn data: they are never read back into the turn, the register or the history, and the JSON persistence schema is unchanged by them (see [Persistence Schema](PERSISTENCE/PERSISTENCE_SCHEMA.md)).
 
-## Inventory fields (V0.1.5.5)
+## Inventory fields (V0.1.6.0)
 
 `TURN_SUMMARY` and `TURN_DETAIL` add two list fields:
 
