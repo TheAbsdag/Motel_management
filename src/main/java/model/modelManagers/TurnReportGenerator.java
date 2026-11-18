@@ -7,6 +7,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import model.ProgramConfig;
 import model.RoomStatus;
 import model.dto.TurnSummaryItemData;
 import model.json.CurrencyConfig;
@@ -125,9 +126,9 @@ public class TurnReportGenerator {
             if (!(a instanceof RoomBookingActivity r)) continue;
             sb.append(r.changeDate().format(DETAIL_DATE_FORMATTER)).append(";");
             sb.append(r.roomString()).append(";");
-            sb.append(r.towerNumber() + 1).append(";");
-            sb.append(r.floorNumber() + 1).append(";");
-            sb.append(r.roomNumber() + 1).append(";");
+            sb.append(ProgramConfig.humanNumber(r.towerNumber())).append(";");
+            sb.append(ProgramConfig.humanNumber(r.floorNumber())).append(";");
+            sb.append(ProgramConfig.humanNumber(r.roomNumber())).append(";");
             sb.append(statusLabel(r.roomStatus())).append(";");
             sb.append(r.startStatus() != null ? r.startStatus().format(DETAIL_DATE_FORMATTER) : "").append(";");
             sb.append(r.endStatus() != null ? r.endStatus().format(DETAIL_DATE_FORMATTER) : "").append(";");
@@ -162,10 +163,10 @@ public class TurnReportGenerator {
             sb.append(s.changeDate().format(DETAIL_DATE_FORMATTER)).append(";");
             sb.append(s.originalRoom()).append(";");
             sb.append(s.swappedRoom()).append(";");
-            sb.append(s.originalTowerNumber() + 1).append(";");
-            sb.append(s.originalFloorNumber() + 1).append(";");
-            sb.append(s.swappedTowerNumber() + 1).append(";");
-            sb.append(s.swappedFloorNumber() + 1).append("\n");
+            sb.append(ProgramConfig.humanNumber(s.originalTowerNumber())).append(";");
+            sb.append(ProgramConfig.humanNumber(s.originalFloorNumber())).append(";");
+            sb.append(ProgramConfig.humanNumber(s.swappedTowerNumber())).append(";");
+            sb.append(ProgramConfig.humanNumber(s.swappedFloorNumber())).append("\n");
         }
         sb.append("\n");
 
@@ -659,9 +660,9 @@ public class TurnReportGenerator {
             Row row = sheet.createRow(rowIdx++);
             row.createCell(0).setCellValue(r.changeDate().format(DETAIL_DATE_FORMATTER));
             row.createCell(1).setCellValue(r.roomString());
-            setNumberCell(row, 2, r.towerNumber() + 1, numberStyle);
-            setNumberCell(row, 3, r.floorNumber() + 1, numberStyle);
-            setNumberCell(row, 4, r.roomNumber() + 1, numberStyle);
+            setNumberCell(row, 2, ProgramConfig.humanNumber(r.towerNumber()), numberStyle);
+            setNumberCell(row, 3, ProgramConfig.humanNumber(r.floorNumber()), numberStyle);
+            setNumberCell(row, 4, ProgramConfig.humanNumber(r.roomNumber()), numberStyle);
             row.createCell(5).setCellValue(statusLabel(r.roomStatus()));
             row.createCell(6).setCellValue(r.startStatus() != null ? r.startStatus().format(DETAIL_DATE_FORMATTER) : "");
             row.createCell(7).setCellValue(r.endStatus() != null ? r.endStatus().format(DETAIL_DATE_FORMATTER) : "");
@@ -741,13 +742,13 @@ public class TurnReportGenerator {
             Row row = sheet.createRow(rowIdx++);
             row.createCell(0).setCellValue(s.changeDate().format(DETAIL_DATE_FORMATTER));
             row.createCell(1).setCellValue(s.originalRoom());
-            setNumberCell(row, 2, s.originalTowerNumber() + 1, numberStyle);
-            setNumberCell(row, 3, s.originalFloorNumber() + 1, numberStyle);
-            setNumberCell(row, 4, s.originalRoomNumber() + 1, numberStyle);
+            setNumberCell(row, 2, ProgramConfig.humanNumber(s.originalTowerNumber()), numberStyle);
+            setNumberCell(row, 3, ProgramConfig.humanNumber(s.originalFloorNumber()), numberStyle);
+            setNumberCell(row, 4, ProgramConfig.humanNumber(s.originalRoomNumber()), numberStyle);
             row.createCell(5).setCellValue(s.swappedRoom());
-            setNumberCell(row, 6, s.swappedTowerNumber() + 1, numberStyle);
-            setNumberCell(row, 7, s.swappedFloorNumber() + 1, numberStyle);
-            setNumberCell(row, 8, s.swappedRoomNumber() + 1, numberStyle);
+            setNumberCell(row, 6, ProgramConfig.humanNumber(s.swappedTowerNumber()), numberStyle);
+            setNumberCell(row, 7, ProgramConfig.humanNumber(s.swappedFloorNumber()), numberStyle);
+            setNumberCell(row, 8, ProgramConfig.humanNumber(s.swappedRoomNumber()), numberStyle);
         }
         return rowIdx;
     }

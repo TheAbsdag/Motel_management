@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import model.ProgramConfig;
 import model.StockRules;
 import model.dto.TurnSummaryItemData;
 import model.json.CurrencyConfig;
@@ -95,9 +96,9 @@ public final class PrintDataBuilder {
 
         data.put("consecutive", String.valueOf(consecutive));
         data.put("roomString", orEmpty(activity.roomString()));
-        data.put("roomNumber", String.valueOf(activity.roomNumber() + 1));
-        data.put("floorNumber", String.valueOf(activity.floorNumber() + 1));
-        data.put("towerNumber", String.valueOf(activity.towerNumber() + 1));
+        data.put("roomNumber", String.valueOf(ProgramConfig.humanNumber(activity.roomNumber())));
+        data.put("floorNumber", String.valueOf(ProgramConfig.humanNumber(activity.floorNumber())));
+        data.put("towerNumber", String.valueOf(ProgramConfig.humanNumber(activity.towerNumber())));
         data.put("entryTime", date.format(HOUR_FORMATTER));
         data.put("date", date.format(DATE_FORMATTER));
         data.put("serviceDuration", TimeFormatter.formatDuration(activity.getEffectiveServiceDuration()));

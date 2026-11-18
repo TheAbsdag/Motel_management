@@ -1,5 +1,6 @@
 package view;
 
+import model.ProgramConfig;
 import view.helpers.NavigationState;
 import java.awt.*;
 import java.awt.CardLayout;
@@ -70,13 +71,13 @@ public class FloorView extends JPanel implements TimeLabelInterface {
                 floorButtonPanel.setLayout(new GridLayout(5, 5));
                 floorButtonPanel.setBorder(BorderFactory.createTitledBorder(
                         BorderFactory.createLineBorder(Color.black),
-                        "TORRE " + (tower + 1) + " - PISO " + (floor + 1),
+                        "TORRE " + ProgramConfig.humanNumber(tower) + " - PISO " + ProgramConfig.humanNumber(floor),
                         TitledBorder.CENTER, TitledBorder.TOP,
                         new Font("SEGOE UI BLACK", Font.BOLD, 28)));
 
                 ArrayList<JButton> floorButtons = new ArrayList<>();
                 for (int room = 0; room < roomsPerFloor[floor]; room++) {
-                    JButton button = new JButton("" + (room + 1));
+                    JButton button = new JButton(String.valueOf(ProgramConfig.humanNumber(room)));
                     button.setBorder(BorderFactory.createLineBorder(Color.BLACK));
                     button.setBackground(Color.WHITE);
                     button.setForeground(Color.BLACK);
@@ -136,11 +137,11 @@ public class FloorView extends JPanel implements TimeLabelInterface {
     }
 
     private void updateTowerLabel() {
-        towerLabel.setText(String.valueOf(nav.getCurrentTowerIndex() + 1));
+        towerLabel.setText(String.valueOf(ProgramConfig.humanNumber(nav.getCurrentTowerIndex())));
     }
 
     private void updateFloorLabel() {
-        floorLabel.setText(String.valueOf(nav.getCurrentFloorIndex() + 1));
+        floorLabel.setText(String.valueOf(ProgramConfig.humanNumber(nav.getCurrentFloorIndex())));
     }
 
     // ========== Overtime Warning ==========

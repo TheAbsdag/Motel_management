@@ -511,6 +511,17 @@ class ProgramConfigTest {
                 .isEqualTo("2-101");
     }
 
+    /**
+     * Verifies the single place a stored 0-based number becomes the human 1-based number.
+     * Expected: index 0 shows as 1 and index 2 as 3.
+     * Failure: every display call site carries its own offset again.
+     */
+    @Test
+    void humanNumberShouldBeOneBased() {
+        assertThat(ProgramConfig.humanNumber(0)).isEqualTo(1);
+        assertThat(ProgramConfig.humanNumber(2)).isEqualTo(3);
+    }
+
     // ========== Helper ==========
 
     private void addTowerWithOneEmptyFloor() {

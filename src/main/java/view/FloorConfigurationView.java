@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionListener;
+import model.ProgramConfig;
 import net.miginfocom.swing.*;
 import view.interfaces.DirtyTrackable;
 
@@ -257,13 +258,13 @@ public class FloorConfigurationView extends JPanel implements DirtyTrackable {
                 floorButtonPanel.setLayout(new GridLayout(5, 5));
                 floorButtonPanel.setBorder(BorderFactory.createTitledBorder(
                         BorderFactory.createLineBorder(Color.black),
-                        "TORRE " + (tower + 1) + " - PISO " + (floor + 1),
+                        "TORRE " + ProgramConfig.humanNumber(tower) + " - PISO " + ProgramConfig.humanNumber(floor),
                         TitledBorder.CENTER, TitledBorder.TOP,
                         new Font("SEGOE UI BLACK", Font.BOLD, 24)));
 
                 ArrayList<JButton> floorButtons = new ArrayList<>();
                 for (int room = 0; room < roomsPerFloor[floor]; room++) {
-                    JButton button = new JButton("" + (room + 1));
+                    JButton button = new JButton("" + ProgramConfig.humanNumber(room));
                     button.setFont(new Font("Segoe UI", Font.BOLD, 14));
                     button.setBorder(BorderFactory.createLineBorder(Color.BLACK));
                     button.setBackground(Color.WHITE);
@@ -365,11 +366,11 @@ public class FloorConfigurationView extends JPanel implements DirtyTrackable {
     }
 
     private void updateTowerSelectedLabel() {
-        towerSelectedLabel.setText("TORRE " + (currentTowerIndex + 1));
+        towerSelectedLabel.setText("TORRE " + ProgramConfig.humanNumber(currentTowerIndex));
     }
 
     private void updateFloorSelectedLabel() {
-        floorSelectedLabel.setText("PISO " + (currentFloorIndex + 1));
+        floorSelectedLabel.setText("PISO " + ProgramConfig.humanNumber(currentFloorIndex));
     }
 
     // ========== Dirty Tracking ==========

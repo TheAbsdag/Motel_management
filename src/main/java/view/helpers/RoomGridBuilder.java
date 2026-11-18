@@ -9,6 +9,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.border.TitledBorder;
+import model.ProgramConfig;
 
 /**
  * Manages the room button grid data structure ({@code ArrayList<ArrayList<ArrayList<JButton>>>})
@@ -49,13 +50,13 @@ public class RoomGridBuilder {
                 floorButtonPanel.setLayout(new GridLayout(5, 5));
                 floorButtonPanel.setBorder(BorderFactory.createTitledBorder(
                         BorderFactory.createLineBorder(Color.black),
-                        "TORRE " + (tower + 1) + " - PISO " + (floor + 1),
+                        "TORRE " + ProgramConfig.humanNumber(tower) + " - PISO " + ProgramConfig.humanNumber(floor),
                         TitledBorder.CENTER, TitledBorder.TOP,
                         new Font("SEGOE UI BLACK", Font.BOLD, titleFontSize)));
 
                 ArrayList<JButton> floorButtons = new ArrayList<>();
                 for (int room = 0; room < roomsPerFloor[floor]; room++) {
-                    JButton button = new JButton(String.valueOf(room + 1));
+                    JButton button = new JButton(String.valueOf(ProgramConfig.humanNumber(room)));
                     button.setBorder(BorderFactory.createLineBorder(Color.BLACK));
                     button.setBackground(Color.WHITE);
                     button.setForeground(Color.BLACK);

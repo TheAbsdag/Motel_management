@@ -7,6 +7,7 @@ package view;
 import java.awt.*;
 import javax.swing.*;
 import javax.swing.text.AbstractDocument;
+import model.ProgramConfig;
 import model.Room;
 import model.RoomTime;
 import model.json.CurrencyConfig;
@@ -313,9 +314,9 @@ public class RoomConfigurationView extends JPanel implements DirtyTrackable {
         currentFloor = floor;
         currentRoom = room;
 
-        towerLabel.setText(String.valueOf(tower + 1));
-        floorLabel.setText(String.valueOf(floor + 1));
-        numberLabel.setText(String.valueOf(room + 1));
+        towerLabel.setText(String.valueOf(ProgramConfig.humanNumber(tower)));
+        floorLabel.setText(String.valueOf(ProgramConfig.humanNumber(floor)));
+        numberLabel.setText(String.valueOf(ProgramConfig.humanNumber(room)));
         roomStringLabel.setText(roomData.getRoomString());
 
         RoomTime[] data = roomData.getCustomRoomTimeData();

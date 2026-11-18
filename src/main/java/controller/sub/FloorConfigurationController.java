@@ -107,7 +107,7 @@ public class FloorConfigurationController {
         if (roomsPerTower != null && !roomsPerTower.isEmpty()) {
             String[] items = new String[roomsPerTower.size()];
             for (int i = 0; i < roomsPerTower.size(); i++) {
-                items[i] = "Torre " + (roomsPerTower.get(i).towerNumber() + 1);
+                items[i] = "Torre " + ProgramConfig.humanNumber(roomsPerTower.get(i).towerNumber());
             }
             view.setTowerItems(items);
         }
@@ -121,7 +121,7 @@ public class FloorConfigurationController {
             List<FloorConfig> towerRooms = tower.towerRooms();
             String[] items = new String[towerRooms.size()];
             for (int i = 0; i < towerRooms.size(); i++) {
-                items[i] = "Piso " + (towerRooms.get(i).floor() + 1);
+                items[i] = "Piso " + ProgramConfig.humanNumber(towerRooms.get(i).floor());
             }
             view.setFloorItems(items);
         }
@@ -292,7 +292,7 @@ public class FloorConfigurationController {
         if (towerIndex < 0) return;
 
         boolean confirm = DialogHelper.confirmDialog(
-                "Esta seguro de eliminar la torre " + (towerIndex + 1) + " y todas sus habitaciones?",
+                "Esta seguro de eliminar la torre " + ProgramConfig.humanNumber(towerIndex) + " y todas sus habitaciones?",
                 "CONFIRMAR ELIMINACION");
         if (!confirm) return;
 
@@ -321,7 +321,7 @@ public class FloorConfigurationController {
         if (floorListIndex < 0) return;
 
         boolean confirm = DialogHelper.confirmDialog(
-                "Esta seguro de eliminar el piso " + (floorListIndex + 1)
+                "Esta seguro de eliminar el piso " + ProgramConfig.humanNumber(floorListIndex)
                         + " y todas sus habitaciones?",
                 "CONFIRMAR ELIMINACION");
         if (!confirm) return;
@@ -420,7 +420,7 @@ public class FloorConfigurationController {
 
     private String buildRoomButtonText(int tower, int floor, int room) {
         Room roomData = motelManager.getRoom(tower, floor, room);
-        String roomNum = String.valueOf(room + 1);
+        String roomNum = String.valueOf(ProgramConfig.humanNumber(room));
         String roomStr = roomData.getRoomString();
         RoomTime[] slots = roomData.getCustomRoomTimeData();
 
@@ -472,7 +472,7 @@ public class FloorConfigurationController {
         }
 
         TowerConfig tower = roomsPerTower.get(towerIndex);
-        int towerNumber = tower.towerNumber() + 1;
+        int towerNumber = ProgramConfig.humanNumber(tower.towerNumber());
         RoomTime[] edited = DialogHelper.showTowerPricingDialog(
                 "TORRE " + towerNumber,
                 ProgramConfig.toRoomTimes(config.towerDefaultTimeData(towerIndex)));

@@ -11,6 +11,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
 import net.miginfocom.swing.MigLayout;
+import model.ProgramConfig;
 import model.RoomStatus;
 import view.interfaces.TimeLabelInterface;
 
@@ -132,7 +133,7 @@ public class RoomSummaryView extends JPanel implements TimeLabelInterface {
                 BorderFactory.createLineBorder(TOWER_BORDER, 2),
                 BorderFactory.createEmptyBorder(8, 8, 8, 8)));
 
-        JLabel towerLabel = new JLabel("TORRE " + (tower + 1), SwingConstants.CENTER);
+        JLabel towerLabel = new JLabel("TORRE " + ProgramConfig.humanNumber(tower), SwingConstants.CENTER);
         towerLabel.setFont(new Font("Segoe UI Black", Font.BOLD, 18));
         towerLabel.setOpaque(true);
         towerLabel.setBackground(TOWER_TITLE_BACKGROUND);
@@ -155,7 +156,7 @@ public class RoomSummaryView extends JPanel implements TimeLabelInterface {
         JPanel floorPanel = new JPanel(new MigLayout("fill, insets 0", "[grow,fill]", "[]2[grow,fill]"));
         floorPanel.setOpaque(false);
 
-        JLabel floorLabel = new JLabel("PISO " + (floor + 1));
+        JLabel floorLabel = new JLabel("PISO " + ProgramConfig.humanNumber(floor));
         floorLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
         floorLabel.setForeground(FLOOR_TEXT);
         floorPanel.add(floorLabel, "growx, wrap");

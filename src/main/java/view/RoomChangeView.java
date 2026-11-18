@@ -3,6 +3,7 @@
  */
 package view;
 
+import model.ProgramConfig;
 import view.helpers.NavigationState;
 import java.awt.*;
 import java.util.ArrayList;
@@ -45,13 +46,13 @@ public class RoomChangeView extends JPanel implements TimeLabelInterface {
                 floorButtonPanel.setLayout(new GridLayout(5, 5));
                 floorButtonPanel.setBorder(BorderFactory.createTitledBorder(
                         BorderFactory.createLineBorder(Color.black),
-                        "TORRE " + (tower + 1) + " - PISO " + (floor + 1),
+                        "TORRE " + ProgramConfig.humanNumber(tower) + " - PISO " + ProgramConfig.humanNumber(floor),
                         TitledBorder.CENTER, TitledBorder.TOP,
                         new Font("SEGOE UI BLACK", Font.BOLD, 24)));
 
                 ArrayList<JButton> floorButtons = new ArrayList<>();
                 for (int room = 0; room < roomsPerFloor[floor]; room++) {
-                    JButton button = new JButton("" + (room + 1));
+                    JButton button = new JButton("" + ProgramConfig.humanNumber(room));
                     button.setBorder(BorderFactory.createLineBorder(Color.BLACK));
                     button.setBackground(Color.WHITE);
                     button.setForeground(Color.BLACK); // Changed to black for visibility
@@ -96,7 +97,7 @@ public class RoomChangeView extends JPanel implements TimeLabelInterface {
     }
 
     private void updateTowerLabel() {
-        towerNumberLabel.setText(String.valueOf((nav.getCurrentTowerIndex() + 1)));
+        towerNumberLabel.setText(String.valueOf(ProgramConfig.humanNumber(nav.getCurrentTowerIndex())));
     }
 
     /**

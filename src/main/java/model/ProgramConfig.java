@@ -478,6 +478,17 @@ public class ProgramConfig {
     public void setKeypadEnabled(boolean keypadEnabled) { this.keypadEnabled = keypadEnabled; }
 
     /**
+     * Returns the number the operator sees for a zero-based tower, floor or room index
+     * (the stored index plus one). This is the only place the offset lives.
+     *
+     * @param zeroBasedIndex stored tower, floor or room number
+     * @return the human 1-based number
+     */
+    public static int humanNumber(int zeroBasedIndex) {
+        return zeroBasedIndex + 1;
+    }
+
+    /**
      * Builds a standard room identifier string from tower, floor, and room numbers.
      * @param towerNumber tower identifier
      * @param floorNumber zero-based floor number
@@ -485,6 +496,6 @@ public class ProgramConfig {
      * @return formatted string like "1-105"
      */
     public static String buildRoomString(int towerNumber, int floorNumber, int roomNumber) {
-        return (towerNumber + 1) + "-" + (floorNumber + 1) + "0" + (roomNumber + 1);
+        return humanNumber(towerNumber) + "-" + humanNumber(floorNumber) + "0" + humanNumber(roomNumber);
     }
 }
