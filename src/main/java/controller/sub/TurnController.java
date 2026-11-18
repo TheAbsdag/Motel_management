@@ -191,27 +191,47 @@ userInterface.setView(ViewCard.FLOOR_VIEW);
     }
 
     private void proceedWithTurnEnd(EmailConfigurationService emailSvc, boolean emailConfigured) {
-        boolean turnEndConfirmation = DialogHelper.confirmTurnEnd();
-        if (!turnEndConfirmation) {
+        if (!DialogHelper.confirmTurnEnd()) {
             return;
         }
         motelManager.timeInformationUpdate();
         turnManagerView.setBackEnabled(false);
         turnManagerView.setEndTurnEnabled(false);
-        motelManager.turnEnded();
-        if (turnManagerView.isNoPrintSelected()) {
-            motelManager.turnEndPrint(1);
-        } else if (turnManagerView.isSummarizedPrintSelected()) {
-            motelManager.turnEndPrint(2);
-        } else if (turnManagerView.isDetailedPrintSelected()) {
-            motelManager.turnEndPrint(3);
+
+        int printOption = selectedPrintOption();
+        if (printOption == 0) {
+            return;
         }
+        finishTurn(printOption);
 
         if (emailConfigured) {
             attemptTurnEmailWithLoading();
         }
 
         userInterface.setView(ViewCard.TURN_SELECT_VIEW);
+    }
+
+    /**
+     * @return 1 (no print), 2 (summarized) or 3 (detailed); 0 when no option is selected
+     */
+    private int selectedPrintOption() {
+        if (turnManagerView.isNoPrintSelected()) return 1;
+        if (turnManagerView.isSummarizedPrintSelected()) return 2;
+        if (turnManagerView.isDetailedPrintSelected()) return 3;
+        return 0;
+    }
+
+    /**
+     * Ends the turn and stores the closed turn on disk. The end-of-turn report writes the
+     * history archive, the XLSX and the PDFs; the main data files carry the closed
+     * {@code data/turn} with its closing stock snapshot, so they are written here as well.
+     *
+     * @param printOption 1 = no print, 2 = summarized, 3 = detailed
+     */
+    void finishTurn(int printOption) {
+        motelManager.turnEnded();
+        motelManager.turnEndPrint(printOption);
+        saveMainFiles.run();
     }
 
     private void attemptTurnEmailWithLoading() {
