@@ -23,7 +23,7 @@ Built on Netbeans as a educational project for a specific usecase present on the
 | `.\mvnw.cmd clean compile` | Compile |
 | `.\mvnw.cmd test` | Run all tests |
 | `.\mvnw.cmd clean package` | Build fat JAR |
-| `java -jar target/Motel_management-0.1.6.0.jar` | Run app |
+| `java -jar target/Motel_management-0.1.6.1.jar` | Run app |
 
 ## Architecture
 
@@ -67,6 +67,7 @@ Features to be added, in no particular order of progress, WIP will be marked and
 - **Java Swing integration:** Development of view related elements started with Java Swing due to simplicity, swap to JavaFX for a touch friendly approach without using broken helpers is currently being tested for implementation
 
 ## Versions major changes:
+- **0.1.6.1:** Fixes the numbers shown to the operator. A custom room receipt no longer prints a 0-based tower, floor or room; deleting a tower, floor or room closes the numbering gap and renames only the automatic room names, keeping any name typed by the operator, and loading repairs data saved after such a deletion. The room notification email no longer reports *Torre 0 / Piso 0* either. No file-format change.
 - **0.1.6.0:** Adds inventory traceability: each product has a minimum stock that marks it low or out, and the turn records stock movements and opening/closing snapshots, printed in the turn summary and detail. Additive and backward-compatible: older data loads with no minimum and empty inventory lists.
 - **0.1.5.5:** Fixes the room summary, which rebuilt itself on every clock tick and jumped back to the top four times per second (floors below the fold were unreachable and touch drag was interrupted); it now refreshes the labels in place, rebuilds only when a tower, floor or room changes and stretches with the window, so no room of a wide floor is clipped and 3 towers fit. Fixes the turn print actions that stayed enabled after unchecking the last print option, which allowed closing a turn with no option and silently skipping the report: they now follow the selection, and the print option is validated before touching the turn, the printer or the files.
 - **0.1.5.4:** Fixes the layout of the on-screen keypad added in 0.1.5.3: its keys are a 3x4 pad instead of a single long row. Everything else is 0.1.5.3.
