@@ -53,16 +53,13 @@ public class RoomManager {
         for (int towerIndex = 0; towerIndex < roomsPerTower.size(); towerIndex++) {
             TowerConfig tower = roomsPerTower.get(towerIndex);
             int towerNumber = tower.towerNumber();
-            int towerFloors = tower.towerFloors();
 
             rooms.add(new ArrayList<>());
-
-            for (int floorIndex = 0; floorIndex < towerFloors; floorIndex++) {
+            for (int floorIndex = 0; floorIndex < tower.towerRooms().size(); floorIndex++) {
                 rooms.get(towerIndex).add(new ArrayList<>());
             }
 
             List<FloorConfig> towerRooms = tower.towerRooms();
-
             for (int floorDataIndex = 0; floorDataIndex < towerRooms.size(); floorDataIndex++) {
                 FloorConfig floorData = towerRooms.get(floorDataIndex);
                 int floorNumber = floorData.floor();
@@ -82,10 +79,11 @@ public class RoomManager {
                         currentRoom.setCustomRoomTimeData(timeData);
                     }
 
-                    rooms.get(towerIndex).get(floorNumber).add(currentRoom);
+                    rooms.get(towerIndex).get(floorDataIndex).add(currentRoom);
                 }
             }
         }
+        normalizeGrid();
     }
 
     public void restoreRoomStates(String json) {
@@ -345,6 +343,30 @@ public class RoomManager {
         restoreRoomStates(savedStates);
     }
 
+    /**
+     * Forces every room to carry the numbers of the position it occupies in the grid and
+     * regenerates the name of the rooms still carrying the automatic name of their old
+     * position. A room the operator renamed keeps its name. Called after every structural
+     * deletion, where the positions of the surviving rooms change.
+     */
+    private void normalizeGrid() {
+        for (int tower = 0; tower < rooms.size(); tower++) {
+            for (int floor = 0; floor < rooms.get(tower).size(); floor++) {
+                for (int room = 0; room < rooms.get(tower).get(floor).size(); room++) {
+                    Room target = rooms.get(tower).get(floor).get(room);
+                    String automatic = ProgramConfig.buildRoomString(
+                            target.getTowerNumber(), target.getFloorNumber(), target.getRoomNumber());
+                    if (automatic.equals(target.getRoomString())) {
+                        target.setRoomString(ProgramConfig.buildRoomString(tower, floor, room));
+                    }
+                    target.setTowerNumber(tower);
+                    target.setFloorNumber(floor);
+                    target.setRoomNumber(room);
+                }
+            }
+        }
+    }
+
     // ========== Incremental Grid Operations ==========
 
     public void addTowerToGrid(int towerNum, int floors) {
@@ -358,6 +380,7 @@ public class RoomManager {
     public void removeTowerFromGrid(int towerIndex) {
         if (towerIndex >= 0 && towerIndex < rooms.size()) {
             rooms.remove(towerIndex);
+            normalizeGrid();
         }
     }
 
@@ -389,6 +412,7 @@ public class RoomManager {
         if (floorIndex < 0 || floorIndex >= rooms.get(towerIndex).size()) return;
         if (roomIndex < 0 || roomIndex >= rooms.get(towerIndex).get(floorIndex).size()) return;
         rooms.get(towerIndex).get(floorIndex).remove(roomIndex);
+        normalizeGrid();
     }
 
     public void addFloorToGrid(int towerIndex, int floorIndex) {
@@ -400,6 +424,7 @@ public class RoomManager {
         if (towerIndex < 0 || towerIndex >= rooms.size()) return;
         if (floorIndex < 0 || floorIndex >= rooms.get(towerIndex).size()) return;
         rooms.get(towerIndex).remove(floorIndex);
+        normalizeGrid();
     }
 
     // ========== Getters / Setters ==========

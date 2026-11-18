@@ -21,10 +21,10 @@ import java.time.Instant;
  */
 public class Room {
     private String roomString;
-    private final int roomNumber;
-    private final int floorNumber;
+    private int roomNumber;
+    private int floorNumber;
     private RoomStatus status;
-    private final int towerNumber;
+    private int towerNumber;
     
     private RoomTime[] customRoomTimeData;
 
@@ -188,6 +188,34 @@ public class Room {
      */
     public int getTowerNumber() {
         return towerNumber;
+    }
+
+    /**
+     * Updates the room number within its floor. Only the room configuration screen moves
+     * it, when a deletion compacted the rooms of the floor.
+     *
+     * @param roomNumber new room number within the floor
+     */
+    public void setRoomNumber(int roomNumber) {
+        this.roomNumber = roomNumber;
+    }
+
+    /**
+     * Updates the floor this room belongs to, after a deletion moved it.
+     *
+     * @param floorNumber new floor number
+     */
+    public void setFloorNumber(int floorNumber) {
+        this.floorNumber = floorNumber;
+    }
+
+    /**
+     * Updates the tower this room belongs to, after a deletion moved it.
+     *
+     * @param towerNumber new tower number
+     */
+    public void setTowerNumber(int towerNumber) {
+        this.towerNumber = towerNumber;
     }
 
     /**

@@ -268,30 +268,12 @@ public class FloorConfigurationController {
     }
 
     private void addNewTower() {
-        int nextTowerNum = 0;
-        List<TowerConfig> roomsPerTower = motelManager.getProgramConfig().getRoomsPerTower();
-        if (roomsPerTower != null && !roomsPerTower.isEmpty()) {
-            int maxNum = -1;
-            for (int i = 0; i < roomsPerTower.size(); i++) {
-                int num = roomsPerTower.get(i).towerNumber();
-                if (num > maxNum) maxNum = num;
-            }
-            nextTowerNum = maxNum + 1;
-        }
-
-        Integer towerNum = DialogHelper.showNumericInputDialog(
-                "Numero de la nueva torre:", "NUEVA TORRE",
-                String.valueOf(nextTowerNum));
-        if (towerNum == null) return;
-
-        int floors = 1;
         List<FloorConfig> towerRooms = new ArrayList<>();
-        for (int f = 0; f < floors; f++) {
-            towerRooms.add(new FloorConfig(f, new ArrayList<>()));
-        }
+        towerRooms.add(new FloorConfig(0, new ArrayList<>()));
+        int towerNumber = motelManager.getProgramConfig().getTowerCount();
 
-        motelManager.getProgramConfig().addTower(towerNum, floors, towerRooms);
-        motelManager.getRoomManager().addTowerToGrid(towerNum, floors);
+        motelManager.getProgramConfig().addTower(towerRooms);
+        motelManager.getRoomManager().addTowerToGrid(towerNumber, 1);
         view.markDirty();
 
         int[][] roomsArray = motelManager.getRoomsArray();

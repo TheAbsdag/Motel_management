@@ -163,22 +163,25 @@ class ProgramConfigTest {
     // ========== Room Grid CRUD ==========
 
     @Test
-    void addTowerShouldAppendToRoomsPerTower() {
+    void addTowerShouldAppendWithTheNextNumber() {
         config.loadFromJson(createBaseConfigJson());
-        config.addTower(1, 2, new ArrayList<>());
+        config.addTower(List.of(new FloorConfig(0, new ArrayList<>())));
+
         assertThat(config.getTowerCount()).isEqualTo(1);
-        assertThat(config.getTower(0).towerNumber()).isEqualTo(1);
-        assertThat(config.getTower(0).towerFloors()).isEqualTo(2);
+        assertThat(config.getTower(0).towerNumber()).isZero();
+        assertThat(config.getTower(0).towerFloors()).isEqualTo(1);
     }
 
     @Test
     void removeTowerShouldReduceCount() {
         config.loadFromJson(createBaseConfigJson());
-        config.addTower(1, 1, new ArrayList<>());
-        config.addTower(2, 1, new ArrayList<>());
+        config.addTower(List.of(new FloorConfig(0, new ArrayList<>())));
+        config.addTower(List.of(new FloorConfig(0, new ArrayList<>())));
+
         config.removeTower(0);
+
         assertThat(config.getTowerCount()).isEqualTo(1);
-        assertThat(config.getTower(0).towerNumber()).isEqualTo(2);
+        assertThat(config.getTower(0).towerNumber()).isZero();
     }
 
     @Test
@@ -186,7 +189,7 @@ class ProgramConfigTest {
         config.loadFromJson(createBaseConfigJson());
         List<FloorConfig> towerRooms = new ArrayList<>();
         towerRooms.add(new FloorConfig(0, new ArrayList<>()));
-        config.addTower(1, 1, towerRooms);
+        config.addTower(towerRooms);
 
         config.addRoomToFloor(0, 0, "1-102", 0, 1);
 
@@ -202,7 +205,7 @@ class ProgramConfigTest {
         rooms.add(new RoomConfigData("1-101", 0, 0, new ArrayList<>()));
         List<FloorConfig> towerRooms = new ArrayList<>();
         towerRooms.add(new FloorConfig(0, rooms));
-        config.addTower(1, 1, towerRooms);
+        config.addTower(towerRooms);
 
         config.removeRoomFromFloor(0, 0, 0);
 
@@ -217,7 +220,7 @@ class ProgramConfigTest {
         rooms.add(new RoomConfigData("1-101", 0, 0, new ArrayList<>()));
         List<FloorConfig> towerRooms = new ArrayList<>();
         towerRooms.add(new FloorConfig(0, rooms));
-        config.addTower(1, 1, towerRooms);
+        config.addTower(towerRooms);
 
         config.setRoomString(0, 0, 0, "VIP-1");
 
@@ -380,16 +383,134 @@ class ProgramConfigTest {
         assertThat(reloaded.isKeypadEnabled()).isFalse();
     }
 
+    // ========== Numbering after a deletion ==========
+
+    /**
+     * Verifies that deleting a tower closes the gap: the towers after it move one
+     * position back and their automatic room names follow.
+     * Expected: two towers numbered 0 and 1, the second named 2-101.
+     * Failure: labels, exports and printed room strings disagree after a deletion.
+     */
+    @Test
+    void deletingATowerShouldRenumberTheRemainingOnes() {
+        config.loadFromJson(createBaseConfigJson());
+        config.setRoomsPerTower(new ArrayList<>(List.of(
+                towerConfig(0, floorConfig(0, room("1-101", 0, 0))),
+                towerConfig(1, floorConfig(0, room("2-101", 0, 0))),
+                towerConfig(2, floorConfig(0, room("3-101", 0, 0))))));
+
+        config.removeTower(1);
+
+        assertThat(config.getTowerCount()).isEqualTo(2);
+        assertThat(config.getTower(0).towerNumber()).isZero();
+        assertThat(config.getTower(1).towerNumber()).isEqualTo(1);
+        assertThat(config.getTower(1).towerRooms().get(0).rooms().get(0).roomString())
+                .isEqualTo("2-101");
+    }
+
+    /**
+     * Verifies that deleting a floor renumbers the floors below it, including the room
+     * floor of every room and the automatic room names.
+     * Expected: the former third floor becomes floor 1 with its room named 1-201.
+     * Failure: the saved data keeps a hole the room grid cannot index.
+     */
+    @Test
+    void deletingAFloorShouldRenumberTheFloorsBelowIt() {
+        config.loadFromJson(createBaseConfigJson());
+        config.setRoomsPerTower(new ArrayList<>(List.of(towerConfig(0,
+                floorConfig(0, room("1-101", 0, 0)),
+                floorConfig(1, room("1-201", 1, 0)),
+                floorConfig(2, room("1-301", 2, 0))))));
+
+        config.removeFloorFromTower(0, 1);
+
+        assertThat(config.getTower(0).towerFloors()).isEqualTo(2);
+        assertThat(config.getTower(0).towerRooms().get(1).floor()).isEqualTo(1);
+        RoomConfigData renamed = config.getTower(0).towerRooms().get(1).rooms().get(0);
+        assertThat(renamed.roomFloor()).isEqualTo(1);
+        assertThat(renamed.roomString()).isEqualTo("1-201");
+    }
+
+    /**
+     * Verifies that deleting a room renumbers the rooms after it.
+     * Expected: the former third room becomes room 1 named 1-102.
+     * Failure: the room numbers and the automatic names drift apart.
+     */
+    @Test
+    void deletingARoomShouldRenumberTheRoomsAfterIt() {
+        config.loadFromJson(createBaseConfigJson());
+        config.setRoomsPerTower(new ArrayList<>(List.of(towerConfig(0,
+                floorConfig(0, room("1-101", 0, 0), room("1-102", 0, 1), room("1-103", 0, 2))))));
+
+        config.removeRoomFromFloor(0, 0, 1);
+
+        List<RoomConfigData> rooms = config.getTower(0).towerRooms().get(0).rooms();
+        assertThat(rooms).hasSize(2);
+        assertThat(rooms.get(1).roomNumber()).isEqualTo(1);
+        assertThat(rooms.get(1).roomString()).isEqualTo("1-102");
+    }
+
+    /**
+     * Verifies that a room the operator renamed keeps its name when a deletion moves it.
+     * Expected: the remaining room is still called "Suite".
+     * Failure: a deletion overwrites a name typed on the room configuration screen.
+     */
+    @Test
+    void aRenamedRoomShouldKeepItsNameWhenTheNumberingMoves() {
+        config.loadFromJson(createBaseConfigJson());
+        config.setRoomsPerTower(new ArrayList<>(List.of(towerConfig(0,
+                floorConfig(0, room("VIP", 0, 0), room("Suite", 0, 1))))));
+
+        config.removeRoomFromFloor(0, 0, 0);
+
+        List<RoomConfigData> rooms = config.getTower(0).towerRooms().get(0).rooms();
+        assertThat(rooms).hasSize(1);
+        assertThat(rooms.get(0).roomNumber()).isZero();
+        assertThat(rooms.get(0).roomString()).isEqualTo("Suite");
+    }
+
+    /**
+     * Verifies that normalization repairs a stored configuration whose numbers no longer
+     * match their positions, which is how a file saved after a middle deletion loads.
+     * Expected: the second tower is number 1 and its room is named 2-101.
+     * Failure: the app loads a hole and crashes or labels the wrong tower.
+     */
+    @Test
+    void normalizePositionsShouldRepairAStoredGap() {
+        config.loadFromJson(createBaseConfigJson());
+        config.setRoomsPerTower(new ArrayList<>(List.of(
+                towerConfig(0, floorConfig(0, room("1-101", 0, 0))),
+                towerConfig(2, floorConfig(0, room("3-101", 0, 0))))));
+
+        config.normalizePositions();
+
+        assertThat(config.getTower(1).towerNumber()).isEqualTo(1);
+        assertThat(config.getTower(1).towerRooms().get(0).rooms().get(0).roomString())
+                .isEqualTo("2-101");
+    }
+
     // ========== Helper ==========
 
     private void addTowerWithOneEmptyFloor() {
         List<FloorConfig> towerRooms = new ArrayList<>();
         towerRooms.add(new FloorConfig(0, new ArrayList<>()));
-        config.addTower(1, 1, towerRooms);
+        config.addTower(towerRooms);
     }
 
     private String createBaseConfigJson() {
         return "{\"consecutiveTransaction\":0,\"motelName\":\"Test Motel\","
                 + "\"motelAddress\":\"Test Address\",\"motelID\":\"NIT 000.000.000-0\"}";
+    }
+
+    private static TowerConfig towerConfig(int towerNumber, FloorConfig... floors) {
+        return new TowerConfig(towerNumber, floors.length, List.of(floors));
+    }
+
+    private static FloorConfig floorConfig(int floorNumber, RoomConfigData... rooms) {
+        return new FloorConfig(floorNumber, List.of(rooms));
+    }
+
+    private static RoomConfigData room(String roomString, int floor, int number) {
+        return new RoomConfigData(roomString, floor, number, null);
     }
 }

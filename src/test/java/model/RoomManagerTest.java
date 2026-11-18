@@ -439,6 +439,81 @@ class RoomManagerTest {
         assertThat(added.getCustomRoomTimeData()[0].getTimeSeconds()).isEqualTo(7200L);
     }
 
+    /**
+     * Verifies that deleting a floor closes the gap in the runtime grid: the floors below
+     * move one position up and their rooms are renumbered and renamed.
+     * Expected: the former third floor is index 1 as floor 1, with room 1-201.
+     * Failure: the room screen and the printed receipts keep the old floor while the
+     * navigation counts a floor that no longer exists.
+     */
+    @Test
+    void removingAFloorShouldRenumberTheSurvivingFloors() {
+        roomManager.buildRoomGrid(createSingleTowerConfig(3, new int[]{1, 1, 1}));
+
+        roomManager.removeFloorFromGrid(0, 1);
+
+        assertThat(roomManager.getRoomsArray()[0]).hasSize(2);
+        Room moved = roomManager.getRoom(0, 1, 0);
+        assertThat(moved.getFloorNumber()).isEqualTo(1);
+        assertThat(moved.getRoomString()).isEqualTo("1-201");
+    }
+
+    /**
+     * Verifies that a configuration stored with a hole in the floor numbers loads instead
+     * of crashing, because the grid is indexed by position.
+     * Expected: the second floor of the list is index 1 and its room is renumbered.
+     * Failure: IndexOutOfBoundsException while loading a file saved after a deletion.
+     */
+    @Test
+    void buildRoomGridShouldTolerateStoredFloorGaps() {
+        List<TowerConfig> gapped = List.of(new TowerConfig(0, 2, List.of(
+                new FloorConfig(0, List.of(new RoomConfigData("1-101", 0, 0, null))),
+                new FloorConfig(2, List.of(new RoomConfigData("1-301", 2, 0, null))))));
+
+        roomManager.buildRoomGrid(gapped);
+
+        Room room = roomManager.getRoom(0, 1, 0);
+        assertThat(room.getFloorNumber()).isEqualTo(1);
+        assertThat(room.getRoomString()).isEqualTo("1-201");
+    }
+
+    /**
+     * Verifies that a renamed room keeps its name when a deletion moves it.
+     * Expected: the name is still "Suite".
+     * Failure: a deletion overwrites a name typed by the operator.
+     */
+    @Test
+    void removingARoomShouldKeepARenamedRoomName() {
+        roomManager.buildRoomGrid(createSingleTowerConfig(1, new int[]{2}));
+        roomManager.setRoomString(0, 0, 1, "Suite");
+
+        roomManager.removeRoomFromGrid(0, 0, 0);
+
+        assertThat(roomManager.getRoom(0, 0, 0).getRoomString()).isEqualTo("Suite");
+        assertThat(roomManager.getRoom(0, 0, 0).getRoomNumber()).isZero();
+    }
+
+    /**
+     * Verifies the saved room states still map to their rooms after a deletion moved them,
+     * so an occupied room does not come back free or in another room.
+     * Expected: the occupied room is restored as OCCUPIED at its new position.
+     * Failure: the state file keeps old floor numbers and the booking is lost on reload.
+     */
+    @Test
+    void stateFileShouldFollowTheRoomsAfterADeletion() {
+        roomManager.buildRoomGrid(createSingleTowerConfig(3, new int[]{1, 1, 1}));
+        roomManager.getRoom(0, 2, 0).setRoomStatus(RoomStatus.OCCUPIED, now, 3600);
+
+        roomManager.removeFloorFromGrid(0, 1);
+        String states = roomManager.getRoomDataForSaving();
+
+        RoomManager reloaded = new RoomManager(zoneID);
+        reloaded.buildRoomGrid(createSingleTowerConfig(2, new int[]{1, 1}));
+        reloaded.restoreRoomStates(states);
+
+        assertThat(reloaded.getRoom(0, 1, 0).getStatus()).isEqualTo(RoomStatus.OCCUPIED);
+    }
+
     // ========== Helpers ==========
 
     private static List<TowerConfig> createSingleTowerConfig(int numFloors, int[] roomsPerFloor) {

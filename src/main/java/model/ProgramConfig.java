@@ -55,6 +55,7 @@ public class ProgramConfig {
             this.currencyConfig = props.currencyConfig() != null ? props.currencyConfig() : CurrencyConfig.defaultConfig();
             this.keypadEnabled = props.keypadEnabled() == null || props.keypadEnabled();
             migrateIfNeeded();
+            normalizePositions();
         } catch (JsonProcessingException e) {
             logger.log(Level.SEVERE, "Failed to load application properties", e);
         }
@@ -161,7 +162,7 @@ public class ProgramConfig {
      * @param roomsPerTower new tower/floor/room layout
      */
     public void setRoomsPerTower(List<TowerConfig> roomsPerTower) {
-        this.roomsPerTower = roomsPerTower;
+        this.roomsPerTower = new ArrayList<>(roomsPerTower);
     }
 
     /**
@@ -183,14 +184,43 @@ public class ProgramConfig {
     }
 
     /**
-     * Appends a new tower to the configuration.
-     * @param towerNumber identifier for the tower
-     * @param towerFloors  number of floors in the tower
-     * @param towerRooms   pre-built rooms list per floor
+     * Appends a new tower, numbered with the next free position.
+     *
+     * @param towerRooms rooms of each floor; the floor count comes from this list
      */
-    public void addTower(int towerNumber, int towerFloors, List<FloorConfig> towerRooms) {
-        TowerConfig tower = new TowerConfig(towerNumber, towerFloors, towerRooms);
-        roomsPerTower.add(tower);
+    public void addTower(List<FloorConfig> towerRooms) {
+        roomsPerTower.add(new TowerConfig(roomsPerTower.size(), towerRooms.size(), towerRooms));
+    }
+
+    /**
+     * Forces every tower, floor and room number to match its position in the lists,
+     * closing the gaps a deletion leaves behind, and regenerates the name of every room
+     * still carrying the automatic name of its old position. A room the operator renamed
+     * keeps its name. Called after every structural deletion and once when a data file is
+     * loaded, which repairs files saved with gaps.
+     */
+    void normalizePositions() {
+        List<TowerConfig> normalized = new ArrayList<>();
+        for (int towerIndex = 0; towerIndex < roomsPerTower.size(); towerIndex++) {
+            TowerConfig tower = roomsPerTower.get(towerIndex);
+            List<FloorConfig> floors = new ArrayList<>();
+            for (int floorIndex = 0; floorIndex < tower.towerRooms().size(); floorIndex++) {
+                List<RoomConfigData> rooms = new ArrayList<>();
+                List<RoomConfigData> stored = tower.towerRooms().get(floorIndex).rooms();
+                for (int roomIndex = 0; roomIndex < stored.size(); roomIndex++) {
+                    RoomConfigData room = stored.get(roomIndex);
+                    String name = room.roomString();
+                    if (name != null && name.equals(buildRoomString(
+                            tower.towerNumber(), room.roomFloor(), room.roomNumber()))) {
+                        name = buildRoomString(towerIndex, floorIndex, roomIndex);
+                    }
+                    rooms.add(new RoomConfigData(name, floorIndex, roomIndex, room.customTimeData()));
+                }
+                floors.add(new FloorConfig(floorIndex, rooms));
+            }
+            normalized.add(new TowerConfig(towerIndex, floors.size(), floors, tower.defaultTimeData()));
+        }
+        roomsPerTower = normalized;
     }
 
     /**
@@ -200,6 +230,7 @@ public class ProgramConfig {
     public void removeTower(int index) {
         if (index >= 0 && index < roomsPerTower.size()) {
             roomsPerTower.remove(index);
+            normalizePositions();
         }
     }
 
@@ -243,6 +274,7 @@ public class ProgramConfig {
             towerRooms.remove(floorDataIndex);
             roomsPerTower.set(towerIndex, new TowerConfig(
                     tower.towerNumber(), tower.towerFloors() - 1, towerRooms, tower.defaultTimeData()));
+            normalizePositions();
         }
     }
 
@@ -286,6 +318,7 @@ public class ProgramConfig {
             rooms.remove(roomIndex);
             towerRooms.set(floorDataIndex, new FloorConfig(floorData.floor(), rooms));
             roomsPerTower.set(towerIndex, tower.withTowerRooms(towerRooms));
+            normalizePositions();
         }
     }
 
