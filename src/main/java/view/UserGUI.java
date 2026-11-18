@@ -25,6 +25,7 @@ public class UserGUI extends JFrame {
     private InventoryManagementView inventoryView;
     private HistoryView historyView;
     private TurnManagerView turnManagerView;
+    private TurnInventoryView turnInventoryView;
     private RoomChangeView roomChangeView;
     private AppOptionsView appOptions;
     private PrinterConfigurationView printerConfigView;
@@ -86,6 +87,9 @@ public class UserGUI extends JFrame {
 
         turnManagerView = new TurnManagerView();
         addView(turnManagerView, ViewCard.TURN_MANAGER_VIEW);
+
+        turnInventoryView = new TurnInventoryView();
+        addView(turnInventoryView, ViewCard.TURN_INVENTORY_VIEW);
 
         roomChangeView = new RoomChangeView(navigationState);
         addView(roomChangeView, ViewCard.ROOM_CHANGE_VIEW);
@@ -262,6 +266,13 @@ public class UserGUI extends JFrame {
      */
     public TurnManagerView getTurnManagerView() {
         return turnManagerView;
+    }
+
+    /**
+     * @return the turnInventoryView
+     */
+    public TurnInventoryView getTurnInventoryView() {
+        return turnInventoryView;
     }
 
     /**

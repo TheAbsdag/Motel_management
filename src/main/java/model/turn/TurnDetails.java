@@ -6,10 +6,17 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import model.RoomStatus;
+import model.dto.TurnInventoryRowData;
 import model.dto.TurnSummaryItemData;
 import model.json.ObjectMapperFactory;
 
@@ -343,6 +350,109 @@ public class TurnDetails {
 
     public void setClosingInventory(List<InventorySnapshotItem> closing) {
         this.closingInventory = closing != null ? new ArrayList<>(closing) : new ArrayList<>();
+    }
+
+    /**
+     * Builds the per-product inventory movement summary of this turn.
+     *
+     * <p>One row exists for every product that appears in the opening snapshot, in a
+     * manual movement, in a sale, in a sale refund or in the current stock, so deleted
+     * products stay visible with a current stock of zero. Sales and courtesy sales are
+     * split by price, exactly as the printed report does. Refunds, consumptions and
+     * deletions have no column of their own, so the current stock is the real stock
+     * after all of them.
+     *
+     * <p>When the turn has no opening snapshot (data written before inventory
+     * traceability existed), {@code received} is rebuilt from the tracked movements
+     * instead of showing a misleading zero.
+     *
+     * @param currentStock current stock of every product
+     * @return one row per product, ordered by product name
+     */
+    public List<TurnInventoryRowData> getInventoryRows(List<InventorySnapshotItem> currentStock) {
+        Map<Long, InventorySnapshotItem> opening = indexByItemID(openingInventory);
+        Map<Long, InventorySnapshotItem> current = indexByItemID(currentStock);
+
+        Map<Long, Long> increases = new LinkedHashMap<>();
+        Map<Long, Long> consumptions = new LinkedHashMap<>();
+        Map<Long, String> names = new LinkedHashMap<>();
+        for (InventoryMovement movement : inventoryMovements) {
+            if (movement.movementType() == MovementType.INCREASE) {
+                increases.merge(movement.itemID(), movement.quantity(), Long::sum);
+            } else {
+                consumptions.merge(movement.itemID(), movement.quantity(), Long::sum);
+            }
+            names.putIfAbsent(movement.itemID(), movement.itemName());
+        }
+
+        Map<Long, Long> sold = new LinkedHashMap<>();
+        Map<Long, Long> courtesy = new LinkedHashMap<>();
+        Map<Long, Long> refunds = new LinkedHashMap<>();
+        for (TurnActivity activity : activities) {
+            if (activity instanceof SaleActivity sale) {
+                for (SaleItem item : sale.items()) {
+                    if (item.price() == 0) {
+                        courtesy.merge(item.itemID(), item.quantity(), Long::sum);
+                    } else {
+                        sold.merge(item.itemID(), item.quantity(), Long::sum);
+                    }
+                    names.putIfAbsent(item.itemID(), item.itemName());
+                }
+            } else if (activity instanceof RefundActivity refund
+                    && refund.refundType() == RefundType.SALE_REFUND) {
+                refunds.merge(refund.itemID(), refund.quantity(), Long::sum);
+                names.putIfAbsent(refund.itemID(), refund.itemName());
+            }
+        }
+
+        Set<Long> itemIDs = new LinkedHashSet<>();
+        itemIDs.addAll(opening.keySet());
+        itemIDs.addAll(increases.keySet());
+        itemIDs.addAll(consumptions.keySet());
+        itemIDs.addAll(sold.keySet());
+        itemIDs.addAll(courtesy.keySet());
+        itemIDs.addAll(refunds.keySet());
+        itemIDs.addAll(current.keySet());
+
+        boolean hasOpening = !opening.isEmpty();
+        List<TurnInventoryRowData> rows = new ArrayList<>();
+        for (long itemID : itemIDs) {
+            InventorySnapshotItem openingItem = opening.get(itemID);
+            InventorySnapshotItem currentItem = current.get(itemID);
+            String itemName = currentItem != null ? currentItem.itemName()
+                    : openingItem != null ? openingItem.itemName()
+                    : names.get(itemID);
+            long increaseQty = increases.getOrDefault(itemID, 0L);
+            long soldQty = sold.getOrDefault(itemID, 0L);
+            long courtesyQty = courtesy.getOrDefault(itemID, 0L);
+            long currentQty = currentItem != null ? currentItem.quantity() : 0L;
+            long receivedQty;
+            if (openingItem != null) {
+                receivedQty = openingItem.quantity();
+            } else if (hasOpening) {
+                receivedQty = 0L;
+            } else {
+                receivedQty = currentQty - increaseQty - refunds.getOrDefault(itemID, 0L)
+                        + soldQty + courtesyQty + consumptions.getOrDefault(itemID, 0L);
+            }
+            rows.add(new TurnInventoryRowData(itemID, itemName, receivedQty, increaseQty,
+                    soldQty, courtesyQty, currentQty));
+        }
+        rows.sort(Comparator
+                .comparing((TurnInventoryRowData row) -> row.itemName() == null
+                        ? "" : row.itemName().toLowerCase(Locale.ROOT))
+                .thenComparingLong(TurnInventoryRowData::itemID));
+        return rows;
+    }
+
+    private static Map<Long, InventorySnapshotItem> indexByItemID(List<InventorySnapshotItem> items) {
+        Map<Long, InventorySnapshotItem> indexed = new LinkedHashMap<>();
+        if (items != null) {
+            for (InventorySnapshotItem item : items) {
+                indexed.put(item.itemID(), item);
+            }
+        }
+        return indexed;
     }
 
     // --- Getters / Setters ---

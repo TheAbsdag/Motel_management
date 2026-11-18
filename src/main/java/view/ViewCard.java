@@ -11,6 +11,7 @@ public enum ViewCard {
     SELLING_VIEW("sellingView"),
     TURN_SELECT_VIEW("turnSelectView"),
     TURN_MANAGER_VIEW("turnManagerView"),
+    TURN_INVENTORY_VIEW("turnInventoryView"),
     MANAGEMENT_SELECT_VIEW("managementSelectView"),
     INVENTORY_VIEW("inventoryView"),
     HISTORY_VIEW("historyView"),

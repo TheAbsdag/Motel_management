@@ -270,6 +270,7 @@ public class TurnManagerView extends JPanel implements TimeLabelInterface {
 	noPrintCheckBox = new JCheckBox();
 	summarizedPrintCheckBox = new JCheckBox();
 	detailedPrintCheckBox = new JCheckBox();
+	inventoryButton = new JButton();
 	backButton = new JButton();
 	printButton = new JButton();
 	endTurnButton = new JButton();
@@ -452,6 +453,11 @@ public class TurnManagerView extends JPanel implements TimeLabelInterface {
 	detailedPrintCheckBox.setFont(new Font("Segoe UI Black", Font.PLAIN, 26));
 	add(detailedPrintCheckBox, "cell 5 13 2 1,growy");
 
+	//---- inventoryButton ----
+	inventoryButton.setText("INVENTARIO");
+	inventoryButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 20));
+	add(inventoryButton, "cell 1 14,growy");
+
 	//---- backButton ----
 	backButton.setText("VOLVER");
 	backButton.setFont(new Font("Segoe UI Black", Font.PLAIN, 28));
@@ -538,6 +544,7 @@ public class TurnManagerView extends JPanel implements TimeLabelInterface {
     private JCheckBox noPrintCheckBox;
     private JCheckBox summarizedPrintCheckBox;
     private JCheckBox detailedPrintCheckBox;
+    private JButton inventoryButton;
     private JButton backButton;
     private JButton printButton;
     private JButton endTurnButton;
@@ -559,6 +566,7 @@ public class TurnManagerView extends JPanel implements TimeLabelInterface {
     public void onEndTurnButton(Runnable action) { endTurnButton.addActionListener(e -> action.run()); }
     public void onRefundButton(Runnable action) { refundButton.addActionListener(e -> action.run()); }
     public void onSummarizedTurn(Runnable action) { summarizedTurnButton.addActionListener(e -> action.run()); }
+    public void onInventoryButton(Runnable action) { inventoryButton.addActionListener(e -> action.run()); }
     public void onBackFromSummarizedTurn(Runnable action) { backFromSummarizedTurn.addActionListener(e -> action.run()); }
     public void onUpButton(Runnable action) { upButton.addActionListener(e -> action.run()); }
     public void onDownButton(Runnable action) { downButton.addActionListener(e -> action.run()); }

@@ -5,6 +5,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import model.Turn;
+import model.dto.TurnInventoryRowData;
 import model.json.ObjectMapperFactory;
 import org.junit.jupiter.api.Test;
 
@@ -104,6 +105,83 @@ class TurnInventoryTest {
         assertThat(details.getOpeningInventory()).isEmpty();
         assertThat(details.getClosingInventory()).isEmpty();
         assertThat(details.getInventoryMovements()).isEmpty();
+    }
+
+    @Test
+    void shouldBuildTheInventoryMovementRowsOfATurn() {
+        TurnDetails details = new TurnDetails(42L, START, true);
+        details.setOpeningInventory(List.of(
+                new InventorySnapshotItem(1L, "Cerveza", 4, 2),
+                new InventorySnapshotItem(2L, "Agua", 10, 2)));
+        details.addInventoryMovement(new InventoryMovement(START, 1L, "Cerveza",
+                MovementType.INCREASE, 6, "COMPRA", 30_000L));
+        details.addActivity(new SaleActivity(START, "101", List.of(
+                new SaleItem("Cerveza", 1L, 2, 10_000L, false),
+                new SaleItem("Agua", 2L, 1, 0L, false)), 1));
+
+        List<TurnInventoryRowData> rows = details.getInventoryRows(List.of(
+                new InventorySnapshotItem(1L, "Cerveza", 8, 2),
+                new InventorySnapshotItem(2L, "Agua", 9, 2),
+                new InventorySnapshotItem(3L, "Papas", 7, 1)));
+
+        assertThat(rows).containsExactly(
+                new TurnInventoryRowData(2L, "Agua", 10, 0, 0, 1, 9),
+                new TurnInventoryRowData(1L, "Cerveza", 4, 6, 2, 0, 8),
+                new TurnInventoryRowData(3L, "Papas", 0, 0, 0, 0, 7));
+        assertThat(rows.get(1).totalIn()).isEqualTo(10);
+    }
+
+    @Test
+    void shouldKeepDeletedProductsAndUseTheCurrentName() {
+        TurnDetails details = new TurnDetails(43L, START, true);
+        details.setOpeningInventory(List.of(
+                new InventorySnapshotItem(1L, "Ron", 3, 0),
+                new InventorySnapshotItem(2L, "Hielo", 5, 0)));
+        details.addInventoryMovement(new InventoryMovement(START, 2L, "Hielo",
+                MovementType.CONSUMPTION, 5, "BAJA DE PRODUCTO", 0L));
+        details.addActivity(new SaleActivity(START, "102",
+                List.of(new SaleItem("Ron", 1L, 1, 5_000L, false)), 1));
+
+        List<TurnInventoryRowData> rows = details.getInventoryRows(List.of(
+                new InventorySnapshotItem(1L, "Ron Viejo", 2, 0)));
+
+        assertThat(rows).containsExactly(
+                new TurnInventoryRowData(2L, "Hielo", 5, 0, 0, 0, 0),
+                new TurnInventoryRowData(1L, "Ron Viejo", 3, 0, 1, 0, 2));
+    }
+
+    @Test
+    void shouldRebuildReceivedWhenTheTurnHasNoOpeningSnapshot() {
+        TurnDetails details = new TurnDetails(44L, START, true);
+        details.addInventoryMovement(new InventoryMovement(START, 1L, "Cerveza",
+                MovementType.INCREASE, 6, "COMPRA", 30_000L));
+        details.addInventoryMovement(new InventoryMovement(START, 1L, "Cerveza",
+                MovementType.CONSUMPTION, 1, "MERMA", 0L));
+        details.addActivity(new SaleActivity(START, "101", List.of(
+                new SaleItem("Cerveza", 1L, 2, 10_000L, false),
+                new SaleItem("Cerveza", 1L, 1, 0L, false)), 1));
+
+        List<TurnInventoryRowData> rows = details.getInventoryRows(List.of(
+                new InventorySnapshotItem(1L, "Cerveza", 6, 2)));
+
+        assertThat(rows).containsExactly(
+                new TurnInventoryRowData(1L, "Cerveza", 4, 6, 2, 1, 6));
+    }
+
+    @Test
+    void shouldKeepRefundedSalesInTheSoldColumn() {
+        TurnDetails details = new TurnDetails(45L, START, true);
+        details.setOpeningInventory(List.of(new InventorySnapshotItem(1L, "Cerveza", 4, 2)));
+        details.addActivity(new SaleActivity(START, "101",
+                List.of(new SaleItem("Cerveza", 1L, 2, 10_000L, true)), 1));
+        details.addActivity(new RefundActivity(START, RefundType.SALE_REFUND, 2, 1, "101",
+                -10_000L, 0, 1L, 2L, "Cerveza"));
+
+        List<TurnInventoryRowData> rows = details.getInventoryRows(List.of(
+                new InventorySnapshotItem(1L, "Cerveza", 4, 2)));
+
+        assertThat(rows).containsExactly(
+                new TurnInventoryRowData(1L, "Cerveza", 4, 0, 2, 0, 4));
     }
 
     private static InventoryMovement movement(MovementType type, long quantity, String concept, long cost) {

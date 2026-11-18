@@ -76,6 +76,13 @@ public class TurnController {
         turnManagerView.onBackButton(() -> onBack.run());
         turnManagerView.onPrintButton(() -> printCurrentTurn());
         turnManagerView.onEndTurnButton(() -> endTurn());
+        turnManagerView.onInventoryButton(this::showTurnInventory);
+
+        // Inventory movement summary
+        var turnInventoryView = userInterface.getTurnInventoryView();
+        turnInventoryView.onBackButton(this::showTurnManagement);
+        turnInventoryView.onUpButton(() -> turnInventoryView.scrollInventoryTable(-1));
+        turnInventoryView.onDownButton(() -> turnInventoryView.scrollInventoryTable(1));
 
         // Print checkbox listeners
         turnManagerView.setupPrintCheckboxes();
@@ -138,6 +145,18 @@ userInterface.setView(ViewCard.FLOOR_VIEW);
         turnManagerView.setRefundEnabled(false);
         turnManagerView.setBackEnabled(true);
         userInterface.setView(ViewCard.TURN_MANAGER_VIEW);
+    }
+
+    /**
+     * Opens the inventory movement summary of the active turn. Current stock is read
+     * at this moment, so the last column reflects the live inventory.
+     */
+    public void showTurnInventory() {
+        var turnInventoryView = userInterface.getTurnInventoryView();
+        TurnDetails details = motelManager.getCurrentTurnDetailedInfo();
+        turnInventoryView.setTurnNumber(details.getTurnNumber());
+        turnInventoryView.updateInventoryRows(motelManager.getTurnInventoryRows());
+        userInterface.setView(ViewCard.TURN_INVENTORY_VIEW);
     }
 
     /**

@@ -23,6 +23,7 @@ import model.dto.InventoryItemData;
 import model.dto.SellingItemData;
 import model.dto.TurnActivityData;
 import model.dto.TurnHistoryData;
+import model.dto.TurnInventoryRowData;
 import model.dto.TurnSummaryItemData;
 import model.json.ObjectMapperFactory;
 import model.print.PrintTemplate;
@@ -279,6 +280,17 @@ public class MotelManagement {
 
     public long getTurnNumber() {
         return turnService.getTurnNumber();
+    }
+
+    /**
+     * Returns the per-product inventory movement summary of the active turn, built
+     * against the live stock so the last column is the real current existence.
+     *
+     * @return one row per product, ordered by name
+     */
+    public List<TurnInventoryRowData> getTurnInventoryRows() {
+        return turnService.getCurrentTurnDetailedInfo()
+                .getInventoryRows(sellingService.inventorySnapshot());
     }
 
     // ========== Inventory / Selling Operations ==========

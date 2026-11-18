@@ -98,6 +98,20 @@ class TurnManagerViewTest {
     }
 
     /**
+     * Verifies that clicking the inventoryButton fires the callback registered via
+     * {@link TurnManagerView#onInventoryButton(Runnable)}.
+     * Expected: The AtomicBoolean is set to true after the button click.
+     * Failure: The inventory button action listener is not wired to the onInventoryButton callback.
+     */
+    @Test
+    void shouldInvokeCallbackWhenInventoryButtonClicked() throws Exception {
+        AtomicBoolean invoked = new AtomicBoolean(false);
+        view.onInventoryButton(() -> invoked.set(true));
+        clickButton(view, "inventoryButton");
+        assertThat(invoked).isTrue();
+    }
+
+    /**
      * Verifies that clicking the backFromSummarizedTurn button fires the callback registered via
      * {@link TurnManagerView#onBackFromSummarizedTurn(Runnable)}.
      * Expected: The AtomicBoolean is set to true after the button click.

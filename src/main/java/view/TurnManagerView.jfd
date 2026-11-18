@@ -208,6 +208,13 @@ new FormModel {
 				"value": "cell 5 13 2 1,growy"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
+				name: "inventoryButton"
+				"text": "INVENTARIO"
+				"font": new java.awt.Font( "Segoe UI Black", 0, 20 )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 1 14,growy"
+			} )
+			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "backButton"
 				"text": "VOLVER"
 				"font": new java.awt.Font( "Segoe UI Black", 0, 28 )
